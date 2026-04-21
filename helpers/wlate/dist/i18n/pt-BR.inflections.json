@@ -1,0 +1,25 @@
+[
+  {
+    "expr": "{{ @sexo %qt ~o ~aluno ~aprovado }}",
+    "context": "pages/result.html:15",
+    "ctxdetail": "caption",
+    "revised": true,
+    "forms": {
+      "m.one": "o único aluno aprovado",
+      "m.other": "os {n} alunos aprovados",
+      "f.one": "a única aluna aprovada",
+      "f.other": "as {n} alunas aprovadas"
+    }
+  },
+  {
+    "expr": "{{ @sexo %qt ~o ~professor ~presente }}",
+    "context": "pages/staff.html:8",
+    "revised": true,
+    "forms": {
+      "m.one": "o professor presente",
+      "m.other": "os {n} professores presentes",
+      "f.one": "a professora presente",
+      "f.other": "as {n} professoras presentes"
+    }
+  }
+]

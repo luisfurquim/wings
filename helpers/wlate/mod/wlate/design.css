@@ -1,0 +1,482 @@
+/* ── wlate layout and structure ──────────────────────────────────────────── */
+
+:host {
+   display: block;
+   width: 100%;
+   height: 100vh;
+   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+   font-size: 14px;
+   color: var(--wl-text);
+   background: var(--wl-bg);
+}
+
+/* ── Root container ─────────────────────────────────────────────────────── */
+
+.wl-root {
+   display: flex;
+   flex-direction: column;
+   height: 100%;
+   max-width: 1400px;
+   margin: 0 auto;
+   padding: 12px 16px;
+   gap: 8px;
+}
+
+/* ── Status bar ─────────────────────────────────────────────────────────── */
+
+.wl-status {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   padding: 8px 16px;
+   background: var(--wl-panel-bg);
+   border-radius: 8px;
+   box-shadow: var(--wl-panel-shadow);
+}
+
+.wl-pending {
+   font-size: 0.9em;
+   color: var(--wl-text-muted);
+}
+.wl-pending strong {
+   color: var(--wl-secondary);
+   font-weight: 700;
+}
+
+.wl-tabs {
+   display: flex;
+   gap: 4px;
+}
+
+.wl-tab {
+   padding: 6px 18px;
+   border: none;
+   border-radius: 6px;
+   font-size: 0.85em;
+   font-weight: 600;
+   cursor: pointer;
+   transition: all 0.2s;
+   background: var(--wl-tab-inactive-bg);
+   color: var(--wl-tab-inactive-color);
+}
+.wl-tab:hover {
+   box-shadow: var(--wl-btn-hover-shadow);
+}
+.wl-tab-active {
+   background: var(--wl-tab-active-bg);
+   color: var(--wl-tab-active-color);
+}
+
+/* ── Language selectors ─────────────────────────────────────────────────── */
+
+.wl-lang-bar {
+   display: grid;
+   grid-template-columns: 1fr 1fr;
+   gap: 12px;
+}
+
+.wl-lang-left,
+.wl-lang-right {
+   padding: 6px 12px;
+   background: var(--wl-panel-bg);
+   border-radius: 8px;
+   box-shadow: var(--wl-panel-shadow);
+}
+
+/* ── Context info ───────────────────────────────────────────────────────── */
+
+.wl-context-bar {
+   display: grid;
+   grid-template-columns: 1fr 1fr;
+   gap: 12px;
+}
+
+.wl-ctx-left,
+.wl-ctx-right {
+   display: flex;
+   gap: 12px;
+   align-items: center;
+   padding: 4px 12px;
+   font-size: 0.8em;
+   color: var(--wl-text-muted);
+}
+
+.wl-ctx-file {
+   font-family: "SF Mono", "Fira Code", monospace;
+   color: var(--wl-primary);
+}
+
+.wl-ctx-detail {
+   font-style: italic;
+   color: var(--wl-text-light);
+}
+
+/* ── Content panels ─────────────────────────────────────────────────────── */
+
+.wl-panels {
+   display: grid;
+   grid-template-columns: 1fr 1fr;
+   gap: 12px;
+   flex: 1;
+   min-height: 0;
+}
+
+.wl-panel {
+   position: relative;
+   background: var(--wl-panel-bg);
+   border-radius: 8px;
+   box-shadow: var(--wl-panel-shadow);
+   padding: 16px;
+   display: flex;
+   flex-direction: column;
+   overflow: auto;
+}
+
+.wl-panel-left {
+   border-left: 4px solid var(--wl-primary-pale);
+}
+
+.wl-panel-right {
+   border-left: 4px solid var(--wl-unrevised-border);
+   transition: border-color 0.3s;
+}
+
+.wl-panel-right.wl-revised {
+   border-left-color: var(--wl-revised-border);
+}
+
+/* ── Text content ───────────────────────────────────────────────────────── */
+
+.wl-content-ro {
+   flex: 1;
+   padding: 8px;
+   line-height: 1.6;
+   color: var(--wl-text);
+   white-space: pre-wrap;
+   word-wrap: break-word;
+}
+
+.wl-content-edit {
+   flex: 1;
+   width: 100%;
+   padding: 8px;
+   border: 1px solid var(--wl-border);
+   border-radius: 6px;
+   font-family: inherit;
+   font-size: 1em;
+   line-height: 1.6;
+   color: var(--wl-text);
+   background: var(--wl-panel-bg);
+   resize: none;
+   outline: none;
+   transition: border-color 0.2s, box-shadow 0.2s;
+}
+.wl-content-edit:focus {
+   border-color: var(--wl-border-focus);
+   box-shadow: 0 0 0 2px rgba(27, 42, 74, 0.1);
+}
+
+/* ── Revised indicator (clickable border area) ──────────────────────────── */
+
+.wl-revised-indicator {
+   position: absolute;
+   left: 0;
+   top: 0;
+   bottom: 0;
+   width: 20px;
+   cursor: pointer;
+   border-radius: 8px 0 0 8px;
+   transition: background 0.2s;
+}
+.wl-revised-indicator:hover {
+   background: rgba(107, 44, 62, 0.08);
+}
+
+/* ── Expression display (inflection tab) ────────────────────────────────── */
+
+.wl-expr {
+   padding: 6px 10px;
+   margin-bottom: 10px;
+   font-family: "SF Mono", "Fira Code", monospace;
+   font-size: 0.85em;
+   color: var(--wl-primary);
+   background: var(--wl-primary-pale);
+   border-radius: 4px;
+   white-space: pre-wrap;
+   word-break: break-all;
+}
+
+/* ── Inflection grid (CSS Grid layout) ──────────────────────────────────── */
+
+.wl-grid {
+   display: grid;
+   font-size: 0.9em;
+   gap: 0;
+   /* columns set dynamically: 1st col = row header, rest = one per gender */
+   /* default 3 cols (header + 2 genders), overridden by JS if needed */
+   grid-template-columns: auto repeat(2, 1fr);
+}
+
+/* Wrapper spans from * iteration must be transparent to grid layout */
+.wl-grid > span,
+.wl-grid-row > span {
+   display: contents;
+}
+
+/* ** container rows: transparent to grid, children participate directly */
+.wl-grid-rows {
+   display: contents;
+}
+
+/* Each row is a sub-grid line — transparent so cells sit in the main grid */
+.wl-grid-row {
+   display: contents;
+}
+
+.wl-grid-corner {
+   padding: 6px 10px;
+   background: var(--wl-grid-header-bg);
+   border: 1px solid var(--wl-grid-cell-border);
+}
+
+.wl-grid-col-header {
+   padding: 6px 10px;
+   background: var(--wl-grid-header-bg);
+   color: var(--wl-primary);
+   font-weight: 600;
+   text-align: center;
+   border: 1px solid var(--wl-grid-cell-border);
+   font-size: 0.85em;
+   text-transform: uppercase;
+   letter-spacing: 0.5px;
+}
+
+.wl-grid-row-header {
+   padding: 6px 10px;
+   background: var(--wl-grid-header-bg);
+   color: var(--wl-text-muted);
+   font-weight: 600;
+   text-align: right;
+   border: 1px solid var(--wl-grid-cell-border);
+   font-size: 0.85em;
+   white-space: nowrap;
+}
+
+.wl-grid-cell {
+   padding: 4px 6px;
+   border: 1px solid var(--wl-grid-cell-border);
+   min-width: 120px;
+}
+
+.wl-grid-cell-edit {
+   padding: 0;
+   border: 1px solid var(--wl-grid-cell-border);
+   min-width: 120px;
+   overflow: hidden;
+}
+
+.wl-cell-input {
+   width: 100%;
+   max-width: 100%;
+   box-sizing: border-box;
+   padding: 4px 6px;
+   border: 1px solid transparent;
+   border-radius: 3px;
+   font-family: inherit;
+   font-size: 1em;
+   color: var(--wl-text);
+   background: transparent;
+   outline: none;
+   transition: border-color 0.2s, background 0.2s;
+}
+.wl-cell-input:focus {
+   border-color: var(--wl-border-focus);
+   background: var(--wl-grid-cell-focus);
+}
+
+/* ── Navigation panel ───────────────────────────────────────────────────── */
+
+.wl-nav {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   padding: 10px 16px;
+   background: var(--wl-panel-bg);
+   border-radius: 8px;
+   box-shadow: var(--wl-panel-shadow);
+   gap: 16px;
+   flex-wrap: wrap;
+}
+
+.wl-nav-buttons {
+   display: flex;
+   align-items: center;
+   gap: 4px;
+}
+
+.wl-nav-btn {
+   padding: 5px 10px;
+   border: 1px solid var(--wl-border);
+   border-radius: 6px;
+   background: var(--wl-btn-bg);
+   color: var(--wl-text);
+   font-size: 0.85em;
+   font-weight: 600;
+   cursor: pointer;
+   transition: all 0.2s;
+   user-select: none;
+}
+.wl-nav-btn:hover {
+   background: var(--wl-nav-btn-hover-bg);
+   color: var(--wl-nav-btn-hover-color);
+   border-color: var(--wl-nav-btn-hover-bg);
+   box-shadow: var(--wl-btn-hover-shadow);
+}
+.wl-nav-btn:active {
+   transform: scale(0.96);
+}
+
+.wl-nav-input {
+   width: 64px;
+   padding: 5px 8px;
+   border: 1px solid var(--wl-border);
+   border-radius: 6px;
+   font-size: 0.9em;
+   text-align: center;
+   font-weight: 600;
+   color: var(--wl-primary);
+   outline: none;
+   transition: border-color 0.2s;
+}
+.wl-nav-input:focus {
+   border-color: var(--wl-border-focus);
+}
+
+/* ── Save button ────────────────────────────────────────────────────────── */
+
+.wl-save-btn {
+   padding: 6px 20px;
+   border: none;
+   border-radius: 6px;
+   background: var(--wl-save-bg);
+   color: var(--wl-save-color);
+   font-size: 0.85em;
+   font-weight: 600;
+   cursor: pointer;
+   transition: all 0.2s;
+}
+.wl-save-btn:hover {
+   box-shadow: var(--wl-save-hover-shadow);
+}
+.wl-save-btn:active {
+   transform: scale(0.97);
+}
+
+/* ── Filter toggle (styled switch) ──────────────────────────────────────── */
+
+.wl-filter-toggle {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   cursor: pointer;
+   font-size: 0.85em;
+   color: var(--wl-text-muted);
+   user-select: none;
+}
+
+.wl-toggle-track {
+   display: inline-flex;
+   align-items: center;
+   width: 36px;
+   height: 20px;
+   border-radius: 10px;
+   background: var(--wl-toggle-off-bg);
+   padding: 2px;
+   transition: background 0.3s;
+   position: relative;
+}
+
+.wl-toggle-track.wl-toggle-on {
+   background: var(--wl-toggle-on-bg);
+}
+
+.wl-toggle-thumb {
+   display: block;
+   width: 16px;
+   height: 16px;
+   border-radius: 50%;
+   background: var(--wl-toggle-thumb);
+   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+   transition: transform 0.3s;
+}
+
+.wl-toggle-track.wl-toggle-on .wl-toggle-thumb {
+   transform: translateX(16px);
+}
+
+/* ── Unsaved changes dialog ─────────────────────────────────────────────── */
+
+.wl-overlay {
+   position: fixed;
+   inset: 0;
+   background: var(--wl-overlay-bg);
+   backdrop-filter: blur(4px);
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   z-index: 9999;
+}
+
+.wl-dialog {
+   background: var(--wl-dialog-bg);
+   border-radius: 12px;
+   padding: 28px 32px;
+   box-shadow: var(--wl-dialog-shadow);
+   max-width: 400px;
+   width: 90%;
+}
+.wl-dialog p {
+   margin-bottom: 20px;
+   font-size: 0.95em;
+   color: var(--wl-text);
+   line-height: 1.5;
+}
+
+.wl-dialog-btns {
+   display: flex;
+   gap: 8px;
+   justify-content: flex-end;
+   flex-wrap: wrap;
+}
+
+.wl-dialog-btns button {
+   padding: 7px 16px;
+   border: 1px solid var(--wl-border);
+   border-radius: 6px;
+   background: var(--wl-btn-bg);
+   color: var(--wl-text);
+   font-size: 0.85em;
+   font-weight: 600;
+   cursor: pointer;
+   transition: all 0.2s;
+}
+.wl-dialog-btns button:hover {
+   box-shadow: var(--wl-btn-hover-shadow);
+}
+.wl-dialog-btns button:first-child {
+   background: var(--wl-save-bg);
+   color: var(--wl-save-color);
+   border-color: transparent;
+}
+.wl-dialog-btns button:last-child {
+   color: var(--wl-text-muted);
+}
+
+/* ── Record number display ──────────────────────────────────────────────── */
+
+.wl-record-info {
+   font-size: 0.8em;
+   color: var(--wl-text-light);
+   text-align: center;
+   min-width: 80px;
+}

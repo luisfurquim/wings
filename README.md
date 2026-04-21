@@ -64,6 +64,13 @@ authored in Go and running natively in the browser.
   - [wprana.Update — Dynamic CSS](#wpranaupdate--dynamic-css)
 - [Built-in Widgets](#built-in-widgets)
   - [wprana/widget/combobox — Multi-select Combobox](#wpranawidgetcombobox--multi-select-combobox)
+- [Internationalization (i18n)](#internationalization-i18n)
+  - [Pipeline Overview](#pipeline-overview)
+  - [wprana/wi18n — Runtime Lookup](#wpranawi18n--runtime-lookup)
+  - [cmd/gen_i18n — Build-time Extractor](#cmdgen_i18n--build-time-extractor)
+  - [cmd/dictbuild & cmd/dictlookup — Flexion Dictionaries](#cmddictbuild--cmddictlookup--flexion-dictionaries)
+  - [helpers/wlate — Translation Editor GUI](#helperswlate--translation-editor-gui)
+    - [server.conf — mini-server configuration](#serverconf--mini-server-configuration)
 - [Component Lifecycle](#component-lifecycle)
 - [Parent-Child Communication](#parent-child-communication)
 - [Syntax Quick-Reference](#syntax-quick-reference)
@@ -1168,6 +1175,357 @@ Available CSS custom properties:
 | `--cb-opt-hover-color` | `#5b21b6` | Option hover text |
 | `--cb-opt-active-bg` | `#ede9fe` | Option active background |
 | `--cb-empty-color` | `#9ca3af` | "No results" text |
+
+## Internationalization (i18n)
+
+wprana ships with an end-to-end i18n pipeline: a build-time extractor that
+rewrites HTML templates with stable numeric indices, a per-language catalog
+loaded at runtime by a zero-config package, a GUI editor for translators,
+and (optional) morphological dictionaries used to pre-fill plural/gender
+flexions from a Unitex DELAF source.
+
+### Pipeline Overview
+
+```
+            ┌────────────────────────────┐
+            │ *.html (mod/**)            │  ── templates with natural text
+            └────────────┬───────────────┘     (text nodes + translatable
+                         │                      attributes like title, alt,
+                         │   cmd/gen_i18n       placeholder, aria-label)
+                         ▼
+            ┌────────────────────────────┐
+            │ *.i18n.html + i18n.db      │  ── each extracted string replaced
+            │ i18n/<deflang>.json        │     by a decimal index; JSON holds
+            └────────────┬───────────────┘     source strings + context info
+                         │
+              translator ▼ (helpers/wlate GUI)
+            ┌────────────────────────────┐
+            │ i18n/<lang>.json           │  ── one translated entry per index,
+            │                            │     aligned with <deflang>
+            └────────────┬───────────────┘
+                         │   runtime
+                         ▼
+            ┌────────────────────────────┐
+            │ wi18n (WASM, side-effect)  │  ── fetches the JSON, replaces
+            │ wprana.Printer = lookup    │     wprana.Printer with an
+            └────────────────────────────┘     index→string lookup
+
+   ┌──────────────────────────────────────────────────────────────┐
+   │ Optional: cmd/dictbuild reads a Unitex DELAF dictionary and  │
+   │ emits <lang>.db (gob) used by gen_i18n to pre-fill flexions. │
+   │ cmd/dictlookup is a CLI inspector for that .db.              │
+   └──────────────────────────────────────────────────────────────┘
+```
+
+The runtime side is intentionally tiny: a TextNode whose content is a
+decimal number gets replaced by `table[n]` when the catalog is loaded, and
+left untouched otherwise — so dynamic text produced via `{{expression}}`
+passes through unchanged. The same lookup applies to values of the
+attributes listed in `wprana.TranslatableAttrs` (default: `title`,
+`placeholder`, `alt`, `aria-label`).
+
+### wprana/wi18n — Runtime Lookup
+
+`import _ "github.com/luisfurquim/wprana/wi18n"` — side-effect import only.
+
+On `init()`, `wi18n`:
+
+1. Detects the browser language from `navigator.languages[0]`, falling back
+   to `navigator.language`, then `en-US`.
+2. Sets `<html lang="…">` accordingly.
+3. Registers itself on `wprana.InitWG` so `wprana.Main()` waits for the
+   catalog to load before defining custom elements.
+4. Fetches `<BasePath><lang>.json` (with fallback chain: full tag → base
+   language → `en-US`) relative to the current page. `BasePath` defaults to
+   `i18n/`; apps that ship their own catalog next to the project's catalog
+   call `wi18n.SetBasePath("<dir>/")` from an `init()` that runs after
+   `wi18n`'s (see the wlate self-i18n setup below for a concrete example).
+5. Decodes the JSON as a `[]wi18n.Entry` array (see schema below); builds
+   the lookup table from each entry's `content` field.
+6. Replaces `wprana.Printer` with a function that parses the TextNode
+   content (or attribute value, when the attribute is in
+   `wprana.TranslatableAttrs`) as a decimal index and returns `table[idx]`.
+   Entries whose `content` is empty fall back to rendering the raw index —
+   a deliberate visual signal for missing translations.
+
+If no catalog can be loaded, `wprana.Printer` stays as the default `ByPass`
+and TextNodes render their raw numeric indices.
+
+```go
+// Usage: import for side effects, that's it.
+import (
+    "github.com/luisfurquim/wprana"
+    _ "github.com/luisfurquim/wprana/wi18n"
+    _ "myapp/mod/mywidget"
+)
+
+func main() { wprana.Main() }
+
+// Optional: read the selected language tag
+lang := wi18n.Lang()
+```
+
+**Catalog schema** (`i18n/<lang>.json`):
+
+```json
+[
+  {
+    "content":   "Dashboard",
+    "revised":   true,
+    "context":   "mywidget/mywidget.html:7:42",
+    "ctxdetail": "a@mywidget/mywidget.html:7:42<br/>h2@mywidget/mywidget.html:65:17"
+  }
+]
+```
+
+- `content` — source string for the default language; translation for every
+  other language. Empty means "not translated yet".
+- `revised` — translator-maintained flag, flipped in the wlate GUI once a
+  human has reviewed the entry. Preserved across `gen_i18n` runs when the
+  underlying source string has not changed.
+- `context` — first occurrence as `<path>:<line>:<col>` (paths use forward
+  slashes on every OS so catalogs diff cleanly across platforms).
+- `ctxdetail` — every occurrence, joined by `<br/>`, each formatted as
+  `<tag>@<path>:<line>:<col>`. For values extracted from attributes, the
+  tag is written as `<element>[<attr>]` (e.g., `button[title]`), giving
+  translators the semantic context needed to pick the right wording.
+
+### cmd/gen_i18n — Build-time Extractor
+
+```
+go run github.com/luisfurquim/wprana/cmd/gen_i18n \
+    --path ./mod \
+    --deflang pt-BR
+```
+
+What it does:
+
+- Walks the directory tree, processes every `*.html` (skips files already
+  ending in `.i18n.html`).
+- For each HTML file, parses the DOM, extracts the natural text from every
+  `TextNode` and the value of each element attribute whose name is in the
+  translatable attribute set (see flags below), inserts the string into a shared
+  trie keyed by an octal hash of the text, and replaces the node content
+  (or attribute value) with the trie's decimal index.
+- Writes `<file>.i18n.html` next to each source template. Embed these at
+  compile time via `//go:embed` instead of the original HTML.
+- Persists the trie to `i18n.db` (gob + 64-bit epoch version header) at
+  the root of `--path`, so the next run reuses indices for unchanged
+  strings.
+- Writes `i18n/<deflang>.json` — a JSON array of `wi18n.Entry` values in
+  the exact order the trie produces. The deflang file has `content` set
+  to the source string for every entry; every other `<lang>.json` in the
+  same directory is remapped in place: when an old source string survives
+  in the new run, its translation and `revised` flag are carried over to
+  the new index; when it disappears, the slot is reset to empty.
+- Validates `--deflang` as a BCP 47 tag via `golang.org/x/text/language`
+  (falls back to `en-US` on invalid input).
+- If legacy `<lang>.csv` files exist without a corresponding `<lang>.json`,
+  they are converted once (the legacy `!` marker, if present, is stripped).
+  This is a one-shot migration; CSV is no longer the on-disk format.
+
+**Translatable-attribute flags.** Attributes like `title`, `placeholder`,
+`alt`, and `aria-label` carry user-visible text just like text nodes do.
+`gen_i18n` extracts the values of the following attributes by default:
+
+```
+title, placeholder, alt, aria-label
+```
+
+Three flags tune this set:
+
+| Flag | Effect |
+|---|---|
+| `--attrs <list>` | Replaces the default list entirely. Comma-separated, case-insensitive. |
+| `--add-attrs <list>` | Appends to the active list (default, or whatever `--attrs` produced). |
+| `--no-attrs <list>` | Removes from the active list after additions, so it can also drop defaults. |
+
+In `ctxdetail`, attribute occurrences are distinguished from text-node
+occurrences by the tag format: `button[title]@path:line:col` vs.
+`button@path:line:col`.
+
+**Runtime mirror.** At runtime, `wprana.TranslatableAttrs` controls which
+attributes the engine passes through `Printer`. Its default matches the
+default `gen_i18n` set, and **must mirror** whatever flags produced the
+catalog, otherwise attribute values render as raw decimal indices:
+
+```go
+// Option 1: assign a fresh slice (full override)
+wprana.TranslatableAttrs = []string{"title", "placeholder"}
+
+// Option 2: incremental — safe with other packages that may also tweak it
+wprana.AddTranslatableAttrs("data-tip", "aria-placeholder")
+wprana.RemoveTranslatableAttrs("title")
+```
+
+The helpers are case-insensitive, trim whitespace, and skip duplicates.
+Both the assignment and the helper calls must run before `wprana.Main()`
+finishes initialization (an `init()` in `package main` is the canonical
+spot).
+
+### cmd/dictbuild & cmd/dictlookup — Flexion Dictionaries
+
+These two tools convert a Unitex/GramLab DELAF `.dic` (UTF-16 text) into a
+compact Go-native lookup structure used to pre-fill plural/gender flexions
+during the build.
+
+**`dictbuild <input.dic> <lang-tag>`** produces `<lang-tag>.db` in the
+current directory. It applies DELAF-specific filters:
+
+- `+Pr` (proper names) → dropped
+- `+PRO` (enclitic pronoun) → dropped
+- Imperative forms (code `Y*`) → dropped
+- Finite 1st/2nd person verbal forms → dropped (only 3rd person, infinitive,
+  gerund, and participle are needed for count/gender agreement in
+  templates)
+
+Each entry is decomposed into three axes — `Class` (tense/mood stem),
+`Genre` (`m`/`f`/`n`/empty), `Count` (`s`/`p`/empty). The resulting shape:
+
+```go
+type Dict struct {
+    Lemmas    map[string]*Lemma   // canonical form → grouped inflections
+    FormIndex map[string][]FormRef // surface form → refs back into Lemmas
+}
+type FormRef struct { Lemma, Class, Genre, Count string }
+type Lemma   struct {
+    Category string                // "N", "V", "A", "ADV", ...
+    Forms    map[string]Inflect    // key = Class+Genre+Count, e.g. "ms", "fp"
+}
+type Inflect struct { DiffPos int; Suffix string } // DiffPos in runes
+```
+
+**`dictlookup <file.db> <word>`** is a human-readable inspector. It prints
+every `FormIndex` hit for the queried word, resolves each hit to its parent
+`Lemma`, and reconstructs the surface form of every kept inflection so the
+output needs no post-processing.
+
+```bash
+$ dictlookup pt-BR.db passou
+loaded pt-BR.db: 128430 lemmas, 984712 form entries
+
+FormIndex["passou"] → 1 reference(s):
+  [0] Lemma="passar" Class="J" Genre="" Count="s"
+      passar (V)
+        W:    passar       (infinitive)
+        G:    passando     (gerund)
+        K:ms  passado      ...
+        ...
+```
+
+### helpers/wlate — Translation Editor GUI
+
+`helpers/wlate/` is a wprana-built WASM app designed for translators to
+review and edit catalogs side-by-side with a reference language.
+
+**Features (implemented):**
+
+- Two-panel layout: reference language (read-only) vs. target language
+  (editable), with per-entry "revised" toggle (bordeaux left border = not
+  yet reviewed; gray = reviewed).
+- Two tabs: **Texto** (plain strings) and **Inflexões** (gender × CLDR
+  plural category grid, using CSS Grid with `display: contents` on
+  iteration wrappers).
+- Keyboard shortcuts for navigation and toggling revised state (all
+  rebindable via `wprana.json`).
+- Filter toggle: show only unrevised entries.
+- Unsaved-changes guard (in-app dialog + `beforeunload`).
+- On-save file creation: if the target catalog doesn't exist, wlate
+  creates it mirroring the reference structure with empty content and
+  `revised: false`.
+- JSON schemas:
+
+  ```json
+  // i18n/<lang>.json — same schema as wi18n consumes
+  [{"content": "...", "revised": false,
+    "context": "pages/result.html:12:8",
+    "ctxdetail": "th@pages/result.html:12:8<br/>button[title]@pages/result.html:40:17"}]
+
+  // i18n/<lang>.inflections.json
+  [{"expr": "{{ @sexo %qt ~o ~aluno ~aprovado }}",
+    "context": "...", "ctxdetail": "caption", "revised": false,
+    "forms": {"m.one": "...", "f.other": "..."}}]
+  ```
+
+**Self-i18n.** wlate itself is built as a translatable wprana app — the
+editor eats its own dog food. Its templates live under
+`helpers/wlate/mod/wlate/`, `build.sh` runs `gen_i18n` against that tree
+before compiling the WASM, and the resulting catalogs are published to
+`dist/wlate-i18n/` so they don't collide with the `/i18n/*` route used
+for the project being translated. On startup, `main.go` calls
+`wi18n.SetBasePath("wlate-i18n/")` to point the runtime fetch at that
+directory. Source language is pt-BR; en-US ships fully translated, es-CO
+ships as a pt-BR copy with `revised=false` for human review.
+
+Build and run:
+
+```bash
+cd helpers/wlate
+bash build.sh                 # runs gen_i18n, copies catalogs, builds WASM
+go run serve.go <project-dir> # starts the mini-server (see below)
+```
+
+#### server.conf — mini-server configuration
+
+`serve.go` is both a dev server and a production-capable mini-server. If a
+file named `server.conf` sits next to the executable, it is parsed as
+`key=value` lines (comments starting with `#` and blank lines allowed;
+values may be single- or double-quoted). Without `server.conf`, the
+server keeps its original defaults (listens on `:8080`, plain HTTP, no
+auth).
+
+**Basic keys:**
+
+| Key | Effect |
+|---|---|
+| `cert=<name>` | Enables TLS. Loads `<name>.crt` (or `<name>.pem`) from the executable's directory; if the file doesn't contain the private key, also loads `<name>.key`. Fatal on any load error. |
+| `listen=<address>` | Address passed verbatim to `net.Listen("tcp", …)`. Fatal on bind error. |
+| `root=<path>` | Overrides the positional `<project-dir>` argument. |
+
+**OAuth2 / OIDC keys (all required together when any is set):**
+
+| Key | Effect |
+|---|---|
+| `oauth2_issuer=<url>` | OIDC issuer URL. Discovery via `/.well-known/openid-configuration`; the provider must expose `userinfo_endpoint`. |
+| `oauth2_client_id=<id>` | Client ID registered with the provider. |
+| `oauth2_client_secret=<s>` | Client secret. |
+| `oauth2_redirect_url=<url>` | Absolute callback URL; typically `https://<host>/oauth2/callback`. |
+| `oauth2_allowed=<path>` | Optional. Path to a text file listing one allowed e-mail per line (blank lines and `#` comments ignored). If omitted, any authenticated user is allowed. |
+
+When OAuth2 is configured, every non-`/oauth2/*` request is gated: GET
+requests without a valid session cookie redirect to the provider's
+authorization endpoint; other methods return `401`. The callback exchanges
+the code for an access token, fetches the e-mail from `userinfo`, checks
+the allowlist, and issues a `wlate_session` cookie (HttpOnly, SameSite=Lax,
+`Secure` when served over TLS, 12 h TTL). Sessions are stored in-memory.
+`GET /oauth2/logout` invalidates the session cookie.
+
+**Example `server.conf`:**
+
+```ini
+# Bind and TLS
+listen=:8443
+cert=wlate
+
+# Project root (overrides CLI arg)
+root=/var/lib/wlate/mytranslations
+
+# Gated access via Google OIDC
+oauth2_issuer=https://accounts.google.com
+oauth2_client_id=1234567890-abc.apps.googleusercontent.com
+oauth2_client_secret=GOCSPX-…
+oauth2_redirect_url=https://wlate.example.com/oauth2/callback
+oauth2_allowed=/etc/wlate/allowed.txt
+```
+
+```text
+# /etc/wlate/allowed.txt — one e-mail per line
+translator1@example.com
+translator2@example.com
+```
+
+OAuth2 support uses only the Go standard library (no `go-oidc` / `x/oauth2`
+dependencies).
 
 ## Component Lifecycle
 

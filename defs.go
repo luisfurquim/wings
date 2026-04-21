@@ -3,51 +3,56 @@
 package wprana
 
 import (
+	"sync"
 	"syscall/js"
 
 	"github.com/luisfurquim/goose"
+	"github.com/luisfurquim/wprana/expr"
 )
 
 // G is the global logger for the package. Recommended levels: 1=errors only, 2=general, 3=detail,
 // 4=light debug, 5=verbose debug, 6=sensitive debug.
 var G goose.Alert = goose.Alert(2)
 
-// ── Token type constants ────────────────────────────────────────────────────
+// InitWG lets side-effect packages (e.g. wi18n) delay Main() until their own
+// asynchronous initialization has finished. Any package that needs to run work
+// before DefineAll() should call InitWG.Add(1) in its init() and InitWG.Done()
+// when its work is complete. Main() calls InitWG.Wait() before defining the
+// custom elements. If nothing registers, Wait() returns immediately.
+var InitWG sync.WaitGroup
 
-// TokenType represents the type of a token in the template parser.
-type TokenType int8
+// Printer transforms a TextNode's content during custom element construction.
+// The default is ByPass (identity). Packages like wi18n may override this
+// global with a function that interprets the string as a txt index and returns
+// the translation for the current browser language.
+var Printer func(string) string = ByPass
+
+// ByPass is the default Printer: it returns its input unchanged.
+func ByPass(in string) string {
+	return in
+}
+
+// ── Type aliases for expr package ───────────────────────────────────────────
+// These aliases allow the rest of the wprana package to use the parser
+// types without qualifying every reference with "expr.".
+
+type TokenType = expr.TokenType
+type RefNode = expr.RefNode
+type TextSegment = expr.TextSegment
 
 const (
-	TokTxt   TokenType = 0  // literal text
-	TokRef   TokenType = 1  // reference {{ }}
-	TokStr   TokenType = 2  // string literal in quotes
-	TokDot   TokenType = 3  // operator .
-	TokOpen  TokenType = 4  // operator [
-	TokClose TokenType = 5  // operator ]
-	TokNum   TokenType = 6  // integer number
-	TokIdent TokenType = 7  // identifier
-	TokWSep  TokenType = 8  // internal state: waiting for separator
-	TokExpr  TokenType = 9  // sub-expression (dynamic index access)
-	TokAttr  TokenType = 10 // attribute node (DOMRefNode type)
+	TokTxt   = expr.TokTxt
+	TokRef   = expr.TokRef
+	TokStr   = expr.TokStr
+	TokDot   = expr.TokDot
+	TokOpen  = expr.TokOpen
+	TokClose = expr.TokClose
+	TokNum   = expr.TokNum
+	TokIdent = expr.TokIdent
+	TokWSep  = expr.TokWSep
+	TokExpr  = expr.TokExpr
+	TokAttr  = expr.TokAttr
 )
-
-// ── Template parse structures ───────────────────────────────────────────────
-
-// RefNode is a node in the parsed reference tree.
-// For TokExpr, Sub contains the sub-expression (e.g. the index in arr[expr]).
-type RefNode struct {
-	Type   TokenType
-	StrVal string
-	IntVal int
-	Sub    []RefNode // populated only when Type == TokExpr
-}
-
-// TextSegment is a template text segment: literal or reference.
-type TextSegment struct {
-	IsRef bool
-	Lit   string    // if !IsRef: literal text
-	Ref   []RefNode // if IsRef: parsed reference tree
-}
 
 // AttrBinding stores the bindings of a single attribute.
 type AttrBinding struct {

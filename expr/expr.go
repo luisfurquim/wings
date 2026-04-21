@@ -1,18 +1,53 @@
-//go:build js && wasm
-
-package wprana
+package expr
 
 import (
 	"fmt"
 	"strconv"
 )
 
+// ── Token type constants ────────────────────────────────────────────────────
+
+// TokenType represents the type of a token in the template parser.
+type TokenType int8
+
+const (
+	TokTxt   TokenType = 0  // literal text
+	TokRef   TokenType = 1  // reference {{ }}
+	TokStr   TokenType = 2  // string literal in quotes
+	TokDot   TokenType = 3  // operator .
+	TokOpen  TokenType = 4  // operator [
+	TokClose TokenType = 5  // operator ]
+	TokNum   TokenType = 6  // integer number
+	TokIdent TokenType = 7  // identifier
+	TokWSep  TokenType = 8  // internal state: waiting for separator
+	TokExpr  TokenType = 9  // sub-expression (dynamic index access)
+	TokAttr  TokenType = 10 // attribute node (DOMRefNode type)
+)
+
+// ── Template parse structures ───────────────────────────────────────────────
+
+// RefNode is a node in the parsed reference tree.
+// For TokExpr, Sub contains the sub-expression (e.g. the index in arr[expr]).
+type RefNode struct {
+	Type   TokenType
+	StrVal string
+	IntVal int
+	Sub    []RefNode // populated only when Type == TokExpr
+}
+
+// TextSegment is a template text segment: literal or reference.
+type TextSegment struct {
+	IsRef bool
+	Lit   string    // if !IsRef: literal text
+	Ref   []RefNode // if IsRef: parsed reference tree
+}
+
 // ── Template text parser ────────────────────────────────────────────────────
 
-// parseText splits a template string into literal segments and references.
+// ParseText splits a template string into literal segments and references.
 // References are delimited by {{ and }}. Each reference is immediately
 // tokenized and parsed into a RefNode tree.
-func parseText(s string) ([]TextSegment, error) {
+func ParseText(s string) ([]TextSegment, error) {
 	var segs []TextSegment
 	i, start := 0, 0
 	inRef := false
@@ -31,10 +66,10 @@ func parseText(s string) ([]TextSegment, error) {
 		} else {
 			if i+1 < len(s) && s[i] == '}' && s[i+1] == '}' {
 				expr := s[start:i]
-				toks := tokenize(expr)
-				ref, err := parseReference(&toks)
+				toks := Tokenize(expr)
+				ref, err := ParseReference(&toks)
 				if err != nil {
-					return nil, fmt.Errorf("parseText: %w", err)
+					return nil, fmt.Errorf("ParseText: %w", err)
 				}
 				segs = append(segs, TextSegment{IsRef: true, Ref: ref})
 				i += 2
@@ -53,8 +88,8 @@ func parseText(s string) ([]TextSegment, error) {
 	return segs, nil
 }
 
-// hasRef returns true if any segment is a reference.
-func hasRef(segs []TextSegment) bool {
+// HasRef returns true if any segment is a reference.
+func HasRef(segs []TextSegment) bool {
 	for i := range segs {
 		if segs[i].IsRef {
 			return true
@@ -63,9 +98,29 @@ func hasRef(segs []TextSegment) bool {
 	return false
 }
 
-// isPureTextSegs returns true if all segments are literals (no references).
-func isPureTextSegs(segs []TextSegment) bool {
-	return !hasRef(segs)
+// IsPureTextSegs returns true if all segments are literals (no references).
+func IsPureTextSegs(segs []TextSegment) bool {
+	return !HasRef(segs)
+}
+
+// IsPureReference returns true if the tree contains no literals (str/num/txt),
+// i.e., it is a pure path of identifiers/expr (useful for two-way binding).
+func IsPureReference(tree []RefNode) bool {
+	for i := range tree {
+		switch tree[i].Type {
+		case TokStr, TokNum, TokTxt:
+			return false
+		}
+	}
+	return true
+}
+
+// IsPureSegs returns true if there is exactly one IsRef segment with a pure reference.
+func IsPureSegs(segs []TextSegment) bool {
+	if len(segs) != 1 || !segs[0].IsRef {
+		return false
+	}
+	return IsPureReference(segs[0].Ref)
 }
 
 // ── Reference expression tokenizer ──────────────────────────────────────────
@@ -77,7 +132,6 @@ type preToken struct {
 }
 
 // splitStrings separates quoted string literals from the rest of the code.
-// Equivalent to the parseString from the original JS.
 func splitStrings(s string) []preToken {
 	var result []preToken
 	i, start := 0, 0
@@ -220,10 +274,9 @@ func indexByte(s string, b byte) int {
 	return -1
 }
 
-// tokenize converts a reference expression into a list of RefNodes.
-// Equivalent to the tokenize() from the JS: first extracts string literals,
-// then tokenizes the remaining fragments.
-func tokenize(s string) []RefNode {
+// Tokenize converts a reference expression into a list of RefNodes.
+// First extracts string literals, then tokenizes the remaining fragments.
+func Tokenize(s string) []RefNode {
 	var toks []RefNode
 
 	preToks := splitStrings(s)
@@ -240,12 +293,11 @@ func tokenize(s string) []RefNode {
 
 // ── Reference parser ────────────────────────────────────────────────────────
 
-// parseReference builds the reference tree from a list of tokens.
-// Consumes tokens from the beginning of the slice pointed to by toks (equivalent to JS splice).
-// Equivalent to the parseReference() from the original JS.
-func parseReference(toks *[]RefNode) ([]RefNode, error) {
+// ParseReference builds the reference tree from a list of tokens.
+// Consumes tokens from the beginning of the slice pointed to by toks.
+func ParseReference(toks *[]RefNode) ([]RefNode, error) {
 	if len(*toks) == 0 {
-		return nil, fmt.Errorf("parseReference: empty reference")
+		return nil, fmt.Errorf("ParseReference: empty reference")
 	}
 
 	token := popRef(toks)
@@ -261,7 +313,7 @@ func parseReference(toks *[]RefNode) ([]RefNode, error) {
 	}
 
 	if token.Type != TokIdent {
-		return nil, fmt.Errorf("parseReference: expected identifier, found type=%d val=%q", token.Type, token.StrVal)
+		return nil, fmt.Errorf("ParseReference: expected identifier, found type=%d val=%q", token.Type, token.StrVal)
 	}
 
 	tree := []RefNode{token}
@@ -275,14 +327,14 @@ func parseReference(toks *[]RefNode) ([]RefNode, error) {
 
 		if stat == stWSep {
 			if token.Type == TokOpen {
-				sub, err := parseReference(toks)
+				sub, err := ParseReference(toks)
 				if err != nil {
 					return nil, err
 				}
 				tree = append(tree, RefNode{Type: TokExpr, Sub: sub})
 				continue
 			} else if token.Type != TokDot {
-				return nil, fmt.Errorf("parseReference: expected '.' or '[', found type=%d", token.Type)
+				return nil, fmt.Errorf("ParseReference: expected '.' or '[', found type=%d", token.Type)
 			}
 			stat = stRef
 		} else { // stRef
@@ -291,7 +343,7 @@ func parseReference(toks *[]RefNode) ([]RefNode, error) {
 				stat = stWSep
 				continue
 			}
-			return nil, fmt.Errorf("parseReference: expected identifier, found type=%d", token.Type)
+			return nil, fmt.Errorf("ParseReference: expected identifier, found type=%d", token.Type)
 		}
 	}
 

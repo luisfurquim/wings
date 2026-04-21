@@ -1,0 +1,37 @@
+[
+  {
+    "content": "Bienvenido al sistema",
+    "revised": false,
+    "context": "pages/home.html:5",
+    "ctxdetail": "title"
+  },
+  {
+    "content": "",
+    "revised": false,
+    "context": "pages/form.html:12",
+    "ctxdetail": "label"
+  },
+  {
+    "content": "",
+    "revised": false,
+    "context": "pages/form.html:28",
+    "ctxdetail": "button"
+  },
+  {
+    "content": "",
+    "revised": false,
+    "context": "pages/result.html:3",
+    "ctxdetail": "th"
+  },
+  {
+    "content": "",
+    "revised": false,
+    "context": "pages/list.html:45"
+  },
+  {
+    "content": "",
+    "revised": false,
+    "context": "pages/detail.html:67",
+    "ctxdetail": "a"
+  }
+]

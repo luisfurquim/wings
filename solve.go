@@ -235,27 +235,6 @@ func solveAll(segs []TextSegment, ctx Ctx) string {
 	return sb.String()
 }
 
-// isPureReference returns true if the tree contains no literals (str/num/txt),
-// i.e., it is a pure path of identifiers/expr (useful for two-way binding).
-// Equivalent to the isPureReference() from the original JS.
-func isPureReference(tree []RefNode) bool {
-	for i := range tree {
-		switch tree[i].Type {
-		case TokStr, TokNum, TokTxt:
-			return false
-		}
-	}
-	return true
-}
-
-// isPureSegs returns true if there is exactly one IsRef segment with a pure reference.
-func isPureSegs(segs []TextSegment) bool {
-	if len(segs) != 1 || !segs[0].IsRef {
-		return false
-	}
-	return isPureReference(segs[0].Ref)
-}
-
 // ── Resolution for assignment (two-way binding) ─────────────────────────────
 
 // refOf finds the (container, key) pair for assignment via two-way binding.

@@ -1,0 +1,16 @@
+{
+  "defaultLang": "pt-BR",
+  "languages": ["pt-BR", "en-US", "es-AR"],
+  "wlate": {
+    "keys": {
+      "prev":    "Alt+ArrowLeft",
+      "next":    "Alt+ArrowRight",
+      "prev10":  "Alt+PageUp",
+      "next10":  "Alt+PageDown",
+      "first":   "Alt+Home",
+      "last":    "Alt+End",
+      "save":    "Ctrl+S",
+      "revised": "Alt+R"
+    }
+  }
+}

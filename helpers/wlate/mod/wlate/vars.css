@@ -1,0 +1,68 @@
+/* ── wlate color variables ───────────────────────────────────────────────────
+   Override these to re-theme wlate without changing the layout.              */
+
+:host {
+   /* Primary accent — azul marinho */
+   --wl-primary: #1B2A4A;
+   --wl-primary-light: #2A3F6A;
+   --wl-primary-pale: #E8EDF5;
+
+   /* Secondary accent — bordeaux */
+   --wl-secondary: #6F2A38;//6B2C3E;
+   --wl-secondary-light: #8d1638;//8A3B52;
+   --wl-secondary-pale: #ffc6c6;//F5E8EC;
+
+   /* Backgrounds */
+   --wl-bg: #F7F5F3;
+   --wl-panel-bg: #FFFFFF;
+   --wl-panel-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+
+   /* Text */
+   --wl-text: #1a1a2e;
+   --wl-text-muted: #6B7280;
+   --wl-text-light: #9CA3AF;
+
+   /* Borders */
+   --wl-border: #E5E7EB;
+   --wl-border-focus: #1B2A4A;
+
+   /* Revised indicator */
+   --wl-revised-border: #C8CCD0;
+   --wl-unrevised-border: #6B2C3E;
+
+   /* Buttons */
+   --wl-btn-bg: linear-gradient(to bottom, #F0EDE8, #E0DDD6);
+   --wl-btn-hover-shadow: 0 2px 6px rgba(27, 42, 74, 0.15);
+   --wl-btn-active-bg: #D8D5CE;
+
+   /* Tabs */
+   --wl-tab-active-bg: linear-gradient(135deg, #1B2A4A, #2A3F6A);
+   --wl-tab-active-color: #FFFFFF;
+   --wl-tab-inactive-bg: #ECEAE6;
+   --wl-tab-inactive-color: #4B5563;
+
+   /* Toggle switch */
+   --wl-toggle-off-bg: #D1D5DB;
+   --wl-toggle-on-bg: #6B2C3E;
+   --wl-toggle-thumb: #FFFFFF;
+
+   /* Nav */
+   --wl-nav-bg: #FAFAF8;
+   --wl-nav-btn-hover-bg: #1B2A4A;
+   --wl-nav-btn-hover-color: #FFFFFF;
+
+   /* Dialog */
+   --wl-overlay-bg: rgba(27, 42, 74, 0.4);
+   --wl-dialog-bg: #FFFFFF;
+   --wl-dialog-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+
+   /* Grid */
+   --wl-grid-header-bg: #F3F1EE;
+   --wl-grid-cell-border: #E5E7EB;
+   --wl-grid-cell-focus: rgba(27, 42, 74, 0.08);
+
+   /* Save button */
+   --wl-save-bg: linear-gradient(135deg, #1B2A4A, #2A3F6A);
+   --wl-save-color: #FFFFFF;
+   --wl-save-hover-shadow: 0 2px 8px rgba(27, 42, 74, 0.3);
+}

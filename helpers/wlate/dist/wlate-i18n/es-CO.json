@@ -1,0 +1,212 @@
+[
+  {
+    "content": "Pendentes: ",
+    "revised": false,
+    "context": "wlate/wlate.html:5:32",
+    "ctxdetail": "span@wlate/wlate.html:5:32"
+  },
+  {
+    "content": "{{pending_count}}",
+    "revised": false,
+    "context": "wlate/wlate.html:5:51",
+    "ctxdetail": "strong@wlate/wlate.html:5:51"
+  },
+  {
+    "content": " de {{total_count}}",
+    "revised": false,
+    "context": "wlate/wlate.html:5:77",
+    "ctxdetail": "span@wlate/wlate.html:5:77"
+  },
+  {
+    "content": "Texto",
+    "revised": false,
+    "context": "wlate/wlate.html:7:61",
+    "ctxdetail": "button@wlate/wlate.html:7:61"
+  },
+  {
+    "content": "Inflexões",
+    "revised": false,
+    "context": "wlate/wlate.html:8:53",
+    "ctxdetail": "button@wlate/wlate.html:8:53"
+  },
+  {
+    "content": "Língua de referência...",
+    "revised": false,
+    "context": "wlate/wlate.html:15:76",
+    "ctxdetail": "wp-combobox[placeholder]@wlate/wlate.html:15:76"
+  },
+  {
+    "content": "Língua a traduzir...",
+    "revised": false,
+    "context": "wlate/wlate.html:18:77",
+    "ctxdetail": "wp-combobox[placeholder]@wlate/wlate.html:18:77"
+  },
+  {
+    "content": "{{context}}",
+    "revised": false,
+    "context": "wlate/wlate.html:25:36",
+    "ctxdetail": "span@wlate/wlate.html:25:36<br/>span@wlate/wlate.html:29:36"
+  },
+  {
+    "content": "{{ctxdetail_text}}",
+    "revised": false,
+    "context": "wlate/wlate.html:26:38",
+    "ctxdetail": "span@wlate/wlate.html:26:38<br/>span@wlate/wlate.html:30:38"
+  },
+  {
+    "content": "{{left_content}}",
+    "revised": false,
+    "context": "wlate/wlate.html:37:37",
+    "ctxdetail": "div@wlate/wlate.html:37:37"
+  },
+  {
+    "content": "{{right_content}}",
+    "revised": false,
+    "context": "wlate/wlate.html:40:44",
+    "ctxdetail": "textarea@wlate/wlate.html:40:44"
+  },
+  {
+    "content": "{{inflection_expr}}",
+    "revised": false,
+    "context": "wlate/wlate.html:48:31",
+    "ctxdetail": "div@wlate/wlate.html:48:31<br/>div@wlate/wlate.html:61:31"
+  },
+  {
+    "content": "{{genders[gi]}}",
+    "revised": false,
+    "context": "wlate/wlate.html:51:57",
+    "ctxdetail": "div@wlate/wlate.html:51:57<br/>div@wlate/wlate.html:64:57"
+  },
+  {
+    "content": "{{categories[ci]}}",
+    "revised": false,
+    "context": "wlate/wlate.html:54:51",
+    "ctxdetail": "div@wlate/wlate.html:54:51<br/>div@wlate/wlate.html:67:51"
+  },
+  {
+    "content": "{{left_cells[ci].cols[gi]}}",
+    "revised": false,
+    "context": "wlate/wlate.html:55:57",
+    "ctxdetail": "div@wlate/wlate.html:55:57"
+  },
+  {
+    "content": "\n         Somente não revisados\n      ",
+    "revised": false,
+    "context": "wlate/wlate.html:83:105",
+    "ctxdetail": "label@wlate/wlate.html:83:105"
+  },
+  {
+    "content": "Primeiro",
+    "revised": false,
+    "context": "wlate/wlate.html:87:59",
+    "ctxdetail": "button[title]@wlate/wlate.html:87:59"
+  },
+  {
+    "content": "⟨⟨",
+    "revised": false,
+    "context": "wlate/wlate.html:87:69",
+    "ctxdetail": "button@wlate/wlate.html:87:69"
+  },
+  {
+    "content": "Voltar 10",
+    "revised": false,
+    "context": "wlate/wlate.html:88:60",
+    "ctxdetail": "button[title]@wlate/wlate.html:88:60"
+  },
+  {
+    "content": "⟨10",
+    "revised": false,
+    "context": "wlate/wlate.html:88:71",
+    "ctxdetail": "button@wlate/wlate.html:88:71"
+  },
+  {
+    "content": "Voltar",
+    "revised": false,
+    "context": "wlate/wlate.html:89:58",
+    "ctxdetail": "button[title]@wlate/wlate.html:89:58"
+  },
+  {
+    "content": "⟨",
+    "revised": false,
+    "context": "wlate/wlate.html:89:66",
+    "ctxdetail": "button@wlate/wlate.html:89:66"
+  },
+  {
+    "content": "de {{total_count}}",
+    "revised": false,
+    "context": "wlate/wlate.html:91:39",
+    "ctxdetail": "span@wlate/wlate.html:91:39"
+  },
+  {
+    "content": "Avançar",
+    "revised": false,
+    "context": "wlate/wlate.html:92:58",
+    "ctxdetail": "button[title]@wlate/wlate.html:92:58"
+  },
+  {
+    "content": "⟩",
+    "revised": false,
+    "context": "wlate/wlate.html:92:68",
+    "ctxdetail": "button@wlate/wlate.html:92:68"
+  },
+  {
+    "content": "Avançar 10",
+    "revised": false,
+    "context": "wlate/wlate.html:93:60",
+    "ctxdetail": "button[title]@wlate/wlate.html:93:60"
+  },
+  {
+    "content": "10⟩",
+    "revised": false,
+    "context": "wlate/wlate.html:93:73",
+    "ctxdetail": "button@wlate/wlate.html:93:73"
+  },
+  {
+    "content": "Último",
+    "revised": false,
+    "context": "wlate/wlate.html:94:58",
+    "ctxdetail": "button[title]@wlate/wlate.html:94:58"
+  },
+  {
+    "content": "⟩⟩",
+    "revised": false,
+    "context": "wlate/wlate.html:94:67",
+    "ctxdetail": "button@wlate/wlate.html:94:67"
+  },
+  {
+    "content": "Salvar (Ctrl+S)",
+    "revised": false,
+    "context": "wlate/wlate.html:96:56",
+    "ctxdetail": "button[title]@wlate/wlate.html:96:56"
+  },
+  {
+    "content": "Salvar",
+    "revised": false,
+    "context": "wlate/wlate.html:96:73",
+    "ctxdetail": "button@wlate/wlate.html:96:73"
+  },
+  {
+    "content": "Há alterações não salvas.",
+    "revised": false,
+    "context": "wlate/wlate.html:102:13",
+    "ctxdetail": "p@wlate/wlate.html:102:13"
+  },
+  {
+    "content": "Salvar e trocar",
+    "revised": false,
+    "context": "wlate/wlate.html:104:35",
+    "ctxdetail": "button@wlate/wlate.html:104:35"
+  },
+  {
+    "content": "Não salvar e trocar",
+    "revised": false,
+    "context": "wlate/wlate.html:105:38",
+    "ctxdetail": "button@wlate/wlate.html:105:38"
+  },
+  {
+    "content": "Cancelar",
+    "revised": false,
+    "context": "wlate/wlate.html:106:37",
+    "ctxdetail": "button@wlate/wlate.html:106:37"
+  }
+]

@@ -3,7 +3,10 @@
 package wprana
 
 import (
+	"strings"
 	"syscall/js"
+
+	"github.com/luisfurquim/wprana/expr"
 )
 
 // ── Module registration ─────────────────────────────────────────────────────
@@ -100,6 +103,92 @@ func defineCustomElement(tagName string, def *modDef) {
 	G.Logf(2, "defineCustomElement: %q defined\n", tagName)
 }
 
+// TranslatableAttrs lists the element attributes whose values should be
+// passed through Printer at construction time. Must mirror the effective
+// attribute set gen_i18n was run with; the default matches gen_i18n's
+// default. Apps can assign a new slice directly to override, or call
+// AddTranslatableAttrs / RemoveTranslatableAttrs to tweak the list.
+var TranslatableAttrs = []string{"title", "placeholder", "alt", "aria-label"}
+
+// AddTranslatableAttrs appends attrs to TranslatableAttrs, skipping those
+// already present. Attribute names are compared case-insensitively.
+func AddTranslatableAttrs(attrs ...string) {
+	for _, a := range attrs {
+		a = strings.ToLower(strings.TrimSpace(a))
+		if a == "" {
+			continue
+		}
+		found := false
+		for _, existing := range TranslatableAttrs {
+			if strings.EqualFold(existing, a) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			TranslatableAttrs = append(TranslatableAttrs, a)
+		}
+	}
+}
+
+// RemoveTranslatableAttrs deletes attrs from TranslatableAttrs. Attribute
+// names are compared case-insensitively; missing entries are ignored.
+func RemoveTranslatableAttrs(attrs ...string) {
+	for _, a := range attrs {
+		a = strings.TrimSpace(a)
+		if a == "" {
+			continue
+		}
+		kept := TranslatableAttrs[:0]
+		for _, existing := range TranslatableAttrs {
+			if !strings.EqualFold(existing, a) {
+				kept = append(kept, existing)
+			}
+		}
+		TranslatableAttrs = kept
+	}
+}
+
+// translateTextNodes walks the cloned template DOM and rewrites every
+// TextNode's content via the current Printer, and every value of the
+// attributes listed in TranslatableAttrs. Text nodes and elements whose tag
+// is <style> or <script> are skipped. Called from elementConstructor right
+// after the template is cloned and before bindElement.
+func translateTextNodes(node js.Value) {
+	if node.IsNull() || node.IsUndefined() {
+		return
+	}
+	tag := node.Get("nodeName").String()
+	if tag == "STYLE" || tag == "SCRIPT" {
+		return
+	}
+	if node.Get("nodeType").Int() == 1 { // ELEMENT_NODE
+		for _, a := range TranslatableAttrs {
+			if !node.Call("hasAttribute", a).Bool() {
+				continue
+			}
+			orig := node.Call("getAttribute", a).String()
+			if orig == "" {
+				continue
+			}
+			node.Call("setAttribute", a, Printer(orig))
+		}
+	}
+	children := node.Get("childNodes")
+	n := children.Get("length").Int()
+	for i := 0; i < n; i++ {
+		child := children.Index(i)
+		nodeType := child.Get("nodeType").Int()
+		switch nodeType {
+		case 3: // Node.TEXT_NODE
+			orig := child.Get("nodeValue").String()
+			child.Set("nodeValue", Printer(orig))
+		case 1: // Node.ELEMENT_NODE
+			translateTextNodes(child)
+		}
+	}
+}
+
 // ── Element lifecycle ───────────────────────────────────────────────────────
 
 // elementConstructor is called when the custom element is instantiated.
@@ -138,6 +227,12 @@ func elementConstructor(self js.Value, tagName string, def *modDef) {
 			htmlRoot.Call("appendChild", content.Get("childNodes").Index(0))
 		}
 	}
+
+	// Applies the active Printer to every TextNode of the template
+	// (skipping children of <style>/<script>). With the default ByPass
+	// this is a no-op; when wi18n is imported, Printer translates each
+	// TextNode's numeric index into the localized string.
+	translateTextNodes(htmlRoot)
 
 	// Reads element attributes for initial data
 	var attrs [][2]string
@@ -187,7 +282,7 @@ func elementAttrChanged(self js.Value, name, oldVal, newVal string) {
 		self.Get("_pranaTag").String(), name, oldVal, newVal)
 
 	// Checks if the new value is a reference (should not be propagated)
-	segs, err := parseText(newVal)
+	segs, err := expr.ParseText(newVal)
 	if err != nil {
 		return
 	}
@@ -428,8 +523,17 @@ func Update(tagName string, cssContent string) {
 
 // Main must be called from main() to keep the WASM alive and define the
 // custom elements. Blocks indefinitely.
+//
+// Before defining the modules, Main() waits on InitWG. This allows side-effect
+// packages (e.g. wi18n) to register asynchronous initialization via
+// InitWG.Add(1) in their init() and InitWG.Done() when ready.
 func Main() {
-	G.Logf(2, "wprana: starting, defining %d modules\n", len(moduleRegistry))
+	G.Logf(2, "wprana: starting")
+
+	G.Logf(2, "wprana: waiting for async initializers")
+	InitWG.Wait()
+
+	G.Logf(2, "wprana: defining %d modules", len(moduleRegistry))
 	DefineAll()
 
 	// Keeps the WASM running

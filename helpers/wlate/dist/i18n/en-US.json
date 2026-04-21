@@ -1,0 +1,37 @@
+[
+  {
+    "content": "Welcome to the system",
+    "revised": true,
+    "context": "pages/home.html:5",
+    "ctxdetail": "title"
+  },
+  {
+    "content": "Student name",
+    "revised": false,
+    "context": "pages/form.html:12",
+    "ctxdetail": "label"
+  },
+  {
+    "content": "Save changes",
+    "revised": true,
+    "context": "pages/form.html:28",
+    "ctxdetail": "button"
+  },
+  {
+    "content": "Evaluation result",
+    "revised": false,
+    "context": "pages/result.html:3",
+    "ctxdetail": "th"
+  },
+  {
+    "content": "No records found",
+    "revised": false,
+    "context": "pages/list.html:45"
+  },
+  {
+    "content": "Go back to previous page",
+    "revised": false,
+    "context": "pages/detail.html:67",
+    "ctxdetail": "a"
+  }
+]

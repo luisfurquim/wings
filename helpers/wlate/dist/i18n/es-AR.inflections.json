@@ -1,0 +1,25 @@
+[
+  {
+    "expr": "{{ @sexo %qt ~o ~aluno ~aprovado }}",
+    "context": "pages/result.html:15",
+    "ctxdetail": "caption",
+    "revised": true,
+    "forms": {
+      "f.one": "el único estudiante que aprobó",
+      "f.other": "los únicos estudiantes que aprobaran",
+      "m.one": "el único estudiante que aprobó",
+      "m.other": "los únicos estudiantes que aprobaran"
+    }
+  },
+  {
+    "expr": "{{ @sexo %qt ~o ~professor ~presente }}",
+    "context": "pages/staff.html:8",
+    "revised": false,
+    "forms": {
+      "f.one": "",
+      "f.other": "",
+      "m.one": "",
+      "m.other": ""
+    }
+  }
+]

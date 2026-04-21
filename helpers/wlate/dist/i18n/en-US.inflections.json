@@ -1,0 +1,21 @@
+[
+  {
+    "expr": "{{ @sexo %qt ~o ~aluno ~aprovado }}",
+    "context": "pages/result.html:15",
+    "ctxdetail": "caption",
+    "revised": false,
+    "forms": {
+      "m.one": "the approved student",
+      "m.other": "the {n} approved students"
+    }
+  },
+  {
+    "expr": "{{ @sexo %qt ~o ~professor ~presente }}",
+    "context": "pages/staff.html:8",
+    "revised": false,
+    "forms": {
+      "m.one": "the present teacher",
+      "m.other": "the {n} present teachers"
+    }
+  }
+]

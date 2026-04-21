@@ -5,6 +5,8 @@ package wprana
 import (
 	"strings"
 	"syscall/js"
+
+	"github.com/luisfurquim/wprana/expr"
 )
 
 // ── DOM reference extraction ────────────────────────────────────────────────
@@ -22,12 +24,12 @@ func getReferences(model js.Value, domParent js.Value, modelRoot js.Value) *DOMR
 	// ── Text node ───────────────────────────────────────────────────────────
 	if nt == jsNodeText {
 		data := model.Get("data").String()
-		segs, err := parseText(data)
+		segs, err := expr.ParseText(data)
 		if err != nil {
 			G.Logf(1, "getReferences: parseText error on text node: %v\n", err)
 			return nil
 		}
-		if !hasRef(segs) {
+		if !expr.HasRef(segs) {
 			return nil
 		}
 		return &DOMRefNode{
@@ -203,12 +205,12 @@ func refExtractBinding(model js.Value, tree *DOMRefNode, name, value string) boo
 	// Get the attribute value (may have changed after renaming)
 	curVal := attrVal(model, attName)
 
-	segs, err := parseText(curVal)
+	segs, err := expr.ParseText(curVal)
 	if err != nil {
 		G.Logf(1, "getReferences: parseText error on attr %q: %v\n", attName, err)
 		return false
 	}
-	if !hasRef(segs) {
+	if !expr.HasRef(segs) {
 		return false
 	}
 
@@ -216,7 +218,7 @@ func refExtractBinding(model js.Value, tree *DOMRefNode, name, value string) boo
 		Segs:      segs,
 		ForceSync: forceSync,
 	}
-	if isPureSegs(segs) {
+	if expr.IsPureSegs(segs) {
 		ab.PureRef = segs[0].Ref
 	}
 
@@ -230,8 +232,8 @@ func refSetupCond(tree *DOMRefNode, model, domParent js.Value, cond, condOp, con
 	tree.Cond = cond
 	tree.CondOp = condOp
 	tree.CondVal = condVal
-	condToks := tokenize(cond)
-	condTree, err := parseReference(&condToks)
+	condToks := expr.Tokenize(cond)
+	condTree, err := expr.ParseReference(&condToks)
 	if err != nil {
 		G.Logf(1, "getReferences: parseReference for cond %q: %v\n", cond, err)
 	} else {
@@ -250,8 +252,8 @@ func refSetupArray(tree *DOMRefNode, model, modelRoot js.Value, arrayVar, arrayI
 	tree.ArrayIdx = arrayIdx
 	tree.NoSpan = noSpan
 
-	arrToks := tokenize(arrayVar)
-	arrTree, err := parseReference(&arrToks)
+	arrToks := expr.Tokenize(arrayVar)
+	arrTree, err := expr.ParseReference(&arrToks)
 	if err != nil {
 		G.Logf(1, "getReferences: parseReference for arrayVar %q: %v\n", arrayVar, err)
 	}
@@ -260,6 +262,11 @@ func refSetupArray(tree *DOMRefNode, model, modelRoot js.Value, arrayVar, arrayI
 		// ** : the element itself is the container;
 		// its first child element is the template/model.
 		firstChild := model.Get("firstElementChild")
+
+		if firstChild.IsNull() || firstChild.IsUndefined() {
+			G.Logf(1, "refSetupArray: ** used on element without child elements (arrayVar=%q); ignoring\n", arrayVar)
+			return
+		}
 
 		// Extract references from the template BEFORE removing it from the DOM
 		tree.ModelRef = getReferences(firstChild, model, modelRoot)

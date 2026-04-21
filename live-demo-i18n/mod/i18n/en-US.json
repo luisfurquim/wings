@@ -1,0 +1,152 @@
+[
+  {
+    "content": "{{title}}",
+    "revised": true,
+    "context": "mywidget/mywidget.html:2:8",
+    "ctxdetail": "h1@mywidget/mywidget.html:2:8"
+  },
+  {
+    "content": "List",
+    "revised": false,
+    "context": "mywidget/mywidget.html:6:37",
+    "ctxdetail": "a@mywidget/mywidget.html:6:37"
+  },
+  {
+    "content": "Dashboard",
+    "revised": false,
+    "context": "mywidget/mywidget.html:7:42",
+    "ctxdetail": "a@mywidget/mywidget.html:7:42<br/>h2@mywidget/mywidget.html:65:17"
+  },
+  {
+    "content": "Toggle Mode",
+    "revised": false,
+    "context": "mywidget/mywidget.html:12:36",
+    "ctxdetail": "button@mywidget/mywidget.html:12:36"
+  },
+  {
+    "content": "Toggle Extra",
+    "revised": false,
+    "context": "mywidget/mywidget.html:13:37",
+    "ctxdetail": "button@mywidget/mywidget.html:13:37"
+  },
+  {
+    "content": "Mode: ",
+    "revised": false,
+    "context": "mywidget/mywidget.html:14:32",
+    "ctxdetail": "span@mywidget/mywidget.html:14:32<br/>p@mywidget/mywidget.html:79:16"
+  },
+  {
+    "content": "{{mode}}",
+    "revised": false,
+    "context": "mywidget/mywidget.html:14:46",
+    "ctxdetail": "strong@mywidget/mywidget.html:14:46<br/>strong@mywidget/mywidget.html:79:30"
+  },
+  {
+    "content": "Item List",
+    "revised": false,
+    "context": "mywidget/mywidget.html:19:11",
+    "ctxdetail": "h2@mywidget/mywidget.html:19:11"
+  },
+  {
+    "content": "Auto-counter (every 2s): ",
+    "revised": false,
+    "context": "mywidget/mywidget.html:20:10",
+    "ctxdetail": "p@mywidget/mywidget.html:20:10"
+  },
+  {
+    "content": "{{count}}",
+    "revised": false,
+    "context": "mywidget/mywidget.html:20:57",
+    "ctxdetail": "span@mywidget/mywidget.html:20:57<br/>strong@mywidget/mywidget.html:81:38"
+  },
+  {
+    "content": "{{extra}}",
+    "revised": false,
+    "context": "mywidget/mywidget.html:24:13",
+    "ctxdetail": "p@mywidget/mywidget.html:24:13<br/>p@mywidget/mywidget.html:87:13"
+  },
+  {
+    "content": "Click \"Toggle Extra\" to reveal extra content.",
+    "revised": false,
+    "context": "mywidget/mywidget.html:29:13",
+    "ctxdetail": "p@mywidget/mywidget.html:29:13"
+  },
+  {
+    "content": "Add item...",
+    "revised": false,
+    "context": "mywidget/mywidget.html:35:68",
+    "ctxdetail": "input[placeholder]@mywidget/mywidget.html:35:68"
+  },
+  {
+    "content": "Form is visible because mode != \"readonly\".",
+    "revised": false,
+    "context": "mywidget/mywidget.html:42:13",
+    "ctxdetail": "p@mywidget/mywidget.html:42:13"
+  },
+  {
+    "content": "Prefix match: mode starts with \"ed\"",
+    "revised": false,
+    "context": "mywidget/mywidget.html:47:13",
+    "ctxdetail": "p@mywidget/mywidget.html:47:13"
+  },
+  {
+    "content": "Suffix match: mode ends with \"it\"",
+    "revised": false,
+    "context": "mywidget/mywidget.html:52:13",
+    "ctxdetail": "p@mywidget/mywidget.html:52:13"
+  },
+  {
+    "content": "Contains match: mode contains \"d\"",
+    "revised": false,
+    "context": "mywidget/mywidget.html:57:13",
+    "ctxdetail": "p@mywidget/mywidget.html:57:13"
+  },
+  {
+    "content": "{{items[i].label}}",
+    "revised": false,
+    "context": "mywidget/mywidget.html:61:23",
+    "ctxdetail": "li@mywidget/mywidget.html:61:23<br/>li@mywidget/mywidget.html:74:29"
+  },
+  {
+    "content": "Slow counter (every 5s): ",
+    "revised": false,
+    "context": "mywidget/mywidget.html:68:10",
+    "ctxdetail": "p@mywidget/mywidget.html:68:10"
+  },
+  {
+    "content": "{{count2}}",
+    "revised": false,
+    "context": "mywidget/mywidget.html:68:68",
+    "ctxdetail": "span@mywidget/mywidget.html:68:68"
+  },
+  {
+    "content": "Items",
+    "revised": false,
+    "context": "mywidget/mywidget.html:72:17",
+    "ctxdetail": "h3@mywidget/mywidget.html:72:17"
+  },
+  {
+    "content": "Status",
+    "revised": false,
+    "context": "mywidget/mywidget.html:78:17",
+    "ctxdetail": "h3@mywidget/mywidget.html:78:17"
+  },
+  {
+    "content": "Extra visible: ",
+    "revised": false,
+    "context": "mywidget/mywidget.html:80:16",
+    "ctxdetail": "p@mywidget/mywidget.html:80:16"
+  },
+  {
+    "content": "{{show_extra}}",
+    "revised": false,
+    "context": "mywidget/mywidget.html:80:39",
+    "ctxdetail": "strong@mywidget/mywidget.html:80:39"
+  },
+  {
+    "content": "Fast counter: ",
+    "revised": false,
+    "context": "mywidget/mywidget.html:81:16",
+    "ctxdetail": "p@mywidget/mywidget.html:81:16"
+  }
+]
