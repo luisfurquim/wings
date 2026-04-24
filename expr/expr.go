@@ -11,17 +11,21 @@ import (
 type TokenType int8
 
 const (
-	TokTxt   TokenType = 0  // literal text
-	TokRef   TokenType = 1  // reference {{ }}
-	TokStr   TokenType = 2  // string literal in quotes
-	TokDot   TokenType = 3  // operator .
-	TokOpen  TokenType = 4  // operator [
-	TokClose TokenType = 5  // operator ]
-	TokNum   TokenType = 6  // integer number
-	TokIdent TokenType = 7  // identifier
-	TokWSep  TokenType = 8  // internal state: waiting for separator
-	TokExpr  TokenType = 9  // sub-expression (dynamic index access)
-	TokAttr  TokenType = 10 // attribute node (DOMRefNode type)
+	TokTxt       TokenType = 0  // literal text
+	TokRef       TokenType = 1  // reference {{ }}
+	TokStr       TokenType = 2  // string literal in quotes
+	TokDot       TokenType = 3  // operator .
+	TokOpen      TokenType = 4  // operator [
+	TokClose     TokenType = 5  // operator ]
+	TokNum       TokenType = 6  // integer number
+	TokIdent     TokenType = 7  // identifier
+	TokWSep      TokenType = 8  // internal state: waiting for separator
+	TokExpr      TokenType = 9  // sub-expression (dynamic index access)
+	TokAttr      TokenType = 10 // attribute node (DOMRefNode type)
+	TokPctVar    TokenType = 11 // %ident  — count variable + emission
+	TokAtVar     TokenType = 12 // @ident  — gender variable, no emission
+	TokTildeWord TokenType = 13 // ~ident  — flex marker (build-time only)
+	TokFlexIdx   TokenType = 14 // #N      — inflection rule index
 )
 
 // ── Template parse structures ───────────────────────────────────────────────
@@ -67,11 +71,18 @@ func ParseText(s string) ([]TextSegment, error) {
 			if i+1 < len(s) && s[i] == '}' && s[i+1] == '}' {
 				expr := s[start:i]
 				toks := Tokenize(expr)
-				ref, err := ParseReference(&toks)
-				if err != nil {
-					return nil, fmt.Errorf("ParseText: %w", err)
+				// Flexion and formatting blocks skip ParseReference and keep
+				// their raw token list — callers detect them via
+				// IsFmtBlock/IsFlexBlock and use ParseFmtBlock/ParseFlexBlock.
+				if IsFmtBlock(toks) || IsFlexBlock(toks) {
+					segs = append(segs, TextSegment{IsRef: true, Ref: toks})
+				} else {
+					ref, err := ParseReference(&toks)
+					if err != nil {
+						return nil, fmt.Errorf("ParseText: %w", err)
+					}
+					segs = append(segs, TextSegment{IsRef: true, Ref: ref})
 				}
-				segs = append(segs, TextSegment{IsRef: true, Ref: ref})
 				i += 2
 				start = i
 				inRef = false
@@ -216,7 +227,11 @@ func consumeIdent(s string, i int) (RefNode, int) {
 }
 
 // splitSymbols tokenizes a code fragment without string literals.
-// Recognizes: `.`, `[`, `]`, `#`, numbers, identifiers.
+// Recognizes: `.`, `[`, `]`, `#N` (inflection rule index), numbers, identifiers,
+// and the i18n flexion sigils `%ident`, `@ident`, `~ident`.
+// Doubled sigils (`%%`, `@@`, `~~`) are escapes: they emit a TokStr whose
+// StrVal is the single-sigil form, so a webdev documenting the syntax can
+// show it literally without wi18n/gen_i18n treating it as a marker.
 func splitSymbols(s string) []RefNode {
 	var toks []RefNode
 	i := 0
@@ -241,8 +256,26 @@ func splitSymbols(s string) []RefNode {
 			toks = append(toks, RefNode{Type: TokClose})
 			i++
 		case '#':
-			toks = append(toks, RefNode{Type: TokIdent, StrVal: "#"})
-			i++
+			// #N → TokFlexIdx with IntVal=N (inflection rule index)
+			if i+1 < n && s[i+1] >= '0' && s[i+1] <= '9' {
+				j := i + 1
+				for j < n && s[j] >= '0' && s[j] <= '9' {
+					j++
+				}
+				val, _ := strconv.Atoi(s[i+1 : j])
+				toks = append(toks, RefNode{Type: TokFlexIdx, IntVal: val})
+				i = j
+			} else {
+				// Bare `#` (legacy) — keep old behavior.
+				toks = append(toks, RefNode{Type: TokIdent, StrVal: "#"})
+				i++
+			}
+		case '%', '@', '~':
+			tok, next, ok := consumeSigil(s, i)
+			if ok {
+				toks = append(toks, tok)
+			}
+			i = next
 		default:
 			isSign := (c == '+' || c == '-') && i+1 < n && s[i+1] >= '0' && s[i+1] <= '9'
 			switch {
@@ -262,6 +295,45 @@ func splitSymbols(s string) []RefNode {
 	}
 
 	return toks
+}
+
+// consumeSigil reads one of the i18n flexion sigils (`%`, `@`, `~`) followed
+// by an identifier. A doubled sigil (`%%ident`, `@@ident`, `~~ident`) is an
+// escape: the returned token is a TokStr with the single-sigil form as value,
+// so the output is rendered literally.
+// Returns (tok, nextPos, ok). ok=false means no token was produced (bare
+// sigil with no identifier — the char is skipped silently).
+func consumeSigil(s string, i int) (RefNode, int, bool) {
+	c := s[i]
+	n := len(s)
+	// Escape form: `%%`, `@@`, `~~`
+	if i+1 < n && s[i+1] == c {
+		j := i + 2
+		for j < n && isIdentChar(s[j]) {
+			j++
+		}
+		return RefNode{Type: TokStr, StrVal: s[i+1 : j]}, j, true
+	}
+	// Sigil form: `%ident`, `@ident`, `~ident`
+	j := i + 1
+	if j < n && isIdentStart(s[j]) {
+		k := j + 1
+		for k < n && isIdentChar(s[k]) {
+			k++
+		}
+		var t TokenType
+		switch c {
+		case '%':
+			t = TokPctVar
+		case '@':
+			t = TokAtVar
+		case '~':
+			t = TokTildeWord
+		}
+		return RefNode{Type: t, StrVal: s[j:k]}, k, true
+	}
+	// Bare sigil with no identifier — skip.
+	return RefNode{}, i + 1, false
 }
 
 // indexByte finds the first index of b in s, or -1.
@@ -360,4 +432,203 @@ func popRef(toks *[]RefNode) RefNode {
 	t := (*toks)[0]
 	*toks = (*toks)[1:]
 	return t
+}
+
+// ── Flexion block ───────────────────────────────────────────────────────────
+
+// FlexBlock holds the resolved pieces of an i18n flexion reference such as
+// `{{@genero %qt #42}}` or `{{@genero %qt ~o ~aluno ...}}`.
+//
+// At runtime the rewritten form `{{@var %var #N}}` is what reaches the
+// browser. Build-time (`gen_i18n`) also sees the `~word` form, so TildeWords
+// is populated only when parsing the pre-rewrite template.
+//
+// Tokens preserves the full input token sequence in original order so that
+// build-time dict-consult can re-interleave passthrough words (non-sigil
+// tokens that appear between ~words, e.g., "do terceiro ano que" in
+// "{{@s %q ~o ~aluno do terceiro ano que ~está ~aprovado}}") with the flexed
+// forms pulled from the dictionary.
+type FlexBlock struct {
+	GenderVar  string    // @var root ident, "" when absent (degenerate-gender block)
+	GenderPath []RefNode // full @-path (root ident + optional .ident/[expr] tail); nil when @var absent or bare
+	CountVar   string    // %var root ident, "" when absent (pure-gender block)
+	CountPath  []RefNode // full %-path; nil when %var absent or bare
+	Idx        int       // #N rule index, -1 when absent (pre-gen_i18n form)
+	TildeWords []string  // ~word lemmas in original order (build-time only)
+	Tokens     []RefNode // input token sequence in original order; path-tail tokens consumed
+	// by @var/%var are NOT re-emitted here (they are metadata attached to the
+	// sigil RefNode that precedes them).
+}
+
+// IsFlexBlock reports whether the token slice begins with a flexion sigil
+// (`%`, `@`, `~`, or `#N`), meaning ParseFlexBlock should be used instead of
+// ParseReference. A lone `%var` (with optional path) is NOT a FlexBlock — it
+// is a FmtBlock (see IsFmtBlock), routed to FmtPrinter for locale-aware
+// formatting.
+func IsFlexBlock(toks []RefNode) bool {
+	if len(toks) == 0 {
+		return false
+	}
+	switch toks[0].Type {
+	case TokAtVar, TokTildeWord, TokFlexIdx:
+		return true
+	case TokPctVar:
+		// %var alone (plus optional path tail) is a FmtBlock, not a FlexBlock.
+		// When %var co-occurs with @/~/# or passthrough literals, it is the
+		// count axis of a flexion — then it is a FlexBlock.
+		return !IsFmtBlock(toks)
+	}
+	return false
+}
+
+// ParseFlexBlock consumes a flat sequence of flexion tokens and returns the
+// composed FlexBlock. Enforces the unicity rules locked in the design:
+//   - at most one %var per block (hard error on second)
+//   - at most one @var per block (hard error on second)
+//   - at most one #N per block (hard error on second)
+//
+// ~word tokens are collected in order; repetitions are allowed since
+// adjectives/verbs can legitimately repeat a lemma.
+// Identifier/number/string tokens that appear between sigils are accepted as
+// passthrough words (see the FlexBlock doc for the "do terceiro ano"
+// example). Structural tokens (`.`, `[`, `]`, sub-expressions) are an error —
+// a flex block cannot mix sigil syntax with path-reference syntax.
+func ParseFlexBlock(toks *[]RefNode) (FlexBlock, error) {
+	fb := FlexBlock{Idx: -1}
+	seenPct, seenAt, seenIdx := false, false, false
+
+	for len(*toks) > 0 {
+		t := popRef(toks)
+		switch t.Type {
+		case TokAtVar:
+			if seenAt {
+				return fb, fmt.Errorf("ParseFlexBlock: only one @var allowed per block, found %q after %q", t.StrVal, fb.GenderVar)
+			}
+			fb.GenderVar = t.StrVal
+			tail, err := consumePathTail(toks)
+			if err != nil {
+				return fb, fmt.Errorf("ParseFlexBlock: @var path: %w", err)
+			}
+			if len(tail) > 0 {
+				fb.GenderPath = append([]RefNode{{Type: TokIdent, StrVal: t.StrVal}}, tail...)
+			}
+			fb.Tokens = append(fb.Tokens, t)
+			seenAt = true
+		case TokPctVar:
+			if seenPct {
+				return fb, fmt.Errorf("ParseFlexBlock: only one %%var allowed per block, found %q after %q", t.StrVal, fb.CountVar)
+			}
+			fb.CountVar = t.StrVal
+			tail, err := consumePathTail(toks)
+			if err != nil {
+				return fb, fmt.Errorf("ParseFlexBlock: %%var path: %w", err)
+			}
+			if len(tail) > 0 {
+				fb.CountPath = append([]RefNode{{Type: TokIdent, StrVal: t.StrVal}}, tail...)
+			}
+			fb.Tokens = append(fb.Tokens, t)
+			seenPct = true
+		case TokTildeWord:
+			fb.TildeWords = append(fb.TildeWords, t.StrVal)
+			fb.Tokens = append(fb.Tokens, t)
+		case TokFlexIdx:
+			if seenIdx {
+				return fb, fmt.Errorf("ParseFlexBlock: only one #N allowed per block, found #%d after #%d", t.IntVal, fb.Idx)
+			}
+			fb.Idx = t.IntVal
+			fb.Tokens = append(fb.Tokens, t)
+			seenIdx = true
+		case TokIdent, TokStr, TokNum:
+			// Passthrough literal word: kept in Tokens for build-time use.
+			fb.Tokens = append(fb.Tokens, t)
+		default:
+			return fb, fmt.Errorf("ParseFlexBlock: unexpected token type=%d in flex block", t.Type)
+		}
+	}
+
+	return fb, nil
+}
+
+// consumePathTail greedily consumes `.ident` / `[expr]` pairs from the head
+// of toks, returning the accumulated RefNode sequence (not including the
+// root ident). Stops at the first token that is not TokDot or TokOpen.
+// Returns an empty slice when the next token is not a path continuation.
+func consumePathTail(toks *[]RefNode) ([]RefNode, error) {
+	var out []RefNode
+	for len(*toks) > 0 {
+		switch (*toks)[0].Type {
+		case TokDot:
+			popRef(toks)
+			if len(*toks) == 0 {
+				return out, fmt.Errorf("trailing '.' with no identifier")
+			}
+			next := popRef(toks)
+			if next.Type != TokIdent && next.Type != TokStr {
+				return out, fmt.Errorf("expected identifier after '.', got type=%d", next.Type)
+			}
+			out = append(out, next)
+		case TokOpen:
+			popRef(toks)
+			sub, err := ParseReference(toks)
+			if err != nil {
+				return out, fmt.Errorf("in '[...]': %w", err)
+			}
+			out = append(out, RefNode{Type: TokExpr, Sub: sub})
+		default:
+			return out, nil
+		}
+	}
+	return out, nil
+}
+
+// ── FmtBlock: lone %var for locale-aware formatting ─────────────────────────
+
+// FmtBlock holds the resolved pieces of a locale-aware formatting reference
+// such as `{{%preco}}` or `{{%cart[i].total}}`. The value is resolved at
+// sync time from the data context and rendered by wprana.FmtPrinter, which
+// chooses the output format from the Go type of the value and the current
+// locale.
+//
+// A FmtBlock is the lone-%var form. When %var co-occurs with @var/~word/#N
+// (or passthrough literals) inside the same {{...}} block, it is a FlexBlock
+// count axis instead — routed to SynPrinter.
+type FmtBlock struct {
+	Var  string    // %var root ident
+	Path []RefNode // full path (root ident + tail); nil when bare
+}
+
+// IsFmtBlock reports whether toks is a lone %var with an optional path tail
+// and nothing else. Malformed path tails (e.g. trailing `.`) return false so
+// the caller surfaces the error via ParseFmtBlock.
+func IsFmtBlock(toks []RefNode) bool {
+	if len(toks) == 0 || toks[0].Type != TokPctVar {
+		return false
+	}
+	rest := append([]RefNode(nil), toks[1:]...)
+	if _, err := consumePathTail(&rest); err != nil {
+		return false
+	}
+	return len(rest) == 0
+}
+
+// ParseFmtBlock consumes a lone-%var FmtBlock token sequence. Caller should
+// gate on IsFmtBlock first; ParseFmtBlock returns an error on any mismatch
+// so FlexBlocks mis-routed here surface loudly rather than silently.
+func ParseFmtBlock(toks *[]RefNode) (FmtBlock, error) {
+	if len(*toks) == 0 || (*toks)[0].Type != TokPctVar {
+		return FmtBlock{}, fmt.Errorf("ParseFmtBlock: expected %%var at block start")
+	}
+	head := popRef(toks)
+	fb := FmtBlock{Var: head.StrVal}
+	tail, err := consumePathTail(toks)
+	if err != nil {
+		return fb, fmt.Errorf("ParseFmtBlock: %%var path: %w", err)
+	}
+	if len(tail) > 0 {
+		fb.Path = append([]RefNode{{Type: TokIdent, StrVal: head.StrVal}}, tail...)
+	}
+	if len(*toks) != 0 {
+		return fb, fmt.Errorf("ParseFmtBlock: unexpected trailing tokens (this is a FlexBlock, not a FmtBlock)")
+	}
+	return fb, nil
 }

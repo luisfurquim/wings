@@ -13,6 +13,7 @@ import (
 
 	"github.com/luisfurquim/wprana"
 	"github.com/luisfurquim/wprana/dom"
+	"github.com/luisfurquim/wprana/wi18n"
 )
 
 const elementTag = "wp-wlate"
@@ -47,20 +48,12 @@ type WlateConfig struct {
 	Keys map[string]string `json:"keys"`
 }
 
-type TextRecord struct {
-	Content   string `json:"content"`
-	Revised   bool   `json:"revised"`
-	Context   string `json:"context"`
-	CtxDetail string `json:"ctxdetail,omitempty"`
-}
-
-type InflectionRecord struct {
-	Expr      string            `json:"expr"`
-	Context   string            `json:"context"`
-	CtxDetail string            `json:"ctxdetail,omitempty"`
-	Revised   bool              `json:"revised"`
-	Forms     map[string]string `json:"forms"`
-}
+// TextRecord and InflectionRecord are thin aliases over the wi18n merged
+// in-memory views. wlate reads data+meta from split files on disk (data on
+// the browser bundle path, meta on the sibling .meta.json), merges them
+// here, and writes back only the data half on save.
+type TextRecord = wi18n.Entry
+type InflectionRecord = wi18n.FlexEntry
 
 // ── Context detail humanization ────────────────────────────────────────────
 
@@ -134,6 +127,8 @@ func (w *Wlate) InitData() map[string]any {
 		"inflection_expr": "",
 		"genders":         []any{},
 		"categories":      []any{},
+		"gender_headers":  []any{},
+		"category_headers": []any{},
 		"left_cells":      []any{},
 		"right_cells":     []any{},
 
@@ -259,7 +254,7 @@ func (wc *wlateCtx) displayTextRecord(idx int) {
 	if idx < len(wc.leftText) {
 		leftContent = wc.leftText[idx].Content
 		leftCtx = wc.leftText[idx].Context
-		leftDetail = humanizeCtx(wc.leftText[idx].CtxDetail)
+		leftDetail = humanizeCtx(wc.leftText[idx].Ctxdetail)
 	}
 
 	var rightContent string
@@ -269,7 +264,7 @@ func (wc *wlateCtx) displayTextRecord(idx int) {
 		rightContent = wc.rightText[idx].Content
 		revised = wc.rightText[idx].Revised
 		rightCtx = wc.rightText[idx].Context
-		rightDetail = humanizeCtx(wc.rightText[idx].CtxDetail)
+		rightDetail = humanizeCtx(wc.rightText[idx].Ctxdetail)
 	}
 
 	wc.obj.This.Set("left_content", leftContent)
@@ -294,25 +289,25 @@ func (wc *wlateCtx) displayInflectionRecord(idx int) {
 	var expr, ctx, detail string
 
 	if idx < len(wc.leftInflections) {
-		leftForms = wc.leftInflections[idx].Forms
-		expr = wc.leftInflections[idx].Expr
+		leftForms = wc.leftInflections[idx].Cells
+		expr = wc.leftInflections[idx].Label
 		ctx = wc.leftInflections[idx].Context
-		detail = humanizeCtx(wc.leftInflections[idx].CtxDetail)
+		detail = humanizeCtx(wc.leftInflections[idx].Ctxdetail)
 	}
 
 	var rightForms map[string]string
 	var revised bool
 	if idx < len(wc.rightInflections) {
-		rightForms = wc.rightInflections[idx].Forms
+		rightForms = wc.rightInflections[idx].Cells
 		revised = wc.rightInflections[idx].Revised
 		if expr == "" {
-			expr = wc.rightInflections[idx].Expr
+			expr = wc.rightInflections[idx].Label
 		}
 		if ctx == "" {
 			ctx = wc.rightInflections[idx].Context
 		}
 		if detail == "" {
-			detail = humanizeCtx(wc.rightInflections[idx].CtxDetail)
+			detail = humanizeCtx(wc.rightInflections[idx].Ctxdetail)
 		}
 	}
 
@@ -351,6 +346,25 @@ func (wc *wlateCtx) displayInflectionRecord(idx int) {
 		categoriesAny[i] = c
 	}
 
+	// Translator-facing header labels. Degenerate gender (empty string)
+	// renders visually blank with an ARIA label for screen readers, per the
+	// locked grid design (every language gets the full CLDR × gender grid,
+	// even when one axis has a single column).
+	genderHeaders := make([]any, len(genders))
+	for i, g := range genders {
+		genderHeaders[i] = map[string]any{
+			"label": genderHeaderLabel(g),
+			"aria":  genderAriaLabel(g),
+		}
+	}
+	categoryHeaders := make([]any, len(categories))
+	for i, c := range categories {
+		categoryHeaders[i] = map[string]any{
+			"label": c,
+			"aria":  categoryAriaLabel(c),
+		}
+	}
+
 	// Build cell arrays: left_cells[ci].cols[gi] and right_cells[ci].cols[gi]
 	leftCells := make([]any, len(categories))
 	rightCells := make([]any, len(categories))
@@ -376,6 +390,8 @@ func (wc *wlateCtx) displayInflectionRecord(idx int) {
 
 	wc.obj.This.Set("genders", gendersAny)
 	wc.obj.This.Set("categories", categoriesAny)
+	wc.obj.This.Set("gender_headers", genderHeaders)
+	wc.obj.This.Set("category_headers", categoryHeaders)
 	wc.obj.This.Set("left_cells", leftCells)
 	wc.obj.This.Set("right_cells", rightCells)
 
@@ -464,8 +480,8 @@ func (wc *wlateCtx) syncRightContent() {
 			}
 			key := wc.curGenders[giN] + "." + wc.curCategories[ciN]
 			val := inp.Get("value").String()
-			if wc.rightInflections[idx].Forms[key] != val {
-				wc.rightInflections[idx].Forms[key] = val
+			if wc.rightInflections[idx].Cells[key] != val {
+				wc.rightInflections[idx].Cells[key] = val
 				changed = true
 			}
 		}
@@ -506,6 +522,58 @@ func (wc *wlateCtx) findNextUnrevised() int {
 		}
 	}
 	return -1
+}
+
+// ── Header label helpers ───────────────────────────────────────────────────
+
+// genderHeaderLabel returns the short visible label for a gender column.
+// Empty string (degenerate inventory) stays visually blank; the aria
+// label carries the semantic meaning for screen readers.
+func genderHeaderLabel(g string) string {
+	switch g {
+	case "m":
+		return "M"
+	case "f":
+		return "F"
+	case "n":
+		return "N"
+	}
+	return g
+}
+
+// genderAriaLabel returns the verbose a11y string for a gender column.
+func genderAriaLabel(g string) string {
+	switch g {
+	case "m":
+		return "Masculino"
+	case "f":
+		return "Feminino"
+	case "n":
+		return "Neutro"
+	case "":
+		return "forma única"
+	}
+	return g
+}
+
+// categoryAriaLabel returns a short Portuguese hint for the CLDR category
+// name, for screen readers that won't recognise the technical term.
+func categoryAriaLabel(c string) string {
+	switch c {
+	case "zero":
+		return "zero (forma explícita para nenhum)"
+	case "one":
+		return "singular"
+	case "two":
+		return "dual"
+	case "few":
+		return "poucos"
+	case "many":
+		return "muitos"
+	case "other":
+		return "plural geral"
+	}
+	return c
 }
 
 // ── Sort helpers ───────────────────────────────────────────────────────────
@@ -763,58 +831,84 @@ func (wc *wlateCtx) init() {
 	wc.wireEvents()
 }
 
-func (wc *wlateCtx) loadLeftData() {
-	wc.leftText = nil
-	wc.leftInflections = nil
+// loadText fetches a <lang>.json + <lang>.meta.json pair and merges them
+// into the wi18n.Entry shape used in memory. Either half may be absent —
+// legacy combined files ship both fields in the data half, so those still
+// decode correctly.
+func loadText(lang string) []TextRecord {
+	var records []TextRecord
 
-	body, err := fetchText("i18n/" + wc.leftLang + ".json")
+	body, err := fetchText("i18n/" + lang + ".json")
 	if err == nil {
-		json.Unmarshal([]byte(body), &wc.leftText)
+		json.Unmarshal([]byte(body), &records)
 	}
-
-	body, err = fetchText("i18n/" + wc.leftLang + ".inflections.json")
+	body, err = fetchText("i18n/" + lang + ".meta.json")
 	if err == nil {
-		json.Unmarshal([]byte(body), &wc.leftInflections)
-	}
-}
-
-func (wc *wlateCtx) loadRightData() {
-	wc.rightText = nil
-	wc.rightInflections = nil
-	wc.dirty = false
-
-	body, err := fetchText("i18n/" + wc.rightLang + ".json")
-	if err == nil {
-		json.Unmarshal([]byte(body), &wc.rightText)
-	}
-	// If file doesn't exist, create empty structure mirroring left side
-	if wc.rightText == nil && len(wc.leftText) > 0 {
-		wc.rightText = make([]TextRecord, len(wc.leftText))
-		for i, lt := range wc.leftText {
-			wc.rightText[i] = TextRecord{
-				Context:   lt.Context,
-				CtxDetail: lt.CtxDetail,
+		var metas []wi18n.EntryMeta
+		if json.Unmarshal([]byte(body), &metas) == nil {
+			for i := range records {
+				if i < len(metas) {
+					records[i].EntryMeta = metas[i]
+				}
 			}
 		}
 	}
+	return records
+}
 
-	body, err = fetchText("i18n/" + wc.rightLang + ".inflections.json")
+func loadFlex(lang string) []InflectionRecord {
+	var records []InflectionRecord
+
+	body, err := fetchText("i18n/" + lang + ".inflections.json")
 	if err == nil {
-		json.Unmarshal([]byte(body), &wc.rightInflections)
+		json.Unmarshal([]byte(body), &records)
 	}
-	// If file doesn't exist, create empty structure mirroring left side
+	body, err = fetchText("i18n/" + lang + ".inflections.meta.json")
+	if err == nil {
+		var metas []wi18n.FlexEntryMeta
+		if json.Unmarshal([]byte(body), &metas) == nil {
+			for i := range records {
+				if i < len(metas) {
+					records[i].FlexEntryMeta = metas[i]
+				}
+			}
+		}
+	}
+	return records
+}
+
+func (wc *wlateCtx) loadLeftData() {
+	wc.leftText = loadText(wc.leftLang)
+	wc.leftInflections = loadFlex(wc.leftLang)
+}
+
+func (wc *wlateCtx) loadRightData() {
+	wc.rightText = loadText(wc.rightLang)
+	wc.rightInflections = loadFlex(wc.rightLang)
+	wc.dirty = false
+
+	// If right-side files don't exist, bootstrap from left-side shape so
+	// translators see the full list to fill in.
+	if wc.rightText == nil && len(wc.leftText) > 0 {
+		wc.rightText = make([]TextRecord, len(wc.leftText))
+		for i, lt := range wc.leftText {
+			wc.rightText[i] = TextRecord{EntryMeta: lt.EntryMeta}
+		}
+	}
+
 	if wc.rightInflections == nil && len(wc.leftInflections) > 0 {
 		wc.rightInflections = make([]InflectionRecord, len(wc.leftInflections))
 		for i, li := range wc.leftInflections {
-			forms := make(map[string]string, len(li.Forms))
-			for key := range li.Forms {
-				forms[key] = ""
+			cells := make(map[string]string, len(li.Cells))
+			for key := range li.Cells {
+				cells[key] = ""
 			}
 			wc.rightInflections[i] = InflectionRecord{
-				Expr:      li.Expr,
-				Context:   li.Context,
-				CtxDetail: li.CtxDetail,
-				Forms:     forms,
+				FlexEntryData: wi18n.FlexEntryData{
+					Label: li.Label,
+					Cells: cells,
+				},
+				FlexEntryMeta: li.FlexEntryMeta,
 			}
 		}
 	}
@@ -1121,29 +1215,35 @@ func (wc *wlateCtx) toggleRevised() {
 func (wc *wlateCtx) save() {
 	wc.syncRightContent()
 
-	// Save text data
+	// Save text: project to data-only (meta is build-server territory).
 	if len(wc.rightText) > 0 {
-		data, err := json.MarshalIndent(wc.rightText, "", "  ")
+		datas := make([]wi18n.EntryData, len(wc.rightText))
+		for i, r := range wc.rightText {
+			datas[i] = r.EntryData
+		}
+		data, err := json.MarshalIndent(datas, "", "  ")
 		if err != nil {
 			fmt.Println("wlate: failed to marshal text data:", err)
 			return
 		}
-		err = postJSON("/save?file=i18n/"+wc.rightLang+".json", data)
-		if err != nil {
+		if err := postJSON("/save?file=i18n/"+wc.rightLang+".json", data); err != nil {
 			fmt.Println("wlate: failed to save text data:", err)
 			return
 		}
 	}
 
-	// Save inflection data
+	// Save inflections: project to data-only.
 	if len(wc.rightInflections) > 0 {
-		data, err := json.MarshalIndent(wc.rightInflections, "", "  ")
+		datas := make([]wi18n.FlexEntryData, len(wc.rightInflections))
+		for i, r := range wc.rightInflections {
+			datas[i] = r.FlexEntryData
+		}
+		data, err := json.MarshalIndent(datas, "", "  ")
 		if err != nil {
 			fmt.Println("wlate: failed to marshal inflection data:", err)
 			return
 		}
-		err = postJSON("/save?file=i18n/"+wc.rightLang+".inflections.json", data)
-		if err != nil {
+		if err := postJSON("/save?file=i18n/"+wc.rightLang+".inflections.json", data); err != nil {
 			fmt.Println("wlate: failed to save inflection data:", err)
 			return
 		}

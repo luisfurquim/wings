@@ -68,6 +68,8 @@ authored in Go and running natively in the browser.
   - [Pipeline Overview](#pipeline-overview)
   - [wprana/wi18n — Runtime Lookup](#wpranawi18n--runtime-lookup)
   - [cmd/gen_i18n — Build-time Extractor](#cmdgen_i18n--build-time-extractor)
+  - [Flexion — Plurals & Gender (SynPrinter)](#flexion--plurals--gender-synprinter)
+  - [Locale-Aware Formatting (FmtPrinter)](#locale-aware-formatting-fmtprinter)
   - [cmd/dictbuild & cmd/dictlookup — Flexion Dictionaries](#cmddictbuild--cmddictlookup--flexion-dictionaries)
   - [helpers/wlate — Translation Editor GUI](#helperswlate--translation-editor-gui)
     - [server.conf — mini-server configuration](#serverconf--mini-server-configuration)
@@ -1191,24 +1193,25 @@ flexions from a Unitex DELAF source.
             │ *.html (mod/**)            │  ── templates with natural text
             └────────────┬───────────────┘     (text nodes + translatable
                          │                      attributes like title, alt,
-                         │   cmd/gen_i18n       placeholder, aria-label)
-                         ▼
-            ┌────────────────────────────┐
-            │ *.i18n.html + i18n.db      │  ── each extracted string replaced
-            │ i18n/<deflang>.json        │     by a decimal index; JSON holds
-            └────────────┬───────────────┘     source strings + context info
+                         │   cmd/gen_i18n       placeholder, aria-label) +
+                         ▼                      flex blocks {{@g %c ~w ...}}
+            ┌────────────────────────────────────────────────┐
+            │ *.i18n.html + i18n.db                          │
+            │ i18n/<deflang>.json                            │  ── text catalog
+            │ i18n/<deflang>.inflections.json  (if any flex) │  ── gender×CLDR
+            └────────────┬───────────────────────────────────┘
                          │
-              translator ▼ (helpers/wlate GUI)
-            ┌────────────────────────────┐
-            │ i18n/<lang>.json           │  ── one translated entry per index,
-            │                            │     aligned with <deflang>
-            └────────────┬───────────────┘
+              translator ▼ (helpers/wlate GUI — Texto + Inflexões tabs)
+            ┌────────────────────────────────────────────────┐
+            │ i18n/<lang>.json + <lang>.inflections.json     │
+            └────────────┬───────────────────────────────────┘
                          │   runtime
                          ▼
             ┌────────────────────────────┐
-            │ wi18n (WASM, side-effect)  │  ── fetches the JSON, replaces
-            │ wprana.Printer = lookup    │     wprana.Printer with an
-            └────────────────────────────┘     index→string lookup
+            │ wi18n (WASM, side-effect)  │  ── fetches both JSONs in parallel,
+            │ wprana.Printer   = lookup  │     installs Printer (text index →
+            │ wprana.SynPrinter = flex   │     string) and SynPrinter (flex
+            └────────────────────────────┘     block → locale-correct form)
 
    ┌──────────────────────────────────────────────────────────────┐
    │ Optional: cmd/dictbuild reads a Unitex DELAF dictionary and  │
@@ -1223,6 +1226,12 @@ left untouched otherwise — so dynamic text produced via `{{expression}}`
 passes through unchanged. The same lookup applies to values of the
 attributes listed in `wprana.TranslatableAttrs` (default: `title`,
 `placeholder`, `alt`, `aria-label`).
+
+For plurals and gender agreement — cases where a single translation string
+cannot reflect the target locale's grammar — wprana ships a parallel
+pipeline keyed on inline **flex sigils** (`@var`/`%var`/`~word`/`#N`). See
+[Flexion — Plurals & Gender (SynPrinter)](#flexion--plurals--gender-synprinter)
+below for the full syntax and catalog format.
 
 ### wprana/wi18n — Runtime Lookup
 
@@ -1363,6 +1372,223 @@ Both the assignment and the helper calls must run before `wprana.Main()`
 finishes initialization (an `init()` in `package main` is the canonical
 spot).
 
+**Flex-block extraction.** In the same pass, `gen_i18n` scans every `{{...}}`
+binding for flex sigils (`@`/`%`/`~`/`#N` — see next section). Each distinct
+block is assigned a numeric rule index, rewritten to its canonical `{{@g %c
+~word #N}}` form in the `.i18n.html`, and emitted as a row in
+`i18n/<deflang>.inflections.json`. Translator-maintained `<lang>.inflections.json`
+files are remapped in place across runs, same as the text catalog.
+
+**Degenerate-deflang lint.** When the deflang has no gender axis (e.g. `en-US`)
+but at least one target locale does (e.g. `pt-BR`), any flex block missing
+`@var` would collapse every row into a single gender column — leaving the
+gendered locale's translator with no way to supply masculine/feminine forms.
+`gen_i18n` emits a `lint:` warning on stderr pointing at the first occurrence
+of each such block, so the webdev can add the `@<var>` sigil before shipping.
+
+### Flexion — Plurals & Gender (SynPrinter)
+
+Text catalogs work when one source string maps to exactly one translated
+string. They break down for grammars that inflect: English "1 student / 2
+students" has two forms, Portuguese "1 aluno aprovado / 2 alunos aprovados
+/ 1 aluna aprovada / 2 alunas aprovadas" has four, and Arabic has six CLDR
+plural categories per gender. wprana's flex pipeline handles this by making
+the grammar-shaping variables visible to the runtime via inline **sigils**.
+
+**Template syntax.** Inside a `{{...}}` binding, four sigils signal a flex
+block (as opposed to a plain reference):
+
+| Sigil | Role | Example |
+|---|---|---|
+| `@var` | Gender axis — value is the row key (e.g. `"m"`, `"f"`). Not emitted into the rendered string. | `{{@genero ...}}` |
+| `%var` | Count axis — value is the integer count. Emitted at its position in the rule (`{n}` placeholder inside cells). | `{{%qt ...}}` |
+| `~word` | Flex marker — a lemma that will be inflected by the translator. Consumed at build time only (gen_i18n uses it to suggest default forms from `<lang>.db`). | `{{... ~aluno ~aprovado}}` |
+| `#N` | Rule index — injected by `gen_i18n` during rewriting; the webdev does **not** write this by hand. | `{{@genero %qt ~aluno #42}}` |
+
+**Path-based variables.** Both `@var` and `%var` accept full reference
+paths — useful when the axis lives inside a struct or array element:
+
+```html
+<!-- Gender from a user record, count from the current cart line -->
+<p>{{ @user.gender %cart[idx].qty ~aluno aprovado }}</p>
+```
+
+The resolver falls back to the cheap single-level lookup for bare names
+(`@genero`, `%qt`) and routes path-bearing sigils through `wprana.Solve`
+against the live data context.
+
+**Order matters inside the block.** `%var` emits the count value where it
+appears in the rule, so placement controls the output. For "os 10 alunos"
+write `~o %qt ~aluno` — placing `%qt` between the article and the noun. A
+verb that agrees with number must carry its own `~` (e.g. `~ganhou`);
+omitting it leaves a singular verb glued to a plural subject.
+
+**Catalog schema** (`i18n/<lang>.inflections.json`):
+
+```json
+[
+  {
+    "expr": "{{ @genero ~o %qt ~aluno ~aprovado ~ganhou uma bolsa }}",
+    "context":   "pages/result.html:12:8",
+    "ctxdetail": "caption@pages/result.html:12:8",
+    "revised":   false,
+    "forms": {
+      "m.one":   "o {n} aluno aprovado ganhou uma bolsa",
+      "m.other": "os {n} alunos aprovados ganharam uma bolsa",
+      "f.one":   "a {n} aluna aprovada ganhou uma bolsa",
+      "f.other": "as {n} alunas aprovadas ganharam uma bolsa"
+    }
+  }
+]
+```
+
+The `forms` map is keyed by `<gender>.<cldr-category>`. CLDR categories
+come from `golang.org/x/text/feature/plural` and vary per locale (`zero`,
+`one`, `two`, `few`, `many`, `other`). Locales without a gender axis use a
+single empty-string gender (`.one`, `.other`). `{n}` inside a form is
+replaced by the numeric count at render time.
+
+**Runtime behavior.** When `wi18n` is imported, it fetches
+`<lang>.inflections.json` in parallel with the main text catalog and
+installs `wprana.SynPrinter` — a second printer hook invoked by the syncer
+on every flex block. `SynPrinter` resolves the gender and count variables
+from the live data context, computes the CLDR plural category for the
+current locale, and looks up `forms["<gender>.<cat>"]`.
+
+The fallback chain handles sparse catalogs:
+
+1. Explicit `<gender>.zero` wins when count is exactly 0 (useful in pt-BR
+   where CLDR folds 0 into `one`).
+2. Empty `zero` cell → try `<gender>.one`.
+3. Any other empty cell → try `<gender>.other`.
+4. Still empty → render the rule `Label` (the translator-facing stem) as a
+   visible placeholder, rather than blank.
+
+Without `wi18n` loaded, the default `wprana.NoFlexSynPrinter` renders the
+rule index as `#N` — missing inflection support stays obvious on the page
+instead of silently dropping content.
+
+### Locale-Aware Formatting (FmtPrinter)
+
+Text catalogs translate strings and flex blocks resolve plurals/gender. A
+third axis — **values** — needs locale-aware treatment too: numbers use
+different decimal and grouping separators across locales, currencies have
+their own symbols and fractional digits, dates span a zoo of formats. The
+`FmtPrinter` pipeline handles all of these through the same sigil already
+used for the count axis of flex blocks: `%var`.
+
+**Template syntax.** When a `{{...}}` binding contains exactly one `%var`
+(optionally followed by a path tail), it is a **format block** — the
+value is resolved from the data context and handed to `wprana.FmtPrinter`,
+which picks the rendering based on the Go type of the value:
+
+```html
+<!-- Plain numeric value (locale separators) -->
+<p>Total: {{%count}} unidades</p>
+
+<!-- Nested path -->
+<p>Saldo: {{%user.balance}}</p>
+
+<!-- Array element — identical semantics to a plain reference path -->
+<td>{{%invoices[idx].total}}</td>
+```
+
+A `%var` that shares a `{{...}}` with any of `@var`, `~word`, `#N`, or
+other literal tokens is interpreted as a flex block count axis instead
+(see the previous section) — the lone-`%var` rule is the only ambiguity
+cleared at parse time, and it falls on the common case.
+
+**Type-directed rendering.** `wi18n`'s `FmtPrinter` dispatches on the value's
+Go type in this order:
+
+| Type | Output |
+|---|---|
+| `nil` | empty string |
+| `int`, `int64`, `uint`, `uint64`, etc. | `Intl.NumberFormat` integer (grouping per locale) |
+| `float32`, `float64` | `Intl.NumberFormat` default precision |
+| `time.Time` | `Intl.DateTimeFormat` (epoch ms bridge) |
+| `js.Value` holding a JS `Date` | `Intl.DateTimeFormat` direct |
+| anything implementing [`wi18n.Numerical`](#locale-aware-formatting-fmtprinter) | `v.Format(locale, formatName)` |
+| anything else | `fmt.Sprint` fallback |
+
+`wi18n` uses the browser's `Intl` API rather than bundling locale tables
+(ICU/CLDR) inside the WASM binary — keeps the artifact small and honors
+the browser's tz database for dates.
+
+**Numerical interface — customization without registries.** Any Go type
+that implements the following interface is treated as a first-class
+formattable value:
+
+```go
+type Numerical interface {
+    Format(locale, formatName string) string
+}
+```
+
+There is no registration step; satisfying the interface is the
+registration. `formatName` is reserved for the future `%var:formatName`
+template syntax (currently always empty) — implementations can accept any
+value they do not recognise and default to their base rendering.
+
+**wi18n.Currency — built-in example of `Numerical`.**
+
+```go
+type Currency struct {
+    Amount int64  // smallest unit (centavos, cents, yen-units)
+    Code   string // ISO 4217 (BRL, USD, JPY, BHD)
+}
+```
+
+`Currency` implements `Numerical`. The amount is stored as a signed `int64`
+in the currency's minor unit — no float rounding surprises on financial
+data — and the ISO code travels with the value so multi-currency templates
+work by iterating a `[]Currency` naturally:
+
+```go
+// mod/invoice/invoice.go
+data := map[string]any{
+    "lines": []wi18n.Currency{
+        {Amount: 123450, Code: "BRL"}, // R$ 1.234,50 in pt-BR
+        {Amount: 9999,   Code: "USD"}, // $99.99 in en-US
+    },
+}
+```
+
+```html
+<!-- mod/invoice/invoice.html -->
+<tr *lines:i><td>{{%lines[i]}}</td></tr>
+```
+
+Applications with a single fixed currency typically wrap `Currency` in a
+helper:
+
+```go
+func BRL(n int64) wi18n.Currency { return wi18n.Currency{Amount: n, Code: "BRL"} }
+```
+
+Or define their own domain type implementing `Numerical` and delegating to
+`Currency` internally — that is the recommended extension point for custom
+business units (distance, velocity, temperature, etc.) that will be
+covered by the measures layer in a future release.
+
+An ISO 4217 table (embedded in `wi18n/currency_iso4217.go`) decides the
+number of fractional digits — most currencies use 2, with documented
+exceptions for zero-decimal (JPY, KRW, VND, …), three-decimal (BHD, KWD,
+…), and four-decimal (CLF, UYW) cases.
+
+**Fallback behaviour.** Without `wi18n` imported, `wprana.FmtPrinter`
+stays as the default `NoFmtFmtPrinter`, which renders values via
+`fmt.Sprint` — locale-incorrect but never blank. When `wi18n` is loaded
+but the browser's `Intl` rejects a locale/currency combination (or the
+environment has no `Intl` at all), each formatter falls back to a
+locale-agnostic rendering (`strconv`, plain decimal point, RFC 3339 for
+dates) so the page stays readable.
+
+**Reserved for later:** named formats (`%var:curta`, `%var:completa`),
+per-locale `<lang>.fmt.json` config files, and the `measure.conf`
+canonical-unit system described in the design notes. These depend on
+interface-driven measurement types that are still being designed.
+
 ### cmd/dictbuild & cmd/dictlookup — Flexion Dictionaries
 
 These two tools convert a Unitex/GramLab DELAF `.dic` (UTF-16 text) into a
@@ -1442,7 +1668,11 @@ review and edit catalogs side-by-side with a reference language.
     "ctxdetail": "th@pages/result.html:12:8<br/>button[title]@pages/result.html:40:17"}]
 
   // i18n/<lang>.inflections.json
-  [{"expr": "{{ @sexo %qt ~o ~aluno ~aprovado }}",
+  // Sigil order matters: %qt emits the number where it appears, so place
+  // it AFTER ~o and BEFORE ~aluno for "os 10 alunos" (not "10 os alunos").
+  // Verbs that conjugate with number (~ganhou/ganharam) need the ~ too —
+  // missing a ~ on a number-agreeing verb causes "10 alunos ganhou" bugs.
+  [{"expr": "{{ @genero ~o %qt ~aluno ~aprovado ~ganhou uma bolsa }}",
     "context": "...", "ctxdetail": "caption", "revised": false,
     "forms": {"m.one": "...", "f.other": "..."}}]
   ```
@@ -1628,6 +1858,11 @@ data map -> calls the function.
 | `**` | Iteration (no wrap) | `**items:i` | Repeat first child for each item (container stays). |
 | `&` | Two-way | `&value="{{val}}"` | Sync `<input>` / `<select>` / `<textarea>` with data. |
 | `@` | Event | `@click="on_save"` | Dispatch child event to parent handler function. |
+| `@var` | Flex gender (i18n) | `{{@genero ~o %qt ~aluno}}` | Gender axis in a flexion block. Value keys the `<gender>.<category>` row. |
+| `%var` | Flex count (i18n) | `{{%qt ~aluno}}` | Count axis in a flexion block. Emitted at its position; drives CLDR plural category. |
+| `%var` (lone) | Format (i18n) | `{{%preco}}` | Locale-aware formatting. Type-directed: ints/floats, `time.Time`, `wi18n.Currency`, or any `Numerical`. |
+| `~word` | Flex stem (i18n) | `{{~aluno ~aprovado}}` | Build-time marker for a word the translator will inflect. Consumed by `gen_i18n`. |
+| `#N` | Flex rule index (i18n) | `{{@genero %qt #42}}` | Auto-assigned by `gen_i18n` when rewriting `.i18n.html`. Webdev never writes this. |
 
 ## Important Notes
 

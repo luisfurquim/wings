@@ -1,6 +1,6 @@
 [
   {
-    "expr": "{{ @sexo %qt ~o ~aluno ~aprovado }}",
+    "expr": "{{ @genero %qt ~o ~aluno ~aprovado }}",
     "context": "pages/result.html:15",
     "ctxdetail": "caption",
     "revised": true,
@@ -12,7 +12,7 @@
     }
   },
   {
-    "expr": "{{ @sexo %qt ~o ~professor ~presente }}",
+    "expr": "{{ @genero %qt ~o ~professor ~presente }}",
     "context": "pages/staff.html:8",
     "revised": false,
     "forms": {

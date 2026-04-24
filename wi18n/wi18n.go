@@ -79,6 +79,11 @@ func BasePath() string {
 func init() {
 	lang = detectLang()
 	setHTMLLang(lang)
+	wprana.Locale = lang
+
+	// Install locale-aware formatting immediately — it has no async deps.
+	// Printer / SynPrinter are installed later by the catalog loader.
+	wprana.FmtPrinter = fmtPrinter
 
 	// Register ourselves as an async initializer so that wprana.Main() waits
 	// until the JSON has been fetched and parsed before defining the modules.
@@ -129,10 +134,21 @@ func loadAndInstall() {
 	if picked != lang {
 		lang = picked
 		setHTMLLang(lang)
+		wprana.Locale = lang
 	}
 
 	wprana.Printer = lookup
 	wprana.G.Logf(2, "wi18n: loaded %d entries for lang=%s\n", len(table), lang)
+
+	// Inflections are optional — apps without flex blocks never produce a
+	// <lang>.inflections.json and should silently skip this step.
+	loadFlexCatalog(picked)
+}
+
+// jsonUnmarshal is a thin wrapper so sibling files can decode without
+// importing encoding/json themselves (keeps the import list in one place).
+func jsonUnmarshal(body string, out any) error {
+	return json.Unmarshal([]byte(body), out)
 }
 
 // fallbackChain builds the ordered list of language tags to try, starting
@@ -179,9 +195,21 @@ func lookup(in string) string {
 
 // ── Language detection ──────────────────────────────────────────────────────
 
-// detectLang picks the first entry from navigator.languages (falling back to
-// navigator.language). Returns "en-US" if nothing is available.
+// detectLang picks the language tag for this session. It honors an explicit
+// <html lang="..."> attribute first (developer override), then falls back to
+// navigator.languages / navigator.language. Returns "en-US" if nothing is
+// available.
 func detectLang() string {
+	doc := wprana.JSGlobal().Get("document")
+	if !doc.IsUndefined() && !doc.IsNull() {
+		html := doc.Get("documentElement")
+		if !html.IsUndefined() && !html.IsNull() {
+			if tag := html.Call("getAttribute", "lang"); !tag.IsUndefined() && !tag.IsNull() && tag.String() != "" {
+				return tag.String()
+			}
+		}
+	}
+
 	nav := wprana.JSGlobal().Get("navigator")
 
 	langs := nav.Get("languages")

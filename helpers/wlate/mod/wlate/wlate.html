@@ -46,28 +46,37 @@
    <div ?tab="inflection" class="wl-panels">
       <div class="wl-panel wl-panel-left">
          <div class="wl-expr">{{inflection_expr}}</div>
-         <div class="wl-grid" id="wl-grid-left">
-            <div class="wl-grid-corner"></div>
-            <div class="wl-grid-col-header" *genders:gi>{{genders[gi]}}</div>
-            <div class="wl-grid-rows" **categories:ci>
-               <div class="wl-grid-row">
-                  <div class="wl-grid-row-header">{{categories[ci]}}</div>
-                  <div class="wl-grid-cell" *genders:gi>{{left_cells[ci].cols[gi]}}</div>
+         <div class="wl-grid" id="wl-grid-left" role="grid">
+            <div class="wl-grid-corner" role="columnheader"></div>
+            <div class="wl-grid-col-header" role="columnheader"
+                 *gender_headers:gi
+                 aria-label="{{gender_headers[gi].aria}}">{{gender_headers[gi].label}}</div>
+            <div class="wl-grid-rows" **category_headers:ci>
+               <div class="wl-grid-row" role="row">
+                  <div class="wl-grid-row-header" role="rowheader"
+                       aria-label="{{category_headers[ci].aria}}">{{category_headers[ci].label}}</div>
+                  <div class="wl-grid-cell" role="gridcell"
+                       *gender_headers:gi>{{left_cells[ci].cols[gi]}}</div>
                </div>
             </div>
          </div>
       </div>
       <div class="wl-panel wl-panel-right" id="wl-right-inflection-panel">
          <div class="wl-expr">{{inflection_expr}}</div>
-         <div class="wl-grid" id="wl-grid-right">
-            <div class="wl-grid-corner"></div>
-            <div class="wl-grid-col-header" *genders:gi>{{genders[gi]}}</div>
-            <div class="wl-grid-rows" **categories:ci>
-               <div class="wl-grid-row">
-                  <div class="wl-grid-row-header">{{categories[ci]}}</div>
-                  <div class="wl-grid-cell-edit" *genders:gi>
+         <div class="wl-grid" id="wl-grid-right" role="grid">
+            <div class="wl-grid-corner" role="columnheader"></div>
+            <div class="wl-grid-col-header" role="columnheader"
+                 *gender_headers:gi
+                 aria-label="{{gender_headers[gi].aria}}">{{gender_headers[gi].label}}</div>
+            <div class="wl-grid-rows" **category_headers:ci>
+               <div class="wl-grid-row" role="row">
+                  <div class="wl-grid-row-header" role="rowheader"
+                       aria-label="{{category_headers[ci].aria}}">{{category_headers[ci].label}}</div>
+                  <div class="wl-grid-cell-edit" role="gridcell"
+                       *gender_headers:gi>
                      <input class="wl-cell-input" type="text"
                             data-ci="{{ci}}" data-gi="{{gi}}"
+                            aria-label="{{category_headers[ci].aria}}, {{gender_headers[gi].aria}}"
                             &value="{{right_cells[ci].cols[gi]}}" />
                   </div>
                </div>

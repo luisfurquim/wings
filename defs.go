@@ -3,12 +3,17 @@
 package wprana
 
 import (
+	"fmt"
+	"strconv"
 	"sync"
 	"syscall/js"
 
 	"github.com/luisfurquim/goose"
 	"github.com/luisfurquim/wprana/expr"
 )
+
+// itoa is a package-local shortcut used by SynPrinter fallbacks.
+func itoa(n int) string { return strconv.Itoa(n) }
 
 // G is the global logger for the package. Recommended levels: 1=errors only, 2=general, 3=detail,
 // 4=light debug, 5=verbose debug, 6=sensitive debug.
@@ -32,6 +37,60 @@ func ByPass(in string) string {
 	return in
 }
 
+// SynPrinter resolves a flexion reference block (e.g. `{{@genero %qt #42}}`)
+// at sync time. It receives the raw flex token slice (the inner part of the
+// `{{...}}` block) and the current data context stack, and returns the
+// rendered string for the current locale.
+//
+// The default is NoFlexSynPrinter, which emits a best-effort literal
+// rendering so pages without wi18n still show something sensible. When
+// wi18n is imported, its init installs a catalog-backed implementation
+// that performs CLDR plural resolution against the loaded inflections
+// catalog.
+var SynPrinter func(toks []RefNode, ctx Ctx) string = NoFlexSynPrinter
+
+// NoFlexSynPrinter is the default SynPrinter: since no inflections catalog
+// is loaded, it returns the rule index in `#N` form as a visible marker —
+// missing translations stay obvious instead of rendering blank.
+func NoFlexSynPrinter(toks []RefNode, _ Ctx) string {
+	for _, t := range toks {
+		if t.Type == expr.TokFlexIdx {
+			return "#" + itoa(t.IntVal)
+		}
+	}
+	return ""
+}
+
+// Locale is the BCP 47 language tag currently in effect for locale-aware
+// rendering (FmtPrinter, SynPrinter). Empty until a catalog-backed package
+// (e.g. wi18n) detects the browser language and assigns it. Reading an
+// empty Locale is safe — FmtPrinter implementations fall back to a
+// locale-agnostic rendering in that case.
+var Locale string
+
+// FmtPrinter formats a single value into its locale-appropriate string
+// representation. It is called by the solver for lone-`%var` bindings
+// (FmtBlock), invoked with the resolved value, the current Locale, and an
+// optional format name (reserved for `%var:formatName` syntax — currently
+// always empty).
+//
+// The default is NoFmtFmtPrinter, a locale-agnostic `fmt.Sprint` passthrough.
+// When wi18n is imported, its init installs a type-switching implementation
+// that routes native ints/floats through golang.org/x/text/message, time.Time
+// through Intl.DateTimeFormat, and any value implementing wi18n.Numerical
+// through its Format(locale, formatName) method.
+var FmtPrinter func(val any, locale, formatName string) string = NoFmtFmtPrinter
+
+// NoFmtFmtPrinter is the default FmtPrinter. With no locale-aware backend
+// loaded, it renders values via fmt.Sprint so pages still show something
+// reasonable — just not locale-correct.
+func NoFmtFmtPrinter(val any, _ string, _ string) string {
+	if val == nil {
+		return ""
+	}
+	return fmt.Sprint(val)
+}
+
 // ── Type aliases for expr package ───────────────────────────────────────────
 // These aliases allow the rest of the wprana package to use the parser
 // types without qualifying every reference with "expr.".
@@ -39,19 +98,24 @@ func ByPass(in string) string {
 type TokenType = expr.TokenType
 type RefNode = expr.RefNode
 type TextSegment = expr.TextSegment
+type FlexBlock = expr.FlexBlock
 
 const (
-	TokTxt   = expr.TokTxt
-	TokRef   = expr.TokRef
-	TokStr   = expr.TokStr
-	TokDot   = expr.TokDot
-	TokOpen  = expr.TokOpen
-	TokClose = expr.TokClose
-	TokNum   = expr.TokNum
-	TokIdent = expr.TokIdent
-	TokWSep  = expr.TokWSep
-	TokExpr  = expr.TokExpr
-	TokAttr  = expr.TokAttr
+	TokTxt       = expr.TokTxt
+	TokRef       = expr.TokRef
+	TokStr       = expr.TokStr
+	TokDot       = expr.TokDot
+	TokOpen      = expr.TokOpen
+	TokClose     = expr.TokClose
+	TokNum       = expr.TokNum
+	TokIdent     = expr.TokIdent
+	TokWSep      = expr.TokWSep
+	TokExpr      = expr.TokExpr
+	TokAttr      = expr.TokAttr
+	TokPctVar    = expr.TokPctVar
+	TokAtVar     = expr.TokAtVar
+	TokTildeWord = expr.TokTildeWord
+	TokFlexIdx   = expr.TokFlexIdx
 )
 
 // AttrBinding stores the bindings of a single attribute.

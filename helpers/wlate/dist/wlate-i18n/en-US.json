@@ -96,8 +96,8 @@
     "ctxdetail": "label@wlate/wlate.html:83:105"
   },
   {
-    "content": "First",
-    "revised": true,
+    "content": "",
+    "revised": false,
     "context": "wlate/wlate.html:87:59",
     "ctxdetail": "button[title]@wlate/wlate.html:87:59"
   },
@@ -108,8 +108,8 @@
     "ctxdetail": "button@wlate/wlate.html:87:69"
   },
   {
-    "content": "Back 10",
-    "revised": true,
+    "content": "",
+    "revised": false,
     "context": "wlate/wlate.html:88:60",
     "ctxdetail": "button[title]@wlate/wlate.html:88:60"
   },
@@ -120,8 +120,8 @@
     "ctxdetail": "button@wlate/wlate.html:88:71"
   },
   {
-    "content": "Back",
-    "revised": true,
+    "content": "",
+    "revised": false,
     "context": "wlate/wlate.html:89:58",
     "ctxdetail": "button[title]@wlate/wlate.html:89:58"
   },
@@ -138,8 +138,8 @@
     "ctxdetail": "span@wlate/wlate.html:91:39"
   },
   {
-    "content": "Forward",
-    "revised": true,
+    "content": "",
+    "revised": false,
     "context": "wlate/wlate.html:92:58",
     "ctxdetail": "button[title]@wlate/wlate.html:92:58"
   },
@@ -150,8 +150,8 @@
     "ctxdetail": "button@wlate/wlate.html:92:68"
   },
   {
-    "content": "Forward 10",
-    "revised": true,
+    "content": "",
+    "revised": false,
     "context": "wlate/wlate.html:93:60",
     "ctxdetail": "button[title]@wlate/wlate.html:93:60"
   },
@@ -162,8 +162,8 @@
     "ctxdetail": "button@wlate/wlate.html:93:73"
   },
   {
-    "content": "Last",
-    "revised": true,
+    "content": "",
+    "revised": false,
     "context": "wlate/wlate.html:94:58",
     "ctxdetail": "button[title]@wlate/wlate.html:94:58"
   },
@@ -174,8 +174,8 @@
     "ctxdetail": "button@wlate/wlate.html:94:67"
   },
   {
-    "content": "Save (Ctrl+S)",
-    "revised": true,
+    "content": "",
+    "revised": false,
     "context": "wlate/wlate.html:96:56",
     "ctxdetail": "button[title]@wlate/wlate.html:96:56"
   },

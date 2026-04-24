@@ -7,6 +7,8 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/luisfurquim/wprana/expr"
 )
 
 // ── Field and index access ──────────────────────────────────────────────────
@@ -167,11 +169,11 @@ func coerceToType(s string, existing any) any {
 
 // ── Reference resolution ────────────────────────────────────────────────────
 
-// solve walks the reference tree and resolves the value against ctx.
+// Solve walks the reference tree and resolves the value against ctx.
 // fullCtx is the full context stack, used to resolve sub-expressions
 // (e.g.: the index [fi] in filtered_options[fi]) that may be in different
 // layers from where the root identifier was found.
-func solve(tree []RefNode, ctx any, fullCtx Ctx) any {
+func Solve(tree []RefNode, ctx any, fullCtx Ctx) any {
 	if tree == nil {
 		return ctx
 	}
@@ -198,7 +200,7 @@ func solve(tree []RefNode, ctx any, fullCtx Ctx) any {
 			// the array was found in the data layer.
 			var key any
 			for _, layer := range fullCtx {
-				key = solve(tree[i].Sub, layer, fullCtx)
+				key = Solve(tree[i].Sub, layer, fullCtx)
 				if key != nil {
 					break
 				}
@@ -210,10 +212,10 @@ func solve(tree []RefNode, ctx any, fullCtx Ctx) any {
 	return sym
 }
 
-// solveAll walks all segments, resolves references and concatenates.
+// SolveAll walks all segments, resolves references and concatenates.
 // Searches in ctx (context stack) until a non-nil value is found.
 // Equivalent to the solveAll() from the original JS.
-func solveAll(segs []TextSegment, ctx Ctx) string {
+func SolveAll(segs []TextSegment, ctx Ctx) string {
 	var sb strings.Builder
 
 	for i := range segs {
@@ -221,10 +223,40 @@ func solveAll(segs []TextSegment, ctx Ctx) string {
 			sb.WriteString(segs[i].Lit)
 			continue
 		}
+		// Flex blocks bypass Solve(): their tokens are sigil-based, not
+		// path-based, and need CLDR/catalog resolution. Route to SynPrinter.
+		if expr.IsFlexBlock(segs[i].Ref) {
+			sb.WriteString(SynPrinter(segs[i].Ref, ctx))
+			continue
+		}
+		// Lone %var (optional path): locale-aware formatting. Resolve the
+		// value through the normal Solve pipeline, then hand it to
+		// FmtPrinter for type-directed rendering.
+		if expr.IsFmtBlock(segs[i].Ref) {
+			toksCopy := append([]RefNode(nil), segs[i].Ref...)
+			fb, err := expr.ParseFmtBlock(&toksCopy)
+			if err != nil {
+				G.Logf(1, "wprana: ParseFmtBlock: %v\n", err)
+				continue
+			}
+			path := fb.Path
+			if path == nil {
+				path = []RefNode{{Type: TokIdent, StrVal: fb.Var}}
+			}
+			var val any
+			for j := range ctx {
+				val = Solve(path, ctx[j], ctx)
+				if val != nil {
+					break
+				}
+			}
+			sb.WriteString(FmtPrinter(val, Locale, ""))
+			continue
+		}
 		// Search in the context stack
 		var val any
 		for j := range ctx {
-			val = solve(segs[i].Ref, ctx[j], ctx)
+			val = Solve(segs[i].Ref, ctx[j], ctx)
 			if val != nil {
 				break
 			}
@@ -275,7 +307,7 @@ func refOf(tree []RefNode, ctx Ctx) (container any, key string) {
 		case TokExpr:
 			var resolved any
 			for _, layer := range ctx {
-				resolved = solve(tree[i].Sub, layer, ctx)
+				resolved = Solve(tree[i].Sub, layer, ctx)
 				if resolved != nil {
 					break
 				}

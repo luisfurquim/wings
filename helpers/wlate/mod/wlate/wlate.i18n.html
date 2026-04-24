@@ -46,27 +46,27 @@
    <div ?tab="inflection" class="wl-panels">
       <div class="wl-panel wl-panel-left">
          <div class="wl-expr">11</div>
-         <div class="wl-grid" id="wl-grid-left">
-            <div class="wl-grid-corner"></div>
-            <div class="wl-grid-col-header" *genders:gi="">12</div>
-            <div class="wl-grid-rows" **categories:ci="">
-               <div class="wl-grid-row">
-                  <div class="wl-grid-row-header">13</div>
-                  <div class="wl-grid-cell" *genders:gi="">14</div>
+         <div class="wl-grid" id="wl-grid-left" role="grid">
+            <div class="wl-grid-corner" role="columnheader"></div>
+            <div class="wl-grid-col-header" role="columnheader" *gender_headers:gi="" aria-label="12">13</div>
+            <div class="wl-grid-rows" **category_headers:ci="">
+               <div class="wl-grid-row" role="row">
+                  <div class="wl-grid-row-header" role="rowheader" aria-label="14">15</div>
+                  <div class="wl-grid-cell" role="gridcell" *gender_headers:gi="">16</div>
                </div>
             </div>
          </div>
       </div>
       <div class="wl-panel wl-panel-right" id="wl-right-inflection-panel">
          <div class="wl-expr">11</div>
-         <div class="wl-grid" id="wl-grid-right">
-            <div class="wl-grid-corner"></div>
-            <div class="wl-grid-col-header" *genders:gi="">12</div>
-            <div class="wl-grid-rows" **categories:ci="">
-               <div class="wl-grid-row">
-                  <div class="wl-grid-row-header">13</div>
-                  <div class="wl-grid-cell-edit" *genders:gi="">
-                     <input class="wl-cell-input" type="text" data-ci="{{ci}}" data-gi="{{gi}}" &value="{{right_cells[ci].cols[gi]}}"/>
+         <div class="wl-grid" id="wl-grid-right" role="grid">
+            <div class="wl-grid-corner" role="columnheader"></div>
+            <div class="wl-grid-col-header" role="columnheader" *gender_headers:gi="" aria-label="12">13</div>
+            <div class="wl-grid-rows" **category_headers:ci="">
+               <div class="wl-grid-row" role="row">
+                  <div class="wl-grid-row-header" role="rowheader" aria-label="14">15</div>
+                  <div class="wl-grid-cell-edit" role="gridcell" *gender_headers:gi="">
+                     <input class="wl-cell-input" type="text" data-ci="{{ci}}" data-gi="{{gi}}" aria-label="17" &value="{{right_cells[ci].cols[gi]}}"/>
                   </div>
                </div>
             </div>
@@ -78,28 +78,28 @@
    <!-- Navigation -->
    <div class="wl-nav">
       <label class="wl-filter-toggle" id="wl-filter-toggle">
-         <span class="wl-toggle-track" id="wl-toggle-track"><span class="wl-toggle-thumb"></span></span>15</label>
+         <span class="wl-toggle-track" id="wl-toggle-track"><span class="wl-toggle-thumb"></span></span>18</label>
       <div class="wl-nav-buttons">
-         <button id="nav-first" class="wl-nav-btn" title="16">17</button>
-         <button id="nav-prev10" class="wl-nav-btn" title="18">19</button>
-         <button id="nav-prev" class="wl-nav-btn" title="20">21</button>
+         <button id="nav-first" class="wl-nav-btn" title="19">20</button>
+         <button id="nav-prev10" class="wl-nav-btn" title="21">22</button>
+         <button id="nav-prev" class="wl-nav-btn" title="23">24</button>
          <input id="nav-input" class="wl-nav-input" type="text" &value="{{nav_input}}"/>
-         <span class="wl-record-info">22</span>
-         <button id="nav-next" class="wl-nav-btn" title="23">24</button>
-         <button id="nav-next10" class="wl-nav-btn" title="25">26</button>
-         <button id="nav-last" class="wl-nav-btn" title="27">28</button>
+         <span class="wl-record-info">25</span>
+         <button id="nav-next" class="wl-nav-btn" title="26">27</button>
+         <button id="nav-next10" class="wl-nav-btn" title="28">29</button>
+         <button id="nav-last" class="wl-nav-btn" title="30">31</button>
       </div>
-      <button id="btn-save" class="wl-save-btn" title="29">30</button>
+      <button id="btn-save" class="wl-save-btn" title="32">33</button>
    </div>
 
    <!-- Unsaved changes dialog -->
    <div ?show_dialog="" class="wl-overlay">
       <div class="wl-dialog">
-         <p>31</p>
+         <p>34</p>
          <div class="wl-dialog-btns">
-            <button id="dlg-save">32</button>
-            <button id="dlg-discard">33</button>
-            <button id="dlg-cancel">34</button>
+            <button id="dlg-save">35</button>
+            <button id="dlg-discard">36</button>
+            <button id="dlg-cancel">37</button>
          </div>
       </div>
    </div>

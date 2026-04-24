@@ -46,7 +46,7 @@ func syncElement(dom js.Value, ref *DOMRefNode, ctx Ctx, state *PranaState, sync
 
 	// ── Attributes ──────────────────────────────────────────────────────
 	for attrName, ab := range ref.Attrs {
-		val := solveAll(ab.Segs, ctx)
+		val := SolveAll(ab.Segs, ctx)
 
 		dom.Call("setAttribute", attrName, val)
 
@@ -162,7 +162,7 @@ func condSync(dom js.Value, ref *DOMRefNode, ctx Ctx, index any, state *PranaSta
 	// Resolve condition
 	var res any
 	for i := range ctx {
-		res = solve(ref.CondTree, ctx[i], ctx)
+		res = Solve(ref.CondTree, ctx[i], ctx)
 		if res != nil {
 			break
 		}
@@ -209,7 +209,7 @@ func replaceInDaddy(daddy, old, newNode js.Value) {
 
 // syncText resolves a text node's bindings and updates the DOM.
 func syncText(dom js.Value, ref *DOMRefNode, ctx Ctx) {
-	val := solveAll(ref.TextSegs, ctx)
+	val := SolveAll(ref.TextSegs, ctx)
 	// textarea: update .value, others: update .data
 	parent := dom.Get("parentNode")
 	if !parent.IsNull() && !parent.IsUndefined() && tagName(parent) == "textarea" {
@@ -223,7 +223,7 @@ func syncText(dom js.Value, ref *DOMRefNode, ctx Ctx) {
 // the resolved slice, or nil if not found.
 func resolveArray(st *NodeState, ref *DOMRefNode, ctx Ctx) []any {
 	for j := range ctx {
-		v := solve(st.Tree, ctx[j], ctx)
+		v := Solve(st.Tree, ctx[j], ctx)
 		if v != nil {
 			if a, ok := v.([]any); ok {
 				return a

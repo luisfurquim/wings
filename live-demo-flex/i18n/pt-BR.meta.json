@@ -1,0 +1,30 @@
+[
+  {
+    "context": "docs/index.html:5:11",
+    "ctxdetail": "title@docs/index.html:5:11"
+  },
+  {
+    "context": "mod/flexwidget/flexwidget.html:2:8",
+    "ctxdetail": "h1@mod/flexwidget/flexwidget.html:2:8"
+  },
+  {
+    "context": "mod/flexwidget/flexwidget.html:5:14",
+    "ctxdetail": "label@mod/flexwidget/flexwidget.html:5:14"
+  },
+  {
+    "context": "mod/flexwidget/flexwidget.html:8:31",
+    "ctxdetail": "option@mod/flexwidget/flexwidget.html:8:31"
+  },
+  {
+    "context": "mod/flexwidget/flexwidget.html:9:31",
+    "ctxdetail": "option@mod/flexwidget/flexwidget.html:9:31"
+  },
+  {
+    "context": "mod/flexwidget/flexwidget.html:12:14",
+    "ctxdetail": "label@mod/flexwidget/flexwidget.html:12:14"
+  },
+  {
+    "context": "mod/flexwidget/flexwidget.html:18:22",
+    "ctxdetail": "p@mod/flexwidget/flexwidget.html:18:22"
+  }
+]

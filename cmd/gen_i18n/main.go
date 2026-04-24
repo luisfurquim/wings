@@ -160,7 +160,7 @@ func main() {
 	for _, langFile := range langFiles {
 		base := filepath.Base(langFile)
 		lang := strings.TrimSuffix(base, ".json")
-		if lang == defLang || strings.Contains(base, ".inflections.") {
+		if lang == defLang || strings.Contains(base, ".inflections.") || strings.HasSuffix(lang, ".meta") {
 			continue
 		}
 		oldLang, err := loadJSON(langFile)
@@ -181,6 +181,13 @@ func main() {
 		}
 	}
 
+	// Emit <lang>.inflections.json for every discovered language, including
+	// deflang. Translations are remapped across runs by canonical label.
+	if err := emitFlexCatalogs(i18nDir, defLang); err != nil {
+		fmt.Fprintf(os.Stderr, "error emitting flex catalogs: %v\n", err)
+		os.Exit(1)
+	}
+
 	// Save the current tree to i18n.db.
 	dbPath := filepath.Join(rootDir, "i18n.db")
 	if err := saveDB(dbPath, version); err != nil {
@@ -191,6 +198,7 @@ func main() {
 	fmt.Printf("done: %d entries, version %d\n", len(dbMap), version)
 	fmt.Printf("Arena: %d nodes\n", len(arena))
 	fmt.Printf("Txt: %d entries\n", len(txt))
+	fmt.Printf("Flex: %d rules\n", len(flexBlocks))
 }
 
 // buildEntries assembles the [wi18n.Entry] slice for one language.
@@ -215,10 +223,14 @@ func buildEntries(
 			content = contentOverride(i)
 		}
 		out[i] = wi18n.Entry{
-			Content:   content,
-			Revised:   revised,
-			Context:   formatFirstContext(int32(i)),
-			Ctxdetail: formatCtxdetail(int32(i)),
+			EntryData: wi18n.EntryData{
+				Content: content,
+				Revised: revised,
+			},
+			EntryMeta: wi18n.EntryMeta{
+				Context:   formatFirstContext(int32(i)),
+				Ctxdetail: formatCtxdetail(int32(i)),
+			},
 		}
 	}
 	return out
@@ -253,8 +265,27 @@ func mustRel(root, path string) string {
 	return rel
 }
 
-// loadJSON reads a <lang>.json catalog. Returns nil if the file does not
-// exist.
+// metaPath derives the sibling meta-file path for a data-file path:
+// foo/i18n/pt-BR.json                     → foo/i18n/pt-BR.meta.json
+// foo/i18n/pt-BR.inflections.json         → foo/i18n/pt-BR.inflections.meta.json
+func metaPath(dataPath string) string {
+	return strings.TrimSuffix(dataPath, ".json") + ".meta.json"
+}
+
+// loadJSON reads a <lang>.json catalog and its sibling <lang>.meta.json,
+// merging them into the in-memory []wi18n.Entry form. Returns nil when the
+// data file does not exist.
+//
+// Handles two on-disk formats transparently:
+//   - Split (new): data file has only content/revised; meta file has
+//     context/ctxdetail. Both JSON decoders produce populated fields via
+//     their respective tags; the merge step copies meta into entry.
+//   - Legacy combined (old): data file has all four fields inline; no meta
+//     file exists. json.Unmarshal fills everything from the single file and
+//     the meta read returns nil, so the entries are already complete.
+//
+// In both cases the returned slice is indistinguishable. On the next save
+// gen_i18n writes the split format, so legacy files migrate on first run.
 func loadJSON(path string) ([]wi18n.Entry, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -270,18 +301,61 @@ func loadJSON(path string) ([]wi18n.Entry, error) {
 	if err := json.Unmarshal(data, &entries); err != nil {
 		return nil, fmt.Errorf("parse json: %w", err)
 	}
+	metas, err := loadEntryMetas(metaPath(path))
+	if err != nil {
+		return nil, err
+	}
+	for i := range entries {
+		if i < len(metas) {
+			entries[i].Context = metas[i].Context
+			entries[i].Ctxdetail = metas[i].Ctxdetail
+		}
+	}
 	return entries, nil
 }
 
-// saveJSON writes entries as an indented JSON array. HTML escaping is
-// disabled so the <br/> separator inside Ctxdetail stays human-readable in
-// the on-disk file (JSON decoders handle both forms identically).
+func loadEntryMetas(path string) ([]wi18n.EntryMeta, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	if len(bytes.TrimSpace(data)) == 0 {
+		return nil, nil
+	}
+	var metas []wi18n.EntryMeta
+	if err := json.Unmarshal(data, &metas); err != nil {
+		return nil, fmt.Errorf("parse meta json: %w", err)
+	}
+	return metas, nil
+}
+
+// saveJSON writes the data half to path and the meta half to the sibling
+// meta path. HTML escaping is disabled in both so "<br/>" separators stay
+// human-readable; JSON decoders handle the escaped form identically.
 func saveJSON(path string, entries []wi18n.Entry) error {
+	datas := make([]wi18n.EntryData, len(entries))
+	metas := make([]wi18n.EntryMeta, len(entries))
+	for i, e := range entries {
+		datas[i] = e.EntryData
+		metas[i] = e.EntryMeta
+	}
+	if err := writeIndentedJSON(path, datas); err != nil {
+		return err
+	}
+	return writeIndentedJSON(metaPath(path), metas)
+}
+
+// writeIndentedJSON encodes v as indented JSON with HTML escaping disabled
+// and writes it to path.
+func writeIndentedJSON(path string, v any) error {
 	var buf bytes.Buffer
 	enc := json.NewEncoder(&buf)
 	enc.SetEscapeHTML(false)
 	enc.SetIndent("", "  ")
-	if err := enc.Encode(entries); err != nil {
+	if err := enc.Encode(v); err != nil {
 		return err
 	}
 	return os.WriteFile(path, buf.Bytes(), 0644)
@@ -307,7 +381,7 @@ func migrateCSVToJSON(i18nDir string) error {
 		}
 		entries := make([]wi18n.Entry, len(rows))
 		for i, s := range rows {
-			entries[i] = wi18n.Entry{Content: s}
+			entries[i] = wi18n.Entry{EntryData: wi18n.EntryData{Content: s}}
 		}
 		if err := saveJSON(jsonPath, entries); err != nil {
 			return fmt.Errorf("write %s: %w", jsonPath, err)
@@ -474,13 +548,22 @@ func replaceTextNodes(n *html.Node, dbMap map[string]string, relPath string, tra
 		if isBlank(original) {
 			return
 		}
-		txtIdx := resolveHash(original, dbMap)
 
 		line, col := tracker.find(original)
 		tag := ""
 		if n.Parent != nil && n.Parent.Type == html.ElementNode {
 			tag = n.Parent.Data
 		}
+
+		// Rewrite flex blocks (e.g. {{@s %q ~o ~aluno}} → {{@s %q #N}})
+		// before hashing, so the txt catalog stores the stable runtime form.
+		rewritten, _ := rewriteFlexBlocks(original, func(idx int32) {
+			flexOccurrences[idx] = append(flexOccurrences[idx], Occurrence{
+				Path: relPath, Line: line, Col: col, Tag: tag,
+			})
+		})
+		txtIdx := resolveHash(rewritten, dbMap)
+
 		occurrences[txtIdx] = append(occurrences[txtIdx], Occurrence{
 			Path: relPath,
 			Line: line,
@@ -501,13 +584,19 @@ func replaceTextNodes(n *html.Node, dbMap map[string]string, relPath string, tra
 			if a.Val == "" || isBlank(a.Val) {
 				continue
 			}
-			txtIdx := resolveHash(a.Val, dbMap)
 			line, col := tracker.find(a.Val)
+			attrTag := n.Data + "[" + a.Key + "]"
+			rewritten, _ := rewriteFlexBlocks(a.Val, func(idx int32) {
+				flexOccurrences[idx] = append(flexOccurrences[idx], Occurrence{
+					Path: relPath, Line: line, Col: col, Tag: attrTag,
+				})
+			})
+			txtIdx := resolveHash(rewritten, dbMap)
 			occurrences[txtIdx] = append(occurrences[txtIdx], Occurrence{
 				Path: relPath,
 				Line: line,
 				Col:  col,
-				Tag:  n.Data + "[" + a.Key + "]",
+				Tag:  attrTag,
 			})
 			a.Val = fmt.Sprintf("%d", txtIdx)
 		}
