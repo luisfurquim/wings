@@ -4,8 +4,6 @@ package wprana
 
 import (
 	"syscall/js"
-
-	"github.com/luisfurquim/wprana/expr"
 )
 
 // RetranslateAll re-applies the active Printer to every live custom element
@@ -90,7 +88,7 @@ func rebindWalk(dom js.Value, ref *DOMRefNode) {
 	if ref.Type == TokTxt {
 		srcVal := dom.Get("_wi18nSrc")
 		if srcVal.Type() == js.TypeString {
-			if segs, err := expr.ParseText(Printer(srcVal.String())); err == nil {
+			if segs, err := cachedParseText(Printer(srcVal.String())); err == nil {
 				ref.TextSegs = segs
 			}
 		}
@@ -100,7 +98,7 @@ func rebindWalk(dom js.Value, ref *DOMRefNode) {
 	for attrName, ab := range ref.Attrs {
 		srcVal := dom.Get("_wi18nAttr_" + attrName)
 		if srcVal.Type() == js.TypeString {
-			if segs, err := expr.ParseText(Printer(srcVal.String())); err == nil {
+			if segs, err := cachedParseText(Printer(srcVal.String())); err == nil {
 				ab.Segs = segs
 			}
 		}

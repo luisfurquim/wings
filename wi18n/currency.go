@@ -4,7 +4,6 @@ package wi18n
 
 import (
 	"strconv"
-	"syscall/js"
 )
 
 // Currency is wi18n's locale-aware monetary amount. The amount is stored in
@@ -24,7 +23,7 @@ type Currency struct {
 
 // Format implements Numerical. It renders the amount with the locale's
 // decimal and grouping conventions and the currency's ISO symbol, using the
-// browser's Intl.NumberFormat for correctness across locales.
+// browser's Intl.NumberFormat (cached) for correctness across locales.
 //
 // When Code is empty or the browser rejects the locale/currency pair,
 // Format falls back to a plain decimal rendering so the page remains
@@ -34,26 +33,16 @@ func (c Currency) Format(locale, _ string) string {
 	if c.Code == "" {
 		return formatDecimal(c.Amount, decimals)
 	}
-
-	intl := js.Global().Get("Intl")
-	if !intl.Truthy() {
-		return formatDecimal(c.Amount, decimals) + " " + c.Code
+	key := numberFmtKey{
+		locale:     locale,
+		style:      "currency",
+		currency:   c.Code,
+		fracDigits: decimals,
 	}
-
-	opts := js.Global().Get("Object").New()
-	opts.Set("style", "currency")
-	opts.Set("currency", c.Code)
-	opts.Set("minimumFractionDigits", decimals)
-	opts.Set("maximumFractionDigits", decimals)
-
-	// Guard against invalid locale/currency combinations by catching the
-	// NumberFormat constructor in a JS try/catch — a Go panic from
-	// syscall/js cannot be recovered from here without bouncing through JS.
-	result := safeNumberFormat(locale, opts, c.amountAsFloat(decimals))
-	if result == "" {
-		return formatDecimal(c.Amount, decimals) + " " + c.Code
+	if out, ok := formatNumber(key, c.amountAsFloat(decimals)); ok {
+		return out
 	}
-	return result
+	return formatDecimal(c.Amount, decimals) + " " + c.Code
 }
 
 // amountAsFloat shifts the integer minor-unit amount into the major-unit
@@ -69,19 +58,6 @@ func (c Currency) amountAsFloat(decimals int) float64 {
 		div *= 10
 	}
 	return float64(c.Amount) / div
-}
-
-// safeNumberFormat calls Intl.NumberFormat(locale, opts).format(value) and
-// returns the produced string. Returns "" on any JS-side exception, so the
-// caller can fall back.
-func safeNumberFormat(locale string, opts js.Value, value float64) (out string) {
-	defer func() {
-		if r := recover(); r != nil {
-			out = ""
-		}
-	}()
-	nf := js.Global().Get("Intl").Get("NumberFormat").New(locale, opts)
-	return nf.Call("format", value).String()
 }
 
 // formatDecimal is a locale-agnostic fallback: it places the decimal point

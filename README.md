@@ -67,6 +67,7 @@ authored in Go and running natively in the browser.
 - [Internationalization (i18n)](#internationalization-i18n)
   - [Pipeline Overview](#pipeline-overview)
   - [wprana/wi18n — Runtime Lookup](#wpranawi18n--runtime-lookup)
+  - [Runtime Locale Switching (SetLang)](#runtime-locale-switching-setlang)
   - [cmd/gen_i18n — Build-time Extractor](#cmdgen_i18n--build-time-extractor)
   - [Flexion — Plurals & Gender (SynPrinter)](#flexion--plurals--gender-synprinter)
   - [Locale-Aware Formatting (FmtPrinter)](#locale-aware-formatting-fmtprinter)
@@ -1260,6 +1261,11 @@ On `init()`, `wi18n`:
 If no catalog can be loaded, `wprana.Printer` stays as the default `ByPass`
 and TextNodes render their raw numeric indices.
 
+The bundle loaded at init is also stashed in an in-memory cache keyed by
+the requested tag, so the first call to `wi18n.SetLang(<initial-lang>)`
+later in the session is a cache hit (no re-fetch). See [Runtime Locale
+Switching (SetLang)](#runtime-locale-switching-setlang) below.
+
 ```go
 // Usage: import for side effects, that's it.
 import (
@@ -1298,6 +1304,81 @@ lang := wi18n.Lang()
   `<tag>@<path>:<line>:<col>`. For values extracted from attributes, the
   tag is written as `<element>[<attr>]` (e.g., `button[title]`), giving
   translators the semantic context needed to pick the right wording.
+
+### Runtime Locale Switching (SetLang)
+
+Once the page has loaded, applications can switch the active locale on
+the fly without reloading the page or rebuilding the DOM. Form input,
+list contents, scroll position and component state survive the switch —
+only the bindings driven by `Printer` / `SynPrinter` / `FmtPrinter` are
+refreshed in place.
+
+```go
+import "github.com/luisfurquim/wprana/wi18n"
+
+// from a click handler, language picker, etc.
+wi18n.SetLang("en-US", func(err error) {
+    if err != nil {
+        // No catalog available for "en-US" or any of its fallbacks.
+        return
+    }
+    // Locale switch is complete; wprana.Locale is now "en-US"
+    // and every visible custom element has been re-translated.
+})
+```
+
+`SetLang(tag, done)` always runs in a goroutine and returns immediately;
+this is mandatory because the catalog fetch goes through the JS event
+loop, and a synchronous wait inside an event handler would deadlock the
+very `fetch().then` callback we are awaiting. The optional `done`
+callback fires (also from the goroutine) once the switch completes or
+fails. Pass `nil` if you do not need notification.
+
+**How it works:**
+
+- The first call to a given tag fetches `<BasePath><lang>.json` (and
+  `<lang>.inflections.json`, if any), parses it, and caches the resulting
+  bundle keyed by the requested tag. Subsequent calls to the same tag
+  reuse the cache, so toggling between languages does not re-fetch.
+- The active text and inflection tables are atomically swapped, then
+  `wprana.Locale` and `<html lang="…">` are updated.
+- Every live custom-element instance is then walked: each text node and
+  attribute that the constructor stashed (via `_wi18nSrc` /
+  `_wi18nAttr_*` JS expandos on the node) is re-translated, the new
+  binding string is re-parsed, and the affected `PranaState` is
+  re-synced. Existing `*items:i` clones, conditional state, two-way
+  bindings and timer goroutines are preserved.
+
+**Limitation.** The walker rewrites `TextSegs` / `Attrs.Segs` in place;
+it does not currently create or destroy `DOMRefNode`s. If a translation
+introduces or removes `{{...}}` placeholders that were absent from the
+source-language version, those placeholders may render as raw text. Keep
+the `{{...}}` shape consistent across locales for templates that depend
+on it.
+
+**Performance caches.** Two memoisation layers sit underneath the
+runtime so the per-switch cost stays low even for large pages:
+
+- *Intl instance cache* (`wprana/wi18n/intl_cache.go`).
+  `Intl.NumberFormat` / `Intl.DateTimeFormat` instances are expensive to
+  construct (each one parses CLDR locale data behind the syscall/js
+  boundary) and essentially free to call. They are cached keyed by
+  `(locale, options)` and reused across `SetLang` calls — so toggling
+  back to a previous locale always hits warm formatters.
+- *Parsed-template cache* (`wprana/parse_cache.go`). The re-bind walker
+  memoises `expr.ParseText` by its input string. Many instances of the
+  same custom element produce identical translated strings, so the parse
+  cost is paid once per unique `(locale, source string)` pair instead of
+  once per node.
+
+Neither cache is invalidated on `SetLang`: both are keyed on values
+that stay stable for the lifetime of the catalog.
+
+**Worked example.** The `live-demo/` directory at the repository root
+ships a single tabbed application that exercises every feature
+described in this README — including a locale switcher in the header
+that demonstrates `SetLang` simultaneously refreshing the basics, flex,
+fmt and i18n tabs across pt-BR / en-US / es-AR.
 
 ### cmd/gen_i18n — Build-time Extractor
 
