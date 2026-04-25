@@ -41,5 +41,10 @@
   { "content": "Decimal:" },
   { "content": "Preço:" },
   { "content": "Total:" },
-  { "content": "Agora:" }
+  { "content": "Agora:" },
+  { "content": "Catálogo de traduções por dentro" },
+  { "content": "Cada texto traduzível recebeu um índice numérico durante a compilação. A coluna do meio mostra o que o desenvolvedor escreveu em pt-BR (a língua-fonte); a da direita mostra o que está renderizado agora — troque o idioma no topo para vê-la mudar." },
+  { "content": "Índice" },
+  { "content": "Texto na fonte (pt-BR)" },
+  { "content": "Renderizado agora" }
 ]

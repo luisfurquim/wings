@@ -11,9 +11,12 @@ import (
 //go:embed i18ntab.i18n.html
 var htmlContent string
 
-const cssContent = `.tab-stub { padding: 8px 0; color: #444; }
-.tab-stub h2 { margin: 4px 0 8px; font-size: 1.1rem; }
-.tab-stub p { margin: 0; font-style: italic; }`
+const cssContent = `.i18n-tab p { color: #444; line-height: 1.4; }
+.i18n-tab table { border-collapse: collapse; width: 100%; margin-top: 8px; }
+.i18n-tab th, .i18n-tab td { border: 1px solid #ddd; padding: 6px 10px; text-align: left; vertical-align: top; }
+.i18n-tab th { background: #f0f0f0; font-size: 0.9rem; }
+.i18n-tab td.src { color: #666; font-style: italic; }
+.i18n-tab td.cur { color: #036; font-weight: 600; }`
 
 type I18nTab struct{}
 
@@ -27,4 +30,4 @@ func init() {
 }
 
 func (w *I18nTab) InitData() map[string]any { return map[string]any{} }
-func (w *I18nTab) Render(obj *wprana.PranaObj) {}
+func (w *I18nTab) Render(obj *wprana.PranaObj)  {}

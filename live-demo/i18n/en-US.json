@@ -41,5 +41,10 @@
   { "content": "Decimal:" },
   { "content": "Price:" },
   { "content": "Total:" },
-  { "content": "Now:" }
+  { "content": "Now:" },
+  { "content": "Translation catalog under the hood" },
+  { "content": "Each translatable string received a numeric index at build time. The middle column shows what the developer wrote in pt-BR (the source language); the right column shows what is rendered right now — switch the language at the top to see it change." },
+  { "content": "Index" },
+  { "content": "Source text (pt-BR)" },
+  { "content": "Currently rendered" }
 ]
