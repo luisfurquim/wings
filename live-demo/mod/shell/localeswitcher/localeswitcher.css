@@ -1,0 +1,8 @@
+.lsw {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 0.9rem;
+}
+.lsw label { color: #555; }
+.lsw select { padding: 2px 6px; }

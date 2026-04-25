@@ -1,0 +1,32 @@
+.shell {
+  font-family: system-ui, sans-serif;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 16px;
+}
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+header h1 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+main details {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  padding: 0 12px;
+}
+main summary {
+  cursor: pointer;
+  padding: 10px 0;
+  font-weight: 600;
+}
+main details[open] {
+  padding-bottom: 12px;
+}
