@@ -212,28 +212,3 @@ func cldrCategory(tag language.Tag, n int) string {
 	return "other"
 }
 
-// ── Loader: fetch <lang>.inflections.json in parallel with <lang>.json ──────
-
-// loadFlexCatalog is called from loadAndInstall after the text catalog has
-// settled on a language. Failure is non-fatal: SynPrinter falls back to
-// the default NoFlexSynPrinter, which keeps the rule index visible.
-func loadFlexCatalog(picked string) {
-	url := BasePath() + picked + ".inflections.json"
-	body, err := fetchText(url)
-	if err != nil {
-		wprana.G.Logf(3, "wi18n: no inflections catalog at %s (%v); SynPrinter stays as default\n", url, err)
-		return
-	}
-	var entries []FlexEntry
-	if err := jsonUnmarshal(body, &entries); err != nil {
-		wprana.G.Logf(1, "wi18n: failed to parse %s: %v\n", url, err)
-		return
-	}
-	tag, err := language.Parse(picked)
-	if err != nil {
-		tag = language.English
-	}
-	setFlexCatalog(entries, tag)
-	wprana.SynPrinter = synPrinter
-	wprana.G.Logf(2, "wi18n: loaded %d flex rules for lang=%s\n", len(entries), picked)
-}

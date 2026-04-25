@@ -103,9 +103,12 @@ func nodeType(node js.Value) int {
 
 // cloneNode clones a DOM node and reassociates the _pranaId to avoid aliasing.
 // Equivalent to the cloneNode() from the original JS (plus the cloneRefs part).
+// Also re-stashes the i18n source markers (_wi18nSrc / _wi18nAttr_*) that
+// JS cloneNode does not copy, so SetLang() can re-translate cloned nodes.
 func cloneNode(model js.Value) js.Value {
 	cloned := model.Call("cloneNode", true)
 	reassignNodeIDs(cloned, model)
+	copyTranslateStash(model, cloned)
 	return cloned
 }
 

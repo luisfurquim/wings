@@ -26,7 +26,6 @@
 package wi18n
 
 import (
-	"encoding/json"
 	"strconv"
 	"strings"
 	"sync"
@@ -97,42 +96,23 @@ func init() {
 func loadAndInstall() {
 	defer wprana.InitWG.Done()
 
-	base := BasePath()
-
-	var (
-		body   string
-		picked string
-		err    error
-	)
-	for _, cand := range fallbackChain(lang) {
-		url := base + cand + ".json"
-		body, err = fetchText(url)
-		if err == nil {
-			picked = cand
-			break
-		}
-		wprana.G.Logf(3, "wi18n: %s not available (%v), trying next\n", url, err)
-	}
-	if picked == "" {
-		wprana.G.Logf(1, "wi18n: no i18n catalog could be loaded; Printer stays as ByPass\n")
+	bundle, err := loadBundle(lang)
+	if err != nil {
+		wprana.G.Logf(1, "wi18n: %v; Printer stays as ByPass\n", err)
 		return
 	}
 
-	var entries []Entry
-	if err := json.Unmarshal([]byte(body), &entries); err != nil {
-		wprana.G.Logf(1, "wi18n: failed to parse %s%s.json: %v\n", base, picked, err)
-		return
-	}
+	// Seed the locale cache so a later SetLang(lang) is a cache hit.
+	bundleMu.Lock()
+	bundles[lang] = bundle
+	bundleMu.Unlock()
 
-	table = make([]string, len(entries))
-	for i, e := range entries {
-		table[i] = e.Content
-	}
+	table = bundle.text
 
 	// If the picked tag is not the one we originally detected, update the
 	// <html lang="..."> attribute so that the DOM reflects what actually loaded.
-	if picked != lang {
-		lang = picked
+	if bundle.picked != lang {
+		lang = bundle.picked
 		setHTMLLang(lang)
 		wprana.Locale = lang
 	}
@@ -140,15 +120,11 @@ func loadAndInstall() {
 	wprana.Printer = lookup
 	wprana.G.Logf(2, "wi18n: loaded %d entries for lang=%s\n", len(table), lang)
 
-	// Inflections are optional — apps without flex blocks never produce a
-	// <lang>.inflections.json and should silently skip this step.
-	loadFlexCatalog(picked)
-}
-
-// jsonUnmarshal is a thin wrapper so sibling files can decode without
-// importing encoding/json themselves (keeps the import list in one place).
-func jsonUnmarshal(body string, out any) error {
-	return json.Unmarshal([]byte(body), out)
+	if bundle.flex != nil {
+		setFlexCatalog(bundle.flex, bundle.tag)
+		wprana.SynPrinter = synPrinter
+		wprana.G.Logf(2, "wi18n: loaded %d flex rules for lang=%s\n", len(bundle.flex), lang)
+	}
 }
 
 // fallbackChain builds the ordered list of language tags to try, starting

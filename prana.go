@@ -5,6 +5,7 @@ package wprana
 import (
 	"strings"
 	"syscall/js"
+	"time"
 
 	"github.com/luisfurquim/wprana/expr"
 )
@@ -154,6 +155,13 @@ func RemoveTranslatableAttrs(attrs ...string) {
 // attributes listed in TranslatableAttrs. Text nodes and elements whose tag
 // is <style> or <script> are skipped. Called from elementConstructor right
 // after the template is cloned and before bindElement.
+//
+// Each translated node also receives a JS expando carrying the pre-Printer
+// source string ("_wi18nSrc" on text nodes, "_wi18nAttr_<name>" on elements
+// per translated attribute). These expandos let SetLang() locate every node
+// originally driven by Printer and re-translate without rebuilding the DOM.
+// The expandos do not survive Node.cloneNode(true) — see copyTranslateStash
+// for the post-clone re-stash used by array iteration.
 func translateTextNodes(node js.Value) {
 	if node.IsNull() || node.IsUndefined() {
 		return
@@ -171,6 +179,7 @@ func translateTextNodes(node js.Value) {
 			if orig == "" {
 				continue
 			}
+			node.Set("_wi18nAttr_"+a, orig)
 			node.Call("setAttribute", a, Printer(orig))
 		}
 	}
@@ -182,9 +191,47 @@ func translateTextNodes(node js.Value) {
 		switch nodeType {
 		case 3: // Node.TEXT_NODE
 			orig := child.Get("nodeValue").String()
+			child.Set("_wi18nSrc", orig)
 			child.Set("nodeValue", Printer(orig))
 		case 1: // Node.ELEMENT_NODE
 			translateTextNodes(child)
+		}
+	}
+}
+
+// copyTranslateStash mirrors the _wi18nSrc / _wi18nAttr_* expandos from src
+// to dst by walking both subtrees in lockstep. Required after cloneNode(true)
+// because expando properties are not copied by the JS clone, but the cloned
+// subtree has identical topology so positional walking is reliable.
+func copyTranslateStash(src, dst js.Value) {
+	if src.IsNull() || src.IsUndefined() || dst.IsNull() || dst.IsUndefined() {
+		return
+	}
+	if src.Get("nodeType").Int() == 1 { // ELEMENT_NODE
+		for _, a := range TranslatableAttrs {
+			key := "_wi18nAttr_" + a
+			v := src.Get(key)
+			if !v.IsUndefined() && !v.IsNull() {
+				dst.Set(key, v)
+			}
+		}
+	}
+	srcKids := src.Get("childNodes")
+	dstKids := dst.Get("childNodes")
+	n := srcKids.Get("length").Int()
+	if dstKids.Get("length").Int() < n {
+		n = dstKids.Get("length").Int()
+	}
+	for i := 0; i < n; i++ {
+		s := srcKids.Index(i)
+		d := dstKids.Index(i)
+		if s.Get("nodeType").Int() == 3 { // TEXT_NODE
+			v := s.Get("_wi18nSrc")
+			if !v.IsUndefined() && !v.IsNull() {
+				d.Set("_wi18nSrc", v)
+			}
+		} else if s.Get("nodeType").Int() == 1 {
+			copyTranslateStash(s, d)
 		}
 	}
 }
@@ -536,6 +583,16 @@ func Main() {
 	G.Logf(2, "wprana: defining %d modules", len(moduleRegistry))
 	DefineAll()
 
-	// Keeps the WASM running
-	select {}
+	// Keep the WASM runtime alive. The deadlock detector does not consider
+	// pending js.FuncOf callbacks as future work, so if every Go goroutine
+	// is parked on a channel (including the ones inside fetch wrappers used
+	// by event handlers like wi18n.SetLang) it will panic with
+	// "all goroutines are asleep". A perpetual timer registers a runtime
+	// timer entry, which IS recognised as future work and keeps the
+	// detector quiet without busy-spinning.
+	go func() {
+		for range time.Tick(time.Hour) {
+		}
+	}()
+	<-make(chan struct{})
 }
