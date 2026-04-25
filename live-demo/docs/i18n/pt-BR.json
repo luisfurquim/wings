@@ -31,5 +31,15 @@
   { "content": "Masculino" },
   { "content": "Feminino" },
   { "content": "Quantidade:" },
-  { "content": "{{@gender %qt #0}}" }
+  { "content": "{{@gender %qt #0}}" },
+  { "content": "Demonstração de formatação" },
+  { "content": "Números" },
+  { "content": "Moedas" },
+  { "content": "Carrinho" },
+  { "content": "Data e hora" },
+  { "content": "Inteiro:" },
+  { "content": "Decimal:" },
+  { "content": "Preço:" },
+  { "content": "Total:" },
+  { "content": "Agora:" }
 ]

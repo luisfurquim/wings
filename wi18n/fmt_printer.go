@@ -4,6 +4,7 @@ package wi18n
 
 import (
 	"strconv"
+	"strings"
 	"syscall/js"
 	"time"
 
@@ -84,18 +85,41 @@ func formatUint(n uint64, locale string) string {
 	return strconv.FormatUint(n, 10)
 }
 
-// formatFloat renders a float64 through Intl.NumberFormat with the locale's
-// default fractional-digit behaviour (typically up to 3).
+// formatFloat renders a float64 through Intl.NumberFormat. The fractional
+// digit count is taken from the input value's own minimal representation
+// (via strconv) instead of Intl's default of 3, so callers see the
+// precision they passed in. Capped at 20 because the ECMAScript spec
+// limits maximumFractionDigits to that range.
+//
+// Note: passing js.Null() as the options object to the constructor crashes
+// at the syscall/js boundary, so we always materialize a real JS Object.
 func formatFloat(f float64, locale string) string {
 	intl := js.Global().Get("Intl")
 	if !intl.Truthy() {
 		return strconv.FormatFloat(f, 'f', -1, 64)
 	}
-	out, ok := safeNumberFormatCall(locale, js.Null(), f)
+	opts := js.Global().Get("Object").New()
+	opts.Set("maximumFractionDigits", floatDecimals(f))
+	out, ok := safeNumberFormatCall(locale, opts, f)
 	if !ok {
 		return strconv.FormatFloat(f, 'f', -1, 64)
 	}
 	return out
+}
+
+// floatDecimals returns the number of fractional digits in the minimal
+// decimal representation of f, clamped to [0, 20] (Intl's spec limit).
+func floatDecimals(f float64) int {
+	s := strconv.FormatFloat(f, 'f', -1, 64)
+	i := strings.IndexByte(s, '.')
+	if i < 0 {
+		return 0
+	}
+	n := len(s) - i - 1
+	if n > 20 {
+		n = 20
+	}
+	return n
 }
 
 // formatTime renders a Go time.Time via Intl.DateTimeFormat. Uses the

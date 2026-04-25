@@ -20,6 +20,11 @@ import (
 	_ "live-demo/mod/tabs/flex/genderpicker"
 
 	_ "live-demo/mod/tabs/fmt"
+	_ "live-demo/mod/tabs/fmt/currencydisplay"
+	_ "live-demo/mod/tabs/fmt/currencylist"
+	_ "live-demo/mod/tabs/fmt/datedisplay"
+	_ "live-demo/mod/tabs/fmt/numberdisplay"
+
 	_ "live-demo/mod/tabs/i18n"
 )
 
