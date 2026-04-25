@@ -11,9 +11,8 @@ import (
 //go:embed flextab.i18n.html
 var htmlContent string
 
-const cssContent = `.tab-stub { padding: 8px 0; color: #444; }
-.tab-stub h2 { margin: 4px 0 8px; font-size: 1.1rem; }
-.tab-stub p { margin: 0; font-style: italic; }`
+const cssContent = `.flex-tab .controls { display: flex; gap: 18px; flex-wrap: wrap; margin: 8px 0 12px; }
+.flex-tab .result { background: #f7f7f7; padding: 10px 14px; border-radius: 4px; font-size: 1rem; }`
 
 type FlexTab struct{}
 
@@ -26,5 +25,30 @@ func init() {
 	)
 }
 
-func (w *FlexTab) InitData() map[string]any { return map[string]any{} }
-func (w *FlexTab) Render(obj *wprana.PranaObj) {}
+func (w *FlexTab) InitData() map[string]any {
+	return map[string]any{
+		"gender":    "m",
+		"qt":        1,
+		"setgender": wprana.TriggerHandler(nil),
+		"setcount":  wprana.TriggerHandler(nil),
+	}
+}
+
+func (w *FlexTab) Render(obj *wprana.PranaObj) {
+	obj.This.M["setgender"] = wprana.TriggerHandler(func(args ...any) {
+		if len(args) == 0 {
+			return
+		}
+		if s, ok := args[0].(string); ok {
+			obj.This.Set("gender", s)
+		}
+	})
+	obj.This.M["setcount"] = wprana.TriggerHandler(func(args ...any) {
+		if len(args) == 0 {
+			return
+		}
+		if n, ok := args[0].(int); ok {
+			obj.This.Set("qt", n)
+		}
+	})
+}

@@ -1,0 +1,14 @@
+[
+  {
+    "label": "el {n} alumno de tercer año que está aprobado ganó una beca",
+    "cells": {
+      "f.one": "la única alumna de tercer año que está aprobada ganó una beca",
+      "f.other": "las {n} alumnas de tercer año que están aprobadas ganaron una beca",
+      "f.zero": "ninguna alumna de tercer año está aprobada, así que no se otorgó ninguna beca",
+      "m.one": "el único alumno de tercer año que está aprobado ganó una beca",
+      "m.other": "los {n} alumnos de tercer año que están aprobados ganaron una beca",
+      "m.zero": "ningún alumno de tercer año está aprobado, así que no se otorgó ninguna beca"
+    },
+    "revised": true
+  }
+]

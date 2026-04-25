@@ -11,9 +11,8 @@ import (
 //go:embed basicstab.i18n.html
 var htmlContent string
 
-const cssContent = `.tab-stub { padding: 8px 0; color: #444; }
-.tab-stub h2 { margin: 4px 0 8px; font-size: 1.1rem; }
-.tab-stub p { margin: 0; font-style: italic; }`
+const cssContent = `.basics-tab section { margin: 12px 0; }
+.basics-tab h3 { margin: 0 0 6px; font-size: 1rem; color: #333; }`
 
 type BasicsTab struct{}
 
@@ -27,4 +26,4 @@ func init() {
 }
 
 func (w *BasicsTab) InitData() map[string]any { return map[string]any{} }
-func (w *BasicsTab) Render(obj *wprana.PranaObj) {}
+func (w *BasicsTab) Render(obj *wprana.PranaObj)  {}
