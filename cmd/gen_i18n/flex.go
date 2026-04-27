@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"golang.org/x/text/feature/plural"
 	"golang.org/x/text/language"
 
 	"github.com/luisfurquim/wprana/expr"
@@ -241,15 +242,66 @@ func genderInventory(lang string) []string {
 	}
 }
 
-// emptyCells initialises the full (gender × CLDR) grid with empty strings.
+// emptyCells initialises the (gender × CLDR-category) grid with empty
+// strings, restricted to the categories the locale's CLDR rules actually
+// produce. "zero" is always included so translators can supply an explicit
+// zero-override even when CLDR folds 0 into another category.
 func emptyCells(lang string) map[string]string {
 	out := map[string]string{}
 	for _, g := range genderInventory(lang) {
-		for _, c := range cldrCategories {
+		for _, c := range activeCLDRCategories(lang) {
 			out[g+"."+c] = ""
 		}
 	}
 	return out
+}
+
+// activeCLDRCategories discovers which CLDR plural categories the locale
+// uses by sampling representative cardinal values. The set is always
+// canonical-ordered and always contains "zero" so a translator can
+// hand-supply a zero-override that SynPrinter prefers when count==0.
+//
+// Sampling beats hardcoding per-language tables: the sample values cover
+// every common CLDR rule branch (1, 2, few-range, many-range, hundreds),
+// and adding a locale only requires it to be valid in golang.org/x/text.
+//
+// An unparseable tag falls back to the full six-category set — losing
+// catalog cleanliness but never dropping a cell the runtime might query.
+func activeCLDRCategories(lang string) []string {
+	tag, err := language.Parse(lang)
+	if err != nil {
+		return cldrCategories
+	}
+	seen := map[string]bool{"zero": true}
+	samples := []int{0, 1, 2, 3, 4, 5, 6, 10, 11, 21, 22, 100}
+	for _, n := range samples {
+		seen[cldrFormName(plural.Cardinal.MatchPlural(tag, n, 0, 0, 0, 0))] = true
+	}
+	out := make([]string, 0, len(cldrCategories))
+	for _, cat := range cldrCategories {
+		if seen[cat] {
+			out = append(out, cat)
+		}
+	}
+	return out
+}
+
+// cldrFormName converts a plural.Form into its CLDR category name. Mirrors
+// wi18n/syn.go::cldrCategory but on the gen_i18n side.
+func cldrFormName(f plural.Form) string {
+	switch f {
+	case plural.Zero:
+		return "zero"
+	case plural.One:
+		return "one"
+	case plural.Two:
+		return "two"
+	case plural.Few:
+		return "few"
+	case plural.Many:
+		return "many"
+	}
+	return "other"
 }
 
 // ── Per-language inflections catalog I/O ────────────────────────────────────
@@ -436,6 +488,22 @@ func emitFlexCatalogs(i18nDir, defLang string) error {
 			}
 		}
 
+		// Lazily load <lang>.db when auto-plurals is enabled. Missing dict
+		// is non-fatal: the language stays as whatever the previous run
+		// (or hand editing) left in place.
+		var dict *Dict
+		if autoPlurals {
+			dictPath := filepath.Join(dictDir, lang+".db")
+			d, err := loadDict(dictPath)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "warn: failed to load %s: %v (auto-plurals skipped for %s)\n", dictPath, err, lang)
+			} else if d == nil {
+				fmt.Fprintf(os.Stderr, "warn: no dict at %s (auto-plurals skipped for %s)\n", dictPath, lang)
+			} else {
+				dict = d
+			}
+		}
+
 		out := make([]wi18n.FlexEntry, len(flexBlocks))
 		for i, fb := range flexBlocks {
 			label := flexLabel(fb)
@@ -452,6 +520,11 @@ func emitFlexCatalogs(i18nDir, defLang string) error {
 				}
 				revised = prev.Revised
 				source = prev.Source
+			}
+			if dict != nil {
+				if autoFillCells(dict, fb, cells, lang) && source == "" {
+					source = dictSource
+				}
 			}
 			out[i] = wi18n.FlexEntry{
 				FlexEntryData: wi18n.FlexEntryData{

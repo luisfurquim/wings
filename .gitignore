@@ -8,3 +8,4 @@ cmd/dictbuild/dicts/
 # Keep the gen_i18n hash database (per-project translation index stability)
 !**/i18n.db
 
+gen_i18n

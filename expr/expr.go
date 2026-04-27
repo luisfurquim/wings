@@ -3,6 +3,8 @@ package expr
 import (
 	"fmt"
 	"strconv"
+	"unicode"
+	"unicode/utf8"
 )
 
 // ── Token type constants ────────────────────────────────────────────────────
@@ -301,6 +303,13 @@ func splitSymbols(s string) []RefNode {
 // by an identifier. A doubled sigil (`%%ident`, `@@ident`, `~~ident`) is an
 // escape: the returned token is a TokStr with the single-sigil form as value,
 // so the output is rendered literally.
+//
+// `%var` and `@var` consume ASCII-only identifiers (variable names from app
+// code). `~word` consumes a natural-language token: any sequence of Unicode
+// letters/digits, plus the literal '|' character for the dual-lemma form
+// (`~pai|mãe`). This lets templates carry accented Portuguese/Spanish/etc.
+// words verbatim — without it, "~está" would split as `~est` + `á…`.
+//
 // Returns (tok, nextPos, ok). ok=false means no token was produced (bare
 // sigil with no identifier — the char is skipped silently).
 func consumeSigil(s string, i int) (RefNode, int, bool) {
@@ -309,13 +318,24 @@ func consumeSigil(s string, i int) (RefNode, int, bool) {
 	// Escape form: `%%`, `@@`, `~~`
 	if i+1 < n && s[i+1] == c {
 		j := i + 2
-		for j < n && isIdentChar(s[j]) {
-			j++
+		if c == '~' {
+			j = consumeTildeWord(s, j)
+		} else {
+			for j < n && isIdentChar(s[j]) {
+				j++
+			}
 		}
 		return RefNode{Type: TokStr, StrVal: s[i+1 : j]}, j, true
 	}
-	// Sigil form: `%ident`, `@ident`, `~ident`
+	// Sigil form
 	j := i + 1
+	if c == '~' {
+		k := consumeTildeWord(s, j)
+		if k == j {
+			return RefNode{}, i + 1, false
+		}
+		return RefNode{Type: TokTildeWord, StrVal: s[j:k]}, k, true
+	}
 	if j < n && isIdentStart(s[j]) {
 		k := j + 1
 		for k < n && isIdentChar(s[k]) {
@@ -327,13 +347,34 @@ func consumeSigil(s string, i int) (RefNode, int, bool) {
 			t = TokPctVar
 		case '@':
 			t = TokAtVar
-		case '~':
-			t = TokTildeWord
 		}
 		return RefNode{Type: t, StrVal: s[j:k]}, k, true
 	}
 	// Bare sigil with no identifier — skip.
 	return RefNode{}, i + 1, false
+}
+
+// consumeTildeWord scans s starting at j, advancing past every byte that
+// belongs to a Unicode letter, a Unicode digit, or the literal '|' (for the
+// dual-lemma form `~m|f`). Returns the position of the first byte that does
+// not belong — equal to j if no character was consumed.
+func consumeTildeWord(s string, j int) int {
+	k := j
+	for k < len(s) {
+		if s[k] == '|' {
+			k++
+			continue
+		}
+		r, size := utf8.DecodeRuneInString(s[k:])
+		if r == utf8.RuneError && size <= 1 {
+			break
+		}
+		if !unicode.IsLetter(r) && !unicode.IsDigit(r) {
+			break
+		}
+		k += size
+	}
+	return k
 }
 
 // indexByte finds the first index of b in s, or -1.
