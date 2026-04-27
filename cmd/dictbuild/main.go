@@ -5,10 +5,15 @@
 //
 // Usage:
 //
-//	dictbuild <input.dic> <lang-tag>
+//	dictbuild -lang <tag>                        // fetch from gh:unitex-lingua
+//	dictbuild [-out <dir>] <input.dic> <tag>     // legacy: parse a local .dic
 //
-// Produces <lang-tag>.db in the current working directory. The .db is a gob
-// encoding of the Dict type declared below.
+// The -lang form clones github.com/UnitexGramLab/unitex-core (pinned tag),
+// builds UnitexToolLogger from source, downloads the .bin/.inf for the
+// requested locale from github.com/UnitexGramLab/unitex-lingua, and runs
+// Uncompress to obtain the text DELAF before parsing it. Persistent state
+// (cloned tools, compiled binaries, cached dictionaries) lives under the
+// directory passed via -state-dir, which defaults to a per-user cache.
 //
 // Filters applied while reading the DELAF:
 //   - entries marked +Pr   (proper names)    → dropped
@@ -31,8 +36,11 @@ import (
 	"bufio"
 	"encoding/gob"
 	"errors"
+	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
+	"sort"
 	"strings"
 
 	"golang.org/x/text/encoding/unicode"
@@ -81,24 +89,124 @@ type Inflect struct {
 var errSkipped = errors.New("filtered")
 
 func main() {
-	if len(os.Args) != 3 {
-		fmt.Fprintln(os.Stderr, "usage: dic2tree <input.dic> <lang-tag>")
+	var (
+		langFlag  = flag.String("lang", "", "BCP-47 tag to fetch from unitex-lingua (e.g. pt-BR); mutually exclusive with positional input")
+		outDir    = flag.String("out", ".", "directory to write <lang>.db into")
+		stateDir  = flag.String("state-dir", defaultStateDir(), "where to keep cloned unitex-core, built tools, and cached .bin/.inf")
+		toolPath  = flag.String("tool", "", "path to a prebuilt UnitexToolLogger binary (skips the auto-build)")
+	)
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "usage:\n  %s -lang <tag>\n  %s [-out <dir>] <input.dic> <tag>\n\nflags:\n", os.Args[0], os.Args[0])
+		flag.PrintDefaults()
+	}
+	flag.Parse()
+
+	args := flag.Args()
+	switch {
+	case *langFlag != "" && len(args) == 0:
+		runFetch(*langFlag, *outDir, *stateDir, *toolPath)
+	case *langFlag == "" && len(args) == 2:
+		runLocal(args[0], args[1], *outDir)
+	default:
+		flag.Usage()
 		os.Exit(1)
 	}
-	inputPath := os.Args[1]
-	langCode := os.Args[2]
+}
 
+// defaultStateDir resolves $XDG_CACHE_HOME/wprana/dictbuild (or the platform
+// equivalent). Errors fall back to the current directory: that keeps dictbuild
+// usable on minimal environments where os.UserCacheDir is unset, at the cost
+// of placing tool/ and cache/ under wherever the user happens to invoke it.
+func defaultStateDir() string {
+	cache, err := os.UserCacheDir()
+	if err != nil {
+		return "."
+	}
+	return filepath.Join(cache, "wprana", "dictbuild")
+}
+
+// runFetch implements the modern flow: pull the .bin/.inf from unitex-lingua,
+// build UnitexToolLogger if needed, expand the .dic locally, then hand off to
+// the existing parsing pipeline.
+func runFetch(langCode, outDir, stateDir, externalTool string) {
+	src, key, ok := resolveLangSource(langCode)
+	if !ok {
+		// Try BCP-47 normalisation as a courtesy: "PT-br" → "pt-BR" hits the
+		// table even though the user's input doesn't match the literal key.
+		// Tags that fail to parse (e.g. "oge", which language.Parse rejects)
+		// are simply reported as unknown — those are already handled above
+		// when their literal form happens to match a key directly.
+		if tag, err := language.Parse(langCode); err == nil {
+			src, key, ok = resolveLangSource(tag.String())
+		}
+	}
+	if !ok {
+		supported := make([]string, 0, len(langSources))
+		for k := range langSources {
+			supported = append(supported, k)
+		}
+		sort.Strings(supported)
+		fmt.Fprintf(os.Stderr, "lang %q not in the auto-fetch table; supported: %s\n", langCode, strings.Join(supported, ", "))
+		fmt.Fprintln(os.Stderr, "(add an entry to sources.go after verifying the upstream filename)")
+		os.Exit(1)
+	}
+	langCode = key
+
+	cacheDir := filepath.Join(stateDir, "cache", langCode)
+	binPath, _, err := fetchDelaSources(src, cacheDir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "fetch dela: %v\n", err)
+		os.Exit(1)
+	}
+
+	tool := externalTool
+	if tool == "" {
+		coreRoot := filepath.Join(stateDir, "tool", "unitex-core")
+		if err := cloneUnitexCore(coreRoot); err != nil {
+			fmt.Fprintf(os.Stderr, "clone unitex-core: %v\n", err)
+			os.Exit(1)
+		}
+		tool, err = buildUnitexToolLogger(coreRoot)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "build UnitexToolLogger: %v\n", err)
+			os.Exit(1)
+		}
+	}
+
+	dicPath, err := uncompressDela(tool, binPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "uncompress: %v\n", err)
+		os.Exit(1)
+	}
+
+	if err := buildDict(dicPath, langCode, outDir); err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(1)
+	}
+}
+
+// runLocal is the original positional-argument flow, kept for users who
+// already have a .dic on hand (typically because they ran UnitexToolLogger
+// themselves or got the file from an internal mirror).
+func runLocal(inputPath, langCode, outDir string) {
 	tag, err := language.Parse(langCode)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "invalid language tag %q: %v\n", langCode, err)
 		os.Exit(1)
 	}
 	langCode = tag.String()
+	if err := buildDict(inputPath, langCode, outDir); err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(1)
+	}
+}
 
+// buildDict runs the DELAF-text-to-gob conversion. Extracted from main() so
+// both the fetch and legacy entry points share a single parsing implementation.
+func buildDict(inputPath, langCode, outDir string) error {
 	f, err := os.Open(inputPath)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "open %s: %v\n", inputPath, err)
-		os.Exit(1)
+		return fmt.Errorf("open %s: %w", inputPath, err)
 	}
 	defer f.Close()
 
@@ -137,24 +245,25 @@ func main() {
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		fmt.Fprintf(os.Stderr, "scan: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("scan: %w", err)
 	}
 
-	outPath := langCode + ".db"
+	if err := os.MkdirAll(outDir, 0o755); err != nil {
+		return fmt.Errorf("mkdir out: %w", err)
+	}
+	outPath := filepath.Join(outDir, langCode+".db")
 	out, err := os.Create(outPath)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "create %s: %v\n", outPath, err)
-		os.Exit(1)
+		return fmt.Errorf("create %s: %w", outPath, err)
 	}
 	defer out.Close()
 	if err := gob.NewEncoder(out).Encode(dict); err != nil {
-		fmt.Fprintf(os.Stderr, "encode: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("encode: %w", err)
 	}
 
 	fmt.Printf("done: %d kept, %d filtered, %d malformed; %d lemmas, %d form entries → %s\n",
 		kept, skipped, bad, len(dict.Lemmas), len(dict.FormIndex), outPath)
+	return nil
 }
 
 // processLine parses a single DELAF line and inserts its kept flexions into dict.

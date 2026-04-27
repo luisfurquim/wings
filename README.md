@@ -1215,7 +1215,9 @@ flexions from a Unitex DELAF source.
             └────────────────────────────┘     block → locale-correct form)
 
    ┌──────────────────────────────────────────────────────────────┐
-   │ Optional: cmd/dictbuild reads a Unitex DELAF dictionary and  │
+   │ Optional: cmd/dictbuild self-fetches the Unitex DELAF for a  │
+   │ locale (gh:UnitexGramLab/unitex-lingua + auto-built          │
+   │ UnitexToolLogger from gh:UnitexGramLab/unitex-core) and      │
    │ emits <lang>.db (gob) used by gen_i18n to pre-fill flexions. │
    │ cmd/dictlookup is a CLI inspector for that .db.              │
    └──────────────────────────────────────────────────────────────┘
@@ -1676,8 +1678,39 @@ These two tools convert a Unitex/GramLab DELAF `.dic` (UTF-16 text) into a
 compact Go-native lookup structure used to pre-fill plural/gender flexions
 during the build.
 
-**`dictbuild <input.dic> <lang-tag>`** produces `<lang-tag>.db` in the
-current directory. It applies DELAF-specific filters:
+`dictbuild` has two invocation modes:
+
+- **`dictbuild -lang <tag>`** — fetch mode. Downloads the compiled
+  `.bin`/`.inf` for the requested locale from
+  [`UnitexGramLab/unitex-lingua`](https://github.com/UnitexGramLab/unitex-lingua),
+  shallow-clones [`UnitexGramLab/unitex-core`](https://github.com/UnitexGramLab/unitex-core)
+  at a pinned tag (currently `v3.3`), builds `UnitexToolLogger` from source
+  with `make UNITEXTOOLLOGGERONLY=yes 64BITS=yes`, expands the compiled
+  dictionary back to UTF-16 text via `Uncompress`, and parses the result.
+  Persistent state (cloned tools, compiled binary, cached `.bin`/`.inf`)
+  lives under `-state-dir` (defaults to `$XDG_CACHE_HOME/wprana/dictbuild`).
+  Pass `-tool /path/to/UnitexToolLogger` to skip the auto-build if you
+  already have the binary. Output: `<tag>.db` in `-out` (defaults to `.`).
+  Linux/macOS only — Windows requires a manual MSVC build.
+- **`dictbuild [-out <dir>] <input.dic> <tag>`** — legacy mode for users
+  who already have a UTF-16 DELAF on hand (e.g. produced by Unitex/GramLab
+  desktop or pulled from an internal mirror).
+
+The auto-fetch table covers every language directory in unitex-lingua
+that ships at least one usable DELAF `.bin/.inf` pair: `de`, `el`, `en`,
+`es`, `fi`, `fr`, `grc`, `it`, `la`, `mg`, `nn`, `no`, `oge`, `pl`,
+`pt-BR`, `pt-PT`, `ru`, `sr-Cyrl`, `sr-Latn`, `th`, `zh`. For each
+locale the most general/inflected dictionary upstream provides was
+chosen; some entries are samples or partial dictionaries (`el`'s
+"30percent", `nn`'s "Dela-sample", `grc`'s demo) because that is all
+upstream ships. `ar` (separate noun and verb DELAFs) and `ko` (empty
+upstream `Dela/`) are intentionally not listed. The dictbuild parser is
+PT-centric in its verb-class aliasing (see `aliasHomograph`), so
+`<lang>.db` for non-Portuguese locales is structurally correct but may
+need language-specific tweaks on the gen_i18n side to interpret verbal
+classes.
+
+In both modes the tool applies DELAF-specific filters:
 
 - `+Pr` (proper names) → dropped
 - `+PRO` (enclitic pronoun) → dropped
