@@ -118,6 +118,7 @@ func (w *Wlate) InitData() map[string]any {
 		// Current record display
 		"left_content":   "",
 		"right_content":  "",
+		"right_text_src": "",
 		"context":        "",
 		"ctxdetail_text": "",
 		"is_revised":     false,
@@ -257,11 +258,12 @@ func (wc *wlateCtx) displayTextRecord(idx int) {
 		leftDetail = humanizeCtx(wc.leftText[idx].Ctxdetail)
 	}
 
-	var rightContent string
+	var rightContent, rightSrc string
 	var revised bool
 	var rightCtx, rightDetail string
 	if idx < len(wc.rightText) {
 		rightContent = wc.rightText[idx].Content
+		rightSrc = sourceToAvatarURL(wc.rightText[idx].Source)
 		revised = wc.rightText[idx].Revised
 		rightCtx = wc.rightText[idx].Context
 		rightDetail = humanizeCtx(wc.rightText[idx].Ctxdetail)
@@ -269,6 +271,7 @@ func (wc *wlateCtx) displayTextRecord(idx int) {
 
 	wc.obj.This.Set("left_content", leftContent)
 	wc.obj.This.Set("right_content", rightContent)
+	wc.obj.This.Set("right_text_src", rightSrc)
 	// Use left context if right is empty (context is shared)
 	ctx := rightCtx
 	if ctx == "" {
@@ -365,12 +368,19 @@ func (wc *wlateCtx) displayInflectionRecord(idx int) {
 		}
 	}
 
-	// Build cell arrays: left_cells[ci].cols[gi] and right_cells[ci].cols[gi]
+	// Build cell arrays: left_cells[ci].cols[gi], right_cells[ci].cols[gi],
+	// and right_srcs[ci].cols[gi] (avatar URL or "" for no badge).
+	var rightSources map[string]string
+	if idx < len(wc.rightInflections) {
+		rightSources = wc.rightInflections[idx].Sources
+	}
 	leftCells := make([]any, len(categories))
 	rightCells := make([]any, len(categories))
+	rightSrcs := make([]any, len(categories))
 	for ci, cat := range categories {
 		lcols := make([]any, len(genders))
 		rcols := make([]any, len(genders))
+		srccols := make([]any, len(genders))
 		for gi, gen := range genders {
 			key := gen + "." + cat
 			if leftForms != nil {
@@ -383,9 +393,15 @@ func (wc *wlateCtx) displayInflectionRecord(idx int) {
 			} else {
 				rcols[gi] = ""
 			}
+			src := ""
+			if rightSources != nil {
+				src = sourceToAvatarURL(rightSources[key])
+			}
+			srccols[gi] = src
 		}
 		leftCells[ci] = map[string]any{"cols": lcols}
 		rightCells[ci] = map[string]any{"cols": rcols}
+		rightSrcs[ci] = map[string]any{"cols": srccols}
 	}
 
 	wc.obj.This.Set("genders", gendersAny)
@@ -394,6 +410,7 @@ func (wc *wlateCtx) displayInflectionRecord(idx int) {
 	wc.obj.This.Set("category_headers", categoryHeaders)
 	wc.obj.This.Set("left_cells", leftCells)
 	wc.obj.This.Set("right_cells", rightCells)
+	wc.obj.This.Set("right_srcs", rightSrcs)
 
 	// Set CSS grid columns dynamically: 1 row-header + N gender columns
 	gridCols := fmt.Sprintf("auto repeat(%d, 1fr)", len(genders))
@@ -460,7 +477,9 @@ func (wc *wlateCtx) syncRightContent() {
 		content := textareas[0].Get("value").String()
 		if content != wc.rightText[idx].Content {
 			wc.rightText[idx].Content = content
+			wc.rightText[idx].Source = "manual"
 			wc.rightText[idx].Revised = true
+			wc.obj.This.Set("right_text_src", "")
 			wc.dirty = true
 		}
 	}
@@ -482,6 +501,10 @@ func (wc *wlateCtx) syncRightContent() {
 			val := inp.Get("value").String()
 			if wc.rightInflections[idx].Cells[key] != val {
 				wc.rightInflections[idx].Cells[key] = val
+				if wc.rightInflections[idx].Sources == nil {
+					wc.rightInflections[idx].Sources = make(map[string]string)
+				}
+				wc.rightInflections[idx].Sources[key] = "manual"
 				changed = true
 			}
 		}
@@ -522,6 +545,23 @@ func (wc *wlateCtx) findNextUnrevised() int {
 		}
 	}
 	return -1
+}
+
+// ── Badge helpers ──────────────────────────────────────────────────────────
+
+// sourceToAvatarURL converts a provenance tag to an avatar URL for wlate
+// badges. Returns "" for empty, "manual", or unrecognised tags (hides the badge).
+//
+//   "dict:unitex-lingua"  →  "/avatar/unitex-lingua"
+//   "llm:gemma4"          →  "/avatar/llm-gemma4"
+func sourceToAvatarURL(s string) string {
+	switch {
+	case strings.HasPrefix(s, "dict:"):
+		return "/avatar/" + strings.TrimPrefix(s, "dict:")
+	case strings.HasPrefix(s, "llm:"):
+		return "/avatar/llm-" + strings.TrimPrefix(s, "llm:")
+	}
+	return ""
 }
 
 // ── Header label helpers ───────────────────────────────────────────────────

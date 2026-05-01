@@ -440,6 +440,9 @@ func lintFlexBlocks(langs map[string]bool, defLang string) {
 // emitFlexCatalogs writes one <lang>.inflections.json per language currently
 // present in i18nDir (using the text catalogs as the language set) plus the
 // deflang catalog. Existing cells are remapped by canonical key.
+//
+// deflang is always processed first so its cells are available as source text
+// for the translator pass on non-deflang languages.
 func emitFlexCatalogs(i18nDir, defLang string) error {
 	// Discover the language set from existing text catalogs.
 	langFiles, err := filepath.Glob(filepath.Join(i18nDir, "*.json"))
@@ -472,76 +475,106 @@ func emitFlexCatalogs(i18nDir, defLang string) error {
 		return nil
 	}
 
+	// Process deflang first to get source cells for the translator.
+	defOut, err := buildFlexEntriesForLang(i18nDir, defLang)
+	if err != nil {
+		return err
+	}
+	defPath := filepath.Join(i18nDir, defLang+".inflections.json")
+	if err := saveFlexJSON(defPath, defOut); err != nil {
+		return fmt.Errorf("save %s: %w", defPath, err)
+	}
+
 	for lang := range langs {
-		path := filepath.Join(i18nDir, lang+".inflections.json")
-		old, err := loadFlexJSON(path)
+		if lang == defLang {
+			continue
+		}
+		out, err := buildFlexEntriesForLang(i18nDir, lang)
 		if err != nil {
-			return fmt.Errorf("load %s: %w", path, err)
+			return err
 		}
-		oldByKey := map[string]wi18n.FlexEntry{}
-		if old != nil {
-			// Use the old-deflang catalog's canonical key list if we stored
-			// one; absent that, match by Label (close enough for v1 since
-			// Label is deterministically derived from the canonical form).
-			for i := range old {
-				oldByKey[old[i].Label] = old[i]
-			}
-		}
-
-		// Lazily load <lang>.db when auto-plurals is enabled. Missing dict
-		// is non-fatal: the language stays as whatever the previous run
-		// (or hand editing) left in place.
-		var dict *Dict
-		if autoPlurals {
-			dictPath := filepath.Join(dictDir, lang+".db")
-			d, err := loadDict(dictPath)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "warn: failed to load %s: %v (auto-plurals skipped for %s)\n", dictPath, err, lang)
-			} else if d == nil {
-				fmt.Fprintf(os.Stderr, "warn: no dict at %s (auto-plurals skipped for %s)\n", dictPath, lang)
-			} else {
-				dict = d
-			}
-		}
-
-		out := make([]wi18n.FlexEntry, len(flexBlocks))
-		for i, fb := range flexBlocks {
-			label := flexLabel(fb)
-			cells := emptyCells(lang)
-			revised := false
-			source := ""
-			if prev, ok := oldByKey[label]; ok {
-				// Preserve every previous cell, even if its gender prefix
-				// doesn't fit the current inventory — losing translator
-				// work is worse than carrying a few extra keys. Lint will
-				// flag mismatched inventories separately.
-				for k, v := range prev.Cells {
-					cells[k] = v
-				}
-				revised = prev.Revised
-				source = prev.Source
-			}
-			if dict != nil {
-				if autoFillCells(dict, fb, cells, lang) && source == "" {
-					source = dictSource
-				}
-			}
-			out[i] = wi18n.FlexEntry{
-				FlexEntryData: wi18n.FlexEntryData{
-					Label:   label,
-					Cells:   cells,
-					Revised: revised,
-					Source:  source,
-				},
-				FlexEntryMeta: wi18n.FlexEntryMeta{
-					Context:   firstFlexContext(int32(i)),
-					Ctxdetail: flexCtxdetail(int32(i)),
-				},
-			}
-		}
+		applyFlexTranslations(out, defOut, defLang, lang)
+		path := filepath.Join(i18nDir, lang+".inflections.json")
 		if err := saveFlexJSON(path, out); err != nil {
 			return fmt.Errorf("save %s: %w", path, err)
 		}
 	}
 	return nil
+}
+
+// buildFlexEntriesForLang builds the []wi18n.FlexEntry slice for one language:
+// carry from the previous run, then the dict pass (when -auto-flex is set).
+// The translator pass is NOT applied here — the caller does that after deflang
+// is available as source.
+func buildFlexEntriesForLang(i18nDir, lang string) ([]wi18n.FlexEntry, error) {
+	path := filepath.Join(i18nDir, lang+".inflections.json")
+	old, err := loadFlexJSON(path)
+	if err != nil {
+		return nil, fmt.Errorf("load %s: %w", path, err)
+	}
+	oldByKey := map[string]wi18n.FlexEntry{}
+	for i := range old {
+		oldByKey[old[i].Label] = old[i]
+	}
+
+	var dict *Dict
+	if autoFlex {
+		dictPath := filepath.Join(dictDir, lang+".db")
+		d, err := loadDict(dictPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "warn: failed to load %s: %v (auto-flex skipped for %s)\n", dictPath, err, lang)
+		} else if d == nil {
+			fmt.Fprintf(os.Stderr, "warn: no dict at %s (auto-flex skipped for %s)\n", dictPath, lang)
+		} else {
+			dict = d
+		}
+	}
+
+	out := make([]wi18n.FlexEntry, len(flexBlocks))
+	for i, fb := range flexBlocks {
+		label := flexLabel(fb)
+		cells := emptyCells(lang)
+		revised := false
+		sources := map[string]string{}
+		if prev, ok := oldByKey[label]; ok {
+			// Preserve every previous cell and its per-cell source, even if
+			// its gender prefix doesn't fit the current inventory — losing
+			// translator work is worse than carrying extra keys. Lint will
+			// flag mismatched inventories separately.
+			for k, v := range prev.Cells {
+				cells[k] = v
+			}
+			for k, v := range prev.Sources {
+				sources[k] = v
+			}
+			revised = prev.Revised
+		}
+		if dict != nil {
+			filledSrcs, err := autoFillCells(dict, fb, cells, lang)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "error: %v\n  in flex block: %s\n  source: %s\n", err, label, firstFlexContext(int32(i)))
+				os.Exit(1)
+			}
+			for k, v := range filledSrcs {
+				sources[k] = v
+			}
+		}
+		var sourcesOut map[string]string
+		if len(sources) > 0 {
+			sourcesOut = sources
+		}
+		out[i] = wi18n.FlexEntry{
+			FlexEntryData: wi18n.FlexEntryData{
+				Label:   label,
+				Cells:   cells,
+				Revised: revised,
+				Sources: sourcesOut,
+			},
+			FlexEntryMeta: wi18n.FlexEntryMeta{
+				Context:   firstFlexContext(int32(i)),
+				Ctxdetail: flexCtxdetail(int32(i)),
+			},
+		}
+	}
+	return out, nil
 }

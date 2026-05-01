@@ -9,6 +9,9 @@ package wi18n
 type EntryData struct {
 	Content string `json:"content"`
 	Revised bool   `json:"revised"`
+	// Source, when non-empty, marks automatic provenance (e.g. "llm:gemma4"),
+	// shown in wlate as a small badge. The runtime ignores this field entirely.
+	Source string `json:"source,omitempty"`
 }
 
 // EntryMeta is the wire-format half the runtime does NOT need: source
@@ -65,9 +68,12 @@ type FlexEntryData struct {
 	Cells map[string]string `json:"cells"`
 	// Revised flag, flipped in wlate.
 	Revised bool `json:"revised"`
-	// Source, when non-empty, marks automatic provenance (e.g.
-	// "dict:unitex-lingua@<commit>"), shown in wlate as a small icon.
-	Source string `json:"source,omitempty"`
+	// Sources maps each "<gender>.<cldr_category>" key to the provenance of
+	// that specific cell: "dict:unitex-lingua" when auto-filled by gen_i18n,
+	// "manual" (or a user email when OAuth2 is configured) when edited in
+	// wlate. Absent key means the cell was never touched. The runtime
+	// (wi18n/syn.go) ignores this field entirely.
+	Sources map[string]string `json:"sources,omitempty"`
 }
 
 // FlexEntryMeta holds the source-position metadata for an inflection rule.

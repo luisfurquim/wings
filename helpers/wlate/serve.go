@@ -22,11 +22,12 @@ import (
 )
 
 type serverConfig struct {
-	cert    string
-	listen  string
-	root    string
-	oauth2  oauth2Config
-	hasAuth bool
+	cert         string
+	listen       string
+	root         string
+	dictStateDir string
+	oauth2       oauth2Config
+	hasAuth      bool
 }
 
 type oauth2Config struct {
@@ -67,6 +68,8 @@ func loadConfig(path string) (*serverConfig, error) {
 			cfg.listen = val
 		case "root":
 			cfg.root = val
+		case "dict_state_dir":
+			cfg.dictStateDir = val
 		case "oauth2_issuer":
 			cfg.oauth2.issuer = val
 			cfg.hasAuth = true
@@ -396,6 +399,27 @@ func (a *authManager) middleware(next http.Handler) http.Handler {
 	})
 }
 
+// defaultDictStateDir returns the same default cache directory as dictbuild's
+// -state-dir flag, so serve.go finds provider avatars without configuration.
+func defaultDictStateDir() string {
+	if d, err := os.UserCacheDir(); err == nil {
+		return filepath.Join(d, "wprana", "dictbuild")
+	}
+	return filepath.Join(os.Getenv("HOME"), ".cache", "wprana", "dictbuild")
+}
+
+// reName restricts avatar file names to alphanumerics, hyphens, and
+// underscores — no slashes, no dots, no path traversal possible.
+var reName = regexp.MustCompile(`^[A-Za-z0-9_-]+$`)
+
+// llmAvatarSVG is the fallback badge served for any /avatar/llm-* request
+// when no per-model PNG file exists in the avatars directory.
+const llmAvatarSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">` +
+	`<circle cx="10" cy="10" r="9" fill="#7c3aed"/>` +
+	`<text x="10" y="14" text-anchor="middle" font-family="system-ui,sans-serif" ` +
+	`font-size="8" font-weight="700" fill="#fff">AI</text>` +
+	`</svg>`
+
 // ----------------- main -----------------
 
 func main() {
@@ -426,6 +450,11 @@ func main() {
 	listenAddr := ":8080"
 	if cfg.listen != "" {
 		listenAddr = cfg.listen
+	}
+
+	dictStateDir := defaultDictStateDir()
+	if cfg.dictStateDir != "" {
+		dictStateDir = cfg.dictStateDir
 	}
 
 	fs := http.FileServer(http.Dir("dist"))
@@ -472,6 +501,29 @@ func main() {
 			}
 			w.WriteHeader(http.StatusOK)
 			fmt.Fprintf(w, "saved %s (%d bytes)\n", clean, len(body))
+			return
+		}
+
+		if strings.HasPrefix(r.URL.Path, "/avatar/") {
+			name := strings.TrimPrefix(r.URL.Path, "/avatar/")
+			if !reName.MatchString(name) {
+				http.Error(w, "invalid avatar name", http.StatusBadRequest)
+				return
+			}
+			avatarPath := filepath.Join(dictStateDir, "avatars", name+".png")
+			if _, err := os.Stat(avatarPath); err != nil {
+				if strings.HasPrefix(name, "llm-") {
+					w.Header().Set("Content-Type", "image/svg+xml")
+					w.Header().Set("Cache-Control", "public, max-age=86400")
+					fmt.Fprint(w, llmAvatarSVG)
+					return
+				}
+				http.NotFound(w, r)
+				return
+			}
+			w.Header().Set("Content-Type", "image/png")
+			w.Header().Set("Cache-Control", "public, max-age=86400")
+			http.ServeFile(w, r, avatarPath)
 			return
 		}
 
