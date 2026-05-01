@@ -66,22 +66,30 @@ func main() {
 	attrsFlag := flag.String("attrs", "", "comma-separated HTML attributes whose values are translated; overrides the default list")
 	addAttrsFlag := flag.String("add-attrs", "", "comma-separated attributes to add to the default list")
 	noAttrsFlag := flag.String("no-attrs", "", "comma-separated attributes to remove from the default list")
-	autoPluralsFlag := flag.Bool("auto-plurals", false, "consult per-language dictionaries to auto-fill empty inflection cells (LGPLLR-derivative output — see README)")
+	autoFlexFlag := flag.Bool("auto-flex", false, "consult per-language dictionaries to auto-fill empty inflection cells (LGPLLR-derivative output — see README)")
 	dictDirFlag := flag.String("dict-dir", "", "directory holding <lang>.db files produced by cmd/dictbuild (default: cmd/gen_i18n/dicts under the wprana module)")
+	autoTranslateFlag := flag.Bool("auto-translate", false, "use the configured LLM/MT backend (gen_i18n.json) to pre-fill entries that the dictionary pass could not fill; output is flagged for human review")
 	flag.Parse()
 
 	if *pathFlag == "" {
-		fmt.Fprintln(os.Stderr, "usage: gen_i18n --path <directory> [-deflang <lang>] [-attrs <list>] [-add-attrs <list>] [-no-attrs <list>] [-auto-plurals [-dict-dir <dir>]]")
+		fmt.Fprintln(os.Stderr, "usage: gen_i18n --path <directory> [-deflang <lang>] [-attrs <list>] [-add-attrs <list>] [-no-attrs <list>] [-auto-flex [-dict-dir <dir>]] [-auto-translate]")
 		os.Exit(1)
 	}
 
 	rootDir := *pathFlag
 	defLang := validateLangTag(*deflangFlag)
 	attrSet := buildAttrSet(*attrsFlag, *addAttrsFlag, *noAttrsFlag)
-	autoPlurals = *autoPluralsFlag
+	autoFlex = *autoFlexFlag
 	dictDir = *dictDirFlag
 	if dictDir == "" {
 		dictDir = defaultDictDir()
+	}
+	autoTranslate = *autoTranslateFlag
+	if autoTranslate {
+		if err := initTranslator(rootDir); err != nil {
+			fmt.Fprintf(os.Stderr, "error: %v\n", err)
+			os.Exit(1)
+		}
 	}
 
 	// Capture the current epoch once for the entire run.
@@ -182,6 +190,7 @@ func main() {
 			}
 			return oldLang[oldIdx].Content, oldLang[oldIdx].Revised
 		}, nil)
+		applyTextTranslations(langEntries, defEntries, defLang, lang)
 		if err := saveJSON(langFile, langEntries); err != nil {
 			fmt.Fprintf(os.Stderr, "error saving %s: %v\n", langFile, err)
 			os.Exit(1)
