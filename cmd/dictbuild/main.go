@@ -159,6 +159,8 @@ func runFetch(langCode, outDir, stateDir, externalTool string) {
 		os.Exit(1)
 	}
 
+	fetchProviderAvatars(filepath.Join(stateDir, "avatars"))
+
 	tool := externalTool
 	if tool == "" {
 		coreRoot := filepath.Join(stateDir, "tool", "unitex-core")
