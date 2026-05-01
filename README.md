@@ -2326,6 +2326,26 @@ li { padding: 6px 10px; background: #f9f9fb; border-radius: 4px; margin-bottom: 
 .dash-card h3 { margin: 0 0 8px; font-size: 1em; color: #16213e; }
 ```
 
+## Third-party data
+
+`cmd/dictbuild` can download linguistic dictionaries from the
+[UnitexGramLab/unitex-lingua](https://github.com/UnitexGramLab/unitex-lingua)
+repository. These dictionaries are distributed under the
+**[Lesser General Public License for Linguistic Resources (LGPLLR)](LICENSES/LGPLLR.txt)**.
+They are **not stored in this repository** — they are fetched on demand
+by `dictbuild -lang <tag>` and cached locally on the developer's machine.
+WPrana's source code is not affected by the LGPLLR.
+
+Copyright and per-language modification notices are in
+[`cmd/gen_i18n/dicts/NOTICE.md`](cmd/gen_i18n/dicts/NOTICE.md).
+
+**If you use `gen_i18n -auto-plurals`:** the generated
+`*.inflections.json` files are derivative works of the LGPLLR-licensed
+dictionaries. Before deploying them on your site, copy
+[`NOTICE-TEMPLATE.md`](NOTICE-TEMPLATE.md) into your project's NOTICE
+file and fill in the URL where your `i18n/` directory is accessible.
+Users who fill plural forms by hand are not affected.
+
 ## License
 
 This project is licensed under the [Mozilla Public License 2.0](LICENSE).
