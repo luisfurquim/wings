@@ -1716,30 +1716,47 @@ environment has no `Intl` at all), each formatter falls back to a
 locale-agnostic rendering (`strconv`, plain decimal point, RFC 3339 for
 dates) so the page stays readable.
 
-**Named formats (`%var:formatName`).** The template syntax `{{%dist:km}}`
-passes `"km"` as the second argument to `Format`. The `Numerical`
-implementation decides what to do with it — physical measure types treat it
-as a unit override; future Intl-profile integration will look it up in
-`<lang>.fmt.json`'s `"named"` section. The suffix is optional: bare
-`{{%dist}}` passes an empty string and triggers locale-driven defaults.
+**Named formats (`%var:formatName`).** The `:formatName` suffix is
+interpreted differently depending on the value type:
+
+- **`Numerical` types** (measure packages, `Currency`, custom types):
+  `formatName` is passed as the second argument to `Format`; the
+  implementation decides what to do with it — measure packages treat it as
+  a unit override (`{{%dist:km}}`), `Currency` ignores it.
+- **Native scalars** (`int`, `float64`, etc.) and **`time.Time` / JS
+  `Date`**: `fmtPrinter` looks up `formatName` in the current locale's
+  `<lang>.fmt.json` `"named"` section and, if found, renders through the
+  corresponding `Intl.NumberFormat` or `Intl.DateTimeFormat`
+  (`{{%count:compact}}`). If the name is not configured, rendering falls
+  back to the default locale-aware behavior and `formatName` is silently
+  ignored.
+
+The suffix is optional: bare `{{%dist}}` passes an empty string.
 
 **Per-locale `<lang>.fmt.json`.** A file placed next to the text catalog
-(e.g. `i18n/en-US.fmt.json`) carries two optional sections loaded
+(e.g. `i18n/en-US.fmt.json`) carries two optional entry shapes loaded
 automatically by `wi18n` when the locale is switched:
 
 ```json
 {
-  "units": { "km": 2, "mi": 3, "m": 0 },
-  "named": {
-    "compact": { "type": "number", "options": { "notation": "compact" } }
-  }
+  "km":      { "decimals": 2 },
+  "mi":      { "decimals": 3 },
+  "compact": { "type": "number", "notation": "compact" },
+  "short":   { "type": "date",   "dateStyle": "short"  }
 }
 ```
 
-`"units"` overrides the number of decimal places for a unit name used by
-the measure packages (`wi18n.UnitDecimals(locale, unit)`). `"named"`
-defines named `Intl.NumberFormat` / `Intl.DateTimeFormat` option sets
-reachable via `wi18n.NamedFmt(locale, name)`.
+Entries **with** a `"type"` field are **named scalar formats**: every
+key except `"type"` is forwarded verbatim as an Intl option object.
+`"type": "number"` builds an `Intl.NumberFormat`; `"type": "date"` builds
+an `Intl.DateTimeFormat`. The resulting formatter is cached per
+(locale, name) and reused across renders.
+
+Entries **without** `"type"` are **unit-precision overrides** (`"decimals"`
+key): `wi18n.UnitDecimals(locale, unit)` returns the value, and measure
+packages consult it before their built-in default. `wi18n.NamedFmt(locale,
+name)` exposes named scalar entries to callers that need the raw Intl
+options.
 
 **`wi18n.SetConfig` — app-level unit overrides.** Call
 `wi18n.SetConfig(jsonBytes)` at startup (e.g. from an embedded
