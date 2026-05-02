@@ -31,6 +31,11 @@ func fmtPrinter(val any, locale, formatName string) string {
 	if val == nil {
 		return ""
 	}
+	if formatName != "" {
+		if s, ok := applyNamedFormat(val, locale, formatName); ok {
+			return s
+		}
+	}
 	switch v := val.(type) {
 	case int:
 		return formatInt(int64(v), locale)
@@ -118,9 +123,9 @@ func floatDecimals(f float64) int {
 	return n
 }
 
-// formatTime renders a Go time.Time via Intl.DateTimeFormat. Uses the
-// locale's default date/time style; named formats will route here with a
-// non-empty formatName in a later iteration.
+// formatTime renders a Go time.Time via Intl.DateTimeFormat using the
+// locale's default date/time style. Named formats are handled by
+// applyNamedFormat before this function is reached.
 func formatTime(t time.Time, locale string) string {
 	dateCtor := js.Global().Get("Date")
 	if !dateCtor.Truthy() {
@@ -147,4 +152,74 @@ func formatJSDate(v js.Value, locale string) string {
 		}
 	}
 	return v.String()
+}
+
+// applyNamedFormat tries to render val using a named Intl format entry from
+// <lang>.fmt.json. Returns ("", false) when the formatName is not configured
+// for the current locale, or when val cannot be coerced to the format's
+// required input type. The caller falls through to the normal type switch on
+// false.
+func applyNamedFormat(val any, locale, formatName string) (string, bool) {
+	fmtType, opts, ok := NamedFmt(locale, formatName)
+	if !ok {
+		return "", false
+	}
+	switch fmtType {
+	case "number":
+		if f, ok2 := scalarToFloat64(val); ok2 {
+			if out, ok3 := formatNumberNamed(locale, formatName, fmtType, opts, f); ok3 {
+				return out, true
+			}
+		}
+	case "date":
+		dateCtor := js.Global().Get("Date")
+		switch v := val.(type) {
+		case time.Time:
+			if dateCtor.Truthy() {
+				jsDate := dateCtor.New(v.UnixMilli())
+				if out, ok2 := formatDateNamed(locale, formatName, fmtType, opts, jsDate); ok2 {
+					return out, true
+				}
+			}
+		case js.Value:
+			if dateCtor.Truthy() && v.InstanceOf(dateCtor) {
+				if out, ok2 := formatDateNamed(locale, formatName, fmtType, opts, v); ok2 {
+					return out, true
+				}
+			}
+		}
+	}
+	return "", false
+}
+
+// scalarToFloat64 coerces a native numeric value to float64 for use with
+// named Intl.NumberFormat entries. Returns (0, false) for non-numeric types.
+func scalarToFloat64(val any) (float64, bool) {
+	switch v := val.(type) {
+	case int:
+		return float64(v), true
+	case int8:
+		return float64(v), true
+	case int16:
+		return float64(v), true
+	case int32:
+		return float64(v), true
+	case int64:
+		return float64(v), true
+	case uint:
+		return float64(v), true
+	case uint8:
+		return float64(v), true
+	case uint16:
+		return float64(v), true
+	case uint32:
+		return float64(v), true
+	case uint64:
+		return float64(v), true
+	case float32:
+		return float64(v), true
+	case float64:
+		return v, true
+	}
+	return 0, false
 }
