@@ -46,5 +46,19 @@
   { "content": "Cada texto traducible recibió un índice numérico durante la compilación. La columna del medio muestra lo que el desarrollador escribió en pt-BR (el idioma fuente); la derecha muestra lo que está renderizado ahora — cambie el idioma arriba para verla cambiar." },
   { "content": "Índice" },
   { "content": "Texto fuente (pt-BR)" },
-  { "content": "Renderizado ahora" }
+  { "content": "Renderizado ahora" },
+  { "content": "Medidas" },
+  { "content": "Demo de medidas físicas" },
+  { "content": "Longitud" },
+  { "content": "Temperatura" },
+  { "content": "Velocidad" },
+  { "content": "predeterminado (locale):" },
+  { "content": ":km" },
+  { "content": ":mi" },
+  { "content": ":ft" },
+  { "content": ":c (Celsius):" },
+  { "content": ":f (Fahrenheit):" },
+  { "content": ":k (Kelvin):" },
+  { "content": ":kmh" },
+  { "content": ":mph" }
 ]

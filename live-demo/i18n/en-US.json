@@ -46,5 +46,19 @@
   { "content": "Each translatable string received a numeric index at build time. The middle column shows what the developer wrote in pt-BR (the source language); the right column shows what is rendered right now — switch the language at the top to see it change." },
   { "content": "Index" },
   { "content": "Source text (pt-BR)" },
-  { "content": "Currently rendered" }
+  { "content": "Currently rendered" },
+  { "content": "Measures" },
+  { "content": "Physical measures demo" },
+  { "content": "Length" },
+  { "content": "Temperature" },
+  { "content": "Speed" },
+  { "content": "default (locale):" },
+  { "content": ":km" },
+  { "content": ":mi" },
+  { "content": ":ft" },
+  { "content": ":c (Celsius):" },
+  { "content": ":f (Fahrenheit):" },
+  { "content": ":k (Kelvin):" },
+  { "content": ":kmh" },
+  { "content": ":mph" }
 ]

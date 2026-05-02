@@ -71,6 +71,7 @@ authored in Go and running natively in the browser.
   - [cmd/gen_i18n — Build-time Extractor](#cmdgen_i18n--build-time-extractor)
   - [Flexion — Plurals & Gender (SynPrinter)](#flexion--plurals--gender-synprinter)
   - [Locale-Aware Formatting (FmtPrinter)](#locale-aware-formatting-fmtprinter)
+  - [Physical Measure Packages](#physical-measure-packages)
   - [cmd/dictbuild & cmd/dictlookup — Flexion Dictionaries](#cmddictbuild--cmddictlookup--flexion-dictionaries)
   - [helpers/wlate — Translation Editor GUI](#helperswlate--translation-editor-gui)
     - [server.conf — mini-server configuration](#serverconf--mini-server-configuration)
@@ -1699,9 +1700,8 @@ func BRL(n int64) wi18n.Currency { return wi18n.Currency{Amount: n, Code: "BRL"}
 ```
 
 Or define their own domain type implementing `Numerical` and delegating to
-`Currency` internally — that is the recommended extension point for custom
-business units (distance, velocity, temperature, etc.) that will be
-covered by the measures layer in a future release.
+`Currency` internally — that is exactly the pattern the built-in physical
+measure packages follow (see [Physical Measure Packages](#physical-measure-packages)).
 
 An ISO 4217 table (embedded in `wi18n/currency_iso4217.go`) decides the
 number of fractional digits — most currencies use 2, with documented
@@ -1716,10 +1716,98 @@ environment has no `Intl` at all), each formatter falls back to a
 locale-agnostic rendering (`strconv`, plain decimal point, RFC 3339 for
 dates) so the page stays readable.
 
-**Reserved for later:** named formats (`%var:curta`, `%var:completa`),
-per-locale `<lang>.fmt.json` config files, and the `measure.conf`
-canonical-unit system described in the design notes. These depend on
-interface-driven measurement types that are still being designed.
+**Named formats (`%var:formatName`).** The template syntax `{{%dist:km}}`
+passes `"km"` as the second argument to `Format`. The `Numerical`
+implementation decides what to do with it — physical measure types treat it
+as a unit override; future Intl-profile integration will look it up in
+`<lang>.fmt.json`'s `"named"` section. The suffix is optional: bare
+`{{%dist}}` passes an empty string and triggers locale-driven defaults.
+
+**Per-locale `<lang>.fmt.json`.** A file placed next to the text catalog
+(e.g. `i18n/en-US.fmt.json`) carries two optional sections loaded
+automatically by `wi18n` when the locale is switched:
+
+```json
+{
+  "units": { "km": 2, "mi": 3, "m": 0 },
+  "named": {
+    "compact": { "type": "number", "options": { "notation": "compact" } }
+  }
+}
+```
+
+`"units"` overrides the number of decimal places for a unit name used by
+the measure packages (`wi18n.UnitDecimals(locale, unit)`). `"named"`
+defines named `Intl.NumberFormat` / `Intl.DateTimeFormat` option sets
+reachable via `wi18n.NamedFmt(locale, name)`.
+
+**`wi18n.SetConfig` — app-level unit overrides.** Call
+`wi18n.SetConfig(jsonBytes)` at startup (e.g. from an embedded
+`wprana.json`) to set per-locale default units for any quantity:
+
+```json
+{ "measures": { "pt-BR": { "length": "km" }, "en-US": { "length": "mi" } } }
+```
+
+`wi18n.MeasureDefault(quantity, locale)` returns the configured unit, or
+`("", false)` when none is set. Measure packages consult this before
+falling back to their built-in locale heuristics.
+
+### Physical Measure Packages
+
+Eight packages under `wi18n/` model common physical quantities. Each
+stores the value in a canonical SI unit and implements `wi18n.Numerical`
+(the `//go:build js && wasm` `Format` method is in a separate file so the
+pure-Go math is testable on the host):
+
+| Package | Type | Canonical | Unit names |
+|---|---|---|---|
+| `wi18n/length` | `Length{Meters float64}` | m | `m` `km` `cm` `mm` `mi` `ft` `yd` `in` `nmi` `league` |
+| `wi18n/temperature` | `Temperature{Kelvin float64}` | K | `k`/`kelvin` `c`/`celsius` `f`/`fahrenheit` `r`/`rankine` |
+| `wi18n/speed` | `Speed{MetersPerSecond float64}` | m/s | `ms` `kmh` `mph` `kn` `fps` |
+| `wi18n/volume` | `Volume{Liters float64}` | L | `L` `mL` `dL` `m3` `floz` `pt` `qt` `gal` `galimp` |
+| `wi18n/weight` | `Weight{Kilograms float64}` | kg | `kg` `g` `mg` `t` `lb` `oz` `st` |
+| `wi18n/area` | `Area{SquareMeters float64}` | m² | `m2` `km2` `cm2` `mm2` `ha` `mi2` `ft2` `yd2` `in2` `ac` |
+| `wi18n/fueleconomy` | `FuelEconomy{LitersPer100km float64}` | L/100 km | `l100km` `mpg` `mpgimp` `kml` |
+| `wi18n/cooking` | `CookingVolume{Liters float64}` / `CookingWeight{Kilograms float64}` | L / kg | vol: `L` `mL` `cup` `tbsp` `tsp` `floz` · wt: `kg` `g` `lb` `oz` |
+
+**Template usage.** The data key holds a value of the measure type; the
+template uses `%var` (locale default) or `%var:unit` (explicit unit):
+
+```go
+// mod/trip/trip.go
+func (t *Trip) InitData() map[string]any {
+    return map[string]any{
+        "dist": length.Length{Meters: 42195},
+        "temp": temperature.Temperature{Kelvin: 310.15},
+    }
+}
+```
+
+```html
+<!-- locale default -->
+<td>{{%dist}}</td>
+
+<!-- explicit unit override -->
+<td>{{%dist:km}}</td>
+<td>{{%dist:mi}}</td>
+<td>{{%temp:f}}</td>
+```
+
+**Locale defaults.** Each package's `DefaultUnit(locale)` applies common
+regional conventions: `length` → `mi` for `en-US`/`en-GB`/`en-LR`/`my`,
+`temperature` → `f` for `en-US`/`en-BS`/`en-BZ`/`en-KY`,
+`speed` → `mph` for the same imperial group, `volume` → `gal` for `en-US`,
+`weight` → `lb` for `en-US`, `fueleconomy` → `mpg` for `en-US` and
+`mpgimp` for `en-GB`. All other locales get SI/metric defaults.
+
+**Unit name constraints.** Unit identifiers contain only ASCII letters and
+digits — no `/` or `-` — so they are safe as `%var:unit` tokens in
+templates (`kmh` not `km/h`, `floz` not `fl-oz`, `ms` not `m/s`).
+
+**`fueleconomy` inverse units.** `mpg`, `mpgimp`, and `kml` are inversely
+proportional to `LitersPer100km`. `Format` and `Convert` return a non-nil
+error when `LitersPer100km ≤ 0` for these units (avoids +Inf).
 
 ### cmd/dictbuild & cmd/dictlookup — Flexion Dictionaries
 

@@ -26,6 +26,11 @@ import (
 	_ "live-demo/mod/tabs/fmt/numberdisplay"
 
 	_ "live-demo/mod/tabs/i18n"
+
+	_ "live-demo/mod/tabs/measures"
+	_ "live-demo/mod/tabs/measures/lengthdisplay"
+	_ "live-demo/mod/tabs/measures/speeddisplay"
+	_ "live-demo/mod/tabs/measures/tempdisplay"
 )
 
 func main() {
