@@ -46,7 +46,14 @@ func initTranslator(rootDir string) error {
 		}
 		autoTranslator = translator.NewOpenAI(tc.URL, tc.Model, tc.Key, tc.SystemPrompt, timeout)
 	case "libretranslate":
-		fmt.Fprintln(os.Stderr, "warn: libretranslate backend not yet implemented; -auto-translate has no effect")
+		if tc.URL == "" {
+			return fmt.Errorf("translator.backend=libretranslate requires translator.url in gen_i18n.json")
+		}
+		timeout, err := time.ParseDuration(tc.Timeout)
+		if err != nil {
+			timeout = 60 * time.Second
+		}
+		autoTranslator = translator.NewLibreTranslate(tc.URL, tc.Key, timeout)
 	case "":
 		fmt.Fprintln(os.Stderr, "warn: -auto-translate set but translator.backend not configured in gen_i18n.json; -auto-translate has no effect")
 	default:
