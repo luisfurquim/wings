@@ -1,0 +1,103 @@
+package cooking
+
+import (
+	"math"
+	"testing"
+)
+
+func TestConvertVolume(t *testing.T) {
+	const eps = 1e-6
+	cases := []struct {
+		liters  float64
+		unit    string
+		wantSym string
+		wantVal float64
+	}{
+		{1, "L", "L", 1},
+		{0.001, "mL", "mL", 1},
+		{usGallon / 16, "cup", "cup", 1},
+		{usGallon / 256, "tbsp", "tbsp", 1},
+		{usGallon / 768, "tsp", "tsp", 1},
+		{usGallon / 128, "floz", "fl oz", 1},
+	}
+	for _, c := range cases {
+		val, sym, err := CookingVolume{c.liters}.Convert(c.unit)
+		if err != nil {
+			t.Errorf("CookingVolume.Convert(%g L, %q): unexpected error: %v", c.liters, c.unit, err)
+			continue
+		}
+		if sym != c.wantSym {
+			t.Errorf("CookingVolume.Convert(%g, %q): sym=%q, want %q", c.liters, c.unit, sym, c.wantSym)
+		}
+		if math.Abs(val-c.wantVal) > eps {
+			t.Errorf("CookingVolume.Convert(%g, %q): val=%g, want %g", c.liters, c.unit, val, c.wantVal)
+		}
+	}
+}
+
+func TestConvertWeight(t *testing.T) {
+	const eps = 1e-9
+	cases := []struct {
+		kg      float64
+		unit    string
+		wantSym string
+		wantVal float64
+	}{
+		{1, "kg", "kg", 1},
+		{0.001, "g", "g", 1},
+		{lbKg, "lb", "lb", 1},
+		{lbKg / 16, "oz", "oz", 1},
+	}
+	for _, c := range cases {
+		val, sym, err := CookingWeight{c.kg}.Convert(c.unit)
+		if err != nil {
+			t.Errorf("CookingWeight.Convert(%g kg, %q): unexpected error: %v", c.kg, c.unit, err)
+			continue
+		}
+		if sym != c.wantSym {
+			t.Errorf("CookingWeight.Convert(%g, %q): sym=%q, want %q", c.kg, c.unit, sym, c.wantSym)
+		}
+		if math.Abs(val-c.wantVal) > eps {
+			t.Errorf("CookingWeight.Convert(%g, %q): val=%g, want %g", c.kg, c.unit, val, c.wantVal)
+		}
+	}
+}
+
+func TestConvertUnknownUnits(t *testing.T) {
+	cv := CookingVolume{Liters: 1}
+	if _, _, err := cv.Convert("barrel"); err == nil {
+		t.Error("CookingVolume: expected error for unknown unit, got nil")
+	}
+	cw := CookingWeight{Kilograms: 1}
+	if _, _, err := cw.Convert("slug"); err == nil {
+		t.Error("CookingWeight: expected error for unknown unit, got nil")
+	}
+}
+
+func TestDefaultVolumeUnit(t *testing.T) {
+	cases := []struct{ locale, want string }{
+		{"en-US", "cup"},
+		{"pt-BR", "mL"},
+		{"de-DE", "mL"},
+		{"en-GB", "mL"},
+	}
+	for _, c := range cases {
+		if got := DefaultVolumeUnit(c.locale); got != c.want {
+			t.Errorf("DefaultVolumeUnit(%q) = %q, want %q", c.locale, got, c.want)
+		}
+	}
+}
+
+func TestDefaultWeightUnit(t *testing.T) {
+	cases := []struct{ locale, want string }{
+		{"en-US", "oz"},
+		{"pt-BR", "g"},
+		{"de-DE", "g"},
+		{"en-GB", "g"},
+	}
+	for _, c := range cases {
+		if got := DefaultWeightUnit(c.locale); got != c.want {
+			t.Errorf("DefaultWeightUnit(%q) = %q, want %q", c.locale, got, c.want)
+		}
+	}
+}
