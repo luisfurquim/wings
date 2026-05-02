@@ -12,6 +12,9 @@ func TestClassifyBlocks(t *testing.T) {
 		{"user.name", want{false, false}},
 		{"%preco", want{true, false}},
 		{"%cart[i].total", want{true, false}},
+		{"%preco:compact", want{true, false}},
+		{"%dist:km", want{true, false}},
+		{"%user.salary:usd", want{true, false}},
 		{"@genero %qt ~aluno", want{false, true}},
 		{"@genero %qt #42", want{false, true}},
 		{"~aluno ~aprovado", want{false, true}},
@@ -33,13 +36,17 @@ func TestClassifyBlocks(t *testing.T) {
 
 func TestParseFmtBlock(t *testing.T) {
 	cases := []struct {
-		expr    string
-		wantVar string
-		wantLen int // len(Path): 0=bare, >0=path with root+tail
+		expr       string
+		wantVar    string
+		wantLen    int // len(Path): 0=bare, >0=path with root+tail
+		wantFormat string
 	}{
-		{"%preco", "preco", 0},
-		{"%user.salary", "user", 2},
-		{"%cart[0].total", "cart", 3},
+		{"%preco", "preco", 0, ""},
+		{"%user.salary", "user", 2, ""},
+		{"%cart[0].total", "cart", 3, ""},
+		{"%preco:compact", "preco", 0, "compact"},
+		{"%dist:km", "dist", 0, "km"},
+		{"%user.salary:usd", "user", 2, "usd"},
 	}
 	for _, c := range cases {
 		toks := Tokenize(c.expr)
@@ -57,6 +64,9 @@ func TestParseFmtBlock(t *testing.T) {
 		}
 		if len(fb.Path) != c.wantLen {
 			t.Errorf("%q: len(Path)=%d, want %d", c.expr, len(fb.Path), c.wantLen)
+		}
+		if fb.FormatName != c.wantFormat {
+			t.Errorf("%q: FormatName=%q, want %q", c.expr, fb.FormatName, c.wantFormat)
 		}
 	}
 }

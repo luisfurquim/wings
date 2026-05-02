@@ -14,11 +14,13 @@ import (
 
 // localeBundle holds everything one locale needs at runtime: the text
 // catalog, the inflections catalog (may be nil if the app uses no flex
-// blocks), the parsed BCP 47 tag, and the picked tag (which may differ from
-// the requested one after fallback resolution).
+// blocks), the format config (may be nil when no <lang>.fmt.json was
+// published), the parsed BCP 47 tag, and the picked tag (which may differ
+// from the requested one after fallback resolution).
 type localeBundle struct {
 	text   []string
 	flex   []FlexEntry
+	fmtCfg *fmtConfig
 	tag    language.Tag
 	picked string
 }
@@ -143,6 +145,13 @@ func loadBundle(requested string) (*localeBundle, error) {
 			bundle.flex = flexEntries
 		} else {
 			wprana.G.Logf(1, "wi18n: failed to parse inflections for %s: %v\n", picked, err)
+		}
+	}
+
+	// Format config is optional — apps without measure types publish no file.
+	if fmtBody, err := fetchText(base + picked + ".fmt.json"); err == nil {
+		if cfg := parseFmtConfig(fmtBody); cfg != nil {
+			bundle.fmtCfg = cfg
 		}
 	}
 

@@ -250,7 +250,7 @@ func SolveAll(segs []TextSegment, ctx Ctx) string {
 					break
 				}
 			}
-			sb.WriteString(FmtPrinter(val, Locale, ""))
+			sb.WriteString(FmtPrinter(val, Locale, fb.FormatName))
 			continue
 		}
 		// Search in the context stack

@@ -28,6 +28,7 @@ const (
 	TokAtVar     TokenType = 12 // @ident  — gender variable, no emission
 	TokTildeWord TokenType = 13 // ~ident  — flex marker (build-time only)
 	TokFlexIdx   TokenType = 14 // #N      — inflection rule index
+	TokColon     TokenType = 15 // :       — format-name separator in %var:name
 )
 
 // ── Template parse structures ───────────────────────────────────────────────
@@ -256,6 +257,9 @@ func splitSymbols(s string) []RefNode {
 			i++
 		case ']':
 			toks = append(toks, RefNode{Type: TokClose})
+			i++
+		case ':':
+			toks = append(toks, RefNode{Type: TokColon})
 			i++
 		case '#':
 			// #N → TokFlexIdx with IntVal=N (inflection rule index)
@@ -625,22 +629,25 @@ func consumePathTail(toks *[]RefNode) ([]RefNode, error) {
 // ── FmtBlock: lone %var for locale-aware formatting ─────────────────────────
 
 // FmtBlock holds the resolved pieces of a locale-aware formatting reference
-// such as `{{%preco}}` or `{{%cart[i].total}}`. The value is resolved at
-// sync time from the data context and rendered by wprana.FmtPrinter, which
-// chooses the output format from the Go type of the value and the current
-// locale.
+// such as `{{%preco}}`, `{{%cart[i].total}}`, or `{{%dist:km}}`. The value
+// is resolved at sync time from the data context and rendered by
+// wprana.FmtPrinter, which chooses the output format from the Go type of the
+// value, the current locale, and the optional format name.
 //
-// A FmtBlock is the lone-%var form. When %var co-occurs with @var/~word/#N
-// (or passthrough literals) inside the same {{...}} block, it is a FlexBlock
-// count axis instead — routed to SynPrinter.
+// A FmtBlock is the lone-%var form, with an optional `:formatName` suffix.
+// When %var co-occurs with @var/~word/#N (or passthrough literals) inside the
+// same {{...}} block, it is a FlexBlock count axis instead — routed to
+// SynPrinter.
 type FmtBlock struct {
-	Var  string    // %var root ident
-	Path []RefNode // full path (root ident + tail); nil when bare
+	Var        string    // %var root ident
+	Path       []RefNode // full path (root ident + tail); nil when bare
+	FormatName string    // name after ':' (e.g. "km" in %dist:km); "" when absent
 }
 
 // IsFmtBlock reports whether toks is a lone %var with an optional path tail
-// and nothing else. Malformed path tails (e.g. trailing `.`) return false so
-// the caller surfaces the error via ParseFmtBlock.
+// and optional :formatName suffix, and nothing else. Malformed path tails
+// (e.g. trailing `.`) return false so the caller surfaces the error via
+// ParseFmtBlock.
 func IsFmtBlock(toks []RefNode) bool {
 	if len(toks) == 0 || toks[0].Type != TokPctVar {
 		return false
@@ -649,12 +656,16 @@ func IsFmtBlock(toks []RefNode) bool {
 	if _, err := consumePathTail(&rest); err != nil {
 		return false
 	}
-	return len(rest) == 0
+	if len(rest) == 0 {
+		return true
+	}
+	return len(rest) == 2 && rest[0].Type == TokColon && rest[1].Type == TokIdent
 }
 
-// ParseFmtBlock consumes a lone-%var FmtBlock token sequence. Caller should
-// gate on IsFmtBlock first; ParseFmtBlock returns an error on any mismatch
-// so FlexBlocks mis-routed here surface loudly rather than silently.
+// ParseFmtBlock consumes a lone-%var FmtBlock token sequence, including an
+// optional :formatName suffix. Caller should gate on IsFmtBlock first;
+// ParseFmtBlock returns an error on any mismatch so FlexBlocks mis-routed
+// here surface loudly rather than silently.
 func ParseFmtBlock(toks *[]RefNode) (FmtBlock, error) {
 	if len(*toks) == 0 || (*toks)[0].Type != TokPctVar {
 		return FmtBlock{}, fmt.Errorf("ParseFmtBlock: expected %%var at block start")
@@ -667,6 +678,10 @@ func ParseFmtBlock(toks *[]RefNode) (FmtBlock, error) {
 	}
 	if len(tail) > 0 {
 		fb.Path = append([]RefNode{{Type: TokIdent, StrVal: head.StrVal}}, tail...)
+	}
+	if len(*toks) >= 2 && (*toks)[0].Type == TokColon && (*toks)[1].Type == TokIdent {
+		popRef(toks) // consume ':'
+		fb.FormatName = popRef(toks).StrVal
 	}
 	if len(*toks) != 0 {
 		return fb, fmt.Errorf("ParseFmtBlock: unexpected trailing tokens (this is a FlexBlock, not a FmtBlock)")
