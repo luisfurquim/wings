@@ -25,13 +25,17 @@ type Currency struct {
 // decimal and grouping conventions and the currency's ISO symbol, using the
 // browser's Intl.NumberFormat (cached) for correctness across locales.
 //
+// Currency ignores formatName — it always uses the currency style. If a
+// caller needs a different rendering of the same amount it should wrap
+// Currency in a custom type that implements Numerical.
+//
 // When Code is empty or the browser rejects the locale/currency pair,
 // Format falls back to a plain decimal rendering so the page remains
-// readable.
-func (c Currency) Format(locale, _ string) string {
+// readable. Currency.Format never returns a non-nil error.
+func (c Currency) Format(locale, _ string) (string, error) {
 	decimals := currencyDecimals(c.Code)
 	if c.Code == "" {
-		return formatDecimal(c.Amount, decimals)
+		return formatDecimal(c.Amount, decimals), nil
 	}
 	key := numberFmtKey{
 		locale:     locale,
@@ -40,9 +44,9 @@ func (c Currency) Format(locale, _ string) string {
 		fracDigits: decimals,
 	}
 	if out, ok := formatNumber(key, c.amountAsFloat(decimals)); ok {
-		return out
+		return out, nil
 	}
-	return formatDecimal(c.Amount, decimals) + " " + c.Code
+	return formatDecimal(c.Amount, decimals) + " " + c.Code, nil
 }
 
 // amountAsFloat shifts the integer minor-unit amount into the major-unit

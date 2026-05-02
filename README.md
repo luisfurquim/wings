@@ -1282,16 +1282,26 @@ func main() { wprana.Main() }
 lang := wi18n.Lang()
 ```
 
-**Catalog schema** (`i18n/<lang>.json`):
+**Catalog schema.** The catalog is split across two parallel files: a
+browser-side data file and a server-side metadata file.
+
+`i18n/<lang>.json` — shipped to the browser:
 
 ```json
 [
-  {
-    "content":   "Dashboard",
-    "revised":   true,
-    "context":   "mywidget/mywidget.html:7:42",
-    "ctxdetail": "a@mywidget/mywidget.html:7:42<br/>h2@mywidget/mywidget.html:65:17"
-  }
+  { "content": "Dashboard", "revised": true },
+  { "content": "", "revised": false, "source": "llm:gemma4" }
+]
+```
+
+`i18n/<lang>.meta.json` — server-only, same length, parallel-indexed:
+
+```json
+[
+  { "context": "mywidget/mywidget.html:7:42",
+    "ctxdetail": "a@mywidget/mywidget.html:7:42<br/>h2@mywidget/mywidget.html:65:17" },
+  { "context": "mywidget/mywidget.html:9:5",
+    "ctxdetail": "p@mywidget/mywidget.html:9:5" }
 ]
 ```
 
@@ -1300,12 +1310,14 @@ lang := wi18n.Lang()
 - `revised` — translator-maintained flag, flipped in the wlate GUI once a
   human has reviewed the entry. Preserved across `gen_i18n` runs when the
   underlying source string has not changed.
-- `context` — first occurrence as `<path>:<line>:<col>` (paths use forward
-  slashes on every OS so catalogs diff cleanly across platforms).
-- `ctxdetail` — every occurrence, joined by `<br/>`, each formatted as
-  `<tag>@<path>:<line>:<col>`. For values extracted from attributes, the
-  tag is written as `<element>[<attr>]` (e.g., `button[title]`), giving
-  translators the semantic context needed to pick the right wording.
+- `source` — optional provenance tag, set automatically when the entry was
+  pre-filled (e.g. `"llm:gemma4"`, `"dict:unitex-lingua"`). Displayed as a
+  badge in wlate so translators know which entries need human review.
+- `context` (meta) — first occurrence as `<path>:<line>:<col>` (forward
+  slashes on every OS).
+- `ctxdetail` (meta) — every occurrence joined by `<br/>`, each formatted as
+  `<tag>@<path>:<line>:<col>`. For attribute values the tag is written as
+  `<element>[<attr>]` (e.g., `button[title]`).
 
 ### Runtime Locale Switching (SetLang)
 
@@ -1404,12 +1416,13 @@ What it does:
 - Persists the trie to `i18n.db` (gob + 64-bit epoch version header) at
   the root of `--path`, so the next run reuses indices for unchanged
   strings.
-- Writes `i18n/<deflang>.json` — a JSON array of `wi18n.Entry` values in
-  the exact order the trie produces. The deflang file has `content` set
-  to the source string for every entry; every other `<lang>.json` in the
-  same directory is remapped in place: when an old source string survives
-  in the new run, its translation and `revised` flag are carried over to
-  the new index; when it disappears, the slot is reset to empty.
+- Writes two parallel files per language: `i18n/<lang>.json` (browser
+  bundle — `content`, `revised`, optional `source`) and
+  `i18n/<lang>.meta.json` (server-only — `context`, `ctxdetail`). The
+  deflang `.json` has `content` set to the source string for every entry;
+  other `<lang>.json` files are remapped in place across runs: surviving
+  translations and `revised` flags are carried over; disappeared strings
+  are reset to empty.
 - Validates `--deflang` as a BCP 47 tag via `golang.org/x/text/language`
   (falls back to `en-US` on invalid input).
 - If legacy `<lang>.csv` files exist without a corresponding `<lang>.json`,
@@ -1459,8 +1472,17 @@ spot).
 binding for flex sigils (`@`/`%`/`~`/`#N` — see next section). Each distinct
 block is assigned a numeric rule index, rewritten to its canonical `{{@g %c
 ~word #N}}` form in the `.i18n.html`, and emitted as a row in
-`i18n/<deflang>.inflections.json`. Translator-maintained `<lang>.inflections.json`
+`i18n/<deflang>.inflections.json` (with a parallel `.inflections.meta.json`
+holding `context`/`ctxdetail`). Translator-maintained `<lang>.inflections.json`
 files are remapped in place across runs, same as the text catalog.
+
+**Auto-fill flags.**
+
+| Flag | Effect |
+|---|---|
+| `--auto-flex` | Consult per-language dictionaries (`.db` files built by `cmd/dictbuild`) to auto-fill empty inflection cells. Output is tagged `source: "dict:unitex-lingua"` and flagged for human review. |
+| `--dict-dir <dir>` | Directory holding `<lang>.db` files. Default: `cmd/gen_i18n/dicts` under the wprana module. |
+| `--auto-translate` | Use the LLM/MT backend configured in `gen_i18n.json` to pre-fill text and flex entries that the dictionary pass could not fill. All LLM output is tagged with the model name and flagged `revised: false` for human review. |
 
 **Degenerate-deflang lint.** When the deflang has no gender axis (e.g. `en-US`)
 but at least one target locale does (e.g. `pt-BR`), any flex block missing
@@ -1506,37 +1528,58 @@ write `~o %qt ~aluno` — placing `%qt` between the article and the noun. A
 verb that agrees with number must carry its own `~` (e.g. `~ganhou`);
 omitting it leaves a singular verb glued to a plural subject.
 
-**Catalog schema** (`i18n/<lang>.inflections.json`):
+**Catalog schema.** Like the text catalog, the inflections catalog is split
+across two parallel files.
+
+`i18n/<lang>.inflections.json` — shipped to the browser:
 
 ```json
 [
   {
-    "expr": "{{ @genero ~o %qt ~aluno ~aprovado ~ganhou uma bolsa }}",
-    "context":   "pages/result.html:12:8",
-    "ctxdetail": "caption@pages/result.html:12:8",
-    "revised":   false,
-    "forms": {
+    "label":   "o {n} aluno aprovado ganhou uma bolsa",
+    "revised": false,
+    "cells": {
       "m.one":   "o {n} aluno aprovado ganhou uma bolsa",
       "m.other": "os {n} alunos aprovados ganharam uma bolsa",
       "f.one":   "a {n} aluna aprovada ganhou uma bolsa",
       "f.other": "as {n} alunas aprovadas ganharam uma bolsa"
+    },
+    "sources": {
+      "m.one": "dict:unitex-lingua",
+      "f.one": "llm:gemma4"
     }
   }
 ]
 ```
 
-The `forms` map is keyed by `<gender>.<cldr-category>`. CLDR categories
-come from `golang.org/x/text/feature/plural` and vary per locale (`zero`,
-`one`, `two`, `few`, `many`, `other`). Locales without a gender axis use a
-single empty-string gender (`.one`, `.other`). `{n}` inside a form is
-replaced by the numeric count at render time.
+`i18n/<lang>.inflections.meta.json` — server-only, parallel-indexed:
+
+```json
+[
+  {
+    "context":   "pages/result.html:12:8",
+    "ctxdetail": "caption@pages/result.html:12:8"
+  }
+]
+```
+
+- `label` — translator-facing stem (the non-sigil tokens from the original
+  block), used as a visible placeholder when no matching cell is found.
+- `cells` — map keyed by `<gender>.<cldr-category>`. CLDR categories vary
+  per locale (`zero`, `one`, `two`, `few`, `many`, `other`). Locales without
+  a gender axis use a single empty-string gender key (`.one`, `.other`).
+  `{n}` inside a cell is replaced by the numeric count at render time.
+- `revised` — same semantics as the text catalog flag.
+- `sources` — optional per-cell provenance map (same tag format as `source`
+  in the text catalog). Omitted when empty.
+- `context` / `ctxdetail` (meta) — same format as the text `.meta.json`.
 
 **Runtime behavior.** When `wi18n` is imported, it fetches
 `<lang>.inflections.json` in parallel with the main text catalog and
 installs `wprana.SynPrinter` — a second printer hook invoked by the syncer
 on every flex block. `SynPrinter` resolves the gender and count variables
 from the live data context, computes the CLDR plural category for the
-current locale, and looks up `forms["<gender>.<cat>"]`.
+current locale, and looks up `cells["<gender>.<cat>"]`.
 
 The fallback chain handles sparse catalogs:
 
@@ -1591,7 +1634,7 @@ Go type in this order:
 | `float32`, `float64` | `Intl.NumberFormat` default precision |
 | `time.Time` | `Intl.DateTimeFormat` (epoch ms bridge) |
 | `js.Value` holding a JS `Date` | `Intl.DateTimeFormat` direct |
-| anything implementing [`wi18n.Numerical`](#locale-aware-formatting-fmtprinter) | `v.Format(locale, formatName)` |
+| anything implementing [`wi18n.Numerical`](#locale-aware-formatting-fmtprinter) | `v.Format(locale, formatName)` → `(string, error)`; error stops rendering |
 | anything else | `fmt.Sprint` fallback |
 
 `wi18n` uses the browser's `Intl` API rather than bundling locale tables
@@ -1604,14 +1647,20 @@ formattable value:
 
 ```go
 type Numerical interface {
-    Format(locale, formatName string) string
+    Format(locale, formatName string) (string, error)
 }
 ```
 
 There is no registration step; satisfying the interface is the
-registration. `formatName` is reserved for the future `%var:formatName`
-template syntax (currently always empty) — implementations can accept any
-value they do not recognise and default to their base rendering.
+registration. `formatName` comes from the `%var:formatName` template
+syntax (empty string when the template uses bare `%var`).
+
+Returning a non-nil error stops rendering for that binding: `FmtPrinter`
+discards the returned string, logs the error with locale/formatName
+context, and emits an empty string. Returning `("", nil)` produces an
+empty string without triggering the error path. The implementation may
+log domain-level detail before returning the error; `FmtPrinter` adds
+the locale/formatName context on top.
 
 **wi18n.Currency — built-in example of `Numerical`.**
 
@@ -1776,9 +1825,11 @@ review and edit catalogs side-by-side with a reference language.
 - JSON schemas:
 
   ```json
-  // i18n/<lang>.json — same schema as wi18n consumes
-  [{"content": "...", "revised": false,
-    "context": "pages/result.html:12:8",
+  // i18n/<lang>.json — browser bundle (content + provenance)
+  [{"content": "...", "revised": false, "source": "llm:gemma4"}]
+
+  // i18n/<lang>.meta.json — server-only, parallel-indexed
+  [{"context": "pages/result.html:12:8",
     "ctxdetail": "th@pages/result.html:12:8<br/>button[title]@pages/result.html:40:17"}]
 
   // i18n/<lang>.inflections.json
@@ -1786,9 +1837,12 @@ review and edit catalogs side-by-side with a reference language.
   // it AFTER ~o and BEFORE ~aluno for "os 10 alunos" (not "10 os alunos").
   // Verbs that conjugate with number (~ganhou/ganharam) need the ~ too —
   // missing a ~ on a number-agreeing verb causes "10 alunos ganhou" bugs.
-  [{"expr": "{{ @genero ~o %qt ~aluno ~aprovado ~ganhou uma bolsa }}",
-    "context": "...", "ctxdetail": "caption", "revised": false,
-    "forms": {"m.one": "...", "f.other": "..."}}]
+  [{"label": "o {n} aluno aprovado ganhou uma bolsa", "revised": false,
+    "cells": {"m.one": "...", "f.other": "..."},
+    "sources": {"m.one": "dict:unitex-lingua"}}]
+
+  // i18n/<lang>.inflections.meta.json — server-only, parallel-indexed
+  [{"context": "...", "ctxdetail": "caption"}]
   ```
 
 **Self-i18n.** wlate itself is built as a translatable wprana app — the

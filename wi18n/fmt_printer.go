@@ -24,6 +24,8 @@ import (
 //  6. Numerical interface → value.Format(locale, formatName) — the app
 //     extension point. Any Go-side type that wants locale-aware behavior
 //     implements Numerical; Currency is wi18n's built-in example.
+//     A non-nil error stops rendering: the string is discarded and ""
+//     is returned after logging with locale/formatName context.
 //  7. default → fmt-style fallback via wprana.NoFmtFmtPrinter.
 func fmtPrinter(val any, locale, formatName string) string {
 	if val == nil {
@@ -59,7 +61,12 @@ func fmtPrinter(val any, locale, formatName string) string {
 	case js.Value:
 		return formatJSDate(v, locale)
 	case Numerical:
-		return v.Format(locale, formatName)
+		s, err := v.Format(locale, formatName)
+		if err != nil {
+			G.Printf(1, "wi18n: FmtPrinter: %v (locale=%q formatName=%q)\n", err, locale, formatName)
+			return ""
+		}
+		return s
 	}
 	return wprana.NoFmtFmtPrinter(val, locale, formatName)
 }

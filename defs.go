@@ -70,15 +70,17 @@ var Locale string
 
 // FmtPrinter formats a single value into its locale-appropriate string
 // representation. It is called by the solver for lone-`%var` bindings
-// (FmtBlock), invoked with the resolved value, the current Locale, and an
-// optional format name (reserved for `%var:formatName` syntax — currently
-// always empty).
+// (FmtBlock), invoked with the resolved value, the current Locale, and the
+// format name extracted from the `%var:formatName` template syntax (empty
+// string when the template uses bare `%var`).
 //
 // The default is NoFmtFmtPrinter, a locale-agnostic `fmt.Sprint` passthrough.
 // When wi18n is imported, its init installs a type-switching implementation
-// that routes native ints/floats through golang.org/x/text/message, time.Time
+// that routes native ints/floats through Intl.NumberFormat, time.Time
 // through Intl.DateTimeFormat, and any value implementing wi18n.Numerical
-// through its Format(locale, formatName) method.
+// through its Format(locale, formatName) method. A non-nil error from
+// Numerical.Format stops rendering: the binding emits "" and the error is
+// logged with locale/formatName context.
 var FmtPrinter func(val any, locale, formatName string) string = NoFmtFmtPrinter
 
 // NoFmtFmtPrinter is the default FmtPrinter. With no locale-aware backend
@@ -116,6 +118,7 @@ const (
 	TokAtVar     = expr.TokAtVar
 	TokTildeWord = expr.TokTildeWord
 	TokFlexIdx   = expr.TokFlexIdx
+	TokColon     = expr.TokColon
 )
 
 // AttrBinding stores the bindings of a single attribute.

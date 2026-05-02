@@ -2,6 +2,10 @@
 
 package wi18n
 
+import "github.com/luisfurquim/goose"
+
+var G goose.Alert = goose.Alert(2)
+
 // Numerical is the extension point for locale-aware formatting of values
 // whose type is not known to wi18n.
 //
@@ -17,9 +21,15 @@ package wi18n
 // satisfying the interface is the registration.
 //
 // locale is the BCP 47 tag currently in effect (e.g. "pt-BR"). formatName
-// is reserved for the future `%var:formatName` template syntax — in this
-// release it is always the empty string; implementations should treat any
-// value they do not recognize as equivalent to the default.
+// comes from the `%var:formatName` template syntax (empty string when the
+// template uses bare `%var`).
+//
+// Error semantics: returning a non-nil error signals that rendering must
+// stop — FmtPrinter will discard the returned string, log the error with
+// template context, and emit an empty string for the binding. Returning
+// ("", nil) produces an empty string without triggering the error path.
+// The implementation is free to log domain-level detail before returning
+// the error; FmtPrinter adds the locale/formatName context on top.
 type Numerical interface {
-	Format(locale, formatName string) string
+	Format(locale, formatName string) (string, error)
 }
