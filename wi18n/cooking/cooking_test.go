@@ -21,16 +21,16 @@ func TestConvertVolume(t *testing.T) {
 		{usGallon / 128, "floz", "fl oz", 1},
 	}
 	for _, c := range cases {
-		val, sym, err := CookingVolume{c.liters}.Convert(c.unit)
+		val, sym, err := Volume{c.liters}.Convert(c.unit)
 		if err != nil {
-			t.Errorf("CookingVolume.Convert(%g L, %q): unexpected error: %v", c.liters, c.unit, err)
+			t.Errorf("Volume.Convert(%g L, %q): unexpected error: %v", c.liters, c.unit, err)
 			continue
 		}
 		if sym != c.wantSym {
-			t.Errorf("CookingVolume.Convert(%g, %q): sym=%q, want %q", c.liters, c.unit, sym, c.wantSym)
+			t.Errorf("Volume.Convert(%g, %q): sym=%q, want %q", c.liters, c.unit, sym, c.wantSym)
 		}
 		if math.Abs(val-c.wantVal) > eps {
-			t.Errorf("CookingVolume.Convert(%g, %q): val=%g, want %g", c.liters, c.unit, val, c.wantVal)
+			t.Errorf("Volume.Convert(%g, %q): val=%g, want %g", c.liters, c.unit, val, c.wantVal)
 		}
 	}
 }
@@ -49,28 +49,28 @@ func TestConvertWeight(t *testing.T) {
 		{lbKg / 16, "oz", "oz", 1},
 	}
 	for _, c := range cases {
-		val, sym, err := CookingWeight{c.kg}.Convert(c.unit)
+		val, sym, err := Weight{c.kg}.Convert(c.unit)
 		if err != nil {
-			t.Errorf("CookingWeight.Convert(%g kg, %q): unexpected error: %v", c.kg, c.unit, err)
+			t.Errorf("Weight.Convert(%g kg, %q): unexpected error: %v", c.kg, c.unit, err)
 			continue
 		}
 		if sym != c.wantSym {
-			t.Errorf("CookingWeight.Convert(%g, %q): sym=%q, want %q", c.kg, c.unit, sym, c.wantSym)
+			t.Errorf("Weight.Convert(%g, %q): sym=%q, want %q", c.kg, c.unit, sym, c.wantSym)
 		}
 		if math.Abs(val-c.wantVal) > eps {
-			t.Errorf("CookingWeight.Convert(%g, %q): val=%g, want %g", c.kg, c.unit, val, c.wantVal)
+			t.Errorf("Weight.Convert(%g, %q): val=%g, want %g", c.kg, c.unit, val, c.wantVal)
 		}
 	}
 }
 
 func TestConvertUnknownUnits(t *testing.T) {
-	cv := CookingVolume{Liters: 1}
+	cv := Volume{Liters: 1}
 	if _, _, err := cv.Convert("barrel"); err == nil {
-		t.Error("CookingVolume: expected error for unknown unit, got nil")
+		t.Error("Volume: expected error for unknown unit, got nil")
 	}
-	cw := CookingWeight{Kilograms: 1}
+	cw := Weight{Kilograms: 1}
 	if _, _, err := cw.Convert("slug"); err == nil {
-		t.Error("CookingWeight: expected error for unknown unit, got nil")
+		t.Error("Weight: expected error for unknown unit, got nil")
 	}
 }
 

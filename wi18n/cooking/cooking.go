@@ -2,8 +2,8 @@
 // templates.
 //
 // Two separate types cover the two axes of cooking measurement:
-//   - [CookingVolume] for liquid/dry-volume measures (cup, tbsp, tsp, mL, L…)
-//   - [CookingWeight] for mass measures (g, kg, oz, lb)
+//   - [Volume] for liquid/dry-volume measures (cup, tbsp, tsp, mL, L…)
+//   - [Weight] for mass measures (g, kg, oz, lb)
 //
 // Store values in their respective SI-adjacent canonical form (litres for
 // volume, kilograms for weight) and bind them with %var:unit in templates:
@@ -22,11 +22,11 @@ package cooking
 
 import "fmt"
 
-// CookingVolume stores a cooking volume in litres.
-type CookingVolume struct{ Liters float64 }
+// Volume stores a cooking volume in litres.
+type Volume struct{ Liters float64 }
 
-// CookingWeight stores a cooking mass in kilograms.
-type CookingWeight struct{ Kilograms float64 }
+// Weight stores a cooking mass in kilograms.
+type Weight struct{ Kilograms float64 }
 
 // usGallon is the exact US liquid gallon in litres.
 const usGallon = 3.785411784
@@ -60,28 +60,28 @@ var wgtUnits = map[string]wgtUnit{
 	"oz": {"oz", 16.0 / lbKg},
 }
 
-// NewVolume constructs a CookingVolume from a value in unitName, converting to litres.
-// Example: cooking.NewVolume(2, "cup") returns CookingVolume{Liters: 0.473176473}.
-func NewVolume(val float64, unitName string) (CookingVolume, error) {
+// NewVolume constructs a Volume from a value in unitName, converting to litres.
+// Example: cooking.NewVolume(2, "cup") returns Volume{Liters: 0.473176473}.
+func NewVolume(val float64, unitName string) (Volume, error) {
 	u, ok := volUnits[unitName]
 	if !ok {
-		return CookingVolume{}, fmt.Errorf("wi18n/cooking: unrecognized volume unit %q", unitName)
+		return Volume{}, fmt.Errorf("wi18n/cooking: unrecognized volume unit %q", unitName)
 	}
-	return CookingVolume{Liters: val / u.factor}, nil
+	return Volume{Liters: val / u.factor}, nil
 }
 
-// NewWeight constructs a CookingWeight from a value in unitName, converting to kilograms.
-// Example: cooking.NewWeight(8, "oz") returns CookingWeight{Kilograms: 0.226796185}.
-func NewWeight(val float64, unitName string) (CookingWeight, error) {
+// NewWeight constructs a Weight from a value in unitName, converting to kilograms.
+// Example: cooking.NewWeight(8, "oz") returns Weight{Kilograms: 0.226796185}.
+func NewWeight(val float64, unitName string) (Weight, error) {
 	u, ok := wgtUnits[unitName]
 	if !ok {
-		return CookingWeight{}, fmt.Errorf("wi18n/cooking: unrecognized weight unit %q", unitName)
+		return Weight{}, fmt.Errorf("wi18n/cooking: unrecognized weight unit %q", unitName)
 	}
-	return CookingWeight{Kilograms: val / u.factor}, nil
+	return Weight{Kilograms: val / u.factor}, nil
 }
 
 // Convert returns the volume in the named unit and its display symbol.
-func (cv CookingVolume) Convert(unitName string) (val float64, sym string, err error) {
+func (cv Volume) Convert(unitName string) (val float64, sym string, err error) {
 	u, ok := volUnits[unitName]
 	if !ok {
 		return 0, "", fmt.Errorf("wi18n/cooking: unrecognized volume unit %q", unitName)
@@ -90,7 +90,7 @@ func (cv CookingVolume) Convert(unitName string) (val float64, sym string, err e
 }
 
 // Convert returns the mass in the named unit and its display symbol.
-func (cw CookingWeight) Convert(unitName string) (val float64, sym string, err error) {
+func (cw Weight) Convert(unitName string) (val float64, sym string, err error) {
 	u, ok := wgtUnits[unitName]
 	if !ok {
 		return 0, "", fmt.Errorf("wi18n/cooking: unrecognized weight unit %q", unitName)

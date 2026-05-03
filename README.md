@@ -1807,7 +1807,7 @@ pure-Go math is testable on the host):
 | `wi18n/weight` | `Weight{Kilograms float64}` | kg | `kg` `g` `mg` `t` `lb` `oz` `st` |
 | `wi18n/area` | `Area{SquareMeters float64}` | m² | `m2` `km2` `cm2` `mm2` `ha` `mi2` `ft2` `yd2` `in2` `ac` |
 | `wi18n/fueleconomy` | `FuelEconomy{LitersPer100km float64}` | L/100 km | `l100km` `mpg` `mpgimp` `kml` |
-| `wi18n/cooking` | `CookingVolume{Liters float64}` / `CookingWeight{Kilograms float64}` | L / kg | vol: `L` `mL` `cup` `tbsp` `tsp` `floz` · wt: `kg` `g` `lb` `oz` |
+| `wi18n/cooking` | `Volume{Liters float64}` / `Weight{Kilograms float64}` | L / kg | vol: `L` `mL` `cup` `tbsp` `tsp` `floz` · wt: `kg` `g` `lb` `oz` |
 
 **Template usage.** The data key holds a value of the measure type; the
 template uses `%var` (locale default) or `%var:unit` (explicit unit):
