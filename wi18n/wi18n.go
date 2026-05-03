@@ -48,6 +48,10 @@ var (
 	basePath   = "i18n/"
 )
 
+// printerToken is the one-time token consumed at package-level init so that
+// SetPrinter calls from this package are authorized against wprana's token guard.
+var printerToken = wprana.TakePrinterToken()
+
 // Lang returns the language tag selected at init time.
 func Lang() string {
 	return lang
@@ -117,7 +121,7 @@ func loadAndInstall() {
 		wprana.Locale = lang
 	}
 
-	wprana.Printer = lookup
+	wprana.SetPrinter(lookup, printerToken)
 	wprana.G.Logf(2, "wi18n: loaded %d entries for lang=%s\n", len(table), lang)
 
 	if bundle.flex != nil {

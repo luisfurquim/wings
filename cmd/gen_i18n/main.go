@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/ed25519"
 	"crypto/md5"
 	"encoding/binary"
 	"encoding/csv"
@@ -69,11 +70,52 @@ func main() {
 	autoFlexFlag := flag.Bool("auto-flex", false, "consult per-language dictionaries to auto-fill empty inflection cells (LGPLLR-derivative output — see README)")
 	dictDirFlag := flag.String("dict-dir", "", "directory holding <lang>.db files produced by cmd/dictbuild (default: cmd/gen_i18n/dicts under the wprana module)")
 	autoTranslateFlag := flag.Bool("auto-translate", false, "use the configured LLM/MT backend (gen_i18n.json) to pre-fill entries that the dictionary pass could not fill; output is flagged for human review")
+	genKeyFlag := flag.Bool("genkey", false, "generate a fresh ed25519 signing keypair (gen_i18n.ed25519.key + gen_i18n.ed25519.pub) and exit")
+	genKeyDirFlag := flag.String("genkey-dir", ".", "directory to write the generated keypair when using -genkey")
+	signKeyFlag := flag.String("sign-key", "", "path to gen_i18n.ed25519.key; when set, sign every output catalog with .json.sig sidecar files")
+	signKeyPassFlag := flag.String("sign-key-password", "", "password for the private key file specified by -sign-key")
 	flag.Parse()
 
+	// ── Key generation mode (standalone; does not need -path) ────────────────
+	if *genKeyFlag {
+		dir := *genKeyDirFlag
+		keyFile := dir + "/" + defaultKeyFile
+		pubFile := dir + "/" + defaultPubFile
+		pass := *signKeyPassFlag
+		if pass == "" {
+			fmt.Fprintln(os.Stderr, "error: -genkey requires -sign-key-password")
+			os.Exit(1)
+		}
+		if err := GenerateSigningKey(keyFile, pubFile, pass); err != nil {
+			fmt.Fprintf(os.Stderr, "error generating keypair: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("keypair written:\n  private: %s\n  public:  %s\n", keyFile, pubFile)
+		fmt.Println("Embed the public key in your WASM app:")
+		fmt.Printf("  //go:embed %s\n  var catalogPubKeyPEM []byte\n", pubFile)
+		fmt.Println("  // in main(): wi18n.SetCatalogPublicKey(catalogPubKeyPEM)")
+		os.Exit(0)
+	}
+
 	if *pathFlag == "" {
-		fmt.Fprintln(os.Stderr, "usage: gen_i18n --path <directory> [-deflang <lang>] [-attrs <list>] [-add-attrs <list>] [-no-attrs <list>] [-auto-flex [-dict-dir <dir>]] [-auto-translate]")
+		fmt.Fprintln(os.Stderr, "usage: gen_i18n --path <directory> [-deflang <lang>] [-attrs <list>] [-add-attrs <list>] [-no-attrs <list>] [-auto-flex [-dict-dir <dir>]] [-auto-translate] [-sign-key <file> -sign-key-password <pass>]")
+		fmt.Fprintln(os.Stderr, "       gen_i18n -genkey [-genkey-dir <dir>] -sign-key-password <pass>")
 		os.Exit(1)
+	}
+
+	// ── Load signing key if requested ─────────────────────────────────────────
+	var signingKey ed25519.PrivateKey
+	if *signKeyFlag != "" {
+		if *signKeyPassFlag == "" {
+			fmt.Fprintln(os.Stderr, "error: -sign-key requires -sign-key-password")
+			os.Exit(1)
+		}
+		var err error
+		signingKey, err = LoadSigningKey(*signKeyFlag, *signKeyPassFlag)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error loading signing key: %v\n", err)
+			os.Exit(1)
+		}
 	}
 
 	rootDir := *pathFlag
@@ -163,6 +205,10 @@ func main() {
 		fmt.Fprintf(os.Stderr, "error saving deflang json: %v\n", err)
 		os.Exit(1)
 	}
+	if err := maybeSignJSON(signingKey, oldDefPath); err != nil {
+		fmt.Fprintf(os.Stderr, "error signing deflang json: %v\n", err)
+		os.Exit(1)
+	}
 
 	// Remap every other <lang>.json file (except the default) to the new
 	// index order, preserving translations whose source string is still
@@ -195,6 +241,10 @@ func main() {
 			fmt.Fprintf(os.Stderr, "error saving %s: %v\n", langFile, err)
 			os.Exit(1)
 		}
+		if err := maybeSignJSON(signingKey, langFile); err != nil {
+			fmt.Fprintf(os.Stderr, "error signing %s: %v\n", langFile, err)
+			os.Exit(1)
+		}
 	}
 
 	// Emit <lang>.inflections.json for every discovered language, including
@@ -215,6 +265,18 @@ func main() {
 	fmt.Printf("Arena: %d nodes\n", len(arena))
 	fmt.Printf("Txt: %d entries\n", len(txt))
 	fmt.Printf("Flex: %d rules\n", len(flexBlocks))
+}
+
+// maybeSignJSON signs jsonFile and writes jsonFile+".sig" if signingKey is set.
+func maybeSignJSON(key ed25519.PrivateKey, jsonFile string) error {
+	if key == nil {
+		return nil
+	}
+	content, err := os.ReadFile(jsonFile)
+	if err != nil {
+		return fmt.Errorf("reading %s for signing: %w", jsonFile, err)
+	}
+	return SignCatalog(key, content, jsonFile+".sig")
 }
 
 // buildEntries assembles the [wi18n.Entry] slice for one language.

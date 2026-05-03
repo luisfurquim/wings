@@ -43,6 +43,9 @@ func domCreateStyleNode(css string) js.Value {
 
 func domCreateTemplate(html string) js.Value {
 	tmpl := domCreateElement("template")
+	// SECURITY: html MUST be a compile-time constant (//go:embed). Never pass
+	// runtime, user-derived, or server-fetched strings here — innerHTML is a
+	// DOM XSS sink. See the security notes in README.md.
 	tmpl.Set("innerHTML", html)
 	return tmpl
 }

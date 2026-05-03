@@ -5,6 +5,7 @@ package wi18n
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"sync"
 
 	"golang.org/x/text/language"
@@ -87,7 +88,7 @@ func setLangSync(tag string) error {
 	lang = cached.picked
 	wprana.Locale = cached.picked
 	setHTMLLang(cached.picked)
-	wprana.Printer = lookup
+	wprana.SetPrinter(lookup, printerToken) // idempotent after first install
 
 	wprana.RetranslateAll()
 	return nil
@@ -98,6 +99,12 @@ func setLangSync(tag string) error {
 // `picked` field carries the actually loaded tag, which the caller exposes
 // as the new wprana.Locale.
 func loadBundle(requested string) (*localeBundle, error) {
+	// Validate BCP-47 format before using the tag in URL construction.
+	// Prevents path-traversal via SetLang("../../etc/passwd").
+	if _, err := language.Parse(requested); err != nil {
+		return nil, fmt.Errorf("wi18n: invalid locale tag %q: %w", requested, err)
+	}
+
 	base := BasePath()
 
 	var (
@@ -108,11 +115,20 @@ func loadBundle(requested string) (*localeBundle, error) {
 	for _, cand := range fallbackChain(requested) {
 		url := base + cand + ".json"
 		body, err = fetchText(url)
-		if err == nil {
-			picked = cand
-			break
+		if err != nil {
+			wprana.G.Logf(3, "wi18n: %s not available (%v), trying next\n", url, err)
+			continue
 		}
-		wprana.G.Logf(3, "wi18n: %s not available (%v), trying next\n", url, err)
+		// Verify catalog signature when a .sig sidecar exists. If the sidecar is
+		// absent the verification step is skipped (backward-compatible). If it
+		// exists but the signature is invalid, the catalog is rejected entirely.
+		if sigBody, sigErr := fetchText(url + ".sig"); sigErr == nil {
+			if vErr := verifyCatalog(body, sigBody); vErr != nil {
+				return nil, fmt.Errorf("wi18n: catalog %s rejected: %w", url, vErr)
+			}
+		}
+		picked = cand
+		break
 	}
 	if picked == "" {
 		return nil, errors.New("wi18n: no catalog available for " + requested)

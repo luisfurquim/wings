@@ -17,29 +17,43 @@ var (
 )
 
 // ValidateCell checks that all required placeholders from src appear verbatim
-// in dst. For simple text entries (cellKey == SimpleTextKey) it verifies
-// {{...}} template references; for flex cells it verifies %word tokens.
-// Returns nil when all required placeholders are present in dst.
+// in dst, and that dst introduces no new placeholders not present in src.
+// For simple text entries (cellKey == SimpleTextKey) it verifies {{...}}
+// template references; for flex cells it verifies %word tokens.
 func ValidateCell(cellKey, src, dst string) error {
 	if src == "" {
 		return nil
 	}
-	var required []string
+	var srcToks, dstToks []string
 	if cellKey == SimpleTextKey {
-		required = extractTemplateRefs(src)
+		srcToks = extractTemplateRefs(src)
+		dstToks = extractTemplateRefs(dst)
 	} else {
-		required = extractPctTokens(src)
+		srcToks = extractPctTokens(src)
+		dstToks = extractPctTokens(dst)
 	}
+
+	srcSet := make(map[string]bool, len(srcToks))
+	for _, tok := range srcToks {
+		srcSet[tok] = true
+	}
+
 	var missing []string
-	for _, tok := range required {
+	for _, tok := range srcToks {
 		if !strings.Contains(dst, tok) {
 			missing = append(missing, tok)
 		}
 	}
-	if len(missing) == 0 {
-		return nil
+	if len(missing) > 0 {
+		return fmt.Errorf("missing placeholder(s): %s", strings.Join(missing, ", "))
 	}
-	return fmt.Errorf("missing placeholder(s): %s", strings.Join(missing, ", "))
+
+	for _, tok := range dstToks {
+		if !srcSet[tok] {
+			return fmt.Errorf("destination introduces unknown token %q (not in source)", tok)
+		}
+	}
+	return nil
 }
 
 // extractTemplateRefs returns all {{...}} substrings in s, deduplicated,

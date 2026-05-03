@@ -3,6 +3,7 @@
 package wprana
 
 import (
+	"context"
 	"strings"
 	"syscall/js"
 	"time"
@@ -32,6 +33,23 @@ func Register(tagName, htmlContent, cssContent string, factory ModFactory, obser
 		observed: observed,
 	}
 	G.Logf(2, "Register: module %q registered\n", tagName)
+}
+
+// RegisterWithOpts is like Register but accepts ComponentOpts for additional
+// configuration (e.g. Closed shadow DOM mode).
+func RegisterWithOpts(tagName, htmlContent, cssContent string, opts ComponentOpts, factory ModFactory, observed ...string) {
+	if _, exists := moduleRegistry[tagName]; exists {
+		G.Logf(1, "RegisterWithOpts: module %q already registered\n", tagName)
+		return
+	}
+	moduleRegistry[tagName] = &modDef{
+		factory:  factory,
+		html:     htmlContent,
+		css:      cssContent,
+		observed: observed,
+		closed:   opts.Closed,
+	}
+	G.Logf(2, "RegisterWithOpts: module %q registered (closed=%v)\n", tagName, opts.Closed)
 }
 
 // DefineAll defines all custom elements registered via Register().
@@ -244,8 +262,12 @@ func copyTranslateStash(src, dst js.Value) {
 func elementConstructor(self js.Value, tagName string, def *modDef) {
 	G.Logf(3, "elementConstructor: %q\n", tagName)
 
-	// Creates shadow root
-	shadowRoot := self.Call("attachShadow", map[string]any{"mode": "open"})
+	// Creates shadow root (open or closed per ComponentOpts.Closed).
+	mode := "open"
+	if def.closed {
+		mode = "closed"
+	}
+	shadowRoot := self.Call("attachShadow", map[string]any{"mode": mode})
 
 	// Injects CSS
 	if def.css != "" {
@@ -302,6 +324,12 @@ func elementConstructor(self js.Value, tagName string, def *modDef) {
 	// Stores a reference to the state in the node registry
 	nodeID, st := getOrCreateState(self)
 	st.State = rd.state
+	st.ShadowRoot = shadowRoot
+
+	// Set up render lifecycle cancellation.
+	ctx, cancel := context.WithCancel(context.Background())
+	st.CancelRender = cancel
+	st.RenderDone = make(chan struct{})
 
 	// Marks the element with its modName for debug
 	self.Set("_pranaTag", tagName)
@@ -311,7 +339,7 @@ func elementConstructor(self js.Value, tagName string, def *modDef) {
 	instanceRegistry[tagName] = append(instanceRegistry[tagName], self)
 
 	// Launches goroutine that waits for connection and then calls Render
-	go waitAndRender(self, mod, rd, attrs)
+	go waitAndRender(ctx, st.RenderDone, self, mod, rd, attrs)
 }
 
 // elementConnected is called when the element is inserted into the DOM.
@@ -365,6 +393,18 @@ func elementDisconnected(self js.Value) {
 	if !ok {
 		return
 	}
+
+	// Cancel the waitAndRender goroutine and capture the done channel before
+	// removing state, so the cleanup goroutine below can safely wait.
+	st := nodeRegistry[nodeID]
+	var renderDone chan struct{}
+	if st != nil {
+		if st.CancelRender != nil {
+			st.CancelRender()
+		}
+		renderDone = st.RenderDone
+	}
+
 	releaseTwoWayBindings(nodeID)
 	delete(nodeRegistry, nodeID)
 
@@ -376,34 +416,53 @@ func elementDisconnected(self js.Value) {
 			break
 		}
 	}
+
+	// Wait for waitAndRender to exit in a goroutine — do not block the JS
+	// event loop. Any additional post-disconnect cleanup goes here.
+	if renderDone != nil {
+		go func() { <-renderDone }()
+	}
 }
 
 // ── Wait for connection and call Render ─────────────────────────────────────
 
-// waitAndRender waits for the element to be connected to the DOM and then
-// calls Render(). Equivalent to the polling with setTimeout(10) from the original JS.
-func waitAndRender(self js.Value, mod PranaMod, rd *ReactiveData, attrs [][2]string) {
-	// Poll until connected=true (equivalent to self.ready with setTimeout(10) from JS)
+// waitAndRender waits for the element to connect to the DOM then calls Render.
+// It exits early if ctx is cancelled (element disconnected before Render ran).
+// done is closed on every exit path so elementDisconnected can await teardown.
+func waitAndRender(ctx context.Context, done chan struct{}, self js.Value, mod PranaMod, rd *ReactiveData, attrs [][2]string) {
+	defer close(done)
+
+	// Poll until connected=true, honouring cancellation on each tick.
 	for {
+		if ctx.Err() != nil {
+			return
+		}
 		if isConnected(self) {
 			break
 		}
-		// Waits for a JS tick by releasing the scheduler
-		done := make(chan struct{})
+		tick := make(chan struct{})
 		jsGlobal.Call("setTimeout", js.FuncOf(func(this js.Value, args []js.Value) any {
-			close(done)
+			close(tick)
 			return nil
 		}), 10)
-		<-done
+		select {
+		case <-ctx.Done():
+			return
+		case <-tick:
+		}
 	}
 
-	// Waits another 100ms for complete synchronization (equivalent to setTimeout(100) from JS)
-	done := make(chan struct{})
+	// 100ms stabilization wait, still honouring cancellation.
+	tick := make(chan struct{})
 	jsGlobal.Call("setTimeout", js.FuncOf(func(this js.Value, args []js.Value) any {
-		close(done)
+		close(tick)
 		return nil
 	}), 100)
-	<-done
+	select {
+	case <-ctx.Done():
+		return
+	case <-tick:
+	}
 
 	// Sets up the trigger function for the module
 	triggerFn := buildTrigger(self, rd)
@@ -550,7 +609,14 @@ func Update(tagName string, cssContent string) {
 
 	// Updates the <style> of all live instances
 	for _, self := range instanceRegistry[tagName] {
-		shadowRoot := self.Get("shadowRoot")
+		// For closed shadow roots element.shadowRoot returns null; use the
+		// reference stored at construction time instead.
+		var shadowRoot js.Value
+		if st := getState(self); st != nil && !st.ShadowRoot.IsNull() && !st.ShadowRoot.IsUndefined() {
+			shadowRoot = st.ShadowRoot
+		} else {
+			shadowRoot = self.Get("shadowRoot")
+		}
 		if shadowRoot.IsNull() || shadowRoot.IsUndefined() {
 			continue
 		}

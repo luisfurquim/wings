@@ -3,6 +3,10 @@
 package wprana
 
 import (
+	"bytes"
+	cryptorand "crypto/rand"
+	"crypto/sha256"
+	"context"
 	"fmt"
 	"strconv"
 	"sync"
@@ -26,15 +30,57 @@ var G goose.Alert = goose.Alert(2)
 // custom elements. If nothing registers, Wait() returns immediately.
 var InitWG sync.WaitGroup
 
-// Printer transforms a TextNode's content during custom element construction.
-// The default is ByPass (identity). Packages like wi18n may override this
-// global with a function that interprets the string as a txt index and returns
-// the translation for the current browser language.
-var Printer func(string) string = ByPass
+// printer is the active TextNode transform function (private; set via SetPrinter).
+var printer func(string) string = ByPass
+
+// Printer calls the active printer function. Installed packages (e.g. wi18n)
+// replace the default ByPass via SetPrinter; all other callers use this wrapper.
+func Printer(s string) string { return printer(s) }
 
 // ByPass is the default Printer: it returns its input unchanged.
-func ByPass(in string) string {
-	return in
+func ByPass(in string) string { return in }
+
+// ── Printer authorization ────────────────────────────────────────────────────
+
+var (
+	printerMu        sync.Mutex
+	printerSet       bool
+	printerTokenHash [sha256.Size]byte // sha256 of the one-time authorization token
+	printerTokenVal  []byte            // raw token; nil after TakePrinterToken is called
+	printerTokenOut  bool              // true after TakePrinterToken was called
+)
+
+// TakePrinterToken returns the one-time authorization token required by
+// SetPrinter. It can only be called once; subsequent calls return nil.
+// Intended for use by github.com/luisfurquim/wprana/wi18n only.
+func TakePrinterToken() []byte {
+	printerMu.Lock()
+	defer printerMu.Unlock()
+	if printerTokenOut {
+		return nil
+	}
+	printerTokenOut = true
+	tok := make([]byte, len(printerTokenVal))
+	copy(tok, printerTokenVal)
+	return tok
+}
+
+// SetPrinter installs fn as the active Printer. token must be the value
+// previously returned by TakePrinterToken(). Panics if the token is invalid.
+// Idempotent: subsequent calls from the same authorized holder are no-ops once
+// the printer is installed (so SetLang() re-calls do not panic).
+func SetPrinter(fn func(string) string, token []byte) {
+	h := sha256.Sum256(token)
+	printerMu.Lock()
+	defer printerMu.Unlock()
+	if !bytes.Equal(h[:], printerTokenHash[:]) {
+		panic("wprana: SetPrinter: invalid authorization token")
+	}
+	if printerSet {
+		return
+	}
+	printer = fn
+	printerSet = true
 }
 
 // SynPrinter resolves a flexion reference block (e.g. `{{@genero %qt #42}}`)
@@ -205,6 +251,15 @@ type NodeState struct {
 
 	// For bidirectional bindings (indexed by attribute name)
 	TwoWay map[string]*TwoWayBinding
+
+	// Shadow root reference — populated for all components; required when the
+	// component uses mode:"closed" (element.shadowRoot returns null in that case).
+	ShadowRoot js.Value
+
+	// Render lifecycle — cancel stops the waitAndRender goroutine; RenderDone
+	// is closed when that goroutine exits, enabling safe async cleanup.
+	CancelRender context.CancelFunc
+	RenderDone   chan struct{}
 }
 
 // ── Key-value storage interface ──────────────────────────────────────────────
@@ -264,12 +319,21 @@ type Customizable interface {
 // ModFactory creates a new instance of PranaMod.
 type ModFactory func() PranaMod
 
+// ComponentOpts configures optional behavior for a custom element.
+type ComponentOpts struct {
+	// Closed makes the shadow root use mode:"closed", preventing external scripts
+	// from accessing the component's internals via element.shadowRoot.
+	// See README.md §Security — CVE-2019-11730, GHSA-wh77-3x4m-4q9g.
+	Closed bool
+}
+
 // modDef is the internal definition of a registered module.
 type modDef struct {
 	factory  ModFactory
 	html     string
 	css      string
 	observed []string // attributes observed by attributeChangedCallback
+	closed   bool     // true → shadow root mode:"closed"
 }
 
 // ── Global registries ───────────────────────────────────────────────────────
@@ -314,6 +378,16 @@ func init() {
 	jsGlobal = js.Global()
 	jsDoc = jsGlobal.Get("document")
 	initHash()
+	initPrinterToken()
+}
+
+func initPrinterToken() {
+	tok := make([]byte, 32)
+	if _, err := cryptorand.Read(tok); err != nil {
+		panic("wprana: crypto/rand unavailable: " + err.Error())
+	}
+	printerTokenVal = tok
+	printerTokenHash = sha256.Sum256(tok)
 }
 
 // assignNodeID assigns a unique _pranaId to the node and returns the ID.

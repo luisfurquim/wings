@@ -7,11 +7,13 @@
    <script src="wasm_exec.js"></script>
    <script>
       if (!location.hash) location.hash = '#list';
-      const go = new Go();
-      WebAssembly
-         .instantiateStreaming(fetch("main.wasm"), go.importObject)
-         .then(r => go.run(r.instance))
-         .catch(console.error);
+      // IIFE keeps `go` off window — prevents same-origin scripts from reading
+      // WASM linear memory via go.mem.buffer. See README.md §Security.
+      (async () => {
+         const go = new Go();
+         const r = await WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject);
+         go.run(r.instance);
+      })().catch(console.error);
    </script>
 </head>
 <body>

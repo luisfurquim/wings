@@ -2506,6 +2506,112 @@ li { padding: 6px 10px; background: #f9f9fb; border-radius: 4px; margin-bottom: 
 .dash-card h3 { margin: 0 0 8px; font-size: 1em; color: #16213e; }
 ```
 
+## Security
+
+### Shadow DOM isolation
+
+Every custom element registered with `Register` uses an **open** shadow root
+(`mode: "open"`) by default.  This means any same-page script can access the
+component's internal DOM via `element.shadowRoot`.
+
+**Relevant advisories:** CVE-2019-11730 (Firefox same-origin bypass via shadow
+DOM adoption), GHSA-wh77-3x4m-4q9g (Lit SSR shadow DOM template injection).
+
+If you need stronger DOM isolation, use `RegisterWithOpts` and set
+`ComponentOpts.Closed = true`:
+
+```go
+wprana.RegisterWithOpts("my-widget", html, css,
+    wprana.ComponentOpts{Closed: true},
+    func() wprana.PranaMod { return &MyWidget{} },
+)
+```
+
+With `Closed: true` the shadow root's `mode` is `"closed"` — external scripts
+get `null` from `element.shadowRoot`.  The wprana runtime itself accesses the
+shadow root via the reference stored at construction time, so all internal
+features (CSS injection, `Update()`, data binding) continue to work normally.
+
+**Trade-offs of closed mode:**
+- Testing tools that query the shadow root via `element.shadowRoot` will break
+  and must be refactored to use events, attributes, or test IDs.
+- DevTools in some browsers show closed shadow roots with limited visibility.
+- Closed mode is not an absolute security barrier — slotted content, CSS custom
+  properties, and custom events still cross shadow boundaries.
+
+### innerHTML invariant
+
+`domCreateTemplate(html)` sets `template.innerHTML` internally.  The `html`
+argument **must** be a compile-time constant (typically a `//go:embed` string).
+Never pass runtime, user-supplied, or server-fetched content to this function —
+`innerHTML` is a DOM XSS sink.
+
+### WASM memory isolation
+
+`wasm_exec.js` by default stores the Go runtime object as `window.go`, which
+exposes the WASM linear memory buffer to any same-origin script.  The
+`index.html` templates in this repository wrap the instantiation in an
+async IIFE so `go` never reaches `window`:
+
+```js
+(async () => {
+    const go = new Go();
+    const r = await WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject);
+    go.run(r.instance);
+})().catch(console.error);
+```
+
+Copy this pattern in your own `index.html`.
+
+### Script integrity (SRI)
+
+`build.sh` injects `integrity="sha384-..."` attributes on the `<script>` tags
+for `prana_helper.js` and `wasm_exec.js` after every build.  This prevents a
+compromised CDN or build pipeline from silently substituting modified helpers.
+
+### Catalog signing (ed25519)
+
+`gen_i18n` can sign every `.json` catalog with an ed25519 key.  The WASM app
+embeds the matching public key and the `wi18n` loader verifies each catalog
+before using it.
+
+**Generate a keypair (run once per project):**
+
+```
+gen_i18n -genkey -sign-key-password <strong-password>
+```
+
+This writes `gen_i18n.ed25519.key` (encrypted private key) and
+`gen_i18n.ed25519.pub` (public key for embedding).
+
+**Sign catalogs on every run:**
+
+```
+gen_i18n --path . --deflang en-US \
+         -sign-key gen_i18n.ed25519.key \
+         -sign-key-password <password>
+```
+
+A `.json.sig` sidecar is written next to each `.json` file.
+
+**Verify in your WASM app:**
+
+```go
+//go:embed gen_i18n.ed25519.pub
+var catalogPubKey []byte
+
+func main() {
+    if err := wi18n.SetCatalogPublicKey(catalogPubKey); err != nil {
+        log.Fatal(err)
+    }
+    wprana.Main()
+}
+```
+
+If no public key is configured, catalog verification is skipped (backward
+compatible). If a `.json.sig` sidecar exists but fails verification, the
+catalog is rejected and an error is logged.
+
 ## Third-party data
 
 `cmd/dictbuild` can download linguistic dictionaries from the
