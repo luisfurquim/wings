@@ -60,6 +60,26 @@ var wgtUnits = map[string]wgtUnit{
 	"oz": {"oz", 16.0 / lbKg},
 }
 
+// NewVolume constructs a CookingVolume from a value in unitName, converting to litres.
+// Example: cooking.NewVolume(2, "cup") returns CookingVolume{Liters: 0.473176473}.
+func NewVolume(val float64, unitName string) (CookingVolume, error) {
+	u, ok := volUnits[unitName]
+	if !ok {
+		return CookingVolume{}, fmt.Errorf("wi18n/cooking: unrecognized volume unit %q", unitName)
+	}
+	return CookingVolume{Liters: val / u.factor}, nil
+}
+
+// NewWeight constructs a CookingWeight from a value in unitName, converting to kilograms.
+// Example: cooking.NewWeight(8, "oz") returns CookingWeight{Kilograms: 0.226796185}.
+func NewWeight(val float64, unitName string) (CookingWeight, error) {
+	u, ok := wgtUnits[unitName]
+	if !ok {
+		return CookingWeight{}, fmt.Errorf("wi18n/cooking: unrecognized weight unit %q", unitName)
+	}
+	return CookingWeight{Kilograms: val / u.factor}, nil
+}
+
 // Convert returns the volume in the named unit and its display symbol.
 func (cv CookingVolume) Convert(unitName string) (val float64, sym string, err error) {
 	u, ok := volUnits[unitName]

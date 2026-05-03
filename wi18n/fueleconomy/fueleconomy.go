@@ -32,6 +32,34 @@ const (
 	mpgImp = 100.0 * 4.54609 / 1.609344     // ≈ 282.4809363
 )
 
+// New constructs a FuelEconomy from a value in unitName, converting to L/100km.
+// Returns an error for unrecognized units or for inverse units (mpg, mpgimp,
+// kml) when val ≤ 0. Example: fueleconomy.New(30, "mpg") returns
+// FuelEconomy{LitersPer100km: 7.840486111}.
+func New(val float64, unitName string) (FuelEconomy, error) {
+	switch unitName {
+	case "l100km":
+		return FuelEconomy{LitersPer100km: val}, nil
+	case "mpg":
+		if val <= 0 {
+			return FuelEconomy{}, fmt.Errorf("wi18n/fueleconomy: mpg value must be > 0, got %g", val)
+		}
+		return FuelEconomy{LitersPer100km: mpgUS / val}, nil
+	case "mpgimp":
+		if val <= 0 {
+			return FuelEconomy{}, fmt.Errorf("wi18n/fueleconomy: mpgimp value must be > 0, got %g", val)
+		}
+		return FuelEconomy{LitersPer100km: mpgImp / val}, nil
+	case "kml":
+		if val <= 0 {
+			return FuelEconomy{}, fmt.Errorf("wi18n/fueleconomy: kml value must be > 0, got %g", val)
+		}
+		return FuelEconomy{LitersPer100km: 100.0 / val}, nil
+	default:
+		return FuelEconomy{}, fmt.Errorf("wi18n/fueleconomy: unrecognized unit %q", unitName)
+	}
+}
+
 // Convert returns the fuel economy in the named unit and its display symbol.
 // Returns a non-nil error for unrecognized unit names or when LitersPer100km
 // is ≤ 0 for inverse units (mpg, mpgimp, kml).

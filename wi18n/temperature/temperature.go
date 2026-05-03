@@ -33,6 +33,28 @@ var units = map[string]unit{
 	"rankine":   {"°R", func(k float64) float64 { return k * 9 / 5 }},
 }
 
+// fromUnits maps unit names to their inverse conversion: input value → Kelvin.
+var fromUnits = map[string]func(float64) float64{
+	"k":          func(v float64) float64 { return v },
+	"kelvin":     func(v float64) float64 { return v },
+	"c":          func(v float64) float64 { return v + 273.15 },
+	"celsius":    func(v float64) float64 { return v + 273.15 },
+	"f":          func(v float64) float64 { return (v-32)*5/9 + 273.15 },
+	"fahrenheit": func(v float64) float64 { return (v-32)*5/9 + 273.15 },
+	"r":          func(v float64) float64 { return v * 5 / 9 },
+	"rankine":    func(v float64) float64 { return v * 5 / 9 },
+}
+
+// New constructs a Temperature from a value in unitName, converting to Kelvin.
+// Example: temperature.New(98.6, "f") returns Temperature{Kelvin: 310.15}.
+func New(val float64, unitName string) (Temperature, error) {
+	fn, ok := fromUnits[unitName]
+	if !ok {
+		return Temperature{}, fmt.Errorf("wi18n/temperature: unrecognized unit %q", unitName)
+	}
+	return Temperature{Kelvin: fn(val)}, nil
+}
+
 // Convert returns the temperature expressed in the named unit and its display
 // symbol. Returns a non-nil error for unrecognized unit names.
 func (t Temperature) Convert(unitName string) (val float64, sym string, err error) {

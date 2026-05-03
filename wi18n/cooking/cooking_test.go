@@ -101,3 +101,57 @@ func TestDefaultWeightUnit(t *testing.T) {
 		}
 	}
 }
+
+func TestNewVolume(t *testing.T) {
+	cases := []struct{ val float64; unit string }{
+		{1, "L"}, {250, "mL"}, {2, "cup"}, {4, "tbsp"}, {3, "tsp"}, {8, "floz"},
+	}
+	for _, c := range cases {
+		v, err := NewVolume(c.val, c.unit)
+		if err != nil {
+			t.Errorf("NewVolume(%g, %q): unexpected error: %v", c.val, c.unit, err)
+			continue
+		}
+		got, _, err := v.Convert(c.unit)
+		if err != nil {
+			t.Errorf("NewVolume(%g, %q).Convert: unexpected error: %v", c.val, c.unit, err)
+			continue
+		}
+		if math.Abs(got-c.val) > 1e-9 {
+			t.Errorf("NewVolume(%g, %q) round-trip = %g, want %g", c.val, c.unit, got, c.val)
+		}
+	}
+}
+
+func TestNewWeight(t *testing.T) {
+	cases := []struct{ val float64; unit string }{
+		{1, "kg"}, {500, "g"}, {2, "lb"}, {8, "oz"},
+	}
+	for _, c := range cases {
+		w, err := NewWeight(c.val, c.unit)
+		if err != nil {
+			t.Errorf("NewWeight(%g, %q): unexpected error: %v", c.val, c.unit, err)
+			continue
+		}
+		got, _, err := w.Convert(c.unit)
+		if err != nil {
+			t.Errorf("NewWeight(%g, %q).Convert: unexpected error: %v", c.val, c.unit, err)
+			continue
+		}
+		if math.Abs(got-c.val) > 1e-9 {
+			t.Errorf("NewWeight(%g, %q) round-trip = %g, want %g", c.val, c.unit, got, c.val)
+		}
+	}
+}
+
+func TestNewVolumeUnknownUnit(t *testing.T) {
+	if _, err := NewVolume(1, "barrel"); err == nil {
+		t.Error("NewVolume with unknown unit: expected error, got nil")
+	}
+}
+
+func TestNewWeightUnknownUnit(t *testing.T) {
+	if _, err := NewWeight(1, "stone"); err == nil {
+		t.Error("NewWeight with unknown unit: expected error, got nil")
+	}
+}

@@ -35,6 +35,16 @@ var units = map[string]unit{
 	"st": {"st", 1.0 / (lbKg * 14)},
 }
 
+// New constructs a Weight from a value in unitName, converting to kilograms.
+// Example: weight.New(100, "oz") returns Weight{Kilograms: 2.8349523125}.
+func New(val float64, unitName string) (Weight, error) {
+	u, ok := units[unitName]
+	if !ok {
+		return Weight{}, fmt.Errorf("wi18n/weight: unrecognized unit %q", unitName)
+	}
+	return Weight{Kilograms: val / u.factor}, nil
+}
+
 // Convert returns the mass in the named unit and its display symbol.
 // Returns a non-nil error for unrecognized unit names.
 func (w Weight) Convert(unitName string) (val float64, sym string, err error) {

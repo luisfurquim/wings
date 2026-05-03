@@ -59,3 +59,30 @@ func TestDefaultUnit(t *testing.T) {
 		}
 	}
 }
+
+func TestNew(t *testing.T) {
+	cases := []struct{ val float64; unit string }{
+		{30, "ms"}, {108, "kmh"}, {60, "mph"}, {10, "kn"}, {88, "fps"},
+	}
+	for _, c := range cases {
+		s, err := New(c.val, c.unit)
+		if err != nil {
+			t.Errorf("New(%g, %q): unexpected error: %v", c.val, c.unit, err)
+			continue
+		}
+		got, _, err := s.Convert(c.unit)
+		if err != nil {
+			t.Errorf("New(%g, %q).Convert: unexpected error: %v", c.val, c.unit, err)
+			continue
+		}
+		if math.Abs(got-c.val) > 1e-9 {
+			t.Errorf("New(%g, %q) round-trip = %g, want %g", c.val, c.unit, got, c.val)
+		}
+	}
+}
+
+func TestNewUnknownUnit(t *testing.T) {
+	if _, err := New(0, "warp"); err == nil {
+		t.Error("New with unknown unit: expected error, got nil")
+	}
+}

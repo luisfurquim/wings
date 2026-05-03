@@ -29,6 +29,16 @@ var units = map[string]unit{
 	"fps": {"ft/s", 1.0 / 0.3048},
 }
 
+// New constructs a Speed from a value in unitName, converting to m/s.
+// Example: speed.New(60, "mph") returns Speed{MetersPerSecond: 26.8224}.
+func New(val float64, unitName string) (Speed, error) {
+	u, ok := units[unitName]
+	if !ok {
+		return Speed{}, fmt.Errorf("wi18n/speed: unrecognized unit %q", unitName)
+	}
+	return Speed{MetersPerSecond: val / u.factor}, nil
+}
+
 // Convert returns the speed in the named unit and its display symbol.
 // Returns a non-nil error for unrecognized unit names.
 func (s Speed) Convert(unitName string) (val float64, sym string, err error) {

@@ -64,3 +64,38 @@ func TestDefaultUnit(t *testing.T) {
 		}
 	}
 }
+
+func TestNew(t *testing.T) {
+	cases := []struct{ val float64; unit string }{
+		{8, "l100km"}, {30, "mpg"}, {25, "mpgimp"}, {12, "kml"},
+	}
+	for _, c := range cases {
+		fe, err := New(c.val, c.unit)
+		if err != nil {
+			t.Errorf("New(%g, %q): unexpected error: %v", c.val, c.unit, err)
+			continue
+		}
+		got, _, err := fe.Convert(c.unit)
+		if err != nil {
+			t.Errorf("New(%g, %q).Convert: unexpected error: %v", c.val, c.unit, err)
+			continue
+		}
+		if math.Abs(got-c.val) > 1e-9 {
+			t.Errorf("New(%g, %q) round-trip = %g, want %g", c.val, c.unit, got, c.val)
+		}
+	}
+}
+
+func TestNewInverseZero(t *testing.T) {
+	for _, unit := range []string{"mpg", "mpgimp", "kml"} {
+		if _, err := New(0, unit); err == nil {
+			t.Errorf("New(0, %q): expected error for zero value, got nil", unit)
+		}
+	}
+}
+
+func TestNewUnknownUnit(t *testing.T) {
+	if _, err := New(0, "furlongs-per-hogshead"); err == nil {
+		t.Error("New with unknown unit: expected error, got nil")
+	}
+}

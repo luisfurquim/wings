@@ -36,6 +36,16 @@ var units = map[string]unit{
 	"ac":  {"ac", 1.0 / 4046.8564224}, // 1 acre = 4840 yd² exactly
 }
 
+// New constructs an Area from a value in unitName, converting to m².
+// Example: area.New(1, "ac") returns Area{SquareMeters: 4046.8564224}.
+func New(val float64, unitName string) (Area, error) {
+	u, ok := units[unitName]
+	if !ok {
+		return Area{}, fmt.Errorf("wi18n/area: unrecognized unit %q", unitName)
+	}
+	return Area{SquareMeters: val / u.factor}, nil
+}
+
 // Convert returns the area in the named unit and its display symbol.
 // Returns a non-nil error for unrecognized unit names.
 func (a Area) Convert(unitName string) (val float64, sym string, err error) {

@@ -86,3 +86,39 @@ func TestDefaultDecimals(t *testing.T) {
 		}
 	}
 }
+
+func TestNew(t *testing.T) {
+	// Round-trip: New(v, unit) → Convert(unit) ≈ v
+	cases := []struct{ val float64; unit string }{
+		{300, "k"}, {300, "kelvin"},
+		{26.85, "c"}, {26.85, "celsius"},
+		{80.33, "f"}, {80.33, "fahrenheit"},
+		{540, "r"}, {540, "rankine"},
+	}
+	for _, c := range cases {
+		temp, err := New(c.val, c.unit)
+		if err != nil {
+			t.Errorf("New(%g, %q): unexpected error: %v", c.val, c.unit, err)
+			continue
+		}
+		got, _, err := temp.Convert(c.unit)
+		if err != nil {
+			t.Errorf("New(%g, %q).Convert: unexpected error: %v", c.val, c.unit, err)
+			continue
+		}
+		if math.Abs(got-c.val) > 1e-9 {
+			t.Errorf("New(%g, %q) round-trip = %g, want %g", c.val, c.unit, got, c.val)
+		}
+	}
+	// Known value: 98.6 °F = 310.15 K
+	temp, _ := New(98.6, "f")
+	if math.Abs(temp.Kelvin-310.15) > 1e-9 {
+		t.Errorf("New(98.6, f) = %g K, want 310.15", temp.Kelvin)
+	}
+}
+
+func TestNewUnknownUnit(t *testing.T) {
+	if _, err := New(0, "newton"); err == nil {
+		t.Error("New with unknown unit: expected error, got nil")
+	}
+}

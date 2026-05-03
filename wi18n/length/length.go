@@ -33,6 +33,17 @@ var units = map[string]unit{
 	"league": {"lea", 1 / 4828.032},
 }
 
+// New constructs a Length from a value expressed in unitName, converting it
+// to the canonical SI storage unit (metres). Returns an error for unrecognized
+// unit names. Example: length.New(5, "mi") returns Length{Meters: 8046.72}.
+func New(val float64, unitName string) (Length, error) {
+	u, ok := units[unitName]
+	if !ok {
+		return Length{}, fmt.Errorf("wi18n/length: unrecognized unit %q", unitName)
+	}
+	return Length{Meters: val / u.factor}, nil
+}
+
 // Convert returns the distance expressed in the named unit and its display
 // symbol. Returns a non-nil error for unrecognized unit names.
 func (l Length) Convert(unitName string) (val float64, sym string, err error) {

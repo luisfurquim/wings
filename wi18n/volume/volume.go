@@ -45,6 +45,16 @@ func init() {
 	units["qt"] = unit{"qt", 4.0 / usGallon}
 }
 
+// New constructs a Volume from a value in unitName, converting to litres.
+// Example: volume.New(1, "gal") returns Volume{Liters: 3.785411784}.
+func New(val float64, unitName string) (Volume, error) {
+	u, ok := units[unitName]
+	if !ok {
+		return Volume{}, fmt.Errorf("wi18n/volume: unrecognized unit %q", unitName)
+	}
+	return Volume{Liters: val / u.factor}, nil
+}
+
 // Convert returns the volume in the named unit and its display symbol.
 // Returns a non-nil error for unrecognized unit names.
 func (v Volume) Convert(unitName string) (val float64, sym string, err error) {

@@ -76,3 +76,28 @@ func TestDefaultDecimals(t *testing.T) {
 		}
 	}
 }
+
+func TestNew(t *testing.T) {
+	cases := []struct{ val float64; unit string }{{5,"kg"},{500,"g"},{1000,"mg"},{2,"t"},{10,"lb"},{32,"oz"},{1,"st"}}
+	for _, c := range cases {
+		v, err := New(c.val, c.unit)
+		if err != nil {
+			t.Errorf("New(%g, %q): unexpected error: %v", c.val, c.unit, err)
+			continue
+		}
+		got, _, err := v.Convert(c.unit)
+		if err != nil {
+			t.Errorf("New(%g, %q).Convert: unexpected error: %v", c.val, c.unit, err)
+			continue
+		}
+		if math.Abs(got-c.val) > 1e-9 {
+			t.Errorf("New(%g, %q) round-trip = %g, want %g", c.val, c.unit, got, c.val)
+		}
+	}
+}
+
+func TestNewUnknownUnit(t *testing.T) {
+	if _, err := New(1, "firkin"); err == nil {
+		t.Error("New with unknown unit: expected error, got nil")
+	}
+}
