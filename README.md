@@ -1229,7 +1229,7 @@ decimal number gets replaced by `table[n]` when the catalog is loaded, and
 left untouched otherwise — so dynamic text produced via `{{expression}}`
 passes through unchanged. The same lookup applies to values of the
 attributes listed in `wprana.TranslatableAttrs` (default: `title`,
-`placeholder`, `alt`, `aria-label`).
+`placeholder`, `alt`, `aria-label`, `data-i18n`).
 
 For plurals and gender agreement — cases where a single translation string
 cannot reflect the target locale's grammar — wprana ships a parallel
@@ -1431,12 +1431,33 @@ What it does:
   This is a one-shot migration; CSV is no longer the on-disk format.
 
 **Translatable-attribute flags.** Attributes like `title`, `placeholder`,
-`alt`, and `aria-label` carry user-visible text just like text nodes do.
-`gen_i18n` extracts the values of the following attributes by default:
+`alt`, `aria-label`, and `data-i18n` carry user-visible text just like text
+nodes do. `gen_i18n` extracts the values of the following attributes by
+default:
 
 ```
-title, placeholder, alt, aria-label
+title, placeholder, alt, aria-label, data-i18n
 ```
+
+**CSS `content:` via `data-i18n`.** CSS pseudo-elements (`::before` /
+`::after`) can render translatable text without any CSS-level i18n
+machinery. Declare the CSS once:
+
+```css
+.breadcrumb::before { content: attr(data-i18n); }
+```
+
+Then put the source text on the element as `data-i18n`:
+
+```html
+<span class="breadcrumb" data-i18n="Início"></span>
+```
+
+`gen_i18n` assigns a catalog index to the attribute value exactly as it
+does for text nodes; the runtime `Printer` translates it at construction
+time and again on every `SetLang()` call; the browser picks it up through
+the standard CSS `attr()` function. No CSS parsing, no custom properties,
+no extra runtime code.
 
 Three flags tune this set:
 
