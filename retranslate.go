@@ -61,12 +61,18 @@ func applyStashSweep(node js.Value) {
 			srcVal := node.Get("_wi18nAttr_" + a)
 			if srcVal.Type() == js.TypeString {
 				node.Call("setAttribute", a, Printer(srcVal.String()))
+				if NodeAnnotator != nil {
+					NodeAnnotator(srcVal.String(), node)
+				}
 			}
 		}
 	} else if nt == 3 { // TEXT_NODE
 		srcVal := node.Get("_wi18nSrc")
 		if srcVal.Type() == js.TypeString {
 			node.Set("nodeValue", Printer(srcVal.String()))
+			if NodeAnnotator != nil {
+				NodeAnnotator(srcVal.String(), node)
+			}
 		}
 		return
 	}

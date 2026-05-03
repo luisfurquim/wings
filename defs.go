@@ -114,6 +114,14 @@ func NoFlexSynPrinter(toks []RefNode, _ Ctx) string {
 // locale-agnostic rendering in that case.
 var Locale string
 
+// NodeAnnotator is called by translateTextNodes and applyStashSweep after each
+// node is translated. rawIndex is the original TextNode content (the decimal
+// integer string written by gen_i18n). node is the DOM node that was
+// translated: a Text node (nodeType==3) for text content, or an Element node
+// (nodeType==1) for attribute translations. The default nil means no annotation.
+// wi18n installs a function here when TranslateCheckHighlight is active.
+var NodeAnnotator func(rawIndex string, node js.Value)
+
 // FmtPrinter formats a single value into its locale-appropriate string
 // representation. It is called by the solver for lone-`%var` bindings
 // (FmtBlock), invoked with the resolved value, the current Locale, and the

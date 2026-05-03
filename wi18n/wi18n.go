@@ -96,13 +96,13 @@ func init() {
 
 // loadAndInstall runs in a goroutine. It fetches the JSON for the current
 // language (with fallbacks), decodes it, and replaces wprana.Printer with a
-// lookup function. Calls wprana.InitWG.Done() on every exit path.
+// lookup function. Calls wprana.InitWG.Done() unless TranslateCheckHold
+// blocks startup due to unrevised translations.
 func loadAndInstall() {
-	defer wprana.InitWG.Done()
-
 	bundle, err := loadBundle(lang)
 	if err != nil {
 		wprana.G.Logf(1, "wi18n: %v; Printer stays as ByPass\n", err)
+		wprana.InitWG.Done()
 		return
 	}
 
@@ -129,6 +129,12 @@ func loadAndInstall() {
 		wprana.SynPrinter = synPrinter
 		wprana.G.Logf(2, "wi18n: loaded %d flex rules for lang=%s\n", len(bundle.flex), lang)
 	}
+
+	if blocked := applyTranslateCheck(bundle); blocked {
+		// Hold mode: never release InitWG — wprana.Main() blocks forever.
+		return
+	}
+	wprana.InitWG.Done()
 }
 
 // fallbackChain builds the ordered list of language tags to try, starting

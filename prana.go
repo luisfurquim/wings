@@ -199,6 +199,9 @@ func translateTextNodes(node js.Value) {
 			}
 			node.Set("_wi18nAttr_"+a, orig)
 			node.Call("setAttribute", a, Printer(orig))
+			if NodeAnnotator != nil {
+				NodeAnnotator(orig, node)
+			}
 		}
 	}
 	children := node.Get("childNodes")
@@ -211,6 +214,9 @@ func translateTextNodes(node js.Value) {
 			orig := child.Get("nodeValue").String()
 			child.Set("_wi18nSrc", orig)
 			child.Set("nodeValue", Printer(orig))
+			if NodeAnnotator != nil {
+				NodeAnnotator(orig, child)
+			}
 		case 1: // Node.ELEMENT_NODE
 			translateTextNodes(child)
 		}

@@ -19,11 +19,12 @@ import (
 // published), the parsed BCP 47 tag, and the picked tag (which may differ
 // from the requested one after fallback resolution).
 type localeBundle struct {
-	text   []string
-	flex   []FlexEntry
-	fmtCfg *fmtConfig
-	tag    language.Tag
-	picked string
+	text    []string
+	revised []bool // true = human-reviewed; parallel to text
+	flex    []FlexEntry
+	fmtCfg  *fmtConfig
+	tag     language.Tag
+	picked  string
 }
 
 var (
@@ -90,6 +91,10 @@ func setLangSync(tag string) error {
 	setHTMLLang(cached.picked)
 	wprana.SetPrinter(lookup, printerToken) // idempotent after first install
 
+	if translateCheckMode == TranslateCheckHighlight {
+		updateHighlightSet(cached)
+	}
+
 	wprana.RetranslateAll()
 	return nil
 }
@@ -139,8 +144,10 @@ func loadBundle(requested string) (*localeBundle, error) {
 		return nil, err
 	}
 	text := make([]string, len(entries))
+	revised := make([]bool, len(entries))
 	for i, e := range entries {
 		text[i] = e.Content
+		revised[i] = e.Revised
 	}
 
 	tag, err := language.Parse(picked)
@@ -149,9 +156,10 @@ func loadBundle(requested string) (*localeBundle, error) {
 	}
 
 	bundle := &localeBundle{
-		text:   text,
-		tag:    tag,
-		picked: picked,
+		text:    text,
+		revised: revised,
+		tag:     tag,
+		picked:  picked,
 	}
 
 	// Inflections are optional — apps without flex blocks publish no file.
