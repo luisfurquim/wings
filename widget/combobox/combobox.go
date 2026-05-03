@@ -101,7 +101,7 @@ func init() {
 		htmlContent,
 		buildCSS(),
 		func() wprana.PranaMod { return &Combobox{} },
-		"options", "placeholder",
+		"options", "placeholder", "value",
 	)
 	G.Logf(3, "wp-combobox: module registered\n")
 }
@@ -196,6 +196,7 @@ type cbCtx struct {
 	dropWrap     js.Value
 	selectedVals map[string]bool
 	lastRaw      string
+	lastValue    string
 }
 
 func (cb *cbCtx) showDrop() {
@@ -243,18 +244,51 @@ func (cb *cbCtx) applyFilter(query string) {
 }
 
 // loadOptions parses the options attribute (JSON) into all_options.
-// It is a no-op when the raw string has not changed since the last call.
+// It is a no-op when both the raw options string and the value attribute
+// have not changed since the last call.
 func (cb *cbCtx) loadOptions() {
 	var raw string
 	if v, ok := cb.obj.This.Get("options").(string); ok {
 		raw = v
 	}
-	if raw == cb.lastRaw {
+	val, _ := cb.obj.This.Get("value").(string)
+
+	if raw == cb.lastRaw && val == cb.lastValue {
 		return
 	}
-	cb.lastRaw = raw
-	cb.obj.This.Set("all_options", parseOptions(raw))
-	cb.applyFilter(cb.inputVal())
+	if raw != cb.lastRaw {
+		cb.lastRaw = raw
+		cb.obj.This.Set("all_options", parseOptions(raw))
+		cb.applyFilter(cb.inputVal())
+	}
+	cb.lastValue = val
+	cb.applyValuePreset(val)
+}
+
+// applyValuePreset silently pre-selects the option whose value matches val,
+// but only when no item is currently selected. Does not fire @change so that
+// programmatic initialisation does not trigger parent reload handlers.
+func (cb *cbCtx) applyValuePreset(val string) {
+	if val == "" || len(cb.selectedVals) > 0 {
+		return
+	}
+	opts, ok := cb.obj.This.Get("all_options").([]any)
+	if !ok || len(opts) == 0 {
+		return
+	}
+	for _, o := range opts {
+		m, ok := o.(map[string]any)
+		if !ok {
+			continue
+		}
+		if v, ok := m["value"].(string); ok && v == val {
+			cb.selectedVals[val] = true
+			cb.obj.This.Append("selected_items", m)
+			cb.obj.This.Set("input_val", "")
+			cb.applyFilter("")
+			return
+		}
+	}
 }
 
 // inputVal reads the current input_val from the reactive data.
