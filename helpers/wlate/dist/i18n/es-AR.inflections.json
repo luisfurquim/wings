@@ -1,25 +1,22 @@
 [
   {
-    "expr": "{{ @genero %qt ~o ~aluno ~aprovado }}",
-    "context": "pages/result.html:15",
-    "ctxdetail": "caption",
-    "revised": true,
-    "forms": {
-      "f.one": "el único estudiante que aprobó",
-      "f.other": "los únicos estudiantes que aprobaran",
+    "label": "{n} o aluno aprovado",
+    "cells": {
       "m.one": "el único estudiante que aprobó",
-      "m.other": "los únicos estudiantes que aprobaran"
-    }
+      "m.other": "los {n} estudiantes que aprobaron",
+      "f.one": "la única estudiante que aprobó",
+      "f.other": "las {n} estudiantes que aprobaron"
+    },
+    "revised": true
   },
   {
-    "expr": "{{ @genero %qt ~o ~professor ~presente }}",
-    "context": "pages/staff.html:8",
-    "revised": false,
-    "forms": {
-      "f.one": "",
-      "f.other": "",
+    "label": "{n} o professor presente",
+    "cells": {
       "m.one": "",
-      "m.other": ""
-    }
+      "m.other": "",
+      "f.one": "",
+      "f.other": ""
+    },
+    "revised": false
   }
 ]

@@ -37,7 +37,10 @@
          <div class="wl-content-ro">9</div>
       </div>
       <div class="wl-panel wl-panel-right" id="wl-right-panel">
-         <textarea class="wl-content-edit">10</textarea>
+         <div class="wl-content-wrapper">
+            <textarea class="wl-content-edit">10</textarea>
+            <img class="wl-text-badge" &src="{{right_text_src}}" width="20" height="20" alt="" onerror="this.src=&#39;&#39;"/>
+         </div>
          <div id="wl-revised-toggle" class="wl-revised-indicator"></div>
       </div>
    </div>
@@ -66,7 +69,10 @@
                <div class="wl-grid-row" role="row">
                   <div class="wl-grid-row-header" role="rowheader" aria-label="14">15</div>
                   <div class="wl-grid-cell-edit" role="gridcell" *gender_headers:gi="">
-                     <input class="wl-cell-input" type="text" data-ci="{{ci}}" data-gi="{{gi}}" aria-label="17" &value="{{right_cells[ci].cols[gi]}}"/>
+                     <div class="wl-cell-wrapper">
+                        <input class="wl-cell-input" type="text" data-ci="{{ci}}" data-gi="{{gi}}" aria-label="17" &value="{{right_cells[ci].cols[gi]}}"/>
+                        <img class="wl-cell-badge" &src="{{right_srcs[ci].cols[gi]}}" width="16" height="16" alt="" onerror="this.src=&#39;&#39;"/>
+                     </div>
                   </div>
                </div>
             </div>

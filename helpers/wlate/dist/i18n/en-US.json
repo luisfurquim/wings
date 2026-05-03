@@ -2,36 +2,26 @@
   {
     "content": "Welcome to the system",
     "revised": true,
-    "context": "pages/home.html:5",
-    "ctxdetail": "title"
+    "source": "manual"
   },
   {
     "content": "Student name",
-    "revised": false,
-    "context": "pages/form.html:12",
-    "ctxdetail": "label"
+    "revised": false
   },
   {
     "content": "Save changes",
-    "revised": true,
-    "context": "pages/form.html:28",
-    "ctxdetail": "button"
+    "revised": true
   },
   {
     "content": "Evaluation result",
-    "revised": false,
-    "context": "pages/result.html:3",
-    "ctxdetail": "th"
+    "revised": false
   },
   {
     "content": "No records found",
-    "revised": false,
-    "context": "pages/list.html:45"
+    "revised": false
   },
   {
     "content": "Go back to previous page",
-    "revised": false,
-    "context": "pages/detail.html:67",
-    "ctxdetail": "a"
+    "revised": false
   }
 ]
