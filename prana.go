@@ -109,7 +109,7 @@ func defineCustomElement(tagName string, def *modDef) {
 // attribute set gen_i18n was run with; the default matches gen_i18n's
 // default. Apps can assign a new slice directly to override, or call
 // AddTranslatableAttrs / RemoveTranslatableAttrs to tweak the list.
-var TranslatableAttrs = []string{"title", "placeholder", "alt", "aria-label"}
+var TranslatableAttrs = []string{"title", "placeholder", "alt", "aria-label", "data-i18n"}
 
 // AddTranslatableAttrs appends attrs to TranslatableAttrs, skipping those
 // already present. Attribute names are compared case-insensitively.

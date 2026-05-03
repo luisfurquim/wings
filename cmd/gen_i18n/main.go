@@ -625,7 +625,7 @@ func replaceTextNodes(n *html.Node, dbMap map[string]string, relPath string, tra
 
 // defaultTranslatableAttrs is the set of HTML attributes whose values are
 // extracted by default. Must stay in sync with wprana.TranslatableAttrs.
-var defaultTranslatableAttrs = []string{"title", "placeholder", "alt", "aria-label"}
+var defaultTranslatableAttrs = []string{"title", "placeholder", "alt", "aria-label", "data-i18n"}
 
 // buildAttrSet resolves the three flags into a lowercase attribute set.
 // --attrs overrides the default list entirely; --add-attrs appends to
