@@ -80,75 +80,11 @@
     "revised": false
   },
   {
-    "content": "⟨⟨",
-    "revised": true
-  },
-  {
-    "content": "",
-    "revised": false
-  },
-  {
-    "content": "⟨10",
-    "revised": true
-  },
-  {
-    "content": "",
-    "revised": false
-  },
-  {
-    "content": "⟨",
-    "revised": true
-  },
-  {
-    "content": "of {{total_count}}",
-    "revised": true
-  },
-  {
-    "content": "",
-    "revised": false
-  },
-  {
-    "content": "⟩",
-    "revised": true
-  },
-  {
-    "content": "",
-    "revised": false
-  },
-  {
-    "content": "10⟩",
-    "revised": true
-  },
-  {
-    "content": "",
-    "revised": false
-  },
-  {
-    "content": "⟩⟩",
-    "revised": true
-  },
-  {
-    "content": "",
-    "revised": false
-  },
-  {
     "content": "Save",
     "revised": true
   },
   {
     "content": "There are unsaved changes.",
-    "revised": true
-  },
-  {
-    "content": "Save and switch",
-    "revised": true
-  },
-  {
-    "content": "Discard and switch",
-    "revised": true
-  },
-  {
-    "content": "Cancel",
     "revised": true
   }
 ]

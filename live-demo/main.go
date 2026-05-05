@@ -7,6 +7,11 @@ import (
 
 	_ "github.com/luisfurquim/wprana/wi18n"
 
+	_ "github.com/luisfurquim/wprana/skins/dark"
+	_ "github.com/luisfurquim/wprana/skins/light"
+
+	_ "github.com/luisfurquim/wprana/widget/skinswitcher"
+
 	_ "live-demo/mod/shell/appshell"
 	_ "live-demo/mod/shell/localeswitcher"
 
@@ -34,5 +39,6 @@ import (
 )
 
 func main() {
+	wprana.ApplySkin("light")
 	wprana.Main()
 }

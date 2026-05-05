@@ -1,0 +1,52 @@
+:root {
+  /* Core tokens — see skins/tokens.md */
+  --wings-bg:                 #1a1a1a;
+  --wings-surface:            #2a2a2a;
+  --wings-text:               #e6e6e6;
+  --wings-text-light:         #999999;
+  --wings-primary:            #4d9eff;
+  --wings-border:             #404040;
+  --wings-border-focus:       #4d9eff;
+  --wings-btn-bg:             #2d2d2d;
+  --wings-btn-hover-bg:       #3a3a3a;
+  --wings-btn-hover-color:    #ffffff;
+  --wings-btn-hover-shadow:   0 2px 4px rgba(0, 0, 0, 0.40);
+
+  /* w-dialog tokens. */
+  --wings-dialog-bg:                  #2a2a2a;
+  --wings-dialog-shadow:              0 4px 16px rgba(0, 0, 0, 0.55);
+  --wings-dialog-border-radius:       8px;
+  --wings-dialog-padding:             24px;
+  --wings-dialog-overlay-bg:          rgba(0, 0, 0, 0.70);
+  --wings-dialog-button-bg:           #3a3a3a;
+  --wings-dialog-button-hover-bg:     #4a4a4a;
+  --wings-dialog-button-active-bg:    #555555;
+  --wings-dialog-button-border:       1px solid #555555;
+  --wings-dialog-button-border-hover: 1px solid #777777;
+  --wings-dialog-button-padding:      8px 16px;
+  --wings-dialog-button-gap:          8px;
+  --wings-dialog-primary-bg:          #4d9eff;
+  --wings-dialog-primary-color:       #ffffff;
+  --wings-dialog-primary-hover-bg:    #6bb1ff;
+
+  /* w-combobox tokens. Violet accent shifted darker to live on a dark surface. */
+  --wings-combobox-tag-bg:            #3b2f6b;
+  --wings-combobox-tag-color:         #d8c8ff;
+  --wings-combobox-tag-border:        #5d4d9a;
+  --wings-combobox-rm-color:          #a78bfa;
+  --wings-combobox-rm-hover-bg:       #4a3a85;
+  --wings-combobox-rm-hover-color:    #f87171;
+  --wings-combobox-input-border:      #404040;
+  --wings-combobox-input-focus-border:#a78bfa;
+  --wings-combobox-input-focus-shadow:rgba(167, 139, 250, 0.20);
+  --wings-combobox-input-bg:          #2d2d2d;
+  --wings-combobox-drop-bg:           #252525;
+  --wings-combobox-drop-border:       #404040;
+  --wings-combobox-drop-shadow:       0 4px 16px rgba(0, 0, 0, 0.50), 0 1px 4px rgba(0, 0, 0, 0.30);
+  --wings-combobox-scroll-thumb:      #5d4d9a;
+  --wings-combobox-opt-color:         #e6e6e6;
+  --wings-combobox-opt-hover-bg:      #3a3340;
+  --wings-combobox-opt-hover-color:   #c4b5fd;
+  --wings-combobox-opt-active-bg:     #4a3a85;
+  --wings-combobox-empty-color:       #777777;
+}

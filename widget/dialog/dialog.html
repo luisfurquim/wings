@@ -1,0 +1,15 @@
+<div class="w-dialog-overlay">
+   <div class="w-dialog">
+      <div class="w-dialog-header" ?title>
+         <h2 class="w-dialog-title">{{title}}</h2>
+      </div>
+      <div class="w-dialog-content">
+         <slot></slot>
+      </div>
+      <div class="w-dialog-buttons">
+         <button id="dlg-save" data-i18n="dlg_btn_save" style="order:{{btnSaveOrder}};">Salvar</button>
+         <button id="dlg-discard" data-i18n="dlg_btn_discard" style="order:{{btnDiscardOrder}};">Descartar</button>
+         <button id="dlg-cancel" data-i18n="dlg_btn_cancel" style="order:{{btnCancelOrder}};">Cancelar</button>
+      </div>
+   </div>
+</div>

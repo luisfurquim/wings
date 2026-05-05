@@ -1,0 +1,5 @@
+/* skin-switcher — colour/shadow tokens.
+   Empty by design: defaults are provided as the second argument of
+   var(--wings-*, fallback) inside design.css; the canonical values
+   come from the active wprana skin (skins/tokens.md). Override
+   per-instance via the Customizable "Vars" key. */

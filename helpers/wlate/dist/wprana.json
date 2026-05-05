@@ -1,6 +1,8 @@
 {
   "defaultLang": "pt-BR",
   "languages": ["pt-BR", "en-US", "es-AR"],
+  "debugLevel": 3,
+  "traceOn": true,
   "wlate": {
     "keys": {
       "prev":    "Alt+ArrowLeft",

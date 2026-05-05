@@ -4,10 +4,17 @@
    display: block;
    width: 100%;
    height: 100vh;
+   box-sizing: border-box;
    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
    font-size: 14px;
    color: var(--wl-text);
    background: var(--wl-bg);
+}
+
+/* Inherit border-box across the shadow tree so paddings/borders never push
+   children past the viewport (root cause of the previous overflow). */
+*, *::before, *::after {
+   box-sizing: inherit;
 }
 
 /* ── Root container ─────────────────────────────────────────────────────── */
@@ -50,7 +57,7 @@
 
 .wl-tab {
    padding: 6px 18px;
-   border: none;
+   border: 1px solid var(--wl-tab-inactive-border);
    border-radius: 6px;
    font-size: 0.85em;
    font-weight: 600;
@@ -65,6 +72,7 @@
 .wl-tab-active {
    background: var(--wl-tab-active-bg);
    color: var(--wl-tab-active-color);
+   border-color: var(--wl-tab-active-border);
 }
 
 /* ── Language selectors ─────────────────────────────────────────────────── */
@@ -130,6 +138,9 @@
    display: flex;
    flex-direction: column;
    overflow: auto;
+   /* Required so flex:1 children (textarea, content-wrapper) can actually
+      shrink to fit instead of forcing the panel taller than its grid cell. */
+   min-height: 0;
 }
 
 .wl-panel-left {
@@ -159,6 +170,9 @@
 .wl-content-edit {
    flex: 1;
    width: 100%;
+   /* min-height: 0 lets the textarea shrink past its intrinsic 4-row default
+      so it tracks the available height instead of pinning the panel taller. */
+   min-height: 0;
    padding: 8px;
    border: 1px solid var(--wl-border);
    border-radius: 6px;
@@ -318,6 +332,8 @@
    flex: 1;
    display: flex;
    flex-direction: column;
+   /* Allow the inner textarea (flex:1) to actually fill this wrapper. */
+   min-height: 0;
 }
 
 .wl-text-badge {
@@ -396,7 +412,7 @@
 
 .wl-save-btn {
    padding: 6px 20px;
-   border: none;
+   border: 1px solid var(--wl-save-border);
    border-radius: 6px;
    background: var(--wl-save-bg);
    color: var(--wl-save-color);
@@ -452,64 +468,6 @@
 
 .wl-toggle-track.wl-toggle-on .wl-toggle-thumb {
    transform: translateX(16px);
-}
-
-/* ── Unsaved changes dialog ─────────────────────────────────────────────── */
-
-.wl-overlay {
-   position: fixed;
-   inset: 0;
-   background: var(--wl-overlay-bg);
-   backdrop-filter: blur(4px);
-   display: flex;
-   align-items: center;
-   justify-content: center;
-   z-index: 9999;
-}
-
-.wl-dialog {
-   background: var(--wl-dialog-bg);
-   border-radius: 12px;
-   padding: 28px 32px;
-   box-shadow: var(--wl-dialog-shadow);
-   max-width: 400px;
-   width: 90%;
-}
-.wl-dialog p {
-   margin-bottom: 20px;
-   font-size: 0.95em;
-   color: var(--wl-text);
-   line-height: 1.5;
-}
-
-.wl-dialog-btns {
-   display: flex;
-   gap: 8px;
-   justify-content: flex-end;
-   flex-wrap: wrap;
-}
-
-.wl-dialog-btns button {
-   padding: 7px 16px;
-   border: 1px solid var(--wl-border);
-   border-radius: 6px;
-   background: var(--wl-btn-bg);
-   color: var(--wl-text);
-   font-size: 0.85em;
-   font-weight: 600;
-   cursor: pointer;
-   transition: all 0.2s;
-}
-.wl-dialog-btns button:hover {
-   box-shadow: var(--wl-btn-hover-shadow);
-}
-.wl-dialog-btns button:first-child {
-   background: var(--wl-save-bg);
-   color: var(--wl-save-color);
-   border-color: transparent;
-}
-.wl-dialog-btns button:last-child {
-   color: var(--wl-text-muted);
 }
 
 /* ── Record number display ──────────────────────────────────────────────── */

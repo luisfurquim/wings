@@ -1,9 +1,10 @@
 //go:build js && wasm
 
-// Package combobox provides a wp-combobox custom element for wprana.
+// Package combobox provides a w-combobox custom element for wprana.
 //
 // Features:
-//   - Multi-select with tag display
+//   - Multi-select (default) with tag display, OR single-select that
+//     behaves like a native <select> — picked via the mode attribute.
 //   - Typing filters the dropdown list (case-insensitive, substring match)
 //   - Enter with text not in the list fires the @notinlist event to the parent
 //   - Enter with text matching an option selects that option
@@ -12,16 +13,24 @@
 //
 // # Usage in parent template
 //
-//	<wp-combobox
+//	<w-combobox
 //	    options='["Alpha","Beta","Gamma"]'
 //	    placeholder="Type to filter..."
+//	    mode="multi"
 //	    @notinlist="on_notinlist"
 //	    @change="on_change">
-//	</wp-combobox>
+//	</w-combobox>
 //
 // The options attribute accepts either:
 //   - JSON array of strings:  ["A","B","C"]
 //   - JSON array of objects:  [{"label":"A","value":"a"},...]
+//
+// The mode attribute accepts:
+//   - "multi"  (default) — multiple selections shown as removable tags;
+//     selecting clears the input and adds a tag.
+//   - "single"           — exactly zero or one selection; selecting an
+//     option replaces any previous selection and the chosen label is
+//     shown directly in the input. Tag display is hidden via CSS.
 //
 // # Events fired to parent (all lowercase — HTML spec lowercases attribute names)
 //
@@ -29,6 +38,7 @@
 //	              args[0] = the typed string
 //	@change     — selection changed (add or remove)
 //	              args[0] = []any of currently selected {label, value} maps
+//	              In single mode the slice has 0 or 1 element.
 //
 // # CSS Customization
 //
@@ -55,7 +65,7 @@ import (
 	"github.com/luisfurquim/wprana/dom"
 )
 
-const elementTag = "wp-combobox"
+const elementTag = "w-combobox"
 
 // G is the logger for this module.
 var G goose.Alert
@@ -101,13 +111,13 @@ func init() {
 		htmlContent,
 		buildCSS(),
 		func() wprana.PranaMod { return &Combobox{} },
-		"options", "placeholder", "value",
+		"options", "placeholder", "value", "mode",
 	)
-	G.Logf(3, "wp-combobox: module registered\n")
+	G.Logf(3, "w-combobox: module registered\n")
 }
 
 // Combobox implements wprana.PranaMod and wprana.Customizable
-// for the wp-combobox custom element.
+// for the w-combobox custom element.
 type Combobox struct{}
 
 // Compile-time interface check.
@@ -144,7 +154,14 @@ func (c *Combobox) InitData() map[string]any {
 		"selected_items":   []any{},
 		"input_val":        "",
 		"placeholder":      "Type to filter...",
+		"mode":             "multi",
 	}
+}
+
+// isSingle reports whether the widget is in single-select mode.
+func (cb *cbCtx) isSingle() bool {
+	m, _ := cb.obj.This.Get("mode").(string)
+	return m == "single"
 }
 
 // parseOptions converts the JSON string from the options attribute into a
@@ -209,8 +226,12 @@ func (cb *cbCtx) hideDrop() {
 
 // applyFilter rebuilds filtered_options from all_options, excluding
 // already-selected values and applying a case-insensitive substring filter.
+//
+// In single mode the current selection is NOT excluded from the dropdown,
+// matching native <select> semantics where every option is reachable.
 func (cb *cbCtx) applyFilter(query string) {
 	query = strings.ToLower(strings.TrimSpace(query))
+	single := cb.isSingle()
 	var allOpts []any
 	if v, ok := cb.obj.This.Get("all_options").([]any); ok {
 		allOpts = v
@@ -225,7 +246,7 @@ func (cb *cbCtx) applyFilter(query string) {
 		if !ok {
 			continue
 		}
-		if cb.selectedVals[val] {
+		if !single && cb.selectedVals[val] {
 			continue
 		}
 		if query == "" {
@@ -268,6 +289,7 @@ func (cb *cbCtx) loadOptions() {
 // applyValuePreset silently pre-selects the option whose value matches val,
 // but only when no item is currently selected. Does not fire @change so that
 // programmatic initialisation does not trigger parent reload handlers.
+// In single mode the matched label is shown in the input.
 func (cb *cbCtx) applyValuePreset(val string) {
 	if val == "" || len(cb.selectedVals) > 0 {
 		return
@@ -283,8 +305,14 @@ func (cb *cbCtx) applyValuePreset(val string) {
 		}
 		if v, ok := m["value"].(string); ok && v == val {
 			cb.selectedVals[val] = true
-			cb.obj.This.Append("selected_items", m)
-			cb.obj.This.Set("input_val", "")
+			existing, _ := cb.obj.This.Get("selected_items").([]any)
+			cb.obj.This.Set("selected_items", append(existing, m))
+			if cb.isSingle() {
+				label, _ := m["label"].(string)
+				cb.obj.This.Set("input_val", label)
+			} else {
+				cb.obj.This.Set("input_val", "")
+			}
 			cb.applyFilter("")
 			return
 		}
@@ -299,11 +327,31 @@ func (cb *cbCtx) inputVal() string {
 	return ""
 }
 
-// selectItem adds an option to the selection, clears the input, and
-// fires the @change event.
+// selectItem commits an option as the selection.
+//
+// In multi mode it appends to selected_items and clears the input.
+// In single mode it replaces any previous selection and writes the
+// chosen label into the input so it is shown like a native <select>.
+// Either way @change is fired with the resulting selected_items slice.
 func (cb *cbCtx) selectItem(m map[string]any) {
 	val, ok := m["value"].(string)
 	if !ok {
+		return
+	}
+	if cb.isSingle() {
+		// Re-selecting the same value is a no-op (avoids spurious @change).
+		if cb.selectedVals[val] && len(cb.selectedVals) == 1 {
+			cb.hideDrop()
+			return
+		}
+		// Replace previous selection.
+		cb.selectedVals = map[string]bool{val: true}
+		cb.obj.This.Set("selected_items", []any{m})
+		label, _ := m["label"].(string)
+		cb.obj.This.Set("input_val", label)
+		cb.hideDrop()
+		cb.applyFilter(label)
+		cb.obj.Trigger("change", cb.obj.This.Get("selected_items"))
 		return
 	}
 	if cb.selectedVals[val] {
@@ -334,15 +382,24 @@ func (cb *cbCtx) removeItem(si int) {
 		delete(cb.selectedVals, val)
 	}
 	cb.obj.This.DeleteAt("selected_items", si)
+	if cb.isSingle() {
+		// Removing the (only) tag in single mode clears the input too.
+		cb.obj.This.Set("input_val", "")
+	}
 	cb.applyFilter(cb.inputVal())
 	cb.obj.Trigger("change", cb.obj.This.Get("selected_items"))
 }
 
-// onFocus reloads options and opens the dropdown.
+// onFocus reloads options and opens the dropdown. In single mode the
+// input text (the current selection's label) is select-all'd so the
+// user can type to replace it without manually clearing first.
 func (cb *cbCtx) onFocus(_ js.Value, _ []js.Value) any {
 	cb.loadOptions()
 	cb.applyFilter(cb.inputVal())
 	cb.showDrop()
+	if cb.isSingle() && cb.inp.Get("value").String() != "" {
+		cb.inp.Call("select")
+	}
 	return nil
 }
 
@@ -387,6 +444,21 @@ func (cb *cbCtx) onKeydown(_ js.Value, args []js.Value) any {
 		cb.obj.Trigger("notinlist", val)
 
 	case "Escape":
+		// In single mode keep the selected label visible after Esc; in
+		// multi mode the input is a transient filter, so clear it.
+		if cb.isSingle() {
+			selected, _ := cb.obj.This.Get("selected_items").([]any)
+			label := ""
+			if len(selected) > 0 {
+				if m, ok := selected[0].(map[string]any); ok {
+					label, _ = m["label"].(string)
+				}
+			}
+			cb.obj.This.Set("input_val", label)
+			cb.hideDrop()
+			cb.applyFilter(label)
+			return nil
+		}
 		cb.obj.This.Set("input_val", "")
 		cb.hideDrop()
 		cb.applyFilter("")
@@ -448,6 +520,7 @@ func (c *Combobox) Render(obj *wprana.PranaObj) {
 	inps := dom.Query(obj.Dom, ".cb-input")
 	roots := dom.Query(obj.Dom, ".cb-root")
 	dropWraps := dom.Query(obj.Dom, ".cb-drop-wrap")
+	sentinels := dom.Query(obj.Dom, ".cb-sentinel")
 	if len(inps) == 0 || len(roots) == 0 || len(dropWraps) == 0 {
 		return
 	}
@@ -461,6 +534,17 @@ func (c *Combobox) Render(obj *wprana.PranaObj) {
 
 	// Parse options that may already be present via the attribute.
 	cb.loadOptions()
+
+	// Watch the sentinel for reactive updates to options/value that arrive
+	// after Render() — parent typically sets these after connectedCallback.
+	if len(sentinels) > 0 {
+		onAttrChange := js.FuncOf(func(_ js.Value, _ []js.Value) any {
+			cb.loadOptions()
+			return nil
+		})
+		mo := js.Global().Get("MutationObserver").New(onAttrChange)
+		mo.Call("observe", sentinels[0], map[string]any{"attributes": true})
+	}
 
 	// Register event handlers.
 	dom.AddEvent(cb.inp, "focus", cb.onFocus, false, false)

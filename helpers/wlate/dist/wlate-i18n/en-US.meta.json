@@ -20,135 +20,71 @@
     "ctxdetail": "button@wlate/wlate.html:8:53"
   },
   {
-    "context": "wlate/wlate.html:15:76",
-    "ctxdetail": "wp-combobox[placeholder]@wlate/wlate.html:15:76"
+    "context": "wlate/wlate.html:16:111",
+    "ctxdetail": "w-combobox[placeholder]@wlate/wlate.html:16:111"
   },
   {
-    "context": "wlate/wlate.html:18:77",
-    "ctxdetail": "wp-combobox[placeholder]@wlate/wlate.html:18:77"
+    "context": "wlate/wlate.html:19:113",
+    "ctxdetail": "w-combobox[placeholder]@wlate/wlate.html:19:113"
   },
   {
-    "context": "wlate/wlate.html:25:36",
-    "ctxdetail": "span@wlate/wlate.html:25:36<br/>span@wlate/wlate.html:29:36"
+    "context": "wlate/wlate.html:26:36",
+    "ctxdetail": "span@wlate/wlate.html:26:36<br/>span@wlate/wlate.html:30:36"
   },
   {
-    "context": "wlate/wlate.html:26:38",
-    "ctxdetail": "span@wlate/wlate.html:26:38<br/>span@wlate/wlate.html:30:38"
+    "context": "wlate/wlate.html:27:38",
+    "ctxdetail": "span@wlate/wlate.html:27:38<br/>span@wlate/wlate.html:31:38"
   },
   {
-    "context": "wlate/wlate.html:37:37",
-    "ctxdetail": "div@wlate/wlate.html:37:37"
+    "context": "wlate/wlate.html:38:37",
+    "ctxdetail": "div@wlate/wlate.html:38:37"
   },
   {
-    "context": "wlate/wlate.html:41:47",
-    "ctxdetail": "textarea@wlate/wlate.html:41:47"
+    "context": "wlate/wlate.html:42:47",
+    "ctxdetail": "textarea@wlate/wlate.html:42:47"
   },
   {
-    "context": "wlate/wlate.html:52:31",
-    "ctxdetail": "div@wlate/wlate.html:52:31<br/>div@wlate/wlate.html:69:31"
+    "context": "wlate/wlate.html:53:31",
+    "ctxdetail": "div@wlate/wlate.html:53:31<br/>div@wlate/wlate.html:70:31"
   },
   {
-    "context": "wlate/wlate.html:57:30",
-    "ctxdetail": "div[aria-label]@wlate/wlate.html:57:30<br/>div[aria-label]@wlate/wlate.html:74:30"
+    "context": "wlate/wlate.html:58:30",
+    "ctxdetail": "div[aria-label]@wlate/wlate.html:58:30<br/>div[aria-label]@wlate/wlate.html:75:30"
   },
   {
-    "context": "wlate/wlate.html:57:59",
-    "ctxdetail": "div@wlate/wlate.html:57:59<br/>div@wlate/wlate.html:74:59"
+    "context": "wlate/wlate.html:58:59",
+    "ctxdetail": "div@wlate/wlate.html:58:59<br/>div@wlate/wlate.html:75:59"
   },
   {
-    "context": "wlate/wlate.html:61:36",
-    "ctxdetail": "div[aria-label]@wlate/wlate.html:61:36<br/>div[aria-label]@wlate/wlate.html:78:36"
+    "context": "wlate/wlate.html:62:36",
+    "ctxdetail": "div[aria-label]@wlate/wlate.html:62:36<br/>div[aria-label]@wlate/wlate.html:79:36"
   },
   {
-    "context": "wlate/wlate.html:61:67",
-    "ctxdetail": "div@wlate/wlate.html:61:67<br/>div@wlate/wlate.html:78:67"
+    "context": "wlate/wlate.html:62:67",
+    "ctxdetail": "div@wlate/wlate.html:62:67<br/>div@wlate/wlate.html:79:67"
   },
   {
-    "context": "wlate/wlate.html:63:43",
-    "ctxdetail": "div@wlate/wlate.html:63:43"
+    "context": "wlate/wlate.html:64:43",
+    "ctxdetail": "div@wlate/wlate.html:64:43"
   },
   {
-    "context": "wlate/wlate.html:84:44",
-    "ctxdetail": "input[aria-label]@wlate/wlate.html:84:44"
+    "context": "wlate/wlate.html:85:44",
+    "ctxdetail": "input[aria-label]@wlate/wlate.html:85:44"
   },
   {
-    "context": "wlate/wlate.html:101:105",
-    "ctxdetail": "label@wlate/wlate.html:101:105"
+    "context": "wlate/wlate.html:102:105",
+    "ctxdetail": "label@wlate/wlate.html:102:105"
   },
   {
-    "context": "wlate/wlate.html:105:59",
-    "ctxdetail": "button[title]@wlate/wlate.html:105:59"
+    "context": "wlate/wlate.html:116:56",
+    "ctxdetail": "button[title]@wlate/wlate.html:116:56"
   },
   {
-    "context": "wlate/wlate.html:105:69",
-    "ctxdetail": "button@wlate/wlate.html:105:69"
+    "context": "wlate/wlate.html:116:73",
+    "ctxdetail": "button@wlate/wlate.html:116:73"
   },
   {
-    "context": "wlate/wlate.html:106:60",
-    "ctxdetail": "button[title]@wlate/wlate.html:106:60"
-  },
-  {
-    "context": "wlate/wlate.html:106:71",
-    "ctxdetail": "button@wlate/wlate.html:106:71"
-  },
-  {
-    "context": "wlate/wlate.html:107:58",
-    "ctxdetail": "button[title]@wlate/wlate.html:107:58"
-  },
-  {
-    "context": "wlate/wlate.html:107:66",
-    "ctxdetail": "button@wlate/wlate.html:107:66"
-  },
-  {
-    "context": "wlate/wlate.html:109:39",
-    "ctxdetail": "span@wlate/wlate.html:109:39"
-  },
-  {
-    "context": "wlate/wlate.html:110:58",
-    "ctxdetail": "button[title]@wlate/wlate.html:110:58"
-  },
-  {
-    "context": "wlate/wlate.html:110:68",
-    "ctxdetail": "button@wlate/wlate.html:110:68"
-  },
-  {
-    "context": "wlate/wlate.html:111:60",
-    "ctxdetail": "button[title]@wlate/wlate.html:111:60"
-  },
-  {
-    "context": "wlate/wlate.html:111:73",
-    "ctxdetail": "button@wlate/wlate.html:111:73"
-  },
-  {
-    "context": "wlate/wlate.html:112:58",
-    "ctxdetail": "button[title]@wlate/wlate.html:112:58"
-  },
-  {
-    "context": "wlate/wlate.html:112:67",
-    "ctxdetail": "button@wlate/wlate.html:112:67"
-  },
-  {
-    "context": "wlate/wlate.html:114:56",
-    "ctxdetail": "button[title]@wlate/wlate.html:114:56"
-  },
-  {
-    "context": "wlate/wlate.html:114:73",
-    "ctxdetail": "button@wlate/wlate.html:114:73"
-  },
-  {
-    "context": "wlate/wlate.html:120:13",
-    "ctxdetail": "p@wlate/wlate.html:120:13"
-  },
-  {
-    "context": "wlate/wlate.html:122:35",
-    "ctxdetail": "button@wlate/wlate.html:122:35"
-  },
-  {
-    "context": "wlate/wlate.html:123:38",
-    "ctxdetail": "button@wlate/wlate.html:123:38"
-  },
-  {
-    "context": "wlate/wlate.html:124:37",
-    "ctxdetail": "button@wlate/wlate.html:124:37"
+    "context": "wlate/wlate.html:121:69",
+    "ctxdetail": "w-dialog@wlate/wlate.html:121:69"
   }
 ]

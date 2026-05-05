@@ -1111,12 +1111,13 @@ A multi-select combobox with type-ahead filtering, tag display, and
 keyboard support.
 
 ```html
-<wp-combobox
+<w-combobox
     options='["Alpha","Beta","Gamma"]'
     placeholder="Type to filter..."
+    mode="multi"
     @notinlist="on_notinlist"
     @change="on_change">
-</wp-combobox>
+</w-combobox>
 ```
 
 **Attributes:**
@@ -1125,6 +1126,7 @@ keyboard support.
 |-----------|-------------|
 | `options` | JSON array of strings or `[{"label":"...","value":"..."},...]` objects |
 | `placeholder` | Input placeholder text (default: "Type to filter...") |
+| `mode` | `"multi"` (default — tag-based multi-select) or `"single"` (replaces previous selection, hides tag display, shows label in the input) |
 
 **Events (via `@`):**
 

@@ -11,10 +11,16 @@ import (
 	"strings"
 	"syscall/js"
 
+	"github.com/luisfurquim/goose"
 	"github.com/luisfurquim/wprana"
 	"github.com/luisfurquim/wprana/dom"
 	"github.com/luisfurquim/wprana/wi18n"
 )
+
+// G is this package's goose alert. SetConfig (called from init() with
+// wprana.json bytes) propagates the project-wide debugLevel here via
+// wi18n.ConfigureGoose.
+var G goose.Alert
 
 const elementTag = "wp-wlate"
 
@@ -132,9 +138,22 @@ func (w *Wlate) InitData() map[string]any {
 		"category_headers": []any{},
 		"left_cells":      []any{},
 		"right_cells":     []any{},
+		"right_srcs":      []any{},
 
 		// Dialog
 		"show_dialog": false,
+		"fnSave":      wprana.TriggerHandler(nil),
+		"fnDiscard":   wprana.TriggerHandler(nil),
+		"fnCancel":    wprana.TriggerHandler(nil),
+
+		// Navbar trigger handlers (set in wireEvents).
+		"navFirst":   wprana.TriggerHandler(nil),
+		"navPrev10":  wprana.TriggerHandler(nil),
+		"navPrev":    wprana.TriggerHandler(nil),
+		"navNext":    wprana.TriggerHandler(nil),
+		"navNext10":  wprana.TriggerHandler(nil),
+		"navLast":    wprana.TriggerHandler(nil),
+		"navJump":    wprana.TriggerHandler(nil),
 	}
 }
 
@@ -479,6 +498,7 @@ func (wc *wlateCtx) syncRightContent() {
 			wc.rightText[idx].Content = content
 			wc.rightText[idx].Source = "manual"
 			wc.rightText[idx].Revised = true
+			wc.obj.This.Set("right_content", content)
 			wc.obj.This.Set("right_text_src", "")
 			wc.dirty = true
 		}
@@ -505,6 +525,15 @@ func (wc *wlateCtx) syncRightContent() {
 					wc.rightInflections[idx].Sources = make(map[string]string)
 				}
 				wc.rightInflections[idx].Sources[key] = "manual"
+				// Mirror into M["right_cells"] so a reactive sync triggered by
+				// Set("show_dialog", false) renders the new value, not the old one.
+				if rc, ok := wc.obj.This.M["right_cells"].([]any); ok && ciN < len(rc) {
+					if row, ok := rc[ciN].(map[string]any); ok {
+						if cols, ok := row["cols"].([]any); ok && giN < len(cols) {
+							cols[giN] = val
+						}
+					}
+				}
 				changed = true
 			}
 		}
@@ -820,11 +849,19 @@ func (wc *wlateCtx) init() {
 	// Load config
 	body, err := fetchText("wprana.json")
 	if err != nil {
-		fmt.Println("wlate: failed to load wprana.json:", err)
+		G.Logf(1, "wlate: failed to load wprana.json: %v", err)
 		return
 	}
+	// Apply project-wide settings (debugLevel, traceOn, measure overrides)
+	// before parsing wlate-specific keys, so subsequent G.Logf calls in this
+	// package observe the configured level.
+	if err := wi18n.SetConfig([]byte(body)); err != nil {
+		G.Logf(1, "wlate: failed to apply wprana.json: %v", err)
+		return
+	}
+	wi18n.ConfigureGoose(&G)
 	if err := json.Unmarshal([]byte(body), &wc.config); err != nil {
-		fmt.Println("wlate: failed to parse wprana.json:", err)
+		G.Logf(1, "wlate: failed to parse wprana.json: %v", err)
 		return
 	}
 
@@ -971,50 +1008,47 @@ func (wc *wlateCtx) wireEvents() {
 		}, false, false)
 	}
 
-	// Navigation buttons
-	navHandlers := map[string]func(){
-		"#nav-first":  func() { wc.navigate(0) },
-		"#nav-prev10": func() { wc.navigate(wc.currentPos - 10) },
-		"#nav-prev":   func() { wc.navigate(wc.currentPos - 1) },
-		"#nav-next":   func() { wc.navigate(wc.currentPos + 1) },
-		"#nav-next10": func() { wc.navigate(wc.currentPos + 10) },
-		"#nav-last":   func() { wc.navigate(len(wc.filteredIdx) - 1) },
-	}
-	for sel, handler := range navHandlers {
-		h := handler // capture
-		btns := dom.Query(wc.obj.Dom, sel)
-		if len(btns) > 0 {
-			dom.AddEvent(btns[0], "click", func(_ js.Value, _ []js.Value) any {
-				h()
-				return nil
-			}, false, false)
+	// Navigation — wired to w-navbar widget triggers.
+	wc.obj.This.M["navFirst"] = wprana.TriggerHandler(func(_ ...any) {
+		wc.navigate(0)
+	})
+	wc.obj.This.M["navPrev10"] = wprana.TriggerHandler(func(_ ...any) {
+		wc.navigate(wc.currentPos - 10)
+	})
+	wc.obj.This.M["navPrev"] = wprana.TriggerHandler(func(_ ...any) {
+		wc.navigate(wc.currentPos - 1)
+	})
+	wc.obj.This.M["navNext"] = wprana.TriggerHandler(func(_ ...any) {
+		wc.navigate(wc.currentPos + 1)
+	})
+	wc.obj.This.M["navNext10"] = wprana.TriggerHandler(func(_ ...any) {
+		wc.navigate(wc.currentPos + 10)
+	})
+	wc.obj.This.M["navLast"] = wprana.TriggerHandler(func(_ ...any) {
+		wc.navigate(len(wc.filteredIdx) - 1)
+	})
+	wc.obj.This.M["navJump"] = wprana.TriggerHandler(func(args ...any) {
+		if len(args) == 0 {
+			return
 		}
-	}
-
-	// Nav input — jump to record on Enter
-	navInputs := dom.Query(wc.obj.Dom, "#nav-input")
-	if len(navInputs) > 0 {
-		dom.AddEvent(navInputs[0], "keydown", func(_ js.Value, args []js.Value) any {
-			if args[0].Get("key").String() == "Enter" {
-				val := navInputs[0].Get("value").String()
-				num, err := strconv.Atoi(strings.TrimSpace(val))
-				if err != nil || num < 1 {
-					return nil
-				}
-				// num is 1-based actual record number, find its position in filteredIdx
-				targetIdx := num - 1
-				for pos, fi := range wc.filteredIdx {
-					if fi == targetIdx {
-						wc.navigate(pos)
-						return nil
-					}
-				}
-				// If not in filtered list, navigate to closest
-				wc.navigate(0)
+		val, ok := args[0].(string)
+		if !ok {
+			return
+		}
+		num, err := strconv.Atoi(strings.TrimSpace(val))
+		if err != nil || num < 1 {
+			return
+		}
+		// num is 1-based actual record number; find its position in filteredIdx.
+		targetIdx := num - 1
+		for pos, fi := range wc.filteredIdx {
+			if fi == targetIdx {
+				wc.navigate(pos)
+				return
 			}
-			return nil
-		}, false, false)
-	}
+		}
+		wc.navigate(0)
+	})
 
 	// Filter toggle
 	filterToggles := dom.Query(wc.obj.Dom, "#wl-filter-toggle")
@@ -1067,34 +1101,25 @@ func (wc *wlateCtx) wireEvents() {
 		}, false, false)
 	}
 
-	// Dialog buttons
-	dlgSave := dom.Query(wc.obj.Dom, "#dlg-save")
-	dlgDiscard := dom.Query(wc.obj.Dom, "#dlg-discard")
-	dlgCancel := dom.Query(wc.obj.Dom, "#dlg-cancel")
-	if len(dlgSave) > 0 {
-		dom.AddEvent(dlgSave[0], "click", func(_ js.Value, _ []js.Value) any {
+	// Dialog button handlers — fired by w-dialog's @save/@discard/@cancel triggers.
+	// save()/loadXxxData() use synchronous fetch via syscall/js, which deadlocks
+	// the main thread when invoked from a click callback; run them off-loop.
+	wc.obj.This.M["fnSave"] = wprana.TriggerHandler(func(_ ...any) {
+		go func() {
+			wc.save()
+			wc.displayRecord()
 			wc.obj.This.Set("show_dialog", false)
-			go func() {
-				wc.save()
-				wc.doLangSwitch()
-			}()
-			return nil
-		}, false, false)
-	}
-	if len(dlgDiscard) > 0 {
-		dom.AddEvent(dlgDiscard[0], "click", func(_ js.Value, _ []js.Value) any {
-			wc.obj.This.Set("show_dialog", false)
-			wc.dirty = false
 			wc.doLangSwitch()
-			return nil
-		}, false, false)
-	}
-	if len(dlgCancel) > 0 {
-		dom.AddEvent(dlgCancel[0], "click", func(_ js.Value, _ []js.Value) any {
-			wc.obj.This.Set("show_dialog", false)
-			return nil
-		}, false, false)
-	}
+		}()
+	})
+	wc.obj.This.M["fnDiscard"] = wprana.TriggerHandler(func(_ ...any) {
+		wc.dirty = false
+		wc.obj.This.Set("show_dialog", false)
+		go wc.doLangSwitch()
+	})
+	wc.obj.This.M["fnCancel"] = wprana.TriggerHandler(func(_ ...any) {
+		wc.obj.This.Set("show_dialog", false)
+	})
 
 	// Textarea input tracking for dirty state
 	textareas := dom.Query(wc.obj.Dom, ".wl-content-edit")
@@ -1141,6 +1166,7 @@ func (wc *wlateCtx) wireEvents() {
 		if !ok || lang == wc.leftLang {
 			return
 		}
+		wc.syncRightContent()
 		if wc.dirty {
 			wc.pendingLang = lang
 			wc.pendingSide = "left"
@@ -1171,6 +1197,7 @@ func (wc *wlateCtx) wireEvents() {
 		if !ok || lang == wc.rightLang {
 			return
 		}
+		wc.syncRightContent()
 		if wc.dirty {
 			wc.pendingLang = lang
 			wc.pendingSide = "right"
@@ -1263,11 +1290,11 @@ func (wc *wlateCtx) save() {
 		}
 		data, err := json.MarshalIndent(datas, "", "  ")
 		if err != nil {
-			fmt.Println("wlate: failed to marshal text data:", err)
+			G.Logf(1, "wlate: failed to marshal text data: %v", err)
 			return
 		}
 		if err := postJSON("/save?file=i18n/"+wc.rightLang+".json", data); err != nil {
-			fmt.Println("wlate: failed to save text data:", err)
+			G.Logf(1, "wlate: failed to save text data: %v", err)
 			return
 		}
 	}
@@ -1280,17 +1307,17 @@ func (wc *wlateCtx) save() {
 		}
 		data, err := json.MarshalIndent(datas, "", "  ")
 		if err != nil {
-			fmt.Println("wlate: failed to marshal inflection data:", err)
+			G.Logf(1, "wlate: failed to marshal inflection data: %v", err)
 			return
 		}
 		if err := postJSON("/save?file=i18n/"+wc.rightLang+".inflections.json", data); err != nil {
-			fmt.Println("wlate: failed to save inflection data:", err)
+			G.Logf(1, "wlate: failed to save inflection data: %v", err)
 			return
 		}
 	}
 
 	wc.dirty = false
-	fmt.Printf("wlate: saved %s (%d text, %d inflections)\n",
+	G.Logf(2, "wlate: saved %s (%d text, %d inflections)",
 		wc.rightLang, len(wc.rightText), len(wc.rightInflections))
 }
 

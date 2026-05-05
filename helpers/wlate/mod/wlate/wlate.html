@@ -7,15 +7,16 @@
          <button id="tab-text" class="wl-tab wl-tab-active">Texto</button>
          <button id="tab-inflection" class="wl-tab">Inflexões</button>
       </div>
+      <skin-switcher></skin-switcher>
    </div>
 
    <!-- Language selectors -->
    <div class="wl-lang-bar">
       <div class="wl-lang-left">
-         <wp-combobox id="cb-left" options="{{lang_options}}" placeholder="Língua de referência..." @change="on_left_lang"></wp-combobox>
+         <w-combobox id="cb-left" mode="single" options="{{lang_options}}" value="{{left_lang}}" placeholder="Língua de referência..." @change="on_left_lang"></w-combobox>
       </div>
       <div class="wl-lang-right">
-         <wp-combobox id="cb-right" options="{{lang_options}}" placeholder="Língua a traduzir..." @change="on_right_lang"></wp-combobox>
+         <w-combobox id="cb-right" mode="single" options="{{lang_options}}" value="{{right_lang}}" placeholder="Língua a traduzir..." @change="on_right_lang"></w-combobox>
       </div>
    </div>
 
@@ -101,29 +102,22 @@
          <span class="wl-toggle-track" id="wl-toggle-track"><span class="wl-toggle-thumb"></span></span>
          Somente não revisados
       </label>
-      <div class="wl-nav-buttons">
-         <button id="nav-first" class="wl-nav-btn" title="Primeiro">⟨⟨</button>
-         <button id="nav-prev10" class="wl-nav-btn" title="Voltar 10">⟨10</button>
-         <button id="nav-prev" class="wl-nav-btn" title="Voltar">⟨</button>
-         <input id="nav-input" class="wl-nav-input" type="text" &value="{{nav_input}}" />
-         <span class="wl-record-info">de {{total_count}}</span>
-         <button id="nav-next" class="wl-nav-btn" title="Avançar">⟩</button>
-         <button id="nav-next10" class="wl-nav-btn" title="Avançar 10">10⟩</button>
-         <button id="nav-last" class="wl-nav-btn" title="Último">⟩⟩</button>
-      </div>
+      <w-navbar
+          nav_input="{{nav_input}}"
+          total_count="{{total_count}}"
+          @first="navFirst"
+          @prevmany="navPrev10"
+          @prev="navPrev"
+          @next="navNext"
+          @nextmany="navNext10"
+          @last="navLast"
+          @change="navJump">
+      </w-navbar>
       <button id="btn-save" class="wl-save-btn" title="Salvar (Ctrl+S)">Salvar</button>
    </div>
 
    <!-- Unsaved changes dialog -->
-   <div ?show_dialog class="wl-overlay">
-      <div class="wl-dialog">
-         <p>Há alterações não salvas.</p>
-         <div class="wl-dialog-btns">
-            <button id="dlg-save">Salvar e trocar</button>
-            <button id="dlg-discard">Não salvar e trocar</button>
-            <button id="dlg-cancel">Cancelar</button>
-         </div>
-      </div>
-   </div>
+   <w-dialog ?show_dialog buttons="save,discard,cancel"
+             @save="fnSave" @discard="fnDiscard" @cancel="fnCancel">Há alterações não salvas.</w-dialog>
 
 </div>

@@ -2,20 +2,26 @@
   {
     "label": "{n} o aluno aprovado",
     "cells": {
-      "m.one": "",
-      "m.other": "",
-      "f.one": "",
-      "f.other": ""
+      "f.one": "the only student who passed",
+      "f.other": "the students who passeda",
+      "m.one": "the only student who passed",
+      "m.other": "the students who passed"
     },
-    "revised": false
+    "revised": true,
+    "sources": {
+      "f.one": "manual",
+      "f.other": "manual",
+      "m.one": "manual",
+      "m.other": "manual"
+    }
   },
   {
     "label": "{n} o professor presente",
     "cells": {
-      "m.one": "",
-      "m.other": "",
       "f.one": "",
-      "f.other": ""
+      "f.other": "",
+      "m.one": "",
+      "m.other": ""
     },
     "revised": false
   }
