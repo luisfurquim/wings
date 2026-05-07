@@ -1,0 +1,59 @@
+:root {
+  /* --- Tema Outono Explosivo --- */
+  /* Inspirado nas cores mais saturadas de image_fbc4b3.jpg */
+
+  /* Core tokens — see skins/tokens.md */
+  --wings-bg:                 #fff7ed;  /* Fundo: Laranja/amarelo pálido e quente (das áreas de luz) */
+  --wings-surface:            #ffffff;  /* Superfície: Branco puro para manter clareza nos modais */
+  --wings-text:               #451a03;  /* Texto: Marrom/preto muito escuro e quente (das sombras mais profundas) */
+  --wings-text-light:         #ea580c;  /* Texto secundário: Laranja queimado intenso */
+  --wings-primary:            #d97706;  /* Cor primária: Amarelo âmbar/dourado profundo e vibrante */
+  --wings-border:             #fdba74;  /* Borda: Laranja pêssego médio */
+  --wings-border-focus:       #ea580c;  /* Foco: Laranja intenso e saturado */
+  --wings-btn-bg:             #ffffff;
+  --wings-btn-hover-bg:       #fffbeb;  /* Amarelo muito pálido */
+  --wings-btn-hover-color:    #a16207;  /* Amarelo dourado escuro */
+  --wings-btn-hover-shadow:   0 2px 4px rgba(161, 98, 7, 0.2);
+
+  --wings-secondary:          #b91c1c;  /* Vermelho vibrante outonal (como as folhas mais saturadas) */
+  --wings-quiet:              #f97316;  /* Laranja vibrante para elementos neutros */
+  --wings-primary-pale:       #fef3c7;  /* Amarelo pálido para tinturas */
+
+  /* w-dialog tokens (extracted from widget/dialog/vars.css). */
+  --wings-dialog-bg:                  #ffffff;
+  --wings-dialog-shadow:               0 8px 32px rgba(69, 26, 3, 0.25);
+  --wings-dialog-border-radius:        8px;
+  --wings-dialog-padding:              24px;
+  --wings-dialog-overlay-bg:          rgba(69, 26, 3, 0.40); /* Sobreposição quente e escura */
+  --wings-dialog-button-bg:           #ffffff;
+  --wings-dialog-button-hover-bg:      #fff7ed;
+  --wings-dialog-button-active-bg:     #ffedd5;
+  --wings-dialog-button-border:        1px solid #fdba74;
+  --wings-dialog-button-border-hover: 1px solid #ea580c;
+  --wings-dialog-button-padding:       8px 16px;
+  --wings-dialog-button-gap:           8px;
+  --wings-dialog-primary-bg:          #b91c1c; /* Botão principal Vermelho Vibrante */
+  --wings-dialog-primary-color:       #ffffff;
+  --wings-dialog-primary-hover-bg:    #991b1b;
+
+  /* w-combobox tokens (extracted from widget/combobox/vars.css). */
+  --wings-combobox-tag-bg:            #fed7aa;  /* Tag: Laranja pêssego pálido */
+  --wings-combobox-tag-color:          #a16207;  /* Texto da tag: Amarelo dourado profundo */
+  --wings-combobox-tag-border:         #fdba74;  /* Borda da tag */
+  --wings-combobox-rm-color:          #c2410c;
+  --wings-combobox-rm-hover-bg:       #f97316;
+  --wings-combobox-rm-hover-color:    #7c2d12;
+  --wings-combobox-input-border:      #d1d5db;
+  --wings-combobox-input-focus-border:#ea580c;
+  --wings-combobox-input-focus-shadow:rgba(234, 88, 12, 0.15);
+  --wings-combobox-input-bg:          #ffffff;
+  --wings-combobox-drop-bg:           #ffffff;
+  --wings-combobox-drop-border:       #d1d5db;
+  --wings-combobox-drop-shadow:       0 4px 16px rgba(69, 26, 3, 0.15);
+  --wings-combobox-scroll-thumb:      #f97316;
+  --wings-combobox-opt-color:         #451a03;
+  --wings-combobox-opt-hover-bg:      #fffbeb;
+  --wings-combobox-opt-hover-color:    #c2410c;
+  --wings-combobox-opt-active-bg:     #fed7aa;
+  --wings-combobox-empty-color:       #9ca3af;
+}
