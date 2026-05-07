@@ -1,19 +1,20 @@
 /* ── wlate token aliases ─────────────────────────────────────────────────────
    The wlate templates and design.css speak in semantic --wl-* names. This
-   layer maps each name to the corresponding global --wings-* token, so the
-   active wprana skin (skins/tokens.md) drives wlate's appearance.
+   layer maps each name to the corresponding global --wings-* token so the
+   active wprana skin drives wlate's appearance.
 
    The fallback (second arg of each var(...)) preserves the original wlate
    palette when no skin is active, so nothing regresses if skins are stripped.
 
-   Tokens that carry wlate-specific brand value (the bordeaux secondary, the
-   gradient buttons, the revised/unrevised status indicators) stay hard-coded
-   below — they are not skinnable on purpose.                                  */
+   Tokens that carry wlate-specific brand value (the gradient buttons/tabs,
+   the revised/unrevised status indicators) are now expressed through the
+   generic --wings-secondary / --wings-quiet / --wings-gradient family so
+   skin authors need no wlate knowledge to theme wlate correctly.            */
 
 :host {
    /* ── Skinnable: structural neutrals + accents ─────────────────────────── */
 
-   /* Primary accent — follows skin if defined; falls back to wlate navy. */
+   /* Primary accent */
    --wl-primary:        var(--wings-primary, #1B2A4A);
 
    /* Backgrounds */
@@ -22,9 +23,12 @@
    --wl-nav-bg:         var(--wings-surface, #FAFAF8);
    --wl-grid-header-bg: var(--wings-surface, #F3F1EE);
 
-   /* Text */
+   /* Pale primary tint — for panel accent borders and code expression bg */
+   --wl-primary-pale:   var(--wings-primary-pale, #E8EDF5);
+
+   /* Text — three-level hierarchy */
    --wl-text:        var(--wings-text, #1a1a2e);
-   --wl-text-muted:  var(--wings-text-light, #6B7280);
+   --wl-text-muted:  var(--wings-text-muted, #6B7280);
    --wl-text-light:  var(--wings-text-light, #9CA3AF);
 
    /* Borders */
@@ -32,65 +36,55 @@
    --wl-border-focus:     var(--wings-border-focus, #1B2A4A);
    --wl-grid-cell-border: var(--wings-border, #E5E7EB);
 
-   /* Buttons / hovers / shadows that match the skin's neutrals */
+   /* Secondary accent (attention / unrevised) and its quiet counterpart */
+   --wl-secondary:        var(--wings-secondary, #6F2A38);
+   --wl-unrevised-border: var(--wings-secondary, #6B2C3E);
+   --wl-revised-border:   var(--wings-quiet, #C8CCD0);
+
+   /* ── Wlate brand: buttons ─────────────────────────────────────────────── */
+
+   /* Nav button bg — no gradient override: skin's neutral btn bg drives this */
+   --wl-btn-bg:        var(--wings-btn-bg, linear-gradient(to bottom, #F0EDE8, #E0DDD6));
    --wl-btn-hover-shadow: var(--wings-btn-hover-shadow, 0 2px 6px rgba(27, 42, 74, 0.15));
 
-   /* Dialog (uses dialog-namespaced wings tokens, with wlate fallbacks) */
+   /* ── Wlate brand: tabs ────────────────────────────────────────────────── */
+
+   /* Active tab: gradient if skin provides one, else secondary solid */
+   --wl-tab-active-bg:     var(--wings-gradient, var(--wings-secondary, #1B2A4A));
+   --wl-tab-active-color:  var(--wings-gradient-color, var(--wings-surface, #FFFFFF));
+   /* Translucent borders: self-cancelling across light/dark skins */
+   --wl-tab-active-border:   rgba(255, 255, 255, 0.55);
+   --wl-tab-inactive-border: rgba(0, 0, 0, 0.22);
+
+   /* Inactive tab: skin's elevated surface + secondary text */
+   --wl-tab-inactive-bg:    var(--wings-surface, #ECEAE6);
+   --wl-tab-inactive-color: var(--wings-text-light, #4B5563);
+
+   /* ── Wlate brand: toggle switch ───────────────────────────────────────── */
+   --wl-toggle-off-bg: var(--wings-border, #D1D5DB);
+   --wl-toggle-on-bg:  var(--wings-secondary, #6B2C3E);
+   --wl-toggle-thumb:  #ffffff;   /* always white — physical switch look */
+
+   /* ── Wlate brand: nav buttons (invert to secondary on hover) ──────────── */
+   --wl-nav-btn-hover-bg:    var(--wings-secondary, #1B2A4A);
+   --wl-nav-btn-hover-color: var(--wings-surface, #FFFFFF);
+
+   /* ── Wlate brand: grid cell focus ────────────────────────────────────── */
+   /* color-mix gives a skin-matched tint without extra tokens */
+   --wl-grid-cell-focus: color-mix(in srgb, var(--wl-primary) 8%, transparent);
+
+   /* ── Wlate brand: save button ────────────────────────────────────────── */
+   --wl-save-bg:           var(--wings-gradient, var(--wings-secondary, #1B2A4A));
+   --wl-save-color:        var(--wings-gradient-color, var(--wings-surface, #FFFFFF));
+   /* Translucent border — same self-cancelling trick as active tab */
+   --wl-save-border:       rgba(255, 255, 255, 0.55);
+   --wl-save-hover-shadow: var(--wings-gradient-shadow, 0 2px 8px rgba(27, 42, 74, 0.3));
+
+   /* ── Dialog ───────────────────────────────────────────────────────────── */
    --wl-overlay-bg:    var(--wings-dialog-overlay-bg, rgba(27, 42, 74, 0.4));
    --wl-dialog-bg:     var(--wings-dialog-bg, #FFFFFF);
    --wl-dialog-shadow: var(--wings-dialog-shadow, 0 8px 32px rgba(0, 0, 0, 0.18));
 
-   /* ── Hard-coded: wlate brand identity (intentionally not skinnable) ────── */
-
-   /* Primary auxiliary shades (related to --wl-primary in light mode). */
-   --wl-primary-light: #2A3F6A;
-   --wl-primary-pale:  #E8EDF5;
-
-   /* Secondary accent — bordeaux (wlate-specific). */
-   --wl-secondary:       #6F2A38;
-   --wl-secondary-light: #8d1638;
-   --wl-secondary-pale:  #ffc6c6;
-
-   /* Surface elevation shadow (kept subtle; skin's shadow tokens are
-      dialog-specific and would clash here). */
+   /* ── Panel elevation shadow ───────────────────────────────────────────── */
    --wl-panel-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-
-   /* Revised / unrevised translation indicators. */
-   --wl-revised-border:   #C8CCD0;
-   --wl-unrevised-border: #6B2C3E;
-
-   /* Buttons (gradients are part of wlate's look). */
-   --wl-btn-bg:        linear-gradient(to bottom, #F0EDE8, #E0DDD6);
-   --wl-btn-active-bg: #D8D5CE;
-
-   /* Tabs (gradient + dark inactive — wlate-specific).
-      Borders are translucent so they stay subtle against their own button
-      bg while becoming visible when the surrounding panel inverts under a
-      contrasting skin (light border on navy pops against a dark panel;
-      dark border on light grey pops against a light panel). */
-   --wl-tab-active-bg:     linear-gradient(135deg, #1B2A4A, #2A3F6A);
-   --wl-tab-active-color:  #FFFFFF;
-   --wl-tab-active-border: rgba(255, 255, 255, 0.55);
-   --wl-tab-inactive-bg:     #ECEAE6;
-   --wl-tab-inactive-color:  #4B5563;
-   --wl-tab-inactive-border: rgba(0, 0, 0, 0.22);
-
-   /* Toggle switch. */
-   --wl-toggle-off-bg: #D1D5DB;
-   --wl-toggle-on-bg:  #6B2C3E;
-   --wl-toggle-thumb:  #FFFFFF;
-
-   /* Nav buttons hover (inverts to dark — wlate-specific behaviour). */
-   --wl-nav-btn-hover-bg:    #1B2A4A;
-   --wl-nav-btn-hover-color: #FFFFFF;
-
-   /* Grid cell focus highlight. */
-   --wl-grid-cell-focus: rgba(27, 42, 74, 0.08);
-
-   /* Save button (gradient + shadow — wlate-specific). Same translucent
-      border trick as the active tab. */
-   --wl-save-bg:           linear-gradient(135deg, #1B2A4A, #2A3F6A);
-   --wl-save-color:        #FFFFFF;
-   --wl-save-border:       rgba(255, 255, 255, 0.55);
-   --wl-save-hover-shadow: 0 2px 8px rgba(27, 42, 74, 0.3);
 }
