@@ -187,7 +187,7 @@
 }
 .wl-content-edit:focus {
    border-color: var(--wl-border-focus);
-   box-shadow: 0 0 0 2px rgba(27, 42, 74, 0.1);
+   box-shadow: 0 0 0 2px color-mix(in srgb, var(--wl-border-focus) 15%, transparent);
 }
 
 /* ── Revised indicator (clickable border area) ──────────────────────────── */
@@ -203,7 +203,7 @@
    transition: background 0.2s;
 }
 .wl-revised-indicator:hover {
-   background: rgba(107, 44, 62, 0.08);
+   background: color-mix(in srgb, var(--wl-secondary) 8%, transparent);
 }
 
 /* ── Expression display (inflection tab) ────────────────────────────────── */
