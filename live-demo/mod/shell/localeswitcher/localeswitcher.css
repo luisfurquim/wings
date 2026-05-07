@@ -3,6 +3,13 @@
   gap: 6px;
   align-items: center;
   font-size: 0.9rem;
+  color: var(--wings-text, #222222);
 }
 .lsw label { color: var(--wings-text-muted, #555); }
-.lsw select { padding: 2px 6px; }
+.lsw select {
+  padding: 2px 6px;
+  background: var(--wings-surface, #ffffff);
+  color: var(--wings-text, #222222);
+  border: 1px solid var(--wings-border, #cccccc);
+  border-radius: 4px;
+}

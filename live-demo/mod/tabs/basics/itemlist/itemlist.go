@@ -15,8 +15,9 @@ var htmlContent string
 
 const cssContent = `.item-list form { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
 .item-list label { font-size: 0.9rem; color: var(--wings-text-muted, #555); }
-.item-list input { flex: 1; padding: 4px; }
-.item-list button { padding: 4px 12px; cursor: pointer; }
+.item-list input { flex: 1; padding: 4px; background: var(--wings-surface, #fff); color: var(--wings-text, #222); border: 1px solid var(--wings-border, #ccc); border-radius: 4px; }
+.item-list button { padding: 4px 12px; cursor: pointer; background: var(--wings-btn-bg, #fff); color: var(--wings-text, #222); border: 1px solid var(--wings-border, #ccc); border-radius: 4px; transition: background 0.15s; }
+.item-list button:hover { background: var(--wings-btn-hover-bg, #f5f5f5); color: var(--wings-btn-hover-color, #222); box-shadow: var(--wings-btn-hover-shadow, 0 2px 4px rgba(0,0,0,.1)); }
 .item-list ul { margin: 0; padding-left: 20px; }`
 
 type ItemList struct{}
