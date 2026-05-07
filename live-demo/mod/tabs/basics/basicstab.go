@@ -12,7 +12,7 @@ import (
 var htmlContent string
 
 const cssContent = `.basics-tab section { margin: 12px 0; }
-.basics-tab h3 { margin: 0 0 6px; font-size: 1rem; color: #333; }`
+.basics-tab h3 { margin: 0 0 6px; font-size: 1rem; color: var(--wings-text, #333); }`
 
 type BasicsTab struct{}
 

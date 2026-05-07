@@ -15,9 +15,9 @@ var htmlContent string
 
 const cssContent = `.mode-toggle .row { display: flex; gap: 8px; align-items: center; margin: 4px 0; }
 .mode-toggle button { padding: 4px 12px; cursor: pointer; }
-.mode-toggle .extra-box { background: #eef9ff; padding: 6px 10px; border-radius: 4px; margin: 6px 0; }
-.mode-toggle .extra-hint { color: #888; font-style: italic; margin: 6px 0; }
-.mode-toggle .cond { color: #444; font-size: 0.9rem; margin: 2px 0; }
+.mode-toggle .extra-box { background: var(--wings-primary-pale, #eef9ff); padding: 6px 10px; border-radius: 4px; margin: 6px 0; }
+.mode-toggle .extra-hint { color: var(--wings-text-light, #888); font-style: italic; margin: 6px 0; }
+.mode-toggle .cond { color: var(--wings-text, #444); font-size: 0.9rem; margin: 2px 0; }
 .mode-toggle p { margin: 0; }`
 
 type ModeToggle struct{}

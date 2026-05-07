@@ -14,8 +14,8 @@ var htmlContent string
 
 const cssContent = `.temp-display table { border-collapse: collapse; margin: 4px 0; }
 .temp-display td { padding: 2px 12px 2px 0; }
-.temp-display td:first-child { color: #666; font-size: 0.9em; font-family: monospace; min-width: 180px; }
-.temp-display strong { color: #036; font-variant-numeric: tabular-nums; }`
+.temp-display td:first-child { color: var(--wings-text-light, #666); font-size: 0.9em; font-family: monospace; min-width: 180px; }
+.temp-display strong { color: var(--wings-primary, #036); font-variant-numeric: tabular-nums; }`
 
 type TempDisplay struct{}
 

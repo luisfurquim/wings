@@ -12,7 +12,7 @@ import (
 var htmlContent string
 
 const cssContent = `.number-display p { margin: 4px 0; }
-.number-display strong { color: #036; font-variant-numeric: tabular-nums; }`
+.number-display strong { color: var(--wings-primary, #036); font-variant-numeric: tabular-nums; }`
 
 type NumberDisplay struct{}
 

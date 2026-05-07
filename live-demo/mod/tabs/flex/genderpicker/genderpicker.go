@@ -14,7 +14,7 @@ import (
 var htmlContent string
 
 const cssContent = `.gender-picker { display: inline-flex; gap: 6px; align-items: center; }
-.gender-picker label { font-size: 0.9rem; color: #555; }`
+.gender-picker label { font-size: 0.9rem; color: var(--wings-text-muted, #555); }`
 
 type GenderPicker struct{}
 

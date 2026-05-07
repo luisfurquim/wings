@@ -14,7 +14,7 @@ var htmlContent string
 
 const cssContent = `.currency-list ul { margin: 0; padding-left: 18px; }
 .currency-list li { margin: 2px 0; }
-.currency-list strong { color: #063; font-variant-numeric: tabular-nums; }`
+.currency-list strong { color: var(--wings-primary, #063); font-variant-numeric: tabular-nums; }`
 
 type CurrencyList struct{}
 

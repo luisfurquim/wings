@@ -14,7 +14,7 @@ import (
 var htmlContent string
 
 const cssContent = `.date-display p { margin: 4px 0; }
-.date-display strong { color: #503; }`
+.date-display strong { color: var(--wings-primary, #503); }`
 
 type DateDisplay struct{}
 

@@ -15,7 +15,7 @@ import (
 var htmlContent string
 
 const cssContent = `.count-input { display: inline-flex; gap: 6px; align-items: center; }
-.count-input label { font-size: 0.9rem; color: #555; }
+.count-input label { font-size: 0.9rem; color: var(--wings-text-muted, #555); }
 .count-input input { width: 80px; padding: 2px 4px; }`
 
 type CountInput struct{}

@@ -8,7 +8,7 @@ header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #ccc;
+  border-bottom: 1px solid var(--wings-border, #ccc);
   padding-bottom: 12px;
   margin-bottom: 16px;
 }
@@ -17,7 +17,7 @@ header h1 {
   font-size: 1.4rem;
 }
 main details {
-  border: 1px solid #ddd;
+  border: 1px solid var(--wings-border, #ddd);
   border-radius: 6px;
   margin-bottom: 8px;
   padding: 0 12px;

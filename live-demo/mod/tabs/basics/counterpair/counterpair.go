@@ -13,7 +13,7 @@ import (
 var htmlContent string
 
 const cssContent = `.counter-pair p { margin: 4px 0; }
-.counter-pair strong { color: #0a5; font-variant-numeric: tabular-nums; }`
+.counter-pair strong { color: var(--wings-primary, #0a5); font-variant-numeric: tabular-nums; }`
 
 type CounterPair struct{}
 

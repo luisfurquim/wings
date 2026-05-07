@@ -12,7 +12,7 @@ import (
 var htmlContent string
 
 const cssContent = `.flex-tab .controls { display: flex; gap: 18px; flex-wrap: wrap; margin: 8px 0 12px; }
-.flex-tab .result { background: #f7f7f7; padding: 10px 14px; border-radius: 4px; font-size: 1rem; }`
+.flex-tab .result { background: var(--wings-surface, #f7f7f7); padding: 10px 14px; border-radius: 4px; font-size: 1rem; }`
 
 type FlexTab struct{}
 

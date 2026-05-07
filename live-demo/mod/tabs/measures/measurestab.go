@@ -12,7 +12,7 @@ import (
 var htmlContent string
 
 const cssContent = `.measures-tab section { margin: 12px 0; }
-.measures-tab h3 { margin: 0 0 6px; font-size: 1rem; color: #333; }`
+.measures-tab h3 { margin: 0 0 6px; font-size: 1rem; color: var(--wings-text, #333); }`
 
 type MeasuresTab struct{}
 

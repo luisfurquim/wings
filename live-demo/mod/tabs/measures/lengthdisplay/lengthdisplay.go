@@ -14,8 +14,8 @@ var htmlContent string
 
 const cssContent = `.length-display table { border-collapse: collapse; margin: 4px 0; }
 .length-display td { padding: 2px 12px 2px 0; }
-.length-display td:first-child { color: #666; font-size: 0.9em; font-family: monospace; min-width: 180px; }
-.length-display strong { color: #036; font-variant-numeric: tabular-nums; }`
+.length-display td:first-child { color: var(--wings-text-light, #666); font-size: 0.9em; font-family: monospace; min-width: 180px; }
+.length-display strong { color: var(--wings-primary, #036); font-variant-numeric: tabular-nums; }`
 
 type LengthDisplay struct{}
 

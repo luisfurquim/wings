@@ -13,7 +13,7 @@ import (
 var htmlContent string
 
 const cssContent = `.currency-display p { margin: 4px 0; }
-.currency-display strong { color: #063; font-variant-numeric: tabular-nums; }`
+.currency-display strong { color: var(--wings-primary, #063); font-variant-numeric: tabular-nums; }`
 
 type CurrencyDisplay struct{}
 

@@ -14,8 +14,8 @@ var htmlContent string
 
 const cssContent = `.speed-display table { border-collapse: collapse; margin: 4px 0; }
 .speed-display td { padding: 2px 12px 2px 0; }
-.speed-display td:first-child { color: #666; font-size: 0.9em; font-family: monospace; min-width: 180px; }
-.speed-display strong { color: #036; font-variant-numeric: tabular-nums; }`
+.speed-display td:first-child { color: var(--wings-text-light, #666); font-size: 0.9em; font-family: monospace; min-width: 180px; }
+.speed-display strong { color: var(--wings-primary, #036); font-variant-numeric: tabular-nums; }`
 
 type SpeedDisplay struct{}
 

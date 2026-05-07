@@ -14,7 +14,7 @@ import (
 var htmlContent string
 
 const cssContent = `.item-list form { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
-.item-list label { font-size: 0.9rem; color: #555; }
+.item-list label { font-size: 0.9rem; color: var(--wings-text-muted, #555); }
 .item-list input { flex: 1; padding: 4px; }
 .item-list button { padding: 4px 12px; cursor: pointer; }
 .item-list ul { margin: 0; padding-left: 20px; }`
