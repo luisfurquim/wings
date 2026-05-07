@@ -350,7 +350,7 @@ func (cb *cbCtx) selectItem(m map[string]any) {
 		label, _ := m["label"].(string)
 		cb.obj.This.Set("input_val", label)
 		cb.hideDrop()
-		cb.applyFilter(label)
+		cb.applyFilter("")
 		cb.obj.Trigger("change", cb.obj.This.Get("selected_items"))
 		return
 	}
@@ -395,7 +395,11 @@ func (cb *cbCtx) removeItem(si int) {
 // user can type to replace it without manually clearing first.
 func (cb *cbCtx) onFocus(_ js.Value, _ []js.Value) any {
 	cb.loadOptions()
-	cb.applyFilter(cb.inputVal())
+	if cb.isSingle() {
+		cb.applyFilter("")
+	} else {
+		cb.applyFilter(cb.inputVal())
+	}
 	cb.showDrop()
 	if cb.isSingle() && cb.inp.Get("value").String() != "" {
 		cb.inp.Call("select")

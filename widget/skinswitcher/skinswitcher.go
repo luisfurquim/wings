@@ -25,13 +25,12 @@ package skinswitcher
 
 import (
 	_ "embed"
+	"encoding/json"
 	"sort"
 	"strings"
-	"syscall/js"
 
 	"github.com/luisfurquim/goose"
 	"github.com/luisfurquim/wprana"
-	"github.com/luisfurquim/wprana/dom"
 )
 
 const elementTag = "skin-switcher"
@@ -105,37 +104,47 @@ func (s *SkinSwitcher) ReplaceCSS(key, content string) {
 }
 
 func (s *SkinSwitcher) InitData() map[string]any {
-	return map[string]any{}
+	return map[string]any{
+		"skin_options": "[]",
+		"active_skin":  "",
+	}
 }
 
 func (s *SkinSwitcher) Render(obj *wprana.PranaObj) {
 	s.obj = obj
 
-	sels := dom.Query(obj.Dom, "#ssw-sel")
-	if len(sels) == 0 {
-		return
-	}
-	sel := sels[0]
-
 	names := wprana.ListSkins()
 	sort.Strings(names)
-	doc := js.Global().Get("document")
-	for _, name := range names {
-		opt := doc.Call("createElement", "option")
-		opt.Set("value", name)
-		opt.Set("textContent", name)
-		sel.Call("appendChild", opt)
+
+	opts := make([]map[string]string, len(names))
+	for i, name := range names {
+		opts[i] = map[string]string{"label": name, "value": name}
 	}
+	optsJSON, _ := json.Marshal(opts)
+	obj.This.Set("skin_options", string(optsJSON))
 
 	if active := wprana.ActiveSkin(); active != "" {
-		sel.Set("value", active)
+		obj.This.Set("active_skin", active)
 	}
 
-	dom.AddEvent(sel, "change", func(_ js.Value, _ []js.Value) any {
-		next := sel.Get("value").String()
+	obj.This.M["on_change"] = wprana.TriggerHandler(func(args ...any) {
+		if len(args) == 0 {
+			return
+		}
+		selected, ok := args[0].([]any)
+		if !ok || len(selected) == 0 {
+			return
+		}
+		m, ok := selected[0].(map[string]any)
+		if !ok {
+			return
+		}
+		next, ok := m["value"].(string)
+		if !ok {
+			return
+		}
 		if !wprana.ApplySkin(next) {
 			G.Logf(1, "skin-switcher: ApplySkin(%q) failed\n", next)
 		}
-		return nil
-	}, false, false)
+	})
 }
