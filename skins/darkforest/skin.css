@@ -1,0 +1,70 @@
+:root {
+  /* Base — floresta profunda */
+  --wings-bg:                 #121a14;   /* verde quase preto */
+  --wings-surface:            #1b241d;   /* verde escuro suave */
+  --wings-text:               #f2efe8;   /* off-white quente */
+  --wings-text-muted:         #ccc7bf;   /* intermediário */
+  --wings-text-light:         #a8a29e;   /* bege acinzentado */
+
+  /* Primary — dourado outonal (luz da cena) */
+  --wings-primary:            #c89a34;
+  --wings-border:             #2c3a2f;
+  --wings-border-focus:       #eab308;
+
+  --wings-btn-bg:             #1b241d;
+  --wings-btn-hover-bg:       #243126;
+  --wings-btn-hover-color:    #ffffff;
+  --wings-btn-hover-shadow:   0 2px 8px rgba(200, 154, 52, 0.25);
+
+  --wings-secondary:          #eab308;  /* golden yellow — warm attention on dark forest */
+  --wings-quiet:              #2c3a2f;  /* same as border — dark muted green */
+  --wings-primary-pale:       #2c2310;  /* dark warm tint of golden primary */
+  --wings-gradient:           linear-gradient(135deg, #c89a34, #7a5208);
+  --wings-gradient-color:     #1b1305;  /* very dark — readable on golden */
+  --wings-gradient-shadow:    0 2px 8px rgba(200, 154, 52, 0.35);
+
+  /* Dialog */
+  --wings-dialog-bg:                  #1b241d;
+  --wings-dialog-shadow:              0 12px 40px rgba(0, 0, 0, 0.7);
+  --wings-dialog-border-radius:       10px;
+  --wings-dialog-padding:             24px;
+  --wings-dialog-overlay-bg:          rgba(5, 10, 5, 0.75);
+
+  --wings-dialog-button-bg:           #243126;
+  --wings-dialog-button-hover-bg:     #2f3f30;
+  --wings-dialog-button-active-bg:    #162019;
+  --wings-dialog-button-border:       1px solid #2c3a2f;
+  --wings-dialog-button-border-hover: 1px solid #c89a34;
+
+  --wings-dialog-primary-bg:          #c89a34;
+  --wings-dialog-primary-color:       #1b1305;
+  --wings-dialog-primary-hover-bg:    #eab308;
+
+  /* Combobox */
+  --wings-combobox-tag-bg:            #2a2f22;   /* oliva escuro */
+  --wings-combobox-tag-color:         #eab308;
+  --wings-combobox-tag-border:        #3a3f2a;
+
+  --wings-combobox-rm-color:          #c89a34;
+  --wings-combobox-rm-hover-bg:       #3f2a1a;   /* terracota escuro */
+  --wings-combobox-rm-hover-color:    #f87171;
+
+  --wings-combobox-input-border:      #2c3a2f;
+  --wings-combobox-input-focus-border:#c89a34;
+  --wings-combobox-input-focus-shadow:rgba(200, 154, 52, 0.25);
+
+  --wings-combobox-input-bg:          #121a14;
+
+  --wings-combobox-drop-bg:           #1b241d;
+  --wings-combobox-drop-border:       #2c3a2f;
+  --wings-combobox-drop-shadow:       0 12px 40px rgba(0, 0, 0, 0.6);
+
+  --wings-combobox-scroll-thumb:      #3a3f2a;
+
+  --wings-combobox-opt-color:         #f2efe8;
+  --wings-combobox-opt-hover-bg:      #243126;
+  --wings-combobox-opt-hover-color:   #facc15;
+  --wings-combobox-opt-active-bg:     #3f2a1a;
+
+  --wings-combobox-empty-color:       #78716c;
+}

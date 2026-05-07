@@ -39,7 +39,8 @@ button affordances. Every skin SHOULD define all of them.
 | `--wings-bg`                   | Page background (the outermost surface)          |
 | `--wings-surface`              | Elevated surface above the page bg (panels, cards, dialogs) |
 | `--wings-text`                 | Primary foreground text colour                   |
-| `--wings-text-light`           | Secondary/dimmed text (helper labels, captions)  |
+| `--wings-text-muted`           | Intermediate dimmed text (less emphasis than primary, more than light) |
+| `--wings-text-light`           | Secondary/very dimmed text (helper labels, captions) |
 | `--wings-primary`              | Brand accent — links, focused input text, etc.   |
 | `--wings-border`               | Default 1px border colour for inputs/cards       |
 | `--wings-border-focus`         | Border colour when an input is focused           |
@@ -47,6 +48,12 @@ button affordances. Every skin SHOULD define all of them.
 | `--wings-btn-hover-bg`         | Neutral button background on hover               |
 | `--wings-btn-hover-color`      | Neutral button text colour on hover              |
 | `--wings-btn-hover-shadow`     | Box-shadow applied to neutral buttons on hover   |
+| `--wings-secondary`            | Secondary accent — draws attention, complements primary (e.g. status indicators, unrevised items) |
+| `--wings-quiet`                | Quiet counterpart to secondary — settled, no action needed (e.g. resolved/done indicators) |
+| `--wings-primary-pale`         | Very pale/dark tint of the primary colour (for tinted backgrounds, panel accents) |
+| `--wings-gradient`             | Optional accent gradient string (e.g. `linear-gradient(...)`) for branded buttons/tabs |
+| `--wings-gradient-color`       | Text colour to use on `--wings-gradient` backgrounds |
+| `--wings-gradient-shadow`      | Glow / drop-shadow for elements using `--wings-gradient` |
 
 ## Widget-namespaced tokens
 
@@ -107,16 +114,13 @@ necessary it will register `--wings-navbar-*`.
 
 - API: `wprana.RegisterSkin(name, css)` and `wprana.ApplySkin(name)` are
   in place (see `skin.go`).
-- Skins shipped:
-  - **`light`** (`./skins/light/`) — baseline extracted from the current
-    `dialog`/`navbar`/`combobox` defaults.
-  - **`dark`** (`./skins/dark/`) — dark surface palette with the same
-    accent hues (blue primary, violet combobox) shifted for legibility
-    on dark backgrounds.
+- Skins shipped: `light`, `dark`, `darkblueberry`, `darkforest`,
+  `lightblueberry`, `mushroom`, `vividforest`.
+  All define the full core token set including `--wings-secondary`,
+  `--wings-quiet`, `--wings-primary-pale`, and `--wings-gradient*`.
 
   Activate with `_ "github.com/luisfurquim/wprana/skins/<name>"` plus
-  `wprana.ApplySkin("<name>")` before `wprana.Main()`. Both `live-demo`
-  and `helpers/wlate` register both skins and apply `light` by default.
+  `wprana.ApplySkin("<name>")` before `wprana.Main()`.
 - Widget migration:
   - **`w-dialog`** ✅ migrated: `design.css` references
     `var(--wings-dialog-*, fallback)`; `vars.css` is empty.

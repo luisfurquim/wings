@@ -3,6 +3,7 @@
   --wings-bg:                 #1a1a1a;
   --wings-surface:            #2a2a2a;
   --wings-text:               #e6e6e6;
+  --wings-text-muted:         #b3b3b3;
   --wings-text-light:         #999999;
   --wings-primary:            #4d9eff;
   --wings-border:             #404040;
@@ -11,6 +12,13 @@
   --wings-btn-hover-bg:       #3a3a3a;
   --wings-btn-hover-color:    #ffffff;
   --wings-btn-hover-shadow:   0 2px 4px rgba(0, 0, 0, 0.40);
+
+  --wings-secondary:          #94d3c1;  /* mint teal — attention accent on dark surface */
+  --wings-quiet:              #404040;  /* dark neutral, same as border */
+  --wings-primary-pale:       #1a3057;  /* dark blue tint of primary */
+  --wings-gradient:           linear-gradient(135deg, #00dcff, #087a8c);
+  --wings-gradient-color:     #171717;
+  --wings-gradient-shadow:    0 2px 8px rgba(0, 220, 255, 0.25);
 
   /* w-dialog tokens. */
   --wings-dialog-bg:                  #2a2a2a;

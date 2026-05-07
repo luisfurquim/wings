@@ -1,0 +1,63 @@
+:root {
+  /* --- Tema Floresta Ensolarada --- */
+  /* Inspirado na paleta de cores de image_9fc39b.jpg */
+
+  /* Core tokens */
+  --wings-bg:                 #f0f9eb; /* Fundo: verde menta claríssimo, quase branco */
+  --wings-surface:            #ffffff; /* Superfícies: branco puro para clareza */
+  --wings-text:               #064e3b; /* Texto: verde esmeralda muito escuro (sombras das folhas) */
+  --wings-text-muted:         #2a6524; /* Texto intermediário: verde médio */
+  --wings-text-light:         #4d7c0f; /* Texto secundário: verde oliva/folha */
+  --wings-primary:            #84cc16; /* Cor primária: verde lima vibrante (folhas iluminadas) */
+  --wings-border:             #d1d5db; /* Borda: cinza neutro claro */
+  --wings-border-focus:       #bef264; /* Foco: verde limão claro */
+  --wings-btn-bg:             #ffffff;
+  --wings-btn-hover-bg:       #f7fee7;
+  --wings-btn-hover-color:    #166534;
+  --wings-btn-hover-shadow:   0 2px 4px rgba(22, 101, 52, 0.1);
+
+  --wings-secondary:          #4d7c0f;  /* dark olive — earthy attention on bright green */
+  --wings-quiet:              #d1d5db;  /* neutral gray — settled, no action needed */
+  --wings-primary-pale:       #f7fee7;  /* pale lime tint */
+  --wings-gradient:           linear-gradient(135deg, #84cc16, #4d7c0f);
+  --wings-gradient-color:     #ffffff;
+  --wings-gradient-shadow:    0 2px 8px rgba(77, 124, 15, 0.30);
+
+  /* w-dialog tokens */
+  --wings-dialog-bg:                  #ffffff;
+  --wings-dialog-shadow:               0 8px 32px rgba(6, 78, 59, 0.15);
+  --wings-dialog-border-radius:        10px;
+  --wings-dialog-padding:              24px;
+  --wings-dialog-overlay-bg:          rgba(6, 78, 59, 0.3); /* Overlay: verde escuro translúcido */
+  --wings-dialog-button-bg:           #ffffff;
+  --wings-dialog-button-hover-bg:      #ecfccb;
+  --wings-dialog-button-active-bg:     #d9f99d;
+  --wings-dialog-button-border:        1px solid #d1d5db;
+  --wings-dialog-button-border-hover: 1px solid #84cc16;
+  --wings-dialog-button-padding:       8px 16px;
+  --wings-dialog-button-gap:           8px;
+  --wings-dialog-primary-bg:          #84cc16; /* Botão principal: Verde lima */
+  --wings-dialog-primary-color:       #ffffff;
+  --wings-dialog-primary-hover-bg:    #65a30d;
+
+  /* w-combobox tokens */
+  --wings-combobox-tag-bg:            #fef9c3; /* Tag: Amarelo solar pálido (reflexo do sol) */
+  --wings-combobox-tag-color:          #713f12; /* Texto da tag: Castanho (tronco da árvore) */
+  --wings-combobox-tag-border:         #fde047; /* Borda da tag: Amarelo sol */
+  --wings-combobox-rm-color:          #a16207; /* Botão remover: Castanho dourado */
+  --wings-combobox-rm-hover-bg:       #fef08a;
+  --wings-combobox-rm-hover-color:    #451a03;
+  --wings-combobox-input-border:      #d1d5db;
+  --wings-combobox-input-focus-border:#84cc16;
+  --wings-combobox-input-focus-shadow:rgba(132, 204, 22, 0.2);
+  --wings-combobox-input-bg:          #ffffff;
+  --wings-combobox-drop-bg:           #ffffff;
+  --wings-combobox-drop-border:       #d1d5db;
+  --wings-combobox-drop-shadow:       0 4px 12px rgba(0, 0, 0, 0.08);
+  --wings-combobox-scroll-thumb:      #a3e635;
+  --wings-combobox-opt-color:         #064e3b;
+  --wings-combobox-opt-hover-bg:      #f7fee7;
+  --wings-combobox-opt-hover-color:    #166534;
+  --wings-combobox-opt-active-bg:     #ecfccb;
+  --wings-combobox-empty-color:       #9ca3af;
+}
