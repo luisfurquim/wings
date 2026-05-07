@@ -3,10 +3,14 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
+
+	"github.com/luisfurquim/goose"
 )
+
+// G is this binary's goose alert.
+var G goose.Alert = goose.Alert(2)
 
 func main() {
 	fs := http.FileServer(http.Dir("docs"))
@@ -16,6 +20,6 @@ func main() {
 		}
 		fs.ServeHTTP(w, r)
 	})
-	fmt.Println("Listening on http://localhost:8080")
+	G.Logf(2, "Listening on http://localhost:8080")
 	http.ListenAndServe(":8080", nil)
 }

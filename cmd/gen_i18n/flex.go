@@ -99,7 +99,7 @@ func rewriteFlexBlocks(text string, recordOccurrence func(idx int32)) (string, b
 			toksCopy := append([]expr.RefNode(nil), toks...)
 			fb, err := expr.ParseFlexBlock(&toksCopy)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "warn: flex block parse error in %q: %v (left as-is)\n", inner, err)
+				G.Logf(2, "warn: flex block parse error in %q: %v (left as-is)", inner, err)
 				b.WriteString(text[i : j+2])
 				i = j + 2
 				continue
@@ -431,8 +431,7 @@ func lintFlexBlocks(langs map[string]bool, defLang string) {
 		if loc == "" {
 			loc = "<unknown>"
 		}
-		fmt.Fprintf(os.Stderr,
-			"lint: flex block #%d %q at %s has no @var; target locales %v need gender — consider adding @<var> to the template\n",
+		G.Logf(2, "lint: flex block #%d %q at %s has no @var; target locales %v need gender — consider adding @<var> to the template",
 			i, flexLabel(fb), loc, gendered)
 	}
 }
@@ -522,9 +521,9 @@ func buildFlexEntriesForLang(i18nDir, lang string) ([]wi18n.FlexEntry, error) {
 		dictPath := filepath.Join(dictDir, lang+".db")
 		d, err := loadDict(dictPath)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "warn: failed to load %s: %v (auto-flex skipped for %s)\n", dictPath, err, lang)
+			G.Logf(2, "warn: failed to load %s: %v (auto-flex skipped for %s)", dictPath, err, lang)
 		} else if d == nil {
-			fmt.Fprintf(os.Stderr, "warn: no dict at %s (auto-flex skipped for %s)\n", dictPath, lang)
+			G.Logf(2, "warn: no dict at %s (auto-flex skipped for %s)", dictPath, lang)
 		} else {
 			dict = d
 		}
@@ -552,8 +551,7 @@ func buildFlexEntriesForLang(i18nDir, lang string) ([]wi18n.FlexEntry, error) {
 		if dict != nil {
 			filledSrcs, err := autoFillCells(dict, fb, cells, lang)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "error: %v\n  in flex block: %s\n  source: %s\n", err, label, firstFlexContext(int32(i)))
-				os.Exit(1)
+				G.Fatalf(1, "error: %v\n  in flex block: %s\n  source: %s", err, label, firstFlexContext(int32(i)))
 			}
 			for k, v := range filledSrcs {
 				sources[k] = v

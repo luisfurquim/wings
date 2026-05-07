@@ -1,20 +1,31 @@
 package wi18n
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/luisfurquim/goose"
+)
 
 type wpranaMeasureEntry struct {
 	Defaults map[string]string `json:"defaults"`
 }
 
 type wpranaCfgJSON struct {
-	Measures map[string]wpranaMeasureEntry `json:"measures"`
+	Measures   map[string]wpranaMeasureEntry `json:"measures"`
+	DebugLevel int                           `json:"debugLevel"`
+	TraceOn    bool                          `json:"traceOn"`
 }
 
-var measureDefaults map[string]map[string]string
+var (
+	measureDefaults map[string]map[string]string
+	debugLevel      int
+	traceEnabled    bool
+)
 
-// SetConfig parses a wprana.json configuration file and applies the measure
-// unit overrides. Safe to call multiple times; each call replaces the
-// previous configuration.
+// SetConfig parses a wprana.json configuration file and applies the
+// project-wide settings: measure unit overrides, goose debug level, and
+// optional goose stack tracing. Safe to call multiple times; each call
+// replaces the previous configuration.
 //
 // Typical usage with go:embed:
 //
@@ -22,6 +33,9 @@ var measureDefaults map[string]map[string]string
 //	var wpranaCfg []byte
 //
 //	func init() { wi18n.SetConfig(wpranaCfg) }
+//
+// To propagate the debug level to a package-local goose.Alert, call
+// ConfigureGoose(&pkg.G) after SetConfig.
 func SetConfig(data []byte) error {
 	var cfg wpranaCfgJSON
 	if err := json.Unmarshal(data, &cfg); err != nil {
@@ -32,6 +46,11 @@ func SetConfig(data []byte) error {
 		md[qty] = entry.Defaults
 	}
 	measureDefaults = md
+	debugLevel = cfg.DebugLevel
+	traceEnabled = cfg.TraceOn
+	if cfg.TraceOn {
+		goose.TraceOn()
+	}
 	return nil
 }
 
@@ -49,4 +68,19 @@ func MeasureDefault(quantity, locale string) (unit string, ok bool) {
 	}
 	u, ok := d[locale]
 	return u, ok
+}
+
+// DebugLevel returns the goose debug level loaded from wprana.json.
+// Zero until SetConfig has been called with a non-zero "debugLevel" key.
+func DebugLevel() int { return debugLevel }
+
+// TraceEnabled reports whether the wprana.json "traceOn" key was true.
+// SetConfig already calls goose.TraceOn() in that case; this getter is
+// for diagnostic display only.
+func TraceEnabled() bool { return traceEnabled }
+
+// ConfigureGoose applies the debug level loaded by SetConfig to g. Call
+// this after SetConfig from any package that holds its own goose.Alert.
+func ConfigureGoose(g *goose.Alert) {
+	g.Set(debugLevel)
 }

@@ -19,7 +19,13 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/luisfurquim/goose"
+	"github.com/luisfurquim/wprana/wi18n"
 )
+
+// G is this binary's goose alert. wprana.json may set the level via SetConfig.
+var G goose.Alert = goose.Alert(2)
 
 type serverConfig struct {
 	cert         string
@@ -425,15 +431,13 @@ const llmAvatarSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20
 func main() {
 	exe, err := os.Executable()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "cannot determine executable path:", err)
-		os.Exit(1)
+		G.Fatalf(1, "cannot determine executable path: %v", err)
 	}
 	exeDir := filepath.Dir(exe)
 
 	cfg, err := loadConfig(filepath.Join(exeDir, "server.conf"))
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "server.conf error:", err)
-		os.Exit(1)
+		G.Fatalf(1, "server.conf error: %v", err)
 	}
 	if cfg == nil {
 		cfg = &serverConfig{}
@@ -445,6 +449,14 @@ func main() {
 	}
 	if cfg.root != "" {
 		projectRoot = cfg.root
+	}
+
+	// Apply project-wide debug settings from wprana.json (if present).
+	if data, err := os.ReadFile(filepath.Join(projectRoot, "wprana.json")); err == nil {
+		if err := wi18n.SetConfig(data); err != nil {
+			G.Logf(1, "wprana.json: %v", err)
+		}
+		wi18n.ConfigureGoose(&G)
 	}
 
 	listenAddr := ":8080"
@@ -465,7 +477,7 @@ func main() {
 	if cfg.hasAuth {
 		am, err = newAuthManager(cfg.oauth2)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "OAuth2 init:", err)
+			G.Logf(1, "OAuth2 init: %v", err)
 			os.Exit(1)
 		}
 		mux.HandleFunc("/oauth2/callback", am.handleCallback)
@@ -491,13 +503,22 @@ func main() {
 				return
 			}
 			target := filepath.Join(projectRoot, clean)
+			abs, _ := filepath.Abs(target)
 			if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 			if err := os.WriteFile(target, body, 0644); err != nil {
+				G.Logf(1, "save: WriteFile %s failed: %v", abs, err)
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
+			}
+			st, statErr := os.Stat(target)
+			if statErr != nil {
+				G.Logf(1, "save: stat after write %s: %v", abs, statErr)
+			} else {
+				G.Logf(2, "save: wrote %s (%d bytes; mtime=%s; on-disk size=%d)",
+					abs, len(body), st.ModTime().Format(time.RFC3339Nano), st.Size())
 			}
 			w.WriteHeader(http.StatusOK)
 			fmt.Fprintf(w, "saved %s (%d bytes)\n", clean, len(body))
@@ -529,6 +550,14 @@ func main() {
 
 		if strings.HasPrefix(r.URL.Path, "/i18n/") {
 			target := filepath.Join(projectRoot, r.URL.Path)
+			abs, _ := filepath.Abs(target)
+			if st, err := os.Stat(target); err == nil {
+				G.Logf(3, "serve i18n: %s -> %s (size=%d, mtime=%s)",
+					r.URL.Path, abs, st.Size(), st.ModTime().Format(time.RFC3339Nano))
+			} else {
+				G.Logf(2, "serve i18n: %s -> %s (stat error: %v)", r.URL.Path, abs, err)
+			}
+			w.Header().Set("Cache-Control", "no-store")
 			http.ServeFile(w, r, target)
 			return
 		}
@@ -552,8 +581,7 @@ func main() {
 
 	ln, err := net.Listen("tcp", listenAddr)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "listen error:", err)
-		os.Exit(1)
+		G.Fatalf(1, "listen error: %v", err)
 	}
 	defer ln.Close()
 
@@ -561,19 +589,18 @@ func main() {
 	if cfg.cert != "" {
 		cert, err := loadTLSCert(exeDir, cfg.cert)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "TLS cert error:", err)
-			os.Exit(1)
+			G.Fatalf(1, "TLS cert error: %v", err)
 		}
 		ln = tls.NewListener(ln, &tls.Config{Certificates: []tls.Certificate{cert}})
 		scheme = "https"
 	}
 
-	fmt.Printf("wlate server listening on %s://%s\n", scheme, ln.Addr())
-	fmt.Printf("Project root: %s\n", projectRoot)
+	G.Logf(2, "wlate server listening on %s://%s", scheme, ln.Addr())
+	G.Logf(2, "Project root: %s", projectRoot)
 	if am != nil {
-		fmt.Printf("OAuth2 enabled (issuer=%s)\n", cfg.oauth2.issuer)
+		G.Logf(2, "OAuth2 enabled (issuer=%s)", cfg.oauth2.issuer)
 		if cfg.oauth2.allowedFile != "" {
-			fmt.Printf("Allowed emails from: %s\n", cfg.oauth2.allowedFile)
+			G.Logf(2, "Allowed emails from: %s", cfg.oauth2.allowedFile)
 		}
 	}
 
@@ -583,7 +610,7 @@ func main() {
 		BaseContext:       func(net.Listener) context.Context { return context.Background() },
 	}
 	if err := srv.Serve(ln); err != nil && err != http.ErrServerClosed {
-		fmt.Fprintln(os.Stderr, "serve error:", err)
+		G.Logf(1, "serve error: %v", err)
 		os.Exit(1)
 	}
 }

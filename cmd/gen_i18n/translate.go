@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
 	"strconv"
 	"time"
 
@@ -55,9 +54,9 @@ func initTranslator(rootDir string) error {
 		}
 		autoTranslator = translator.NewLibreTranslate(tc.URL, tc.Key, timeout)
 	case "":
-		fmt.Fprintln(os.Stderr, "warn: -auto-translate set but translator.backend not configured in gen_i18n.json; -auto-translate has no effect")
+		G.Logf(2, "warn: -auto-translate set but translator.backend not configured in gen_i18n.json; -auto-translate has no effect")
 	default:
-		fmt.Fprintf(os.Stderr, "warn: unknown translator.backend %q in gen_i18n.json; -auto-translate has no effect\n", tc.Backend)
+		G.Logf(2, "warn: unknown translator.backend %q in gen_i18n.json; -auto-translate has no effect", tc.Backend)
 	}
 	if autoTranslator != nil {
 		trBatchSize = tc.BatchSize
@@ -100,7 +99,7 @@ func applyTextTranslations(entries []wi18n.Entry, defEntries []wi18n.Entry, defL
 	for _, b := range translator.Batch(batch, trBatchSize, trBatchChars) {
 		resp, err := autoTranslator.Translate(ctx, defLang, lang, b)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "warn: translator error (%s→%s): %v\n", defLang, lang, err)
+			G.Logf(2, "warn: translator error (%s→%s): %v", defLang, lang, err)
 			return
 		}
 		for _, e := range resp.Entries {
@@ -114,7 +113,7 @@ func applyTextTranslations(entries []wi18n.Entry, defEntries []wi18n.Entry, defL
 			}
 		}
 		for key, reason := range resp.Failed {
-			fmt.Fprintf(os.Stderr, "warn: translator skip (%s→%s) %s: %s\n", defLang, lang, key, reason)
+			G.Logf(2, "warn: translator skip (%s→%s) %s: %s", defLang, lang, key, reason)
 		}
 	}
 }
@@ -160,7 +159,7 @@ func applyFlexTranslations(out []wi18n.FlexEntry, defOut []wi18n.FlexEntry, defL
 	for _, b := range translator.Batch(batch, trBatchSize, trBatchChars) {
 		resp, err := autoTranslator.Translate(ctx, defLang, lang, b)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "warn: translator error (%s→%s) flex: %v\n", defLang, lang, err)
+			G.Logf(2, "warn: translator error (%s→%s) flex: %v", defLang, lang, err)
 			return
 		}
 		for _, e := range resp.Entries {
@@ -179,7 +178,7 @@ func applyFlexTranslations(out []wi18n.FlexEntry, defOut []wi18n.FlexEntry, defL
 			}
 		}
 		for key, reason := range resp.Failed {
-			fmt.Fprintf(os.Stderr, "warn: translator skip (%s→%s) flex %s: %s\n", defLang, lang, key, reason)
+			G.Logf(2, "warn: translator skip (%s→%s) flex %s: %s", defLang, lang, key, reason)
 		}
 	}
 }

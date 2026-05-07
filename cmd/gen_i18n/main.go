@@ -20,8 +20,13 @@ import (
 	"golang.org/x/net/html"
 	"golang.org/x/text/language"
 
+	"github.com/luisfurquim/goose"
 	"github.com/luisfurquim/wprana/wi18n"
 )
+
+// G is this binary's goose alert. Default 2 keeps info-level output visible;
+// project's wprana.json may raise it via wi18n.SetConfig + ConfigureGoose.
+var G goose.Alert = goose.Alert(2)
 
 // Node is a trie node for octal-keyed strings.
 // Next contains indices into the arena slice (0 = no child).
@@ -83,42 +88,48 @@ func main() {
 		pubFile := dir + "/" + defaultPubFile
 		pass := *signKeyPassFlag
 		if pass == "" {
-			fmt.Fprintln(os.Stderr, "error: -genkey requires -sign-key-password")
-			os.Exit(1)
+			G.Fatalf(1, "error: -genkey requires -sign-key-password")
 		}
 		if err := GenerateSigningKey(keyFile, pubFile, pass); err != nil {
-			fmt.Fprintf(os.Stderr, "error generating keypair: %v\n", err)
-			os.Exit(1)
+			G.Fatalf(1, "error generating keypair: %v", err)
 		}
-		fmt.Printf("keypair written:\n  private: %s\n  public:  %s\n", keyFile, pubFile)
-		fmt.Println("Embed the public key in your WASM app:")
-		fmt.Printf("  //go:embed %s\n  var catalogPubKeyPEM []byte\n", pubFile)
-		fmt.Println("  // in main(): wi18n.SetCatalogPublicKey(catalogPubKeyPEM)")
+		G.Logf(2, "keypair written:")
+		G.Logf(2, "  private: %s", keyFile)
+		G.Logf(2, "  public:  %s", pubFile)
+		G.Logf(2, "Embed the public key in your WASM app:")
+		G.Logf(2, "  //go:embed %s", pubFile)
+		G.Logf(2, "  var catalogPubKeyPEM []byte")
+		G.Logf(2, "  // in main(): wi18n.SetCatalogPublicKey(catalogPubKeyPEM)")
 		os.Exit(0)
 	}
 
 	if *pathFlag == "" {
-		fmt.Fprintln(os.Stderr, "usage: gen_i18n --path <directory> [-deflang <lang>] [-attrs <list>] [-add-attrs <list>] [-no-attrs <list>] [-auto-flex [-dict-dir <dir>]] [-auto-translate] [-sign-key <file> -sign-key-password <pass>]")
-		fmt.Fprintln(os.Stderr, "       gen_i18n -genkey [-genkey-dir <dir>] -sign-key-password <pass>")
-		os.Exit(1)
+		G.Logf(1, "usage: gen_i18n --path <directory> [-deflang <lang>] [-attrs <list>] [-add-attrs <list>] [-no-attrs <list>] [-auto-flex [-dict-dir <dir>]] [-auto-translate] [-sign-key <file> -sign-key-password <pass>]")
+		G.Fatalf(1, "       gen_i18n -genkey [-genkey-dir <dir>] -sign-key-password <pass>")
 	}
 
 	// ── Load signing key if requested ─────────────────────────────────────────
 	var signingKey ed25519.PrivateKey
 	if *signKeyFlag != "" {
 		if *signKeyPassFlag == "" {
-			fmt.Fprintln(os.Stderr, "error: -sign-key requires -sign-key-password")
-			os.Exit(1)
+			G.Fatalf(1, "error: -sign-key requires -sign-key-password")
 		}
 		var err error
 		signingKey, err = LoadSigningKey(*signKeyFlag, *signKeyPassFlag)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error loading signing key: %v\n", err)
-			os.Exit(1)
+			G.Fatalf(1, "error loading signing key: %v", err)
 		}
 	}
 
 	rootDir := *pathFlag
+
+	// Apply project-wide debug settings from wprana.json (if present).
+	if data, err := os.ReadFile(filepath.Join(rootDir, "wprana.json")); err == nil {
+		if err := wi18n.SetConfig(data); err != nil {
+			G.Logf(1, "wprana.json: %v", err)
+		}
+		wi18n.ConfigureGoose(&G)
+	}
 	defLang := validateLangTag(*deflangFlag)
 	attrSet := buildAttrSet(*attrsFlag, *addAttrsFlag, *noAttrsFlag)
 	autoFlex = *autoFlexFlag
@@ -129,8 +140,7 @@ func main() {
 	autoTranslate = *autoTranslateFlag
 	if autoTranslate {
 		if err := initTranslator(rootDir); err != nil {
-			fmt.Fprintf(os.Stderr, "error: %v\n", err)
-			os.Exit(1)
+			G.Fatalf(1, "error: %v", err)
 		}
 	}
 
@@ -140,8 +150,7 @@ func main() {
 	// Ensure the i18n output directory exists.
 	i18nDir := filepath.Join(rootDir, "i18n")
 	if err := os.MkdirAll(i18nDir, 0755); err != nil {
-		fmt.Fprintf(os.Stderr, "error creating i18n dir: %v\n", err)
-		os.Exit(1)
+		G.Fatalf(1, "error creating i18n dir: %v", err)
 	}
 
 	// Map hash → original text (used for collision detection during processing).
@@ -165,15 +174,13 @@ func main() {
 		return processHTMLFile(path, relPath, dbMap, attrSet)
 	})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error walking directory: %v\n", err)
-		os.Exit(1)
+		G.Fatalf(1, "error walking directory: %v", err)
 	}
 
 	// Opportunistically convert any legacy <lang>.csv files to <lang>.json so
 	// the remapping step below can treat them uniformly.
 	if err := migrateCSVToJSON(i18nDir); err != nil {
-		fmt.Fprintf(os.Stderr, "error migrating csv→json: %v\n", err)
-		os.Exit(1)
+		G.Fatalf(1, "error migrating csv→json: %v", err)
 	}
 
 	// Load old deflang to preserve Revised flags and to drive translation
@@ -181,8 +188,7 @@ func main() {
 	oldDefPath := filepath.Join(i18nDir, defLang+".json")
 	oldDef, err := loadJSON(oldDefPath)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error loading old deflang json: %v\n", err)
-		os.Exit(1)
+		G.Fatalf(1, "error loading old deflang json: %v", err)
 	}
 	oldSourceToIdx := map[string]int{}
 	for i, e := range oldDef {
@@ -202,12 +208,10 @@ func main() {
 		return txt[i]
 	})
 	if err := saveJSON(oldDefPath, defEntries); err != nil {
-		fmt.Fprintf(os.Stderr, "error saving deflang json: %v\n", err)
-		os.Exit(1)
+		G.Fatalf(1, "error saving deflang json: %v", err)
 	}
 	if err := maybeSignJSON(signingKey, oldDefPath); err != nil {
-		fmt.Fprintf(os.Stderr, "error signing deflang json: %v\n", err)
-		os.Exit(1)
+		G.Fatalf(1, "error signing deflang json: %v", err)
 	}
 
 	// Remap every other <lang>.json file (except the default) to the new
@@ -215,8 +219,7 @@ func main() {
 	// present in the catalog.
 	langFiles, err := filepath.Glob(filepath.Join(i18nDir, "*.json"))
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error listing languages: %v\n", err)
-		os.Exit(1)
+		G.Fatalf(1, "error listing languages: %v", err)
 	}
 	for _, langFile := range langFiles {
 		base := filepath.Base(langFile)
@@ -226,8 +229,7 @@ func main() {
 		}
 		oldLang, err := loadJSON(langFile)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error loading %s: %v\n", langFile, err)
-			os.Exit(1)
+			G.Fatalf(1, "error loading %s: %v", langFile, err)
 		}
 		langEntries := buildEntries(txt, func(i int) (content string, revised bool) {
 			oldIdx, ok := oldSourceToIdx[txt[i]]
@@ -238,33 +240,29 @@ func main() {
 		}, nil)
 		applyTextTranslations(langEntries, defEntries, defLang, lang)
 		if err := saveJSON(langFile, langEntries); err != nil {
-			fmt.Fprintf(os.Stderr, "error saving %s: %v\n", langFile, err)
-			os.Exit(1)
+			G.Fatalf(1, "error saving %s: %v", langFile, err)
 		}
 		if err := maybeSignJSON(signingKey, langFile); err != nil {
-			fmt.Fprintf(os.Stderr, "error signing %s: %v\n", langFile, err)
-			os.Exit(1)
+			G.Fatalf(1, "error signing %s: %v", langFile, err)
 		}
 	}
 
 	// Emit <lang>.inflections.json for every discovered language, including
 	// deflang. Translations are remapped across runs by canonical label.
 	if err := emitFlexCatalogs(i18nDir, defLang); err != nil {
-		fmt.Fprintf(os.Stderr, "error emitting flex catalogs: %v\n", err)
-		os.Exit(1)
+		G.Fatalf(1, "error emitting flex catalogs: %v", err)
 	}
 
 	// Save the current tree to i18n.db.
 	dbPath := filepath.Join(rootDir, "i18n.db")
 	if err := saveDB(dbPath, version); err != nil {
-		fmt.Fprintf(os.Stderr, "error saving db: %v\n", err)
-		os.Exit(1)
+		G.Fatalf(1, "error saving db: %v", err)
 	}
 
-	fmt.Printf("done: %d entries, version %d\n", len(dbMap), version)
-	fmt.Printf("Arena: %d nodes\n", len(arena))
-	fmt.Printf("Txt: %d entries\n", len(txt))
-	fmt.Printf("Flex: %d rules\n", len(flexBlocks))
+	G.Logf(2, "done: %d entries, version %d", len(dbMap), version)
+	G.Logf(2, "Arena: %d nodes", len(arena))
+	G.Logf(2, "Txt: %d entries", len(txt))
+	G.Logf(2, "Flex: %d rules", len(flexBlocks))
 }
 
 // maybeSignJSON signs jsonFile and writes jsonFile+".sig" if signingKey is set.

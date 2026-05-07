@@ -46,7 +46,12 @@ import (
 	"golang.org/x/text/encoding/unicode"
 	"golang.org/x/text/language"
 	"golang.org/x/text/transform"
+
+	"github.com/luisfurquim/goose"
 )
+
+// G is this binary's goose alert.
+var G goose.Alert = goose.Alert(2)
 
 // Dict is the top-level structure persisted to <lang>.db.
 //
@@ -263,7 +268,7 @@ func buildDict(inputPath, langCode, outDir string) error {
 		return fmt.Errorf("encode: %w", err)
 	}
 
-	fmt.Printf("done: %d kept, %d filtered, %d malformed; %d lemmas, %d form entries → %s\n",
+	G.Logf(2, "done: %d kept, %d filtered, %d malformed; %d lemmas, %d form entries → %s",
 		kept, skipped, bad, len(dict.Lemmas), len(dict.FormIndex), outPath)
 	return nil
 }
