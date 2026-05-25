@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: var(--wings-dialog-overlay-bg, rgba(0, 0, 0, 0.50));
+  background: var(--wings-box-overlay-bg, rgba(0, 0, 0, 0.50));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -12,12 +12,17 @@
 }
 
 .w-dialog {
-  background: var(--wings-dialog-bg, #ffffff);
-  border-radius: var(--wings-dialog-border-radius, 8px);
-  box-shadow: var(--wings-dialog-shadow, 0 4px 16px rgba(0, 0, 0, 0.20));
-  padding: var(--wings-dialog-padding, 24px);
+  background: var(--wings-surface, #ffffff);
+  border-radius: var(--wings-radius-lg, 8px);
+  box-shadow: var(--wings-shadow-md, 0 4px 16px rgba(0, 0, 0, 0.20));
+  padding: var(--wings-box-padding, 24px);
   max-width: 500px;
   min-width: 300px;
+  /* Atmosphere opt-in: when the `glass` skin is active, --wings-surface-blur
+     is non-zero and the dialog gets a backdrop-blur effect. With no
+     atmosphere skin active these resolve to no-ops. */
+  backdrop-filter: blur(var(--wings-surface-blur, 0)) saturate(var(--wings-surface-saturate, 1));
+  -webkit-backdrop-filter: blur(var(--wings-surface-blur, 0)) saturate(var(--wings-surface-saturate, 1));
 }
 
 .w-dialog-header {
@@ -39,36 +44,37 @@
 
 .w-dialog-buttons {
   display: flex;
-  gap: var(--wings-dialog-button-gap, 8px);
+  gap: var(--wings-button-gap, 8px);
   justify-content: flex-end;
 }
 
 .w-dialog-buttons button {
-  padding: var(--wings-dialog-button-padding, 8px 16px);
-  border: var(--wings-dialog-button-border, 1px solid #cccccc);
-  background: var(--wings-dialog-button-bg, #ffffff);
+  padding: var(--wings-button-padding, 8px 16px);
+  border: var(--wings-button-border, 1px solid #cccccc);
+  background: var(--wings-button-bg, #ffffff);
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: var(--wings-radius-sm, 4px);
   font-size: 14px;
-  transition: background 0.2s, border-color 0.2s;
+  transition: background var(--wings-transition-normal, 200ms ease),
+              border-color var(--wings-transition-normal, 200ms ease);
 }
 
 .w-dialog-buttons button:hover {
-  background: var(--wings-dialog-button-hover-bg, #f5f5f5);
-  border-color: var(--wings-dialog-button-border-hover, 1px solid #999999);
+  background: var(--wings-button-hover-bg, #f5f5f5);
+  border-color: var(--wings-button-border-hover, 1px solid #999999);
 }
 
 .w-dialog-buttons button:active {
-  background: var(--wings-dialog-button-active-bg, #e0e0e0);
+  background: var(--wings-button-active-bg, #e0e0e0);
 }
 
 #dlg-cancel {
-  background: var(--wings-dialog-primary-bg, #007bff);
-  color: var(--wings-dialog-primary-color, #ffffff);
-  border-color: var(--wings-dialog-primary-bg, #007bff);
+  background: var(--wings-primary, #007bff);
+  color: var(--wings-primary-color, #ffffff);
+  border-color: var(--wings-primary, #007bff);
 }
 
 #dlg-cancel:hover {
-  background: var(--wings-dialog-primary-hover-bg, #0056b3);
-  border-color: var(--wings-dialog-primary-hover-bg, #0056b3);
+  background: var(--wings-primary-hover-bg, #0056b3);
+  border-color: var(--wings-primary-hover-bg, #0056b3);
 }

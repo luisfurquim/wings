@@ -7,13 +7,17 @@
 .w-nav-btn {
    padding: 5px 10px;
    border: 1px solid var(--wings-border, #cccccc);
-   border-radius: 6px;
+   border-radius: var(--wings-radius-md, 6px);
    background: var(--wings-btn-bg, #ffffff);
    color: var(--wings-text, #222222);
    font-size: 0.85em;
    font-weight: 600;
    cursor: pointer;
-   transition: all 0.2s;
+   transition: background var(--wings-transition-normal, 200ms ease),
+               color var(--wings-transition-normal, 200ms ease),
+               border-color var(--wings-transition-normal, 200ms ease),
+               box-shadow var(--wings-transition-normal, 200ms ease),
+               transform var(--wings-transition-fast, 120ms ease);
    user-select: none;
 }
 
@@ -25,20 +29,20 @@
 }
 
 .w-nav-btn:active {
-   transform: scale(0.96);
+   transform: var(--wings-active-scale, scale(0.96));
 }
 
 .w-nav-input {
    width: 64px;
    padding: 5px 8px;
    border: 1px solid var(--wings-border, #cccccc);
-   border-radius: 6px;
+   border-radius: var(--wings-radius-md, 6px);
    font-size: 0.9em;
    text-align: center;
    font-weight: 600;
    color: var(--wings-primary, #007bff);
    outline: none;
-   transition: border-color 0.2s;
+   transition: border-color var(--wings-transition-normal, 200ms ease);
 }
 
 .w-nav-input:focus {

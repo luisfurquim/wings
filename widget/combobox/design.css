@@ -36,10 +36,10 @@
    display: inline-flex;
    align-items: center;
    gap: 4px;
-   background: var(--wings-combobox-tag-bg, #ede9fe);
-   color: var(--wings-combobox-tag-color, #4c1d95);
-   border: 1px solid var(--wings-combobox-tag-border, #c4b5fd);
-   border-radius: 4px;
+   background: var(--wings-tiny-element-bg, #ede9fe);
+   color: var(--wings-tiny-element-color, #4c1d95);
+   border: 1px solid var(--wings-tiny-element-border, #c4b5fd);
+   border-radius: var(--wings-radius-sm, 4px);
    padding: 2px 6px 2px 8px;
    font-size: 0.85em;
    line-height: 1.4;
@@ -53,19 +53,20 @@
    background: none;
    border: none;
    cursor: pointer;
-   color: var(--wings-combobox-rm-color, #7c3aed);
+   color: var(--wings-remover-color, #7c3aed);
    padding: 0;
    width: 16px;
    height: 16px;
    font-size: 0.85em;
-   border-radius: 2px;
+   border-radius: var(--wings-radius-xs, 2px);
    line-height: 1;
-   transition: background 0.1s, color 0.1s;
+   transition: background var(--wings-transition-fast, 120ms ease),
+               color var(--wings-transition-fast, 120ms ease);
 }
 
 .cb-rm:hover {
-   background: var(--wings-combobox-rm-hover-bg, #ddd6fe);
-   color: var(--wings-combobox-rm-hover-color, #dc2626);
+   background: var(--wings-remover-hover-bg, #ddd6fe);
+   color: var(--wings-remover-hover-color, #dc2626);
 }
 
 /* ── Text input ──────────────────────────────────────────────────────────── */
@@ -74,20 +75,21 @@
    display: block;
    width: 100%;
    padding: 7px 10px;
-   border: 1px solid var(--wings-combobox-input-border, #d1d5db);
-   border-radius: 6px;
+   border: 1px solid var(--wings-input-border, #d1d5db);
+   border-radius: var(--wings-radius-md, 6px);
    font-size: 1em;
    font-family: inherit;
    color: inherit;
-   background: var(--wings-combobox-input-bg, #ffffff);
+   background: var(--wings-input-bg, #ffffff);
    outline: none;
    box-sizing: border-box;
-   transition: border-color 0.15s, box-shadow 0.15s;
+   transition: border-color var(--wings-transition-fast, 120ms ease),
+               box-shadow var(--wings-transition-fast, 120ms ease);
 }
 
 .cb-input:focus {
-   border-color: var(--wings-combobox-input-focus-border, #7c3aed);
-   box-shadow: 0 0 0 3px var(--wings-combobox-input-focus-shadow, rgba(124, 58, 237, 0.12));
+   border-color: var(--wings-input-focus-border, #7c3aed);
+   box-shadow: 0 0 0 3px var(--wings-input-focus-shadow, rgba(124, 58, 237, 0.12));
 }
 
 /* ── Dropdown wrapper ────────────────────────────────────────────────────── */
@@ -100,15 +102,18 @@
    top: calc(100% + 4px);
    left: 0;
    right: 0;
-   background: var(--wings-combobox-drop-bg, #ffffff);
-   border: 1px solid var(--wings-combobox-drop-border, #d1d5db);
-   border-radius: 6px;
-   box-shadow: var(--wings-combobox-drop-shadow, 0 4px 16px rgba(0, 0, 0, 0.10), 0 1px 4px rgba(0, 0, 0, 0.06));
+   background: var(--wings-list-box-bg, #ffffff);
+   border: 1px solid var(--wings-list-box-border, #d1d5db);
+   border-radius: var(--wings-radius-md, 6px);
+   box-shadow: var(--wings-list-box-shadow, var(--wings-shadow-md, 0 4px 16px rgba(0, 0, 0, 0.10), 0 1px 4px rgba(0, 0, 0, 0.06)));
+   /* Atmosphere opt-in (see widget/dialog for the same pattern). */
+   backdrop-filter: blur(var(--wings-surface-blur, 0)) saturate(var(--wings-surface-saturate, 1));
+   -webkit-backdrop-filter: blur(var(--wings-surface-blur, 0)) saturate(var(--wings-surface-saturate, 1));
    max-height: 240px;
    overflow-y: auto;
    /* Thin scrollbar on supporting browsers */
    scrollbar-width: thin;
-   scrollbar-color: var(--wings-combobox-scroll-thumb, #c4b5fd) transparent;
+   scrollbar-color: var(--wings-scroll-thumb, #c4b5fd) transparent;
 }
 
 .cb-drop-wrap::-webkit-scrollbar {
@@ -116,7 +121,7 @@
 }
 
 .cb-drop-wrap::-webkit-scrollbar-thumb {
-   background: var(--wings-combobox-scroll-thumb, #c4b5fd);
+   background: var(--wings-scroll-thumb, #c4b5fd);
    border-radius: 3px;
 }
 
@@ -128,12 +133,13 @@
 
 /* Empty state: when filtered_options is empty, cb-drop collapses.
    A small message is shown via CSS ::after so we avoid an extra template
-   element. */
+   element. The text comes from the data-i18n attribute on .cb-drop so
+   that gen_i18n / wi18n translate it like any other UI string. */
 .cb-drop:empty::after {
-   content: "No results";
+   content: attr(data-i18n);
    display: block;
    padding: 10px 14px;
-   color: var(--wings-combobox-empty-color, #9ca3af);
+   color: var(--wings-empty-list-color, #9ca3af);
    font-size: 0.875em;
    font-style: italic;
 }
@@ -142,19 +148,20 @@
    padding: 8px 14px;
    cursor: pointer;
    font-size: 0.95em;
-   color: var(--wings-combobox-opt-color, #1f2937);
-   border-radius: 4px;
+   color: var(--wings-list-item-color, #1f2937);
+   border-radius: var(--wings-radius-sm, 4px);
    margin: 0 4px;
-   transition: background 0.1s, color 0.1s;
+   transition: background var(--wings-transition-fast, 120ms ease),
+               color var(--wings-transition-fast, 120ms ease);
    /* Prevent text selection while clicking quickly */
    user-select: none;
 }
 
 .cb-opt:hover {
-   background: var(--wings-combobox-opt-hover-bg, #f5f3ff);
-   color: var(--wings-combobox-opt-hover-color, #5b21b6);
+   background: var(--wings-list-item-hover-bg, #f5f3ff);
+   color: var(--wings-list-item-hover-color, #5b21b6);
 }
 
 .cb-opt:active {
-   background: var(--wings-combobox-opt-active-bg, #ede9fe);
+   background: var(--wings-list-item-active-bg, #ede9fe);
 }

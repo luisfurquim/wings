@@ -20,9 +20,12 @@
         so this element is always in the DOM and can be queried at Render time.
         CSS sets the initial state to display:none.
         .cb-drop uses ** iteration on the option divs.
-        data-fi holds the iteration index for the delegated click handler. -->
+        data-fi holds the iteration index for the delegated click handler.
+        data-i18n on .cb-drop carries the empty-state text — exposed to the
+        ::after pseudo-element via attr(), translated by gen_i18n like any
+        other translatable attribute. -->
    <div class="cb-drop-wrap">
-      <div class="cb-drop" **filtered_options:fi>
+      <div class="cb-drop" data-i18n="No results" **filtered_options:fi>
          <div class="cb-opt" data-fi="{{fi}}">{{filtered_options[fi].label}}</div>
       </div>
    </div>

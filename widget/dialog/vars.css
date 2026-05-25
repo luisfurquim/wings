@@ -1,6 +1,5 @@
 /* w-dialog — colour/shadow tokens.
-   Empty by design: defaults are now provided as the second argument of
-   var(--wings-dialog-*, fallback) inside design.css, and the canonical
-   values come from the active wprana skin (skins/tokens.md → "w-dialog"
-   table). Override per-instance via the Customizable "Vars" key to set
-   :host { --wings-dialog-X: ...; } that affects only that instance. */
+   Empty by design: defaults are provided as the fallback argument of
+   var(--wings-X, fallback) inside design.css, referencing the role-based
+   token groups documented in skins/tokens.md (Box, Button, Primary).
+   Override per-instance via the Customizable "Vars" key. */

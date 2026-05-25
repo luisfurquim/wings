@@ -1,4 +1,19 @@
-<div class="ssw">
-  <label for="ssw-sel" class="ssw-label">Tema</label>
-  <w-combobox id="ssw-sel" mode="single" options="{{skin_options}}" value="{{active_skin}}" placeholder="Selecione um tema..." @change="on_change"></w-combobox>
-</div>
+<details class="ssw">
+  <summary class="ssw-summary">
+    <span class="ssw-title">Skins</span>
+    <span class="ssw-count">{{active_count}}</span>
+  </summary>
+  <div class="ssw-panel">
+    <div class="ssw-active-cats" ?active_cats_label>{{active_cats_label}}</div>
+    <ul class="ssw-list" **skin_list:i>
+      <li class="ssw-item">
+        <label class="ssw-label">
+          <input type="checkbox" class="ssw-cb" data-skin="{{skin_list[i].name}}">
+          <span class="ssw-name">{{skin_list[i].name}}</span>
+          <span class="ssw-cats">{{skin_list[i].cats}}</span>
+          <span class="ssw-conflict" ?skin_list[i].conflict>{{skin_list[i].conflict}}</span>
+        </label>
+      </li>
+    </ul>
+  </div>
+</details>
