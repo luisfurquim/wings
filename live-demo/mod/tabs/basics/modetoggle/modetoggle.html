@@ -1,0 +1,19 @@
+<div class="mode-toggle">
+  <div class="row">
+    <button id="mt-mode">Alternar modo</button>
+    <span>Modo:</span>
+    <strong>{{mode}}</strong>
+  </div>
+  <div class="row">
+    <button id="mt-extra">Alternar extra</button>
+  </div>
+
+  <div ?show_extra="" class="extra-box"><p>Conteúdo extra revelado!</p></div>
+  <div ?!show_extra="" class="extra-hint"><p>Clique em &#34;Alternar extra&#34; para revelar.</p></div>
+
+  <div ?mode="edit" class="cond"><p>Modo é exatamente &#34;edit&#34;</p></div>
+  <div ?mode!="readonly" class="cond"><p>Modo é diferente de &#34;readonly&#34;</p></div>
+  <div ?mode^="ed" class="cond"><p>Modo começa com &#34;ed&#34;</p></div>
+  <div ?mode$="t" class="cond"><p>Modo termina com &#34;t&#34;</p></div>
+  <div ?mode*="d" class="cond"><p>Modo contém &#34;d&#34;</p></div>
+</div>

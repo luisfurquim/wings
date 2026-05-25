@@ -1,0 +1,234 @@
+[
+  {
+    "content": "wprana — live demo",
+    "revised": false
+  },
+  {
+    "content": "Basics",
+    "revised": false
+  },
+  {
+    "content": "Inflection",
+    "revised": false
+  },
+  {
+    "content": "Formatting",
+    "revised": false
+  },
+  {
+    "content": "Translation",
+    "revised": false
+  },
+  {
+    "content": "Measures",
+    "revised": false
+  },
+  {
+    "content": "Tabs",
+    "revised": true
+  },
+  {
+    "content": "Language:",
+    "revised": false
+  },
+  {
+    "content": "Item list",
+    "revised": false
+  },
+  {
+    "content": "Counters",
+    "revised": false
+  },
+  {
+    "content": "Mode and extras",
+    "revised": false
+  },
+  {
+    "content": "Fast counter (every 2 s):",
+    "revised": false
+  },
+  {
+    "content": "Slow counter (every 5 s):",
+    "revised": false
+  },
+  {
+    "content": "Add an item:",
+    "revised": false
+  },
+  {
+    "content": "Add",
+    "revised": false
+  },
+  {
+    "content": "Toggle mode",
+    "revised": false
+  },
+  {
+    "content": "Mode:",
+    "revised": false
+  },
+  {
+    "content": "Toggle extra",
+    "revised": false
+  },
+  {
+    "content": "Extra content revealed!",
+    "revised": false
+  },
+  {
+    "content": "Click \"Toggle extra\" to reveal.",
+    "revised": false
+  },
+  {
+    "content": "Mode equals \"edit\"",
+    "revised": false
+  },
+  {
+    "content": "Mode differs from \"readonly\"",
+    "revised": false
+  },
+  {
+    "content": "Mode starts with \"ed\"",
+    "revised": false
+  },
+  {
+    "content": "Mode ends with \"t\"",
+    "revised": false
+  },
+  {
+    "content": "Mode contains \"d\"",
+    "revised": false
+  },
+  {
+    "content": "Quantity:",
+    "revised": false
+  },
+  {
+    "content": "Inflection demo",
+    "revised": false
+  },
+  {
+    "content": "{{@gender %qt #0}}",
+    "revised": false
+  },
+  {
+    "content": "Gender:",
+    "revised": false
+  },
+  {
+    "content": "Masculine",
+    "revised": false
+  },
+  {
+    "content": "Feminine",
+    "revised": false
+  },
+  {
+    "content": "Price:",
+    "revised": false
+  },
+  {
+    "content": "Now:",
+    "revised": false
+  },
+  {
+    "content": "Formatting demo",
+    "revised": false
+  },
+  {
+    "content": "Numbers",
+    "revised": false
+  },
+  {
+    "content": "Currencies",
+    "revised": false
+  },
+  {
+    "content": "Cart",
+    "revised": false
+  },
+  {
+    "content": "Date and time",
+    "revised": false
+  },
+  {
+    "content": "Integer:",
+    "revised": false
+  },
+  {
+    "content": "Decimal:",
+    "revised": false
+  },
+  {
+    "content": "Translation catalog under the hood",
+    "revised": false
+  },
+  {
+    "content": "Each translatable string received a numeric index at build time. The middle column shows what the developer wrote in pt-BR (the source language); the right column shows what is rendered right now — switch the language at the top to see it change.",
+    "revised": false
+  },
+  {
+    "content": "Index",
+    "revised": false
+  },
+  {
+    "content": "Source text (pt-BR)",
+    "revised": false
+  },
+  {
+    "content": "Currently rendered",
+    "revised": false
+  },
+  {
+    "content": "default (locale):",
+    "revised": false
+  },
+  {
+    "content": ":km",
+    "revised": false
+  },
+  {
+    "content": ":mi",
+    "revised": false
+  },
+  {
+    "content": ":ft",
+    "revised": false
+  },
+  {
+    "content": "Physical measures demo",
+    "revised": false
+  },
+  {
+    "content": "Length",
+    "revised": false
+  },
+  {
+    "content": "Temperature",
+    "revised": false
+  },
+  {
+    "content": "Speed",
+    "revised": false
+  },
+  {
+    "content": ":kmh",
+    "revised": false
+  },
+  {
+    "content": ":mph",
+    "revised": false
+  },
+  {
+    "content": ":c (Celsius):",
+    "revised": false
+  },
+  {
+    "content": ":f (Fahrenheit):",
+    "revised": false
+  },
+  {
+    "content": ":k (Kelvin):",
+    "revised": false
+  }
+]

@@ -1,0 +1,234 @@
+[
+  {
+    "context": "shell/appshell/appshell.html:3:9",
+    "ctxdetail": "h1@shell/appshell/appshell.html:3:9"
+  },
+  {
+    "context": "shell/appshell/appshell.html:13:20",
+    "ctxdetail": "w-tabbutton@shell/appshell/appshell.html:13:20"
+  },
+  {
+    "context": "shell/appshell/appshell.html:16:20",
+    "ctxdetail": "w-tabbutton@shell/appshell/appshell.html:16:20"
+  },
+  {
+    "context": "shell/appshell/appshell.html:19:20",
+    "ctxdetail": "w-tabbutton@shell/appshell/appshell.html:19:20"
+  },
+  {
+    "context": "shell/appshell/appshell.html:22:20",
+    "ctxdetail": "w-tabbutton@shell/appshell/appshell.html:22:20"
+  },
+  {
+    "context": "shell/appshell/appshell.html:25:20",
+    "ctxdetail": "w-tabbutton@shell/appshell/appshell.html:25:20"
+  },
+  {
+    "context": "shell/appshell/appshell.html:28:20",
+    "ctxdetail": "w-tabbutton@shell/appshell/appshell.html:28:20"
+  },
+  {
+    "context": "shell/localeswitcher/localeswitcher.html:2:24",
+    "ctxdetail": "label@shell/localeswitcher/localeswitcher.html:2:24"
+  },
+  {
+    "context": "tabs/basics/basicstab.html:3:9",
+    "ctxdetail": "h3@tabs/basics/basicstab.html:3:9"
+  },
+  {
+    "context": "tabs/basics/basicstab.html:7:9",
+    "ctxdetail": "h3@tabs/basics/basicstab.html:7:9"
+  },
+  {
+    "context": "tabs/basics/basicstab.html:11:9",
+    "ctxdetail": "h3@tabs/basics/basicstab.html:11:9"
+  },
+  {
+    "context": "tabs/basics/counterpair/counterpair.html:2:12",
+    "ctxdetail": "span@tabs/basics/counterpair/counterpair.html:2:12"
+  },
+  {
+    "context": "tabs/basics/counterpair/counterpair.html:3:12",
+    "ctxdetail": "span@tabs/basics/counterpair/counterpair.html:3:12"
+  },
+  {
+    "context": "tabs/basics/itemlist/itemlist.html:3:25",
+    "ctxdetail": "label@tabs/basics/itemlist/itemlist.html:3:25"
+  },
+  {
+    "context": "tabs/basics/itemlist/itemlist.html:5:27",
+    "ctxdetail": "button@tabs/basics/itemlist/itemlist.html:5:27"
+  },
+  {
+    "context": "tabs/basics/modetoggle/modetoggle.html:3:26",
+    "ctxdetail": "button@tabs/basics/modetoggle/modetoggle.html:3:26"
+  },
+  {
+    "context": "tabs/basics/modetoggle/modetoggle.html:4:11",
+    "ctxdetail": "span@tabs/basics/modetoggle/modetoggle.html:4:11"
+  },
+  {
+    "context": "tabs/basics/modetoggle/modetoggle.html:8:27",
+    "ctxdetail": "button@tabs/basics/modetoggle/modetoggle.html:8:27"
+  },
+  {
+    "context": "tabs/basics/modetoggle/modetoggle.html:11:44",
+    "ctxdetail": "p@tabs/basics/modetoggle/modetoggle.html:11:44"
+  },
+  {
+    "context": "tabs/basics/modetoggle/modetoggle.html:0:0",
+    "ctxdetail": "p@tabs/basics/modetoggle/modetoggle.html:0:0"
+  },
+  {
+    "context": "tabs/basics/modetoggle/modetoggle.html:0:0",
+    "ctxdetail": "p@tabs/basics/modetoggle/modetoggle.html:0:0"
+  },
+  {
+    "context": "tabs/basics/modetoggle/modetoggle.html:0:0",
+    "ctxdetail": "p@tabs/basics/modetoggle/modetoggle.html:0:0"
+  },
+  {
+    "context": "tabs/basics/modetoggle/modetoggle.html:0:0",
+    "ctxdetail": "p@tabs/basics/modetoggle/modetoggle.html:0:0"
+  },
+  {
+    "context": "tabs/basics/modetoggle/modetoggle.html:0:0",
+    "ctxdetail": "p@tabs/basics/modetoggle/modetoggle.html:0:0"
+  },
+  {
+    "context": "tabs/basics/modetoggle/modetoggle.html:0:0",
+    "ctxdetail": "p@tabs/basics/modetoggle/modetoggle.html:0:0"
+  },
+  {
+    "context": "tabs/flex/countinput/countinput.html:2:23",
+    "ctxdetail": "label@tabs/flex/countinput/countinput.html:2:23"
+  },
+  {
+    "context": "tabs/flex/flextab.html:2:7",
+    "ctxdetail": "h2@tabs/flex/flextab.html:2:7"
+  },
+  {
+    "context": "tabs/flex/flextab.html:7:21",
+    "ctxdetail": "p@tabs/flex/flextab.html:7:21"
+  },
+  {
+    "context": "tabs/flex/genderpicker/genderpicker.html:2:23",
+    "ctxdetail": "label@tabs/flex/genderpicker/genderpicker.html:2:23"
+  },
+  {
+    "context": "tabs/flex/genderpicker/genderpicker.html:4:23",
+    "ctxdetail": "option@tabs/flex/genderpicker/genderpicker.html:4:23"
+  },
+  {
+    "context": "tabs/flex/genderpicker/genderpicker.html:5:23",
+    "ctxdetail": "option@tabs/flex/genderpicker/genderpicker.html:5:23"
+  },
+  {
+    "context": "tabs/fmt/currencydisplay/currencydisplay.html:2:12",
+    "ctxdetail": "span@tabs/fmt/currencydisplay/currencydisplay.html:2:12"
+  },
+  {
+    "context": "tabs/fmt/datedisplay/datedisplay.html:2:12",
+    "ctxdetail": "span@tabs/fmt/datedisplay/datedisplay.html:2:12"
+  },
+  {
+    "context": "tabs/fmt/fmttab.html:2:7",
+    "ctxdetail": "h2@tabs/fmt/fmttab.html:2:7"
+  },
+  {
+    "context": "tabs/fmt/fmttab.html:5:9",
+    "ctxdetail": "h3@tabs/fmt/fmttab.html:5:9"
+  },
+  {
+    "context": "tabs/fmt/fmttab.html:10:9",
+    "ctxdetail": "h3@tabs/fmt/fmttab.html:10:9"
+  },
+  {
+    "context": "tabs/fmt/fmttab.html:15:9",
+    "ctxdetail": "h3@tabs/fmt/fmttab.html:15:9"
+  },
+  {
+    "context": "tabs/fmt/fmttab.html:20:9",
+    "ctxdetail": "h3@tabs/fmt/fmttab.html:20:9"
+  },
+  {
+    "context": "tabs/fmt/numberdisplay/numberdisplay.html:2:12",
+    "ctxdetail": "span@tabs/fmt/numberdisplay/numberdisplay.html:2:12"
+  },
+  {
+    "context": "tabs/fmt/numberdisplay/numberdisplay.html:3:12",
+    "ctxdetail": "span@tabs/fmt/numberdisplay/numberdisplay.html:3:12"
+  },
+  {
+    "context": "tabs/i18n/i18ntab.html:2:7",
+    "ctxdetail": "h2@tabs/i18n/i18ntab.html:2:7"
+  },
+  {
+    "context": "tabs/i18n/i18ntab.html:3:6",
+    "ctxdetail": "p@tabs/i18n/i18ntab.html:3:6"
+  },
+  {
+    "context": "tabs/i18n/i18ntab.html:7:13",
+    "ctxdetail": "th@tabs/i18n/i18ntab.html:7:13"
+  },
+  {
+    "context": "tabs/i18n/i18ntab.html:8:13",
+    "ctxdetail": "th@tabs/i18n/i18ntab.html:8:13"
+  },
+  {
+    "context": "tabs/i18n/i18ntab.html:9:13",
+    "ctxdetail": "th@tabs/i18n/i18ntab.html:9:13"
+  },
+  {
+    "context": "tabs/measures/lengthdisplay/lengthdisplay.html:3:20",
+    "ctxdetail": "td@tabs/measures/lengthdisplay/lengthdisplay.html:3:20<br/>td@tabs/measures/speeddisplay/speeddisplay.html:3:20<br/>td@tabs/measures/tempdisplay/tempdisplay.html:3:20"
+  },
+  {
+    "context": "tabs/measures/lengthdisplay/lengthdisplay.html:4:13",
+    "ctxdetail": "td@tabs/measures/lengthdisplay/lengthdisplay.html:4:13"
+  },
+  {
+    "context": "tabs/measures/lengthdisplay/lengthdisplay.html:5:13",
+    "ctxdetail": "td@tabs/measures/lengthdisplay/lengthdisplay.html:5:13"
+  },
+  {
+    "context": "tabs/measures/lengthdisplay/lengthdisplay.html:6:13",
+    "ctxdetail": "td@tabs/measures/lengthdisplay/lengthdisplay.html:6:13"
+  },
+  {
+    "context": "tabs/measures/measurestab.html:2:7",
+    "ctxdetail": "h2@tabs/measures/measurestab.html:2:7"
+  },
+  {
+    "context": "tabs/measures/measurestab.html:5:9",
+    "ctxdetail": "h3@tabs/measures/measurestab.html:5:9"
+  },
+  {
+    "context": "tabs/measures/measurestab.html:10:9",
+    "ctxdetail": "h3@tabs/measures/measurestab.html:10:9"
+  },
+  {
+    "context": "tabs/measures/measurestab.html:15:9",
+    "ctxdetail": "h3@tabs/measures/measurestab.html:15:9"
+  },
+  {
+    "context": "tabs/measures/speeddisplay/speeddisplay.html:4:13",
+    "ctxdetail": "td@tabs/measures/speeddisplay/speeddisplay.html:4:13"
+  },
+  {
+    "context": "tabs/measures/speeddisplay/speeddisplay.html:5:13",
+    "ctxdetail": "td@tabs/measures/speeddisplay/speeddisplay.html:5:13"
+  },
+  {
+    "context": "tabs/measures/tempdisplay/tempdisplay.html:4:13",
+    "ctxdetail": "td@tabs/measures/tempdisplay/tempdisplay.html:4:13"
+  },
+  {
+    "context": "tabs/measures/tempdisplay/tempdisplay.html:5:13",
+    "ctxdetail": "td@tabs/measures/tempdisplay/tempdisplay.html:5:13"
+  },
+  {
+    "context": "tabs/measures/tempdisplay/tempdisplay.html:6:13",
+    "ctxdetail": "td@tabs/measures/tempdisplay/tempdisplay.html:6:13"
+  }
+]
