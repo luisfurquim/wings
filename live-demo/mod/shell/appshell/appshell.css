@@ -29,21 +29,7 @@ header h1 {
   color: var(--wings-text, #222222);
 }
 
-main details {
-  background: var(--wings-surface, #ffffff);
-  border: 1px solid var(--wings-border, #ddd);
-  border-radius: 6px;
-  margin-bottom: 8px;
-  padding: 0 12px;
-}
-
-main summary {
-  cursor: pointer;
-  padding: 10px 0;
-  font-weight: 600;
-  color: var(--wings-text, #222222);
-}
-
-main details[open] {
-  padding-bottom: 12px;
-}
+/* The section navigation is a <w-tabs mode="accordion"> (see appshell.html).
+   The accordion's card chrome — surface background, border, radius, summary
+   weight, body padding — is supplied by widget/tab's own shadow CSS and reads
+   the same --wings-* skin tokens, so nothing is styled here. */
