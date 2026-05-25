@@ -1,0 +1,74 @@
+/* The framework wraps the template in <span> elements inside the shadow root.
+   Neutralize them so :host lays out .wt-strip / .wt-body directly — otherwise
+   flex/grid on :host only sees the wrapper and the menu / strip+body split
+   collapse. (These are the framework's own spans; the template has none.) */
+span {
+    display: contents;
+}
+
+/* :host is the <w-tabs> element. The layout is selected by the `mode`
+   attribute; buttons live in .wt-strip and panels in .wt-body. */
+:host {
+    display:     block;
+    box-sizing:  border-box;
+    font-family: inherit;
+    font-size:   inherit;
+    color:       inherit;
+}
+
+/* ── panel (default) / detached ─────────────────────────────────────────────
+   Button strip on top (horizontally scrollable on overflow), panels below. */
+:host([mode=panel]) .wt-strip,
+:host([mode=detached]) .wt-strip {
+    display:    flex;
+    flex-wrap:  nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+:host([mode=detached]) .wt-strip {
+    gap:           var(--wings-gap, 8px);
+    margin-bottom: var(--wings-gap, 8px);
+}
+:host([mode=panel]) .wt-body,
+:host([mode=detached]) .wt-body {
+    display:   block;
+    min-width: 0;
+}
+
+/* ── menu ───────────────────────────────────────────────────────────────
+   Button column on the left, panel on the right. */
+:host([mode=menu]) {
+    display:     flex;
+    align-items: flex-start;
+    gap:         var(--wings-gap, 12px);
+}
+:host([mode=menu]) .wt-strip {
+    display:        flex;
+    flex-direction: column;
+    flex:           0 0 auto;
+}
+:host([mode=menu]) .wt-body {
+    flex:      1 1 auto;
+    min-width: 0;
+}
+
+/* ── accordion ──────────────────────────────────────────────────────────
+   No central strip — each button was moved into its w-tab's <summary>. */
+:host([mode=accordion]) .wt-strip {
+    display: none;
+}
+:host([mode=accordion]) .wt-body {
+    display: block;
+}
+
+/* ── headless (no w-tabbutton present) ──────────────────────────────────────
+   Full passthrough: hide the strip and dissolve the body so the consumer's own
+   layout reaches the panels (the host behaves like the old slot-only widget).
+   Selection is driven by the `active` attribute. Listed last so it wins over
+   the per-mode rules above. */
+:host([headless]) .wt-strip {
+    display: none;
+}
+:host([headless]) .wt-body {
+    display: contents;
+}

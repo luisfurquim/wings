@@ -1,0 +1,15 @@
+<!-- Per-form template, selected by the `mode` the parent <w-tabs> stamps on
+     this element (resolved by the framework's ?cond conditional).
+
+     • accordion → render a native <details>. <w-tabs> has MOVED the matching
+       <w-tabbutton> into this element with slot="button", so it lands in the
+       <summary>; the rest of the light content fills the disclosure body. This
+       buys native a11y, animation and state for free.
+     • everything else (panel / detached / menu) → a transparent <slot>; the
+       button lives in <w-tabs>'s own strip, and only the layout/chrome differ
+       per mode (see design.css). -->
+<details ?mode="accordion">
+    <summary><slot name="button"></slot></summary>
+    <div class="wt-acc-body"><slot></slot></div>
+</details>
+<slot ?mode!="accordion"></slot>

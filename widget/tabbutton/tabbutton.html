@@ -1,0 +1,10 @@
+<!-- A bare label that catches clicks and lets them bubble up to the parent
+     <w-tabs>. It is a <span> (NOT a <button>) on purpose: in accordion mode
+     <w-tabs> moves this element inside the matching <w-tab>'s <summary>, and a
+     real <button> there would swallow the click and block the native <details>
+     toggle. Keyboard activation and the roving focus (tabindex on the host) are
+     driven by <w-tabs>; the visible state is pure CSS via :host([active]) /
+     :host([mode=…]). This widget owns no JS-side state — see tabbutton.go. -->
+<span class="tbb" part="button">
+    <slot></slot>
+</span>

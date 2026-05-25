@@ -1,0 +1,3 @@
+/* w-tabs uses only generic core tokens (radius/shadow/transition/btn/primary).
+   Per-skin overrides live in :root via skin.css; defaults live in design.css
+   inside var(--wings-*, fallback) — vars.css is intentionally empty. */

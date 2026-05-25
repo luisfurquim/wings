@@ -1,0 +1,14 @@
+<!-- w-tabs splits its light-DOM children into two named regions:
+
+       .wt-strip  ← <slot name="button"> : the w-tabbutton elements, which
+                    <w-tabs> routes here by stamping slot="button" on them.
+                    In panel/detached it is a horizontally scrollable bar; in
+                    menu it is the left column; in accordion it is empty (the
+                    buttons are moved into their w-tab's <summary>) and hidden.
+
+       .wt-body   ← <slot> : the w-tab panels (default slot).
+
+     The named-slot grouping means the author writes button,panel,button,panel
+     co-located and the layout regroups them — no DOM order juggling, no clone. -->
+<div class="wt-strip" part="strip"><slot name="button"></slot></div>
+<div class="wt-body" part="body"><slot></slot></div>

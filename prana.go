@@ -492,15 +492,15 @@ func isConnected(self js.Value) bool {
 
 // buildTrigger creates the trigger function that fires events from a child module
 // to the parent module via @eventName attributes.
+//
+// Triggers bubble through container prana elements: if the immediate parent
+// prana element does not declare the named handler (e.g. it is a transparent
+// wrapper like <w-tabs> hosting other prana children), the lookup walks
+// further up until a prana ancestor with the handler is found, or the chain
+// is exhausted. This keeps "navFirst" (declared on the wlate root) reachable
+// from <w-navbar> even when <w-tabs> sits between them.
 func buildTrigger(self js.Value, rd *ReactiveData) func(eventName string, args ...any) {
 	return func(eventName string, args ...any) {
-		// Goes up to find the pRoot (parent prana element)
-		pRoot := findParentPranaElement(self)
-		if pRoot.IsNull() || pRoot.IsUndefined() {
-			G.Logf(3, "trigger: %q without pRoot\n", eventName)
-			return
-		}
-
 		attrName := "@" + eventName
 		handlerName := attrVal(self, attrName)
 		if handlerName == "" {
@@ -508,22 +508,45 @@ func buildTrigger(self js.Value, rd *ReactiveData) func(eventName string, args .
 			return
 		}
 
-		pst := getPranaState(pRoot)
-		if pst == nil {
+		// Walk up through prana ancestors until one declares the handler.
+		cur := findParentPranaElement(self)
+		for !cur.IsNull() && !cur.IsUndefined() {
+			pst := getPranaState(cur)
+			if pst == nil {
+				cur = findParentPranaElement(cur)
+				continue
+			}
+			handler := getField(pst.Data.M, handlerName)
+			if handler == nil {
+				cur = findParentPranaElement(cur)
+				continue
+			}
+			if fn, ok := handler.(func(...any)); ok {
+				if fn == nil {
+					// Nil placeholder at this level — keep walking up in case
+					// a real handler is declared higher in the tree.
+					cur = findParentPranaElement(cur)
+					continue
+				}
+				G.Logf(4, "trigger: calling %q with %d args\n", handlerName, len(args))
+				fn(args...)
+				return
+			}
+			if fn, ok := handler.(TriggerHandler); ok {
+				// `TriggerHandler(nil)` is the conventional placeholder used in
+				// InitData() while the real handler is wired up in Render().
+				if fn == nil {
+					cur = findParentPranaElement(cur)
+					continue
+				}
+				G.Logf(4, "trigger: calling %q with %d args\n", handlerName, len(args))
+				fn(args...)
+				return
+			}
+			G.Logf(1, "trigger: handler %q is not a function\n", handlerName)
 			return
 		}
-
-		// Resolves the handler name in the parent's context
-		handler := getField(pst.Data.M, handlerName)
-		if fn, ok := handler.(func(...any)); ok {
-			G.Logf(4, "trigger: calling %q with %d args\n", handlerName, len(args))
-			fn(args...)
-		} else if fn, ok := handler.(TriggerHandler); ok {
-			G.Logf(4, "trigger: calling %q with %d args\n", handlerName, len(args))
-			fn(args...)
-		} else {
-			G.Logf(1, "trigger: handler %q is not a function\n", handlerName)
-		}
+		G.Logf(3, "trigger: %q without handler %q in any prana ancestor\n", eventName, handlerName)
 	}
 }
 

@@ -1,0 +1,123 @@
+:host {
+    display: inline-block;
+    box-sizing: border-box;
+
+    /* ── Mode-aware variant tokens ────────────────────────────────────────
+       The parent <w-tabs> stamps a `mode` attribute on every w-tabbutton
+       (panel / menu / detached / accordion); each mode overrides a subset of
+       these tokens via :host([mode=MODE]). A single :host([active]) .tbb rule
+       then reads the variants below, so we never need the (invalid) combo of
+       :host() with another structural condition.                           */
+
+    --tbb-justify:           center;            /* main-axis alignment of contents */
+    --tbb-width:             auto;
+    --tbb-radius:            var(--wings-radius-md, 6px) var(--wings-radius-md, 6px) 0 0;
+    --tbb-active-bg:         var(--wings-surface, #ffffff);
+    --tbb-active-color:      var(--wings-primary, #6366f1);
+    --tbb-active-shadow:     inset 0 -2px 0 var(--wings-primary, #6366f1);
+    --tbb-active-border:     var(--wings-border-width, 1px) var(--wings-border-style, solid) transparent;
+}
+
+/* ── Mode overrides (apply to host) ────────────────────────────────────── */
+
+/* Menu mode: vertical list, lit on the trailing edge. */
+:host([mode=menu]) {
+    display:                 block;
+    --tbb-justify:           flex-start;
+    --tbb-width:             100%;
+    --tbb-radius:            var(--wings-radius-md, 6px) 0 0 var(--wings-radius-md, 6px);
+    --tbb-active-shadow:     inset -3px 0 0 var(--wings-primary, #6366f1);
+}
+
+/* Detached mode: chip-like free-floating buttons. Full radius, full border
+   around (active = primary tint), slight hover lift. */
+:host([mode=detached]) {
+    --tbb-radius:            var(--wings-radius-md, 6px);
+    --tbb-active-bg:         var(--wings-primary-pale, #e8f0fe);
+    --tbb-active-shadow:     var(--wings-btn-hover-shadow, 0 2px 4px rgba(0, 0, 0, 0.10));
+    --tbb-active-border:     var(--wings-border-width, 1px) var(--wings-border-style, solid) var(--wings-primary, #007bff);
+}
+
+/* ── Inner label (reads the variant tokens) ────────────────────────────── */
+
+.tbb {
+    display:        inline-flex;
+    box-sizing:     border-box;   /* width:100% (menu mode) must include padding+border, else the hover bg bleeds past the host's right edge onto the panel */
+    align-items:    center;
+    justify-content: var(--tbb-justify);
+    width:          var(--tbb-width);
+    gap:            6px;
+    padding:        8px 16px;
+    border:         var(--wings-border-width, 1px) var(--wings-border-style, solid) transparent;
+    border-radius:  var(--tbb-radius);
+    background:     var(--wings-btn-bg, #f3f4f6);
+    color:          var(--wings-text-muted, #6b7280);
+    cursor:         pointer;
+    font-size:      0.9em;
+    font-family:    inherit;
+    user-select:    none;
+    white-space:    nowrap;
+    transition:
+        background var(--wings-transition-fast, 120ms ease),
+        color      var(--wings-transition-fast, 120ms ease),
+        box-shadow var(--wings-transition-fast, 120ms ease),
+        transform  var(--wings-transition-fast, 120ms ease),
+        border-color var(--wings-transition-fast, 120ms ease);
+}
+
+.tbb:hover {
+    background: var(--wings-btn-hover-bg, #e5e7eb);
+    color:      var(--wings-btn-hover-color, #111827);
+    box-shadow: var(--wings-shadow-sm, 0 2px 4px rgba(0, 0, 0, 0.08));
+    transform:  var(--wings-hover-lift, translateY(-1px));
+}
+
+/* Focus lives on the host (w-tabs toggles tabindex on it per mode), so the
+   ring reads from :host(:focus-visible) rather than the inner span. */
+:host(:focus-visible) {
+    outline: none;
+}
+:host(:focus-visible) .tbb {
+    outline:        2px solid var(--wings-border-focus, #6366f1);
+    outline-offset: 2px;
+}
+
+.tbb:active {
+    transform: var(--wings-active-scale, scale(0.97));
+}
+
+/* Active state — every layout mode shares this rule; the variant tokens
+   above pick the visual treatment per mode. */
+:host([active]) .tbb {
+    background:    var(--tbb-active-bg);
+    color:         var(--tbb-active-color);
+    border:        var(--tbb-active-border);
+    border-radius: var(--tbb-radius);
+    box-shadow:    var(--tbb-active-shadow);
+    font-weight:   600;
+    transform:     none;
+}
+
+/* ── Accordion mode ────────────────────────────────────────────────────────
+   Here <w-tabs> has moved this element into the matching <w-tab>'s <summary>.
+   The summary itself is the interactive disclosure control (styled in
+   w-tab/design.css), so the label strips its button chrome to plain inline
+   text and never shows the tab "active" treatment. */
+:host([mode=accordion]) .tbb {
+    display:       inline;
+    width:         auto;
+    padding:       0;
+    background:    none;
+    border:        none;
+    box-shadow:    none;
+    color:         inherit;
+    font-size:     inherit;
+    cursor:        inherit;
+    white-space:   normal;
+}
+:host([mode=accordion]) .tbb:hover {
+    background: none;
+    box-shadow: none;
+    transform: none;
+    color: inherit;
+}

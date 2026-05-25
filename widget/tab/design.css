@@ -1,0 +1,80 @@
+/* The form is chosen by the `mode` attribute <w-tabs> stamps on the host;
+   the host fills its parent so the webdev's container decides the size.
+   Visibility (non-accordion) is driven by the `active` attribute. */
+
+/* ── panel (default) ──────────────────────────────────────────────────────
+   A framed panel sitting under the button strip. */
+:host {
+    display:       block;
+    width:         100%;
+    height:        100%;
+    box-sizing:    border-box;
+    background:    var(--wings-surface, #ffffff);
+    border:        var(--wings-border-width, 1px) var(--wings-border-style, solid) var(--wings-border, #e5e7eb);
+    border-top:    none;
+    border-radius: 0 var(--wings-radius-md, 6px) var(--wings-radius-md, 6px) var(--wings-radius-md, 6px);
+    box-shadow:    var(--wings-shadow-md, 0 4px 12px rgba(0,0,0,.08));
+    padding:       16px;
+    color:         var(--wings-text, #111827);
+}
+
+/* Invariant: an inactive panel is hidden — EXCEPT in accordion, where the
+   native <details> owns open/close and the host stays in flow. */
+:host(:not([active]):not([mode=accordion])) {
+    display: none !important;
+}
+
+/* ── menu ───────────────────────────────────────────────────────────────
+   Panel sits beside its button column — full radius, top border restored. */
+:host([mode=menu]) {
+    border-top:    var(--wings-border-width, 1px) var(--wings-border-style, solid) var(--wings-border, #e5e7eb);
+    border-radius: var(--wings-radius-md, 6px);
+}
+
+/* ── detached ───────────────────────────────────────────────────────────
+   Transparent slot: the consumer supplies its own panel chrome. display:contents
+   removes the host box so the slotted content participates directly in the
+   <w-tabs> body layout (needed by consumers like wlate whose inner grid must
+   take a definite height — flex propagation through the shadow boundary into a
+   slotted grid child is unreliable in Chrome). */
+:host([mode=detached]) {
+    display:       contents;
+    background:    transparent;
+    border:        none;
+    border-radius: 0;
+    box-shadow:    none;
+    padding:       0;
+}
+
+/* ── accordion ──────────────────────────────────────────────────────────
+   Native <details>; the moved <w-tabbutton> is the <summary>. */
+:host([mode=accordion]) {
+    display:       block;
+    height:        auto;
+    background:    transparent;
+    border:        none;
+    border-radius: 0;
+    box-shadow:    none;
+    padding:       0;
+    margin-bottom: var(--wings-gap, 6px);
+}
+:host([mode=accordion]) details {
+    background:    var(--wings-surface, #ffffff);
+    border:        var(--wings-border-width, 1px) var(--wings-border-style, solid) var(--wings-border, #e5e7eb);
+    border-radius: var(--wings-radius-md, 6px);
+    overflow:      hidden;
+}
+:host([mode=accordion]) summary {
+    cursor:        pointer;
+    padding:       10px 14px;
+    font-weight:   600;
+    color:         var(--wings-text, #111827);
+    user-select:   none;
+}
+:host([mode=accordion]) details[open] summary {
+    border-bottom: var(--wings-border-width, 1px) var(--wings-border-style, solid) var(--wings-border, #e5e7eb);
+}
+:host([mode=accordion]) .wt-acc-body {
+    padding: 12px 14px;
+    color:   var(--wings-text, #111827);
+}
