@@ -588,7 +588,7 @@ func processHTMLFile(path, relPath string, dbMap map[string]string, attrSet map[
 	}
 
 	tracker := newPosTracker(src)
-	replaceTextNodes(doc, dbMap, relPath, tracker, attrSet)
+	replaceTextNodes(doc, dbMap, relPath, tracker, attrSet, false)
 
 	// Build output path: dir/name.html → dir/name.i18n.html
 	ext := filepath.Ext(path)
@@ -613,10 +613,34 @@ func processHTMLFile(path, relPath string, dbMap map[string]string, attrSet map[
 // in dbMap and appending a source Occurrence to the per-entry list. For
 // ElementNodes, it also translates attribute values whose attribute name is
 // in attrSet (typically title/placeholder/alt/aria-label).
-func replaceTextNodes(n *html.Node, dbMap map[string]string, relPath string, tracker *posTracker, attrSet map[string]bool) {
+func replaceTextNodes(n *html.Node, dbMap map[string]string, relPath string, tracker *posTracker, attrSet map[string]bool, noTranslate bool) {
+	// Honor the standard HTML `translate` attribute (inherited down the tree):
+	// translate="no" excludes this element and its subtree from extraction; a
+	// nested translate="yes" re-enables it. This is a build-time concern only —
+	// the wi18n runtime still substitutes any numeric index it finds, so a demo
+	// can keep literal indices under translate="no" and still render them live
+	// (see live-demo i18ntab's table), and verbatim content (e.g. the tabsdemo
+	// prose) can opt out of the pt-BR catalog entirely.
+	if n.Type == html.ElementNode {
+		for _, a := range n.Attr {
+			if strings.EqualFold(a.Key, "translate") {
+				switch strings.ToLower(strings.TrimSpace(a.Val)) {
+				case "no":
+					noTranslate = true
+				case "yes", "":
+					noTranslate = false
+				}
+				break
+			}
+		}
+	}
+
 	if n.Type == html.TextNode {
 		// Skip text nodes inside <style> and <script> tags.
 		if n.Parent != nil && n.Parent.Type == html.ElementNode && (n.Parent.Data == "style" || n.Parent.Data == "script") {
+			return
+		}
+		if noTranslate {
 			return
 		}
 		original := n.Data
@@ -633,11 +657,19 @@ func replaceTextNodes(n *html.Node, dbMap map[string]string, relPath string, tra
 
 		// Rewrite flex blocks (e.g. {{@s %q ~o ~aluno}} → {{@s %q #N}})
 		// before hashing, so the txt catalog stores the stable runtime form.
-		rewritten, _ := rewriteFlexBlocks(original, func(idx int32) {
+		rewritten, hasFlex := rewriteFlexBlocks(original, func(idx int32) {
 			flexOccurrences[idx] = append(flexOccurrences[idx], Occurrence{
 				Path: relPath, Line: line, Col: col, Tag: tag,
 			})
 		})
+		// A text node that is nothing but plain {{...}} bindings (no flex block,
+		// no words) is a runtime placeholder, not catalog content — leave it
+		// verbatim. Indexing it would pollute the catalog and, worse, make
+		// non-deflang locales render a bare index where the binding should be
+		// (the binding's translation is empty, so lookup falls back to the index).
+		if !hasFlex && isPureBindings(original) {
+			return
+		}
 		txtIdx := resolveHash(rewritten, dbMap)
 
 		occurrences[txtIdx] = append(occurrences[txtIdx], Occurrence{
@@ -651,7 +683,7 @@ func replaceTextNodes(n *html.Node, dbMap map[string]string, relPath string, tra
 		return
 	}
 
-	if n.Type == html.ElementNode && len(attrSet) > 0 {
+	if n.Type == html.ElementNode && len(attrSet) > 0 && !noTranslate {
 		for i := range n.Attr {
 			a := &n.Attr[i]
 			if !attrSet[strings.ToLower(a.Key)] {
@@ -662,11 +694,14 @@ func replaceTextNodes(n *html.Node, dbMap map[string]string, relPath string, tra
 			}
 			line, col := tracker.find(a.Val)
 			attrTag := n.Data + "[" + a.Key + "]"
-			rewritten, _ := rewriteFlexBlocks(a.Val, func(idx int32) {
+			rewritten, hasFlex := rewriteFlexBlocks(a.Val, func(idx int32) {
 				flexOccurrences[idx] = append(flexOccurrences[idx], Occurrence{
 					Path: relPath, Line: line, Col: col, Tag: attrTag,
 				})
 			})
+			if !hasFlex && isPureBindings(a.Val) {
+				continue
+			}
 			txtIdx := resolveHash(rewritten, dbMap)
 			occurrences[txtIdx] = append(occurrences[txtIdx], Occurrence{
 				Path: relPath,
@@ -679,8 +714,38 @@ func replaceTextNodes(n *html.Node, dbMap map[string]string, relPath string, tra
 	}
 
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		replaceTextNodes(c, dbMap, relPath, tracker, attrSet)
+		replaceTextNodes(c, dbMap, relPath, tracker, attrSet, noTranslate)
 	}
+}
+
+// isPureBindings reports whether s consists solely of {{...}} binding
+// expressions and surrounding whitespace — i.e. it carries no human-readable
+// words to translate. Flex blocks are rewritten and indexed before this is
+// consulted, so the only {{...}} reaching here are plain bindings
+// ({{count}}, {{%price}}, {{%dist:km}}), which are runtime placeholders rather
+// than catalog content. A node with an unclosed or absent {{...}} returns false.
+func isPureBindings(s string) bool {
+	var rest strings.Builder
+	i, n := 0, len(s)
+	sawBinding := false
+	for i < n {
+		if i+1 < n && s[i] == '{' && s[i+1] == '{' {
+			j := i + 2
+			for j+1 < n && !(s[j] == '}' && s[j+1] == '}') {
+				j++
+			}
+			if j+1 >= n {
+				rest.WriteString(s[i:]) // unclosed: count remainder as text
+				break
+			}
+			sawBinding = true
+			i = j + 2
+			continue
+		}
+		rest.WriteByte(s[i])
+		i++
+	}
+	return sawBinding && isBlank(rest.String())
 }
 
 // defaultTranslatableAttrs is the set of HTML attributes whose values are
