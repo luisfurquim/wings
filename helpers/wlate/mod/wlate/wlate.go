@@ -15,6 +15,9 @@ import (
 	"github.com/luisfurquim/wprana"
 	"github.com/luisfurquim/wprana/dom"
 	"github.com/luisfurquim/wprana/wi18n"
+	_ "github.com/luisfurquim/wprana/widget/tab"
+	_ "github.com/luisfurquim/wprana/widget/tabs"
+	_ "github.com/luisfurquim/wprana/widget/tabbutton"
 )
 
 // G is this package's goose alert. SetConfig (called from init() with
@@ -992,21 +995,25 @@ func (wc *wlateCtx) loadRightData() {
 }
 
 func (wc *wlateCtx) wireEvents() {
-	// Tab buttons
-	tabText := dom.Query(wc.obj.Dom, "#tab-text")
-	tabInflection := dom.Query(wc.obj.Dom, "#tab-inflection")
-	if len(tabText) > 0 {
-		dom.AddEvent(tabText[0], "click", func(_ js.Value, _ []js.Value) any {
-			wc.switchTab("text")
+	// Tab switching. <w-tabs> here is headless (no w-tabbutton): it is driven
+	// by the bound `active="{{tab}}"` attribute and imposes no chrome. The tab
+	// buttons are plain <button>s we wire by hand — switchTab sets the `tab`
+	// data, which flows back into <w-tabs> and selects the matching panel.
+	for _, m := range []struct{ id, tab string }{
+		{"#wl-tab-text", "text"},
+		{"#wl-tab-inflection", "inflection"},
+	} {
+		btns := dom.Query(wc.obj.Dom, m.id)
+		if len(btns) == 0 {
+			continue
+		}
+		tab := m.tab
+		dom.AddEvent(btns[0], "click", func(_ js.Value, _ []js.Value) any {
+			wc.switchTab(tab)
 			return nil
 		}, false, false)
 	}
-	if len(tabInflection) > 0 {
-		dom.AddEvent(tabInflection[0], "click", func(_ js.Value, _ []js.Value) any {
-			wc.switchTab("inflection")
-			return nil
-		}, false, false)
-	}
+	wc.highlightTabButtons("text")
 
 	// Navigation — wired to w-navbar widget triggers.
 	wc.obj.This.M["navFirst"] = wprana.TriggerHandler(func(_ ...any) {
@@ -1217,26 +1224,36 @@ func (wc *wlateCtx) wireEvents() {
 	wc.obj.This.Sync()
 }
 
+// highlightTabButtons mirrors the active tab onto the plain <button> tab
+// controls (the panels themselves are driven by <w-tabs> via `active`).
+func (wc *wlateCtx) highlightTabButtons(tab string) {
+	for _, m := range []struct{ id, tab string }{
+		{"#wl-tab-text", "text"},
+		{"#wl-tab-inflection", "inflection"},
+	} {
+		btns := dom.Query(wc.obj.Dom, m.id)
+		if len(btns) == 0 {
+			continue
+		}
+		cl := btns[0].Get("classList")
+		if m.tab == tab {
+			cl.Call("add", "wl-tab-active")
+		} else {
+			cl.Call("remove", "wl-tab-active")
+		}
+	}
+}
+
 func (wc *wlateCtx) switchTab(tab string) {
 	if tab == wc.activeTab {
 		return
 	}
 	wc.syncRightContent()
 	wc.activeTab = tab
+	// Setting `tab` flows into <w-tabs active="{{tab}}">, which selects the
+	// matching panel. The buttons are plain <button>s, so we highlight them.
 	wc.obj.This.Set("tab", tab)
-
-	// Update tab button styles
-	tabTexts := dom.Query(wc.obj.Dom, "#tab-text")
-	tabInflections := dom.Query(wc.obj.Dom, "#tab-inflection")
-	if len(tabTexts) > 0 && len(tabInflections) > 0 {
-		if tab == "text" {
-			tabTexts[0].Get("classList").Call("add", "wl-tab-active")
-			tabInflections[0].Get("classList").Call("remove", "wl-tab-active")
-		} else {
-			tabInflections[0].Get("classList").Call("add", "wl-tab-active")
-			tabTexts[0].Get("classList").Call("remove", "wl-tab-active")
-		}
-	}
+	wc.highlightTabButtons(tab)
 
 	wc.buildFilteredIdx()
 	wc.currentPos = 0

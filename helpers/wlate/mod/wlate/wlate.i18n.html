@@ -1,11 +1,11 @@
-<html><head></head><body><div class="wl-root">
+<html><head></head><body><w-tabs class="wl-root" mode="detached" active="{{tab}}">
 
    <!-- Status bar -->
    <div class="wl-status">
       <span class="wl-pending">0<strong>1</strong>2</span>
       <div class="wl-tabs">
-         <button id="tab-text" class="wl-tab wl-tab-active">3</button>
-         <button id="tab-inflection" class="wl-tab">4</button>
+         <button type="button" class="wl-tab" id="wl-tab-text" data-tab="text">3</button>
+         <button type="button" class="wl-tab" id="wl-tab-inflection" data-tab="inflection">4</button>
       </div>
       <skin-switcher></skin-switcher>
    </div>
@@ -33,54 +33,58 @@
    </div>
 
    <!-- TEXT TAB -->
-   <div ?tab="text" class="wl-panels">
-      <div class="wl-panel wl-panel-left">
-         <div class="wl-content-ro">9</div>
-      </div>
-      <div class="wl-panel wl-panel-right" id="wl-right-panel">
-         <div class="wl-content-wrapper">
-            <textarea class="wl-content-edit">10</textarea>
-            <img class="wl-text-badge" &src="{{right_text_src}}" width="20" height="20" alt="" onerror="this.src=&#39;&#39;"/>
+   <w-tab tid="text">
+      <div class="wl-panels">
+         <div class="wl-panel wl-panel-left">
+            <div class="wl-content-ro">9</div>
          </div>
-         <div id="wl-revised-toggle" class="wl-revised-indicator"></div>
+         <div class="wl-panel wl-panel-right" id="wl-right-panel">
+            <div class="wl-content-wrapper">
+               <textarea class="wl-content-edit">10</textarea>
+               <img class="wl-text-badge" &src="{{right_text_src}}" width="20" height="20" alt="" onerror="this.src=&#39;&#39;"/>
+            </div>
+            <div id="wl-revised-toggle" class="wl-revised-indicator"></div>
+         </div>
       </div>
-   </div>
+   </w-tab>
 
    <!-- INFLECTION TAB -->
-   <div ?tab="inflection" class="wl-panels">
-      <div class="wl-panel wl-panel-left">
-         <div class="wl-expr">11</div>
-         <div class="wl-grid" id="wl-grid-left" role="grid">
-            <div class="wl-grid-corner" role="columnheader"></div>
-            <div class="wl-grid-col-header" role="columnheader" *gender_headers:gi="" aria-label="12">13</div>
-            <div class="wl-grid-rows" **category_headers:ci="">
-               <div class="wl-grid-row" role="row">
-                  <div class="wl-grid-row-header" role="rowheader" aria-label="14">15</div>
-                  <div class="wl-grid-cell" role="gridcell" *gender_headers:gi="">16</div>
-               </div>
-            </div>
-         </div>
-      </div>
-      <div class="wl-panel wl-panel-right" id="wl-right-inflection-panel">
-         <div class="wl-expr">11</div>
-         <div class="wl-grid" id="wl-grid-right" role="grid">
-            <div class="wl-grid-corner" role="columnheader"></div>
-            <div class="wl-grid-col-header" role="columnheader" *gender_headers:gi="" aria-label="12">13</div>
-            <div class="wl-grid-rows" **category_headers:ci="">
-               <div class="wl-grid-row" role="row">
-                  <div class="wl-grid-row-header" role="rowheader" aria-label="14">15</div>
-                  <div class="wl-grid-cell-edit" role="gridcell" *gender_headers:gi="">
-                     <div class="wl-cell-wrapper">
-                        <input class="wl-cell-input" type="text" data-ci="{{ci}}" data-gi="{{gi}}" aria-label="17" &value="{{right_cells[ci].cols[gi]}}"/>
-                        <img class="wl-cell-badge" &src="{{right_srcs[ci].cols[gi]}}" width="16" height="16" alt="" onerror="this.src=&#39;&#39;"/>
-                     </div>
+   <w-tab tid="inflection">
+      <div class="wl-panels">
+         <div class="wl-panel wl-panel-left">
+            <div class="wl-expr">11</div>
+            <div class="wl-grid" id="wl-grid-left" role="grid">
+               <div class="wl-grid-corner" role="columnheader"></div>
+               <div class="wl-grid-col-header" role="columnheader" *gender_headers:gi="" aria-label="12">13</div>
+               <div class="wl-grid-rows" **category_headers:ci="">
+                  <div class="wl-grid-row" role="row">
+                     <div class="wl-grid-row-header" role="rowheader" aria-label="14">15</div>
+                     <div class="wl-grid-cell" role="gridcell" *gender_headers:gi="">16</div>
                   </div>
                </div>
             </div>
          </div>
-         <div id="wl-revised-toggle-inflection" class="wl-revised-indicator"></div>
+         <div class="wl-panel wl-panel-right" id="wl-right-inflection-panel">
+            <div class="wl-expr">11</div>
+            <div class="wl-grid" id="wl-grid-right" role="grid">
+               <div class="wl-grid-corner" role="columnheader"></div>
+               <div class="wl-grid-col-header" role="columnheader" *gender_headers:gi="" aria-label="12">13</div>
+               <div class="wl-grid-rows" **category_headers:ci="">
+                  <div class="wl-grid-row" role="row">
+                     <div class="wl-grid-row-header" role="rowheader" aria-label="14">15</div>
+                     <div class="wl-grid-cell-edit" role="gridcell" *gender_headers:gi="">
+                        <div class="wl-cell-wrapper">
+                           <input class="wl-cell-input" type="text" data-ci="{{ci}}" data-gi="{{gi}}" aria-label="17" &value="{{right_cells[ci].cols[gi]}}"/>
+                           <img class="wl-cell-badge" &src="{{right_srcs[ci].cols[gi]}}" width="16" height="16" alt="" onerror="this.src=&#39;&#39;"/>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+            <div id="wl-revised-toggle-inflection" class="wl-revised-indicator"></div>
+         </div>
       </div>
-   </div>
+   </w-tab>
 
    <!-- Navigation -->
    <div class="wl-nav">
@@ -94,5 +98,5 @@
    <!-- Unsaved changes dialog -->
    <w-dialog ?show_dialog="" buttons="save,discard,cancel" @save="fnSave" @discard="fnDiscard" @cancel="fnCancel">21</w-dialog>
 
-</div>
+</w-tabs>
 </body></html>

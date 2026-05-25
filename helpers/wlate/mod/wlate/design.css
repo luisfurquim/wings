@@ -39,6 +39,7 @@
    background: var(--wl-panel-bg);
    border-radius: 8px;
    box-shadow: var(--wl-panel-shadow);
+   margin-bottom: 10px;
 }
 
 .wl-pending {
@@ -59,6 +60,7 @@
    padding: 6px 18px;
    border: 1px solid var(--wl-tab-inactive-border);
    border-radius: 6px;
+   font-family: inherit;
    font-size: 0.85em;
    font-weight: 600;
    cursor: pointer;
@@ -121,11 +123,15 @@
 
 /* ── Content panels ─────────────────────────────────────────────────────── */
 
+/* Pragmatic height — flex:1 propagation through the w-tab shadow
+   boundary into this grid box is unreliable in Chrome, so we subtract
+   the cumulative height of the surrounding rows (status + lang +
+   context + nav + paddings/gaps) instead of fighting the flex chain. */
 .wl-panels {
    display: grid;
    grid-template-columns: 1fr 1fr;
    gap: 12px;
-   flex: 1;
+   height: calc(100vh - 190px);
    min-height: 0;
 }
 
@@ -169,7 +175,7 @@
 
 .wl-content-edit {
    flex: 1;
-   width: 100%;
+   width: 97%;
    /* min-height: 0 lets the textarea shrink past its intrinsic 4-row default
       so it tracks the available height instead of pinning the panel taller. */
    min-height: 0;
