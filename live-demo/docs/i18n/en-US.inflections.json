@@ -1,14 +1,11 @@
 [
   {
-    "label": "the {n} third-year student who is passing won a scholarship",
+    "label": "{n}",
     "cells": {
-      "f.one": "the only third-year student who is passing won a scholarship",
-      "f.other": "the {n} third-year students who are passing won a scholarship",
-      "f.zero": "no third-year student is passing, so no scholarship was awarded",
-      "m.one": "the only third-year student who is passing won a scholarship",
-      "m.other": "the {n} third-year students who are passing won a scholarship",
-      "m.zero": "no third-year student is passing, so no scholarship was awarded"
+      ".one": "",
+      ".other": "",
+      ".zero": ""
     },
-    "revised": true
+    "revised": false
   }
 ]

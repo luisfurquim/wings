@@ -1,64 +1,234 @@
 [
-  { "content": "wprana — live demo" },
-  { "content": "Básico" },
-  { "content": "Flexão" },
-  { "content": "Formatação" },
-  { "content": "Tradução" },
-  { "content": "Demo de bindings, contadores e listas — Phase 3" },
-  { "content": "Demo de gênero, plural e CLDR — Phase 3" },
-  { "content": "Demo de números, moedas e datas — Phase 3" },
-  { "content": "Demo de carga e troca de catálogos — Phase 3" },
-  { "content": "Idioma:" },
-  { "content": "Lista de itens" },
-  { "content": "Contadores" },
-  { "content": "Modo e extras" },
-  { "content": "Adicione um item:" },
-  { "content": "Adicionar" },
-  { "content": "Contador rápido (a cada 2 s):" },
-  { "content": "Contador lento (a cada 5 s):" },
-  { "content": "Alternar modo" },
-  { "content": "Modo:" },
-  { "content": "Alternar extra" },
-  { "content": "Conteúdo extra revelado!" },
-  { "content": "Clique em \"Alternar extra\" para revelar." },
-  { "content": "Modo é exatamente \"edit\"" },
-  { "content": "Modo é diferente de \"readonly\"" },
-  { "content": "Modo começa com \"ed\"" },
-  { "content": "Modo termina com \"t\"" },
-  { "content": "Modo contém \"d\"" },
-  { "content": "Demonstração de flexão" },
-  { "content": "Gênero:" },
-  { "content": "Masculino" },
-  { "content": "Feminino" },
-  { "content": "Quantidade:" },
-  { "content": "{{@gender %qt #0}}" },
-  { "content": "Demonstração de formatação" },
-  { "content": "Números" },
-  { "content": "Moedas" },
-  { "content": "Carrinho" },
-  { "content": "Data e hora" },
-  { "content": "Inteiro:" },
-  { "content": "Decimal:" },
-  { "content": "Preço:" },
-  { "content": "Total:" },
-  { "content": "Agora:" },
-  { "content": "Catálogo de traduções por dentro" },
-  { "content": "Cada texto traduzível recebeu um índice numérico durante a compilação. A coluna do meio mostra o que o desenvolvedor escreveu em pt-BR (a língua-fonte); a da direita mostra o que está renderizado agora — troque o idioma no topo para vê-la mudar." },
-  { "content": "Índice" },
-  { "content": "Texto na fonte (pt-BR)" },
-  { "content": "Renderizado agora" },
-  { "content": "Medidas" },
-  { "content": "Demonstração de medidas físicas" },
-  { "content": "Comprimento" },
-  { "content": "Temperatura" },
-  { "content": "Velocidade" },
-  { "content": "padrão (locale):" },
-  { "content": ":km" },
-  { "content": ":mi" },
-  { "content": ":ft" },
-  { "content": ":c (Celsius):" },
-  { "content": ":f (Fahrenheit):" },
-  { "content": ":k (Kelvin):" },
-  { "content": ":kmh" },
-  { "content": ":mph" }
+  {
+    "content": "wprana — live demo",
+    "revised": false
+  },
+  {
+    "content": "Básico",
+    "revised": false
+  },
+  {
+    "content": "Flexão",
+    "revised": false
+  },
+  {
+    "content": "Formatação",
+    "revised": false
+  },
+  {
+    "content": "Tradução",
+    "revised": false
+  },
+  {
+    "content": "Medidas",
+    "revised": false
+  },
+  {
+    "content": "Abas",
+    "revised": false
+  },
+  {
+    "content": "Idioma:",
+    "revised": false
+  },
+  {
+    "content": "Lista de itens",
+    "revised": false
+  },
+  {
+    "content": "Contadores",
+    "revised": false
+  },
+  {
+    "content": "Modo e extras",
+    "revised": false
+  },
+  {
+    "content": "Contador rápido (a cada 2 s):",
+    "revised": false
+  },
+  {
+    "content": "Contador lento (a cada 5 s):",
+    "revised": false
+  },
+  {
+    "content": "Adicione um item:",
+    "revised": false
+  },
+  {
+    "content": "Adicionar",
+    "revised": false
+  },
+  {
+    "content": "Alternar modo",
+    "revised": false
+  },
+  {
+    "content": "Modo:",
+    "revised": false
+  },
+  {
+    "content": "Alternar extra",
+    "revised": false
+  },
+  {
+    "content": "Conteúdo extra revelado!",
+    "revised": false
+  },
+  {
+    "content": "Clique em \"Alternar extra\" para revelar.",
+    "revised": false
+  },
+  {
+    "content": "Modo é exatamente \"edit\"",
+    "revised": false
+  },
+  {
+    "content": "Modo é diferente de \"readonly\"",
+    "revised": false
+  },
+  {
+    "content": "Modo começa com \"ed\"",
+    "revised": false
+  },
+  {
+    "content": "Modo termina com \"t\"",
+    "revised": false
+  },
+  {
+    "content": "Modo contém \"d\"",
+    "revised": false
+  },
+  {
+    "content": "Quantidade:",
+    "revised": false
+  },
+  {
+    "content": "Demonstração de flexão",
+    "revised": false
+  },
+  {
+    "content": "{{@gender %qt #0}}",
+    "revised": false
+  },
+  {
+    "content": "Gênero:",
+    "revised": false
+  },
+  {
+    "content": "Masculino",
+    "revised": false
+  },
+  {
+    "content": "Feminino",
+    "revised": false
+  },
+  {
+    "content": "Preço:",
+    "revised": false
+  },
+  {
+    "content": "Agora:",
+    "revised": false
+  },
+  {
+    "content": "Demonstração de formatação",
+    "revised": false
+  },
+  {
+    "content": "Números",
+    "revised": false
+  },
+  {
+    "content": "Moedas",
+    "revised": false
+  },
+  {
+    "content": "Carrinho",
+    "revised": false
+  },
+  {
+    "content": "Data e hora",
+    "revised": false
+  },
+  {
+    "content": "Inteiro:",
+    "revised": false
+  },
+  {
+    "content": "Decimal:",
+    "revised": false
+  },
+  {
+    "content": "Catálogo de traduções por dentro",
+    "revised": false
+  },
+  {
+    "content": "Cada texto traduzível recebeu um índice numérico durante a compilação. A coluna do meio mostra o que o desenvolvedor escreveu em pt-BR (a língua-fonte); a da direita mostra o que está renderizado agora — troque o idioma no topo para vê-la mudar.",
+    "revised": false
+  },
+  {
+    "content": "Índice",
+    "revised": false
+  },
+  {
+    "content": "Texto na fonte (pt-BR)",
+    "revised": false
+  },
+  {
+    "content": "Renderizado agora",
+    "revised": false
+  },
+  {
+    "content": "padrão (locale):",
+    "revised": false
+  },
+  {
+    "content": ":km",
+    "revised": false
+  },
+  {
+    "content": ":mi",
+    "revised": false
+  },
+  {
+    "content": ":ft",
+    "revised": false
+  },
+  {
+    "content": "Demonstração de medidas físicas",
+    "revised": false
+  },
+  {
+    "content": "Comprimento",
+    "revised": false
+  },
+  {
+    "content": "Temperatura",
+    "revised": false
+  },
+  {
+    "content": "Velocidade",
+    "revised": false
+  },
+  {
+    "content": ":kmh",
+    "revised": false
+  },
+  {
+    "content": ":mph",
+    "revised": false
+  },
+  {
+    "content": ":c (Celsius):",
+    "revised": false
+  },
+  {
+    "content": ":f (Fahrenheit):",
+    "revised": false
+  },
+  {
+    "content": ":k (Kelvin):",
+    "revised": false
+  }
 ]
