@@ -26,6 +26,8 @@ authored in Go and running natively in the browser.
 | **Hash Routing** | Built-in `{{#}}` binding and `wprana.GoTo()` for SPA navigation without a router library. |
 | **Composable** | Nest components freely. Parent-to-child data flows via attributes; child-to-parent events flow via `@` triggers. |
 | **Standard Web** | Uses native Custom Elements v1 and Shadow DOM — works alongside any existing page or framework. |
+| **Internationalized** | Build-time text extraction + runtime catalog lookup, with plural/gender flexion and locale-aware number/date/measure formatting. |
+| **Themeable** | Global `--wings-*` design tokens; compose multiple runtime [skins](#skins--theming-with---wings--tokens) (colours, geometry, depth, motion, atmosphere). |
 
 ---
 
@@ -62,13 +64,22 @@ authored in Go and running natively in the browser.
 - [Customizable Widgets](#customizable-widgets)
   - [Customizable Interface](#customizable-interface)
   - [wprana.Update — Dynamic CSS](#wpranaupdate--dynamic-css)
+- [Skins — Theming with --wings-* Tokens](#skins--theming-with---wings--tokens)
+  - [Multi-skin composition](#multi-skin-composition)
+  - [Built-in skins (18)](#built-in-skins-18)
+  - [Registering your own skin](#registering-your-own-skin)
+  - [Skin API](#skin-api)
 - [Built-in Widgets](#built-in-widgets)
   - [wprana/widget/combobox — Multi-select Combobox](#wpranawidgetcombobox--multi-select-combobox)
+  - [wprana/widget/tabs — Tabbed Container](#wpranawidgettabs--tabbed-container-w-tabs--w-tabbutton--w-tab)
+  - [wprana/widget/navbar — Record Navigation Toolbar](#wpranawidgetnavbar--record-navigation-toolbar-w-navbar)
+  - [wprana/widget/skinswitcher — Skin Picker](#wpranawidgetskinswitcher--skin-picker-skin-switcher)
 - [Internationalization (i18n)](#internationalization-i18n)
   - [Pipeline Overview](#pipeline-overview)
   - [wprana/wi18n — Runtime Lookup](#wpranawi18n--runtime-lookup)
   - [Runtime Locale Switching (SetLang)](#runtime-locale-switching-setlang)
   - [cmd/gen_i18n — Build-time Extractor](#cmdgen_i18n--build-time-extractor)
+    - [Opting out (translate=no)](#opting-out-translateno)
   - [Flexion — Plurals & Gender (SynPrinter)](#flexion--plurals--gender-synprinter)
   - [Locale-Aware Formatting (FmtPrinter)](#locale-aware-formatting-fmtprinter)
   - [Physical Measure Packages](#physical-measure-packages)
@@ -1101,6 +1112,117 @@ Replaces the CSS of a registered custom element and updates the `<style>`
 tag in the Shadow DOM of every live instance. Called automatically by
 `ReplaceCSS`; can also be called directly for full CSS replacement.
 
+## Skins — Theming with `--wings-*` Tokens
+
+A **skin** is a CSS payload — a block of `--wings-*` custom-property definitions
+at `:root` — paired with a `SkinCategory` bitmask declaring which design
+dimensions it touches. Widgets read every token through a `var(--wings-X,
+fallback)` reference, so they look correct with no skin active and restyle
+globally the moment one is applied. There is no per-widget theming step.
+
+```go
+import (
+    "github.com/luisfurquim/wprana"
+    _ "github.com/luisfurquim/wprana/skins/light" // blank import → init() registers it
+    _ "github.com/luisfurquim/wprana/skins/glass"
+)
+
+func main() {
+    if err := wprana.ApplySkin("light"); err != nil { /* … */ }
+    _ = wprana.ApplySkin("glass") // composes on top of light
+    wprana.Main()
+}
+```
+
+Each active skin owns a `<style id="wprana-skin-NAME" data-wprana-skin="NAME">`
+in `document.head`; DOM order is activation order, so later skins cascade over
+earlier ones.
+
+### Multi-skin composition
+
+Several skins can be active at once **provided their category bitmasks are
+disjoint** (their AND is zero). This lets a *complete theme* (colours +
+geometry + depth + …) compose with a *focused skin* that touches one orthogonal
+dimension (e.g. `glass`, which is Atmosphere-only). Activating a skin whose
+categories overlap an already-active skin returns a `*SkinConflictError`
+instead of silently double-setting a token.
+
+There are nine categories (`SkinCategory`, a `uint64` bitmask):
+
+| Category | What it owns |
+|---|---|
+| `CategoryIdentity` | colours, surfaces, text, primary/secondary, borders, button colours, shadow *colour* |
+| `CategoryGeometry` | corner-radius scale, border width/style |
+| `CategoryDepth` | shadow *shapes* (offset/blur/spread); colour comes from Identity |
+| `CategoryMotion` | transition durations/easing, hover-lift, active-scale |
+| `CategoryInteraction` | focus-ring (chromatic feedback) |
+| `CategoryTypography` | font family/size/weight *(reserved — no built-ins yet)* |
+| `CategorySpacing` | padding / gap density |
+| `CategoryLighting` | gradients, glows, gradient-shadow |
+| `CategoryAtmosphere` | glass opacity, surface blur/saturate |
+
+The split is principled: a token whose **value is a colour** belongs to a
+chromatic category (Identity / Lighting / Interaction); a token whose value is a
+**metric** (px, ms, ratio, transform) belongs to a structural/temporal one
+(Geometry / Spacing / Depth / Motion). Shadows are split deliberately — the
+*shape* is Depth, the *colour* rgba is Identity (`--wings-shadow-color-*`), and
+Depth skins compose the final `--wings-shadow-*` that widgets read.
+
+Convenience masks bundle the bits a typical skin of each kind declares:
+`IdentitySkinCategories` (Identity|Lighting|Interaction), `GeometrySkinCategories`
+(Geometry|Spacing), `DepthSkinCategories`, `MotionSkinCategories`.
+
+### Built-in skins (18)
+
+| Kind (mask) | Skins | Mutually exclusive? |
+|---|---|---|
+| Identity (theme) | `light` `dark` `autumn` `darkblueberry` `darkforest` `lightblueberry` `mushroom` `vividforest` | yes — pick one |
+| Geometry | `sharp` `classic` `soft` | yes — pick one |
+| Depth | `flat` `lifted` `floating` | yes — pick one |
+| Motion | `gentle` `calm` `brisk` | yes — pick one |
+| Atmosphere | `glass` | composes with anything |
+
+A complete look is one from each column, e.g. the live-demo default is
+`light + classic + lifted + calm` (optionally `+ glass`). Import each skin you
+intend to use (blank import) so its `init()` registers it.
+
+### Registering your own skin
+
+```go
+//go:embed skin.css
+var css string
+
+func init() {
+    // Declare exactly the dimensions your CSS defines, so composition and
+    // conflict detection work. A chromatic theme uses the convenience mask:
+    wprana.RegisterSkin("midnight", wprana.IdentitySkinCategories, css)
+    // A focused skin declares a single bit:
+    // wprana.RegisterSkin("rounded", wprana.GeometrySkinCategories, css)
+}
+```
+
+The token contract every skin fills lives in `skins/tokens.md`, organised one
+section per category. Define the tokens your declared categories own; widgets
+supply literal fallbacks for everything else.
+
+### Skin API
+
+| Function | Purpose |
+|---|---|
+| `RegisterSkin(name, categories, css)` | Register a skin (call from `init()`). |
+| `ApplySkin(name) error` | Activate. Idempotent; returns `*SkinNotRegisteredError` or `*SkinConflictError`. |
+| `DeactivateSkin(name) error` | Remove one active skin. |
+| `ClearSkins()` | Deactivate all. |
+| `ActiveSkins() []string` / `ActiveSkin() string` | All active (activation order) / most-recent. |
+| `ActiveCategories() SkinCategory` | OR of every active skin's mask. |
+| `ConflictsWith(categories) []string` | Active skins that would block `categories`. |
+| `ListSkins() []string` / `ListSkinInfos() []SkinInfo` | Registered names / names+categories. |
+| `SkinCategoriesOf(name) (SkinCategory, bool)` | A skin's declared mask. |
+| `OnSkinChange(fn func())` | Hook fired after every apply/deactivate/clear (used by `<skin-switcher>` to stay in sync). |
+
+The `<skin-switcher>` built-in widget exposes all of this as UI — see
+[Built-in Widgets](#built-in-widgets) below.
+
 ## Built-in Widgets
 
 ### wprana/widget/combobox — Multi-select Combobox
@@ -1135,52 +1257,126 @@ keyboard support.
 | `@notinlist` | typed string | Enter pressed with text not matching any option |
 | `@change` | `[]any` of selected items | Selection changed (add or remove) |
 
-**CSS Customization:**
+**Theming.** The combobox reads its colours and metrics from the shared
+[`--wings-*` skin tokens](#skins--theming-with---wings--tokens) — `--wings-input-*`
+(field), `--wings-list-box-*` / `--wings-list-item-*` (dropdown), `--wings-tiny-element-*`
+(tags), `--wings-remover-*` (tag remove button), plus `--wings-radius-*`,
+`--wings-shadow-md` and `--wings-transition-fast`. Apply a skin and the combobox
+follows; no per-widget theming needed. It also opts into the `glass` skin via
+`--wings-surface-blur`/`--wings-surface-saturate` on the dropdown panel.
 
-The combobox CSS is split into two parts:
+The "No results" label is rendered via CSS `content: attr(data-i18n)`, so it is
+translatable through the normal i18n pipeline.
 
-- **Vars** — CSS custom properties for colors, shadows, etc. Replace
-  this to change the visual theme:
+**Per-instance overrides.** The widget still implements `Customizable` with
+`"Vars"` and `"Design"` parts, so a single instance can override CSS without a
+skin via `cb.ReplaceCSS("Vars", …)` (see [Customizable Widgets](#customizable-widgets)).
+
+### wprana/widget/tabs — Tabbed Container (`w-tabs` / `w-tabbutton` / `w-tab`)
 
 ```go
-cb := combobox.New()
-cb.ReplaceCSS("Vars", `
-:host {
-    --cb-tag-bg: #1e293b;
-    --cb-tag-color: #e2e8f0;
-    --cb-tag-border: #475569;
-    --cb-accent: #3b82f6;
-    /* ... */
-}
-`)
+import (
+    _ "github.com/luisfurquim/wprana/widget/tabs"
+    _ "github.com/luisfurquim/wprana/widget/tabbutton"
+    _ "github.com/luisfurquim/wprana/widget/tab"
+)
 ```
 
-- **Design** — Layout, spacing, transitions. Uses `var()` references for
-  all colors, so changing Vars is enough for most themes.
+`w-tabs` is a **controlled** container: the single source of truth for which
+panel is visible is the host's `active` attribute (a `w-tab` `tid`, or a
+positional index). Panels are `w-tab` children; the `w-tabbutton` buttons are
+*optional sugar*.
 
-Available CSS custom properties:
+**Shape 1 — with buttons (simple tabs).** Co-locate each button with its panel
+as direct children (`button, panel, button, panel`). `w-tabs` routes the buttons
+into a strip and a click sets `active` for you:
 
-| Variable | Default | Used for |
-|----------|---------|----------|
-| `--cb-tag-bg` | `#ede9fe` | Selected tag background |
-| `--cb-tag-color` | `#4c1d95` | Selected tag text |
-| `--cb-tag-border` | `#c4b5fd` | Selected tag border |
-| `--cb-rm-color` | `#7c3aed` | Remove button color |
-| `--cb-rm-hover-bg` | `#ddd6fe` | Remove button hover background |
-| `--cb-rm-hover-color` | `#dc2626` | Remove button hover color |
-| `--cb-input-border` | `#d1d5db` | Input border |
-| `--cb-input-focus-border` | `#7c3aed` | Input focus border |
-| `--cb-input-focus-shadow` | `rgba(124,58,237,0.12)` | Input focus ring |
-| `--cb-input-bg` | `#fff` | Input background |
-| `--cb-drop-bg` | `#ffffff` | Dropdown background |
-| `--cb-drop-border` | `#d1d5db` | Dropdown border |
-| `--cb-drop-shadow` | (see vars.css) | Dropdown shadow |
-| `--cb-scroll-thumb` | `#c4b5fd` | Scrollbar thumb |
-| `--cb-opt-color` | `#1f2937` | Option text |
-| `--cb-opt-hover-bg` | `#f5f3ff` | Option hover background |
-| `--cb-opt-hover-color` | `#5b21b6` | Option hover text |
-| `--cb-opt-active-bg` | `#ede9fe` | Option active background |
-| `--cb-empty-color` | `#9ca3af` | "No results" text |
+```html
+<w-tabs mode="panel">
+  <w-tabbutton active>Overview</w-tabbutton>
+  <w-tab><h2>Overview</h2>…</w-tab>
+  <w-tabbutton>Details</w-tabbutton>
+  <w-tab>…</w-tab>
+</w-tabs>
+```
+
+**Shape 2 — headless (controlled).** Provide *no* `w-tabbutton`. `w-tabs` adds no
+chrome and renders its content transparently (passthrough), so your own layout
+reaches the panels; drive selection by binding `active`:
+
+```html
+<w-tabs mode="detached" active="{{current}}">
+  <header>…your own buttons set `current`…</header>
+  <w-tab tid="a">…</w-tab>
+  <w-tab tid="b">…</w-tab>
+</w-tabs>
+```
+
+**Modes** (`mode` attribute on `w-tabs`):
+
+| Mode | Layout |
+|---|---|
+| `panel` (default) | button strip on top (scrolls on overflow), panel below |
+| `detached` | same shape, chip-like free-floating buttons, transparent panels |
+| `menu` | button column on the left, panel on the right |
+| `accordion` | each button is **moved** into its panel to become the native `<summary>`; a `w-tab` marked `active` starts open, then open/close is the platform's job |
+
+**Attributes.** On `w-tabs`: `mode`, `active`. On `w-tabbutton` / `w-tab`:
+`tid` (optional identifier for deep-link/programmatic selection — pairing is by
+DOM adjacency, so it's not required), `active` (boolean; you may set it on the
+initial markup to choose the starting tab), and `mode` (managed — stamped by
+`w-tabs`; don't write it yourself).
+
+**Event to parent.** `@change` fires after a user-driven (click/keyboard)
+activation; `args[0]` is the selected `tid` (or positional index as a string).
+It does **not** fire at init or for programmatic `active` changes.
+
+> Panels keep their DOM across switches (hidden via CSS, not destroyed), so
+> input values, scroll position and embedded widgets survive. `w-tabbutton` is a
+> deliberately stateless, CSS-only leaf — that's what makes the accordion "move"
+> safe. For one-button-to-one-content disclosure, native `<details>` is often
+> simpler than `accordion`.
+
+### wprana/widget/navbar — Record Navigation Toolbar (`w-navbar`)
+
+```go
+import _ "github.com/luisfurquim/wprana/widget/navbar"
+```
+
+A record-navigation toolbar — first / prev-many / prev / position input / next /
+next-many / last — that forwards actions to the parent as triggers. It keeps no
+internal state: current position and total are owned by the parent through bound
+fields.
+
+```html
+<w-navbar
+    nav_input="{{cur_record}}"
+    total_count="{{record_count}}"
+    @first="goFirst"     @prevmany="goPrevPage"
+    @prev="goPrev"       @next="goNext"
+    @nextmany="goNextPage" @last="goLast"
+    @change="onSeek">
+</w-navbar>
+```
+
+The position input is two-way bound, so typing updates `nav_input`; `@change`
+then fires with the new value (`args[0]`), and Enter fires it immediately
+without waiting for blur. `w-navbar` implements `Customizable` (`"Vars"` /
+`"Design"`).
+
+### wprana/widget/skinswitcher — Skin Picker (`<skin-switcher>`)
+
+```go
+import _ "github.com/luisfurquim/wprana/widget/skinswitcher"
+```
+
+A drop-in UI for the [skin system](#skins--theming-with---wings--tokens): one
+checkbox per registered skin (so the user can stack a focused skin like `glass`
+on top of a complete theme). It detects conflicts via the category bitmasks and,
+on selecting a conflicting skin, auto-replaces the colliding active skin rather
+than blocking. It registers an `OnSkinChange` hook so its UI stays in sync with
+programmatic `ApplySkin` / `DeactivateSkin` calls. Just drop `<skin-switcher>`
+into your markup.
 
 ## Internationalization (i18n)
 
@@ -1414,8 +1610,20 @@ What it does:
   translatable attribute set (see flags below), inserts the string into a shared
   trie keyed by an octal hash of the text, and replaces the node content
   (or attribute value) with the trie's decimal index.
+- **Leaves runtime placeholders verbatim.** A text node (or attribute value)
+  that is *only* `{{…}}` bindings plus whitespace — e.g. `{{count}}`,
+  `{{%price}}`, `{{%dist:km}}` — carries no words to translate, so it is left
+  untouched and never assigned a catalog index. This keeps the catalog clean
+  and prevents non-deflang locales from rendering a bare index where the
+  binding should be. (Flex blocks such as `{{@g %c …}}` are the deliberate
+  exception: they *are* extracted — see Flex-block extraction below.)
+- Skips any element (and its subtree) marked `translate="no"` — see
+  [Opting out](#opting-out-translateno) below.
 - Writes `<file>.i18n.html` next to each source template. Embed these at
-  compile time via `//go:embed` instead of the original HTML.
+  compile time via `//go:embed` instead of the original HTML. (Note: the
+  parser emits a wrapping `<html><head></head><body>…</body></html>` — this is
+  harmless; the framework sets the template via `<template>.innerHTML`, which
+  dissolves those wrappers and keeps the fragment.)
 - Persists the trie to `i18n.db` (gob + 64-bit epoch version header) at
   the root of `--path`, so the next run reuses indices for unchanged
   strings.
@@ -1472,6 +1680,36 @@ Three flags tune this set:
 In `ctxdetail`, attribute occurrences are distinguished from text-node
 occurrences by the tag format: `button[title]@path:line:col` vs.
 `button@path:line:col`.
+
+#### Opting out (`translate="no"`)
+
+`gen_i18n` honors the standard HTML
+[`translate`](https://developer.mozilla.org/docs/Web/HTML/Global_attributes/translate)
+attribute. An element marked `translate="no"` — and everything inside it — is
+excluded from extraction (both text nodes and translatable attributes); a
+nested `translate="yes"` re-enables it. The attribute is **build-time only**:
+the wi18n runtime ignores it and still substitutes any numeric index it finds,
+so a node can hold a *literal* index under `translate="no"` and still render
+live.
+
+Use it for content that must stay verbatim regardless of locale:
+
+```html
+<!-- Language autonyms never translate (each shows in its own language) -->
+<select translate="no">
+  <option value="pt-BR">Português</option>
+  <option value="en-US">English</option>
+  <option value="es-AR">Español</option>
+</select>
+
+<!-- Verbatim prose (e.g. an English API demo) kept out of the catalog -->
+<div class="api-notes" translate="no"> … </div>
+```
+
+The combination — build-time skip + runtime substitution — also enables a
+self-referential demo: a table whose cells contain literal catalog indices
+under `translate="no"` won't be re-indexed by `gen_i18n`, yet the runtime
+renders each index live (the live-demo's "Tradução" tab does exactly this).
 
 **Runtime mirror.** At runtime, `wprana.TranslatableAttrs` controls which
 attributes the engine passes through `Printer`. Its default matches the
