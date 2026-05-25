@@ -1,0 +1,14 @@
+:root {
+  /* floating — generous, diffuse shadow geometry. Pairs with `soft`. */
+
+  --wings-shadow-sm-shape:    0 4px 12px 0;
+  --wings-shadow-md-shape:    0 12px 32px 0;
+  --wings-shadow-lg-shape:    0 24px 64px 0;
+  --wings-shadow-inset-shape: inset 0 4px 12px 0;
+
+  /* Composition with Identity-provided shadow colours. */
+  --wings-shadow-sm:    var(--wings-shadow-sm-shape) var(--wings-shadow-color-sm, rgba(0,0,0,0.06));
+  --wings-shadow-md:    var(--wings-shadow-md-shape) var(--wings-shadow-color-md, rgba(0,0,0,0.08));
+  --wings-shadow-lg:    var(--wings-shadow-lg-shape) var(--wings-shadow-color-lg, rgba(0,0,0,0.12));
+  --wings-shadow-inset: var(--wings-shadow-inset-shape) var(--wings-shadow-color-inset, rgba(0,0,0,0.06));
+}

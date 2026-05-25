@@ -1,63 +1,68 @@
 :root {
   /* --- Tema de Cogumelos Pastel --- */
-  /* Inspirado na paleta de cores de image_0.png */
 
-  /* Core tokens — ver skins/tokens.md */
-  --wings-bg:                 #fee2e2; /* Fundo principal: rosa muito pálido, como o chão da imagem */
-  --wings-surface:            #fff;    /* Superfícies principais: branco puro para contraste */
-  --wings-text:               #4c0519; /* Texto: Borgonha muito escuro e rico (do coral) */
-  --wings-text-muted:         #8a0a2a; /* Texto intermediário: rosa escuro */
-  --wings-text-light:         #be123c; /* Texto secundário: um rosa coral mais profundo */
-  --wings-primary:            #d946ef; /* Cor primária: rosa fúcsia/magenta (dos detalhes vibrantes) */
-  --wings-border:             #fda4af; /* Borda secundária: rosa empoeirado */
-  --wings-border-focus:       #d946ef; /* Foco: mesma fúcsia primária */
-  --wings-btn-bg:             #fff;
+  /* Core palette */
+  --wings-bg:                 #fee2e2;
+  --wings-surface:            #ffffff;
+  --wings-text:               #4c0519;
+  --wings-text-muted:         #8a0a2a;
+  --wings-text-light:         #be123c;
+  --wings-primary:            #d946ef;
+  --wings-primary-color:      #ffffff;
+  --wings-primary-hover-bg:   #a21caf;
+  --wings-border:             #fda4af;
+  --wings-border-focus:       #d946ef;
+  --wings-btn-bg:             #ffffff;
   --wings-btn-hover-bg:       #fff1f2;
   --wings-btn-hover-color:    #4c0519;
   --wings-btn-hover-shadow:   0 2px 4px rgba(76, 5, 25, 0.15);
 
-  --wings-secondary:          #be123c;  /* crimson rose — attention on pastel bg */
-  --wings-quiet:              #fda4af;  /* same as border — rosy neutral */
-  --wings-primary-pale:       #fdf2f8;  /* pale rose tint of fuchsia primary */
+  --wings-secondary:          #be123c;
+  --wings-quiet:              #fda4af;
+  --wings-primary-pale:       #fdf2f8;
   --wings-gradient:           linear-gradient(135deg, #d946ef, #a21caf);
   --wings-gradient-color:     #ffffff;
   --wings-gradient-shadow:    0 2px 8px rgba(162, 28, 175, 0.30);
 
-  /* w-dialog tokens. */
-  --wings-dialog-bg:                  #ffffff; /* Fundo do diálogo: branco puro */
-  --wings-dialog-shadow:               0 8px 32px rgba(76, 5, 25, 0.25); /* Sombra mais profunda e suave */
-  --wings-dialog-border-radius:        12px;   /* Cantos um pouco mais arredondados e orgânicos */
-  --wings-dialog-padding:              24px;
-  --wings-dialog-overlay-bg:          rgba(190, 18, 60, 0.4); /* Overlay: rosa coral translúcido */
-  --wings-dialog-button-bg:           #fff;
-  --wings-dialog-button-hover-bg:      #fff1f2;
-  --wings-dialog-button-active-bg:     #fecdd3; /* Ativo: um rosa mais saturado */
-  --wings-dialog-button-border:        1px solid #fda4af;
-  --wings-dialog-button-border-hover: 1px solid #d946ef;
-  --wings-dialog-button-padding:       8px 16px;
-  --wings-dialog-button-gap:           8px;
-  --wings-dialog-primary-bg:          #d946ef; /* Fundo primário fúcsia */
-  --wings-dialog-primary-color:       #ffffff; /* Texto branco sobre primário */
-  --wings-dialog-primary-hover-bg:    #a21caf; /* Hover primário mais escuro */
+  /* Functional roles */
+  --wings-tiny-element-bg:        #fbcfe8;
+  --wings-tiny-element-color:     #831843;
+  --wings-tiny-element-border:    #f9a8d4;
 
-  /* w-combobox tokens. */
-  --wings-combobox-tag-bg:            #fbcfe8; /* Tag: Rosa pastel suave (dos cogumelos maiores) */
-  --wings-combobox-tag-color:          #831843; /* Texto da tag: bordô profundo (dos corais escuros) */
-  --wings-combobox-tag-border:         #f9a8d4; /* Borda da tag: rosa médio */
-  --wings-combobox-rm-color:          #db2777; /* Botão de remover: rosa vibrante */
-  --wings-combobox-rm-hover-bg:       #f9a8d4; /* Hover de remover: rosa pálido */
-  --wings-combobox-rm-hover-color:    #a21caf; /* Texto de remover no hover */
-  --wings-combobox-input-border:      #d1d5db; /* Mantido neutro, mas pode ser ajustado */
-  --wings-combobox-input-focus-border:#db2777; /* Foco do input: rosa vibrante */
-  --wings-combobox-input-focus-shadow:rgba(219, 39, 119, 0.15); /* Sombra de foco sutil */
-  --wings-combobox-input-bg:          #ffffff;
-  --wings-combobox-drop-bg:           #ffffff;
-  --wings-combobox-drop-border:       #d1d5db;
-  --wings-combobox-drop-shadow:       0 4px 16px rgba(0, 0, 0, 0.05), 0 1px 4px rgba(0, 0, 0, 0.03);
-  --wings-combobox-scroll-thumb:      #f9a8d4; /* Thumb do scroll: rosa médio */
-  --wings-combobox-opt-color:         #4c0519; /* Texto da opção: bordô escuro */
-  --wings-combobox-opt-hover-bg:      #fdf2f8; /* Hover da opção: rosa muito pálido */
-  --wings-combobox-opt-hover-color:    #db2777; /* Texto da opção no hover */
-  --wings-combobox-opt-active-bg:     #fbcfe8; /* Ativo da opção: rosa pastel suave */
-  --wings-combobox-empty-color:       #94a3b8; /* Cor vazia: neutra, mas ligeiramente mais suave */
+  --wings-remover-color:          #db2777;
+  --wings-remover-hover-bg:       #f9a8d4;
+  --wings-remover-hover-color:    #a21caf;
+
+  --wings-input-border:           #d1d5db;
+  --wings-input-focus-border:     #db2777;
+  --wings-input-focus-shadow:     rgba(219, 39, 119, 0.15);
+  --wings-input-bg:               #ffffff;
+
+  --wings-list-box-bg:            #ffffff;
+  --wings-list-box-border:        #d1d5db;
+
+  --wings-list-item-color:        #4c0519;
+  --wings-list-item-hover-bg:     #fdf2f8;
+  --wings-list-item-hover-color:  #db2777;
+  --wings-list-item-active-bg:    #fbcfe8;
+
+  --wings-button-bg:              #ffffff;
+  --wings-button-hover-bg:        #fff1f2;
+  --wings-button-active-bg:       #fecdd3;
+  --wings-button-border:          1px solid #fda4af;
+  --wings-button-border-hover:    1px solid #d946ef;
+
+  --wings-empty-list-color:       #94a3b8;
+  --wings-scroll-thumb:           #f9a8d4;
+
+  --wings-box-overlay-bg:         rgba(190, 18, 60, 0.40);
+
+  /* Shadow colours — tintadas com bordô */
+  --wings-shadow-color-sm:        rgba(76, 5, 25, 0.10);
+  --wings-shadow-color-md:        rgba(76, 5, 25, 0.15);
+  --wings-shadow-color-lg:        rgba(76, 5, 25, 0.22);
+  --wings-shadow-color-inset:     rgba(76, 5, 25, 0.10);
+
+  /* Interaction — chromatic focus feedback */
+  --wings-focus-ring:             0 0 0 3px rgba(217, 70, 239, 0.25);
 }

@@ -32,5 +32,5 @@ import (
 var css string
 
 func init() {
-	wprana.RegisterSkin("dark", css)
+	wprana.RegisterSkin("dark", wprana.IdentitySkinCategories, css)
 }

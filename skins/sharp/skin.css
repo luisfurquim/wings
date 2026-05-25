@@ -1,0 +1,16 @@
+:root {
+  /* sharp — angular, dense. Minimal radius, tight padding. */
+
+  --wings-radius-xs:    0;
+  --wings-radius-sm:    1px;
+  --wings-radius-md:    2px;
+  --wings-radius-lg:    3px;
+  --wings-radius-pill:  9999px;
+
+  --wings-border-width: 1px;
+  --wings-border-style: solid;
+
+  --wings-button-padding: 4px 10px;
+  --wings-button-gap:     4px;
+  --wings-box-padding:    16px;
+}

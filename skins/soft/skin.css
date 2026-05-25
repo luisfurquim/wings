@@ -1,0 +1,16 @@
+:root {
+  /* soft — rounded, airy. Generous radius and breathing room. */
+
+  --wings-radius-xs:    4px;
+  --wings-radius-sm:    8px;
+  --wings-radius-md:    12px;
+  --wings-radius-lg:    16px;
+  --wings-radius-pill:  9999px;
+
+  --wings-border-width: 1px;
+  --wings-border-style: solid;
+
+  --wings-button-padding: 12px 22px;
+  --wings-button-gap:     12px;
+  --wings-box-padding:    32px;
+}

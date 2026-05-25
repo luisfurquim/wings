@@ -1,74 +1,66 @@
 :root {
-  /* Core tokens */
-  --wings-bg:                 #f7f4f8;   /* fundo levemente lilás */
+  /* Core palette — fundo levemente lilás */
+  --wings-bg:                 #f7f4f8;
   --wings-surface:            #ffffff;
-  --wings-text:               #2d1f2f;   /* roxo bem escuro (quase neutro) */
-  --wings-text-muted:         #554757;   /* intermediário */
+  --wings-text:               #2d1f2f;
+  --wings-text-muted:         #554757;
   --wings-text-light:         #7a6a7d;
-
-  /* Primary puxando pro roxo da imagem */
-  --wings-primary:            #8b5cf6;   /* lilás vibrante */
+  --wings-primary:            #8b5cf6;
+  --wings-primary-color:      #ffffff;
+  --wings-primary-hover-bg:   #6d28d9;
   --wings-border:             #e6dff0;
   --wings-border-focus:       #7c3aed;
-
   --wings-btn-bg:             #ffffff;
   --wings-btn-hover-bg:       #f3eef9;
   --wings-btn-hover-color:    #2d1f2f;
   --wings-btn-hover-shadow:   0 2px 6px rgba(88, 28, 135, 0.12);
 
-  --wings-secondary:          #7c3aed;  /* deep violet — contrast with lilac primary */
-  --wings-quiet:              #e6dff0;  /* same as border — pale lilac neutral */
-  --wings-primary-pale:       #f5f3ff;  /* very pale violet tint */
+  --wings-secondary:          #7c3aed;
+  --wings-quiet:              #e6dff0;
+  --wings-primary-pale:       #f5f3ff;
   --wings-gradient:           linear-gradient(135deg, #8b5cf6, #6d28d9);
   --wings-gradient-color:     #ffffff;
   --wings-gradient-shadow:    0 2px 8px rgba(109, 40, 217, 0.30);
 
-  /* Dialog */
-  --wings-dialog-bg:                  #ffffff;
-  --wings-dialog-shadow:              0 6px 20px rgba(88, 28, 135, 0.18);
-  --wings-dialog-border-radius:       10px;
-  --wings-dialog-padding:             24px;
-  --wings-dialog-overlay-bg:          rgba(45, 31, 47, 0.45);
+  /* Functional roles */
+  --wings-tiny-element-bg:        #ede9fe;
+  --wings-tiny-element-color:     #5b21b6;
+  --wings-tiny-element-border:    #c4b5fd;
 
-  --wings-dialog-button-bg:           #ffffff;
-  --wings-dialog-button-hover-bg:     #f3eef9;
-  --wings-dialog-button-active-bg:    #e9e1f5;
-  --wings-dialog-button-border:       1px solid #e6dff0;
-  --wings-dialog-button-border-hover: 1px solid #c4b5fd;
+  --wings-remover-color:          #7c3aed;
+  --wings-remover-hover-bg:       #ddd6fe;
+  --wings-remover-hover-color:    #dc2626;
 
-  --wings-dialog-button-padding:      8px 16px;
-  --wings-dialog-button-gap:          8px;
+  --wings-input-border:           #ddd6fe;
+  --wings-input-focus-border:     #8b5cf6;
+  --wings-input-focus-shadow:     rgba(139, 92, 246, 0.15);
+  --wings-input-bg:               #ffffff;
 
-  --wings-dialog-primary-bg:          #8b5cf6;
-  --wings-dialog-primary-color:       #ffffff;
-  --wings-dialog-primary-hover-bg:    #6d28d9;
+  --wings-list-box-bg:            #ffffff;
+  --wings-list-box-border:        #e6dff0;
 
-  /* Combobox — puxando pro tema blueberry/lilás */
-  --wings-combobox-tag-bg:            #ede9fe;
-  --wings-combobox-tag-color:         #5b21b6;
-  --wings-combobox-tag-border:        #c4b5fd;
+  --wings-list-item-color:        #2d1f2f;
+  --wings-list-item-hover-bg:     #f5f3ff;
+  --wings-list-item-hover-color:  #6d28d9;
+  --wings-list-item-active-bg:    #ede9fe;
 
-  --wings-combobox-rm-color:          #7c3aed;
-  --wings-combobox-rm-hover-bg:       #ddd6fe;
-  --wings-combobox-rm-hover-color:    #dc2626;
+  --wings-button-bg:              #ffffff;
+  --wings-button-hover-bg:        #f3eef9;
+  --wings-button-active-bg:       #e9e1f5;
+  --wings-button-border:          1px solid #e6dff0;
+  --wings-button-border-hover:    1px solid #c4b5fd;
 
-  --wings-combobox-input-border:      #ddd6fe;
-  --wings-combobox-input-focus-border:#8b5cf6;
-  --wings-combobox-input-focus-shadow:rgba(139, 92, 246, 0.15);
+  --wings-empty-list-color:       #9ca3af;
+  --wings-scroll-thumb:           #c4b5fd;
 
-  --wings-combobox-input-bg:          #ffffff;
+  --wings-box-overlay-bg:         rgba(45, 31, 47, 0.45);
 
-  --wings-combobox-drop-bg:           #ffffff;
-  --wings-combobox-drop-border:       #e6dff0;
-  --wings-combobox-drop-shadow:       0 6px 20px rgba(88, 28, 135, 0.12),
-                                      0 2px 6px rgba(0, 0, 0, 0.06);
+  /* Shadow colours — tintadas com lilás suave */
+  --wings-shadow-color-sm:        rgba(88, 28, 135, 0.08);
+  --wings-shadow-color-md:        rgba(88, 28, 135, 0.12);
+  --wings-shadow-color-lg:        rgba(88, 28, 135, 0.18);
+  --wings-shadow-color-inset:     rgba(88, 28, 135, 0.08);
 
-  --wings-combobox-scroll-thumb:      #c4b5fd;
-
-  --wings-combobox-opt-color:         #2d1f2f;
-  --wings-combobox-opt-hover-bg:      #f5f3ff;
-  --wings-combobox-opt-hover-color:   #6d28d9;
-  --wings-combobox-opt-active-bg:     #ede9fe;
-
-  --wings-combobox-empty-color:       #9ca3af;
+  /* Interaction — chromatic focus feedback */
+  --wings-focus-ring:             0 0 0 3px rgba(139, 92, 246, 0.30);
 }

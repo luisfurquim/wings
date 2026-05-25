@@ -13,5 +13,5 @@ import (
 var css string
 
 func init() {
-	wprana.RegisterSkin("darkblueberry", css)
+	wprana.RegisterSkin("darkblueberry", wprana.IdentitySkinCategories, css)
 }

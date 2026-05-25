@@ -1,0 +1,16 @@
+:root {
+  /* classic — middle ground. Default radius/padding from previous themes. */
+
+  --wings-radius-xs:    2px;
+  --wings-radius-sm:    4px;
+  --wings-radius-md:    6px;
+  --wings-radius-lg:    8px;
+  --wings-radius-pill:  9999px;
+
+  --wings-border-width: 1px;
+  --wings-border-style: solid;
+
+  --wings-button-padding: 8px 16px;
+  --wings-button-gap:     8px;
+  --wings-box-padding:    24px;
+}

@@ -1,0 +1,9 @@
+:root {
+  /* gentle — slow, calm transitions; minimal hover lift; soft press. */
+
+  --wings-transition-fast:   220ms ease;
+  --wings-transition-normal: 380ms ease;
+  --wings-transition-slow:   600ms ease;
+  --wings-hover-lift:        translateY(0);
+  --wings-active-scale:      scale(0.99);
+}

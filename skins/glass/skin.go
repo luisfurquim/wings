@@ -1,0 +1,31 @@
+//go:build js && wasm
+
+// Package glass provides a focused wprana skin covering only the
+// CategoryAtmosphere dimension — glass-morphism via backdrop-filter blur
+// and translucent surface alpha.
+//
+// Unlike the chromatic theme skins (which all declare
+// IdentitySkinCategories and are mutually exclusive), glass touches only
+// Atmosphere, so it composes with any of them:
+//
+//	_ = wprana.ApplySkin("mushroom") // colors + geometry + …
+//	_ = wprana.ApplySkin("glass")    // adds atmospheric blur on top
+//
+// Widgets opt into the effect by using the documented tokens with a
+// `0` fallback, so the skin is invisible until a widget references it.
+//
+// Currently consumed by `w-dialog` and `w-combobox` (dropdown panel).
+package glass
+
+import (
+	_ "embed"
+
+	"github.com/luisfurquim/wprana"
+)
+
+//go:embed skin.css
+var css string
+
+func init() {
+	wprana.RegisterSkin("glass", wprana.CategoryAtmosphere, css)
+}

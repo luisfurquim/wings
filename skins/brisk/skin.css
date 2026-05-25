@@ -1,0 +1,9 @@
+:root {
+  /* brisk — fast, expressive transitions; pronounced hover lift; firm press. */
+
+  --wings-transition-fast:   60ms  ease;
+  --wings-transition-normal: 110ms ease;
+  --wings-transition-slow:   200ms ease;
+  --wings-hover-lift:        translateY(-2px);
+  --wings-active-scale:      scale(0.94);
+}
