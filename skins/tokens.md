@@ -11,9 +11,19 @@ fallback). Every token name listed here is reserved for that purpose.
 
 ## Authoring rules
 
-- **Skins** define tokens once at `:root { ... }`. A skin's CSS is injected
-  by `wprana.ApplySkin(name)` into a single `<style id="wprana-skin">`
-  element appended to `document.head`.
+- **Skins** declare a `SkinCategory` bitmask at `wprana.RegisterSkin(name,
+  categories, css)`. The CSS is injected by `wprana.ApplySkin(name)` into
+  a `<style id="wprana-skin-<name>" data-wprana-skin="<name>">` element
+  appended to `document.head`. Multiple skins can be active simultaneously
+  if their bitmasks are disjoint.
+- **Skins are decomposed by orthogonal axis**. The shipped families are:
+  - **Identity** (chromatic): cores, gradient, focus-ring, shadow colour
+  - **Geometry+Spacing** (forma/densidade): radius, border, padding, gap
+  - **Depth** (sombra métrica): shadow shape (offsets/blur/spread)
+  - **Motion** (ritmo): transitions, hover-lift, active-scale
+  - **Atmosphere** (efeito): glass-blur, surface-saturate
+  Cada família tem 1–8 alternativas. As do mesmo eixo são mutuamente
+  exclusivas; com eixos diferentes compõem livremente.
 - **Widgets** reference tokens with a fallback so they remain functional
   without an active skin:
 
@@ -23,108 +33,310 @@ fallback). Every token name listed here is reserved for that purpose.
 
   Widgets MUST NOT redefine tokens with `:host { --wings-X: ...; }` — that
   shadows the global value inside the widget's shadow tree and breaks
-  skin override. Per-widget defaults belong in the `var(name, fallback)`
-  fallback position, not in `:host` blocks.
-- **Adding a token**: add the entry below first (with a one-line semantic
-  description), then update every registered skin in `./skins/*` so they
-  remain coherent. Widgets may then reference the new token.
+  skin override.
+- **Adding a token**: place it under the category that semantically owns
+  it. Then update every skin that declares that category so they remain
+  coherent. Widgets may then reference the new token.
 
-## Core tokens (cross-widget)
+## Categories
 
-These are the shared design language: colors, surfaces, focus ring, common
-button affordances. Every skin SHOULD define all of them.
+A skin declares which design dimensions it owns by combining the
+`wprana.SkinCategory` constants below with `|`. Two skins coexist iff
+their bitmasks have no bit in common.
 
+| Constant                | Bit | Domain                                                      |
+|-------------------------|-----|-------------------------------------------------------------|
+| `CategoryIdentity`      | 0   | Colors, surfaces, text, primary, secondary, button colors   |
+| `CategoryGeometry`      | 1   | Radius scale, border-width, border-style                    |
+| `CategoryDepth`         | 2   | Shadow scale, elevation, drop-shadows                       |
+| `CategoryMotion`        | 3   | Transition durations/easing, hover-lift                     |
+| `CategoryInteraction`   | 4   | Active-scale, focus-ring, click feedback                    |
+| `CategoryTypography`    | 5   | Font family, sizes, weights *(reserved — no tokens yet)*    |
+| `CategorySpacing`       | 6   | Padding/gap density *(reserved — no tokens yet)*            |
+| `CategoryLighting`      | 7   | Gradients, glows, gradient-shadow                           |
+| `CategoryAtmosphere`    | 8   | Glass-opacity, surface-blur, surface-noise                  |
+
+Built-in bitmask helpers (in `skin_category.go`):
+
+- `wprana.IdentitySkinCategories` = `Identity | Lighting | Interaction` —
+  used by the eight chromatic themes (`light`, `dark`, `autumn`,
+  `darkblueberry`, `darkforest`, `lightblueberry`, `mushroom`,
+  `vividforest`).
+- `wprana.GeometrySkinCategories` = `Geometry | Spacing` — used by
+  `sharp`, `classic`, `soft`.
+- `wprana.DepthSkinCategories` = `Depth` — used by `flat`, `lifted`,
+  `floating`.
+- `wprana.MotionSkinCategories` = `Motion` — used by `gentle`, `calm`,
+  `brisk`.
+
+Each helper's family is internally mutually exclusive; the four helpers
+are pairwise disjoint, so up to one skin from each family can stack with
+each other (and with `glass` from the Atmosphere axis).
+
+---
+
+## Identity (`CategoryIdentity`)
+
+Color semantics that define the visual brand. Tokens are grouped by
+**functional role** (what the element does in the UI), not by widget —
+so a chip in a combobox and a chip in a future tag-list reuse the same
+`--wings-tiny-element-*` tokens. A widget that needs finer control over
+its own surface only must reach for the role group whose semantics match.
+
+### Core palette
 | Token                          | Semantics                                        |
 |--------------------------------|--------------------------------------------------|
 | `--wings-bg`                   | Page background (the outermost surface)          |
 | `--wings-surface`              | Elevated surface above the page bg (panels, cards, dialogs) |
 | `--wings-text`                 | Primary foreground text colour                   |
-| `--wings-text-muted`           | Intermediate dimmed text (less emphasis than primary, more than light) |
-| `--wings-text-light`           | Secondary/very dimmed text (helper labels, captions) |
-| `--wings-primary`              | Brand accent — links, focused input text, etc.   |
-| `--wings-border`               | Default 1px border colour for inputs/cards       |
+| `--wings-text-muted`           | Intermediate dimmed text                         |
+| `--wings-text-light`           | Secondary/very dimmed text (helper labels)       |
+| `--wings-primary`              | Brand accent — primary CTA bg, links, focused input text |
+| `--wings-primary-color`        | Foreground colour to use **on** `--wings-primary` (CTA text) |
+| `--wings-primary-hover-bg`     | `--wings-primary` darkened/shifted for hover state |
+| `--wings-primary-pale`         | Pale tint of the primary colour                  |
+| `--wings-secondary`            | Secondary accent (warm complement to primary)    |
+| `--wings-quiet`                | Quiet counterpart to secondary                   |
+| `--wings-border`               | Default border colour for inputs/cards           |
 | `--wings-border-focus`         | Border colour when an input is focused           |
-| `--wings-btn-bg`               | Neutral button background                        |
-| `--wings-btn-hover-bg`         | Neutral button background on hover               |
-| `--wings-btn-hover-color`      | Neutral button text colour on hover              |
-| `--wings-btn-hover-shadow`     | Box-shadow applied to neutral buttons on hover   |
-| `--wings-secondary`            | Secondary accent — draws attention, complements primary (e.g. status indicators, unrevised items) |
-| `--wings-quiet`                | Quiet counterpart to secondary — settled, no action needed (e.g. resolved/done indicators) |
-| `--wings-primary-pale`         | Very pale/dark tint of the primary colour (for tinted backgrounds, panel accents) |
-| `--wings-gradient`             | Optional accent gradient string (e.g. `linear-gradient(...)`) for branded buttons/tabs |
-| `--wings-gradient-color`       | Text colour to use on `--wings-gradient` backgrounds |
-| `--wings-gradient-shadow`      | Glow / drop-shadow for elements using `--wings-gradient` |
+| `--wings-btn-bg`               | Inline neutral button background                 |
+| `--wings-btn-hover-bg`         | Inline neutral button background on hover        |
+| `--wings-btn-hover-color`      | Inline neutral button text colour on hover       |
+| `--wings-btn-hover-shadow`     | Box-shadow on inline neutral button hover        |
 
-## Widget-namespaced tokens
+### Tiny elements — chips, tags, badges
+| Token                          | Semantics                              |
+|--------------------------------|----------------------------------------|
+| `--wings-tiny-element-bg`      | Background fill                        |
+| `--wings-tiny-element-color`   | Text colour                            |
+| `--wings-tiny-element-border`  | Border colour                          |
 
-Widgets that need finer-grained tokens than the core set MAY register their
-own under the `--wings-<widget>-*` namespace. Skins MAY define them; if
-absent the widget falls back to its embedded default.
+### Remover (×) — close/dismiss/remove buttons inside chips and rows
+| Token                          | Semantics                              |
+|--------------------------------|----------------------------------------|
+| `--wings-remover-color`        | × colour at rest                       |
+| `--wings-remover-hover-bg`     | × hover background                     |
+| `--wings-remover-hover-color`  | × hover colour (typically a danger hue)|
 
-### `w-dialog`
+### Text input — single-line text fields
+| Token                          | Semantics                              |
+|--------------------------------|----------------------------------------|
+| `--wings-input-bg`             | Field background                       |
+| `--wings-input-border`         | Default border                         |
+| `--wings-input-focus-border`   | Border when focused                    |
+| `--wings-input-focus-shadow`   | Focus ring rgba                        |
 
-| Token                                  | Semantics                                |
-|----------------------------------------|------------------------------------------|
-| `--wings-dialog-bg`                    | Dialog panel background                  |
-| `--wings-dialog-shadow`                | Dialog panel drop shadow                 |
-| `--wings-dialog-border-radius`         | Dialog panel corner radius               |
-| `--wings-dialog-padding`               | Inner padding of the dialog panel        |
-| `--wings-dialog-overlay-bg`            | Backdrop overlay colour (rgba)           |
-| `--wings-dialog-button-bg`             | Default button surface                   |
-| `--wings-dialog-button-hover-bg`       | Default button surface on hover          |
-| `--wings-dialog-button-active-bg`      | Default button surface on active/click   |
-| `--wings-dialog-button-border`         | Default button border                    |
-| `--wings-dialog-button-border-hover`   | Default button border on hover           |
-| `--wings-dialog-button-padding`        | Button inner padding                     |
-| `--wings-dialog-button-gap`            | Gap between buttons in the action row    |
-| `--wings-dialog-primary-bg`            | Primary action button surface            |
-| `--wings-dialog-primary-color`         | Primary action button text colour        |
-| `--wings-dialog-primary-hover-bg`      | Primary action button surface on hover   |
+### List box — dropdowns, popovers, scrollable surfaces
+| Token                          | Semantics                              |
+|--------------------------------|----------------------------------------|
+| `--wings-list-box-bg`          | Panel background                       |
+| `--wings-list-box-border`      | Panel border                           |
+| `--wings-list-box-shadow`      | Drop shadow override (falls back to `--wings-shadow-md`) |
+| `--wings-scroll-thumb`         | Custom scrollbar thumb colour          |
+| `--wings-empty-list-color`     | "No results" / placeholder text colour |
 
-### `w-navbar`
+### List item — option/menu rows
+| Token                            | Semantics                            |
+|----------------------------------|--------------------------------------|
+| `--wings-list-item-color`        | Text at rest                         |
+| `--wings-list-item-hover-bg`     | Background on hover                  |
+| `--wings-list-item-hover-color`  | Text on hover                        |
+| `--wings-list-item-active-bg`    | Background on press/active           |
 
-`w-navbar` consumes only core tokens at present. If finer control becomes
-necessary it will register `--wings-navbar-*`.
+### Button — block button (dialog actions, toolbars)
+| Token                            | Semantics                            |
+|----------------------------------|--------------------------------------|
+| `--wings-button-bg`              | At rest                              |
+| `--wings-button-hover-bg`        | Hover                                |
+| `--wings-button-active-bg`       | Active/pressed                       |
+| `--wings-button-border`          | Border at rest (full shorthand: `1px solid X`) |
+| `--wings-button-border-hover`    | Border on hover (full shorthand)     |
 
-### `w-combobox`
+### Box — modal/panel containers
+| Token                            | Semantics                            |
+|----------------------------------|--------------------------------------|
+| `--wings-box-overlay-bg`         | Backdrop overlay (rgba)              |
+| `--wings-box-padding`            | Inner padding                        |
 
-| Token                                       | Semantics                                  |
-|---------------------------------------------|--------------------------------------------|
-| `--wings-combobox-tag-bg`                   | Selected-tag background                    |
-| `--wings-combobox-tag-color`                | Selected-tag text colour                   |
-| `--wings-combobox-tag-border`               | Selected-tag border colour                 |
-| `--wings-combobox-rm-color`                 | Tag remove-button (×) colour               |
-| `--wings-combobox-rm-hover-bg`              | Tag remove-button background on hover      |
-| `--wings-combobox-rm-hover-color`           | Tag remove-button colour on hover          |
-| `--wings-combobox-input-border`             | Text-input border                          |
-| `--wings-combobox-input-focus-border`       | Text-input border on focus                 |
-| `--wings-combobox-input-focus-shadow`       | Focus-ring rgba (3px outer shadow)         |
-| `--wings-combobox-input-bg`                 | Text-input background                      |
-| `--wings-combobox-drop-bg`                  | Dropdown panel background                  |
-| `--wings-combobox-drop-border`              | Dropdown panel border                      |
-| `--wings-combobox-drop-shadow`              | Dropdown panel drop-shadow                 |
-| `--wings-combobox-scroll-thumb`             | Dropdown scrollbar thumb colour            |
-| `--wings-combobox-opt-color`                | Option text colour                         |
-| `--wings-combobox-opt-hover-bg`             | Option background on hover                 |
-| `--wings-combobox-opt-hover-color`          | Option text colour on hover                |
-| `--wings-combobox-opt-active-bg`            | Option background on active/click          |
-| `--wings-combobox-empty-color`              | "No results" empty-state text colour       |
+---
+
+## Geometry (`CategoryGeometry`)
+
+Shape language: corner radius and border style. Skins shift the whole UI
+between sharp and rounded uniformly through these tokens.
+
+| Token                  | Suggested value | Semantics                                  |
+|------------------------|-----------------|--------------------------------------------|
+| `--wings-radius-xs`    | `2px`           | Subtle rounding (input chips, badges)      |
+| `--wings-radius-sm`    | `4px`           | Tags, small inline elements                |
+| `--wings-radius-md`    | `6px`           | Buttons, tab buttons, inputs               |
+| `--wings-radius-lg`    | `8px`           | Cards, panels, dialogs                     |
+| `--wings-radius-pill`  | `9999px`        | Pills, fully-round badges                  |
+| `--wings-border-width` | `1px`           | Default border thickness                   |
+| `--wings-border-style` | `solid`         | Default border style                       |
+
+---
+
+## Depth (`CategoryDepth`)
+
+Shadow geometry. **Sombras são compostas em duas camadas**: a Depth
+skin define a forma (offsets/blur/spread) e a Identity skin define a
+cor (rgba). A Depth skin então compõe ambas no token consumível
+`--wings-shadow-*`. Widgets sempre leem só o composto.
+
+| Token                       | Defined by    | Semantics                              |
+|-----------------------------|---------------|----------------------------------------|
+| `--wings-shadow-sm-shape`   | Depth skin    | Offsets+blur+spread para tier sm       |
+| `--wings-shadow-md-shape`   | Depth skin    | idem, tier md                          |
+| `--wings-shadow-lg-shape`   | Depth skin    | idem, tier lg                          |
+| `--wings-shadow-inset-shape`| Depth skin    | idem, tier inset                       |
+| `--wings-shadow-color-sm`   | Identity skin | Cor rgba para tier sm                  |
+| `--wings-shadow-color-md`   | Identity skin | Cor rgba para tier md                  |
+| `--wings-shadow-color-lg`   | Identity skin | Cor rgba para tier lg                  |
+| `--wings-shadow-color-inset`| Identity skin | Cor rgba para tier inset               |
+| `--wings-shadow-sm`         | Depth (composto) | shape + color final                  |
+| `--wings-shadow-md`         | Depth (composto) | shape + color final                  |
+| `--wings-shadow-lg`         | Depth (composto) | shape + color final                  |
+| `--wings-shadow-inset`      | Depth (composto) | shape + color final                  |
+| `--wings-list-box-shadow`   | (opcional)    | Override em dropdown; falls back to `--wings-shadow-md` |
+
+Sem Identity ou Depth ativos, o widget cai no fallback hard-coded em
+`var(--wings-shadow-md, fallback)`.
+
+---
+
+## Motion (`CategoryMotion`)
+
+Animation and click-feedback transforms (no colour). The `active-scale`
+moved here from Interaction so a Motion skin owns every kinetic
+behaviour while Interaction holds only chromatic feedback.
+
+| Token                       | Suggested value           | Semantics                              |
+|-----------------------------|---------------------------|----------------------------------------|
+| `--wings-transition-fast`   | `120ms ease`              | Hover/focus reactions                  |
+| `--wings-transition-normal` | `200ms ease`              | Standard property changes              |
+| `--wings-transition-slow`   | `350ms ease`              | Panels expanding, drawer/dialog open   |
+| `--wings-hover-lift`        | `translateY(-1px)`        | Hover raise transform                  |
+| `--wings-active-scale`      | `scale(0.97)`             | Click-feedback transform               |
+
+Built-in skins: `gentle` (slow + still), `calm` (default), `brisk`
+(fast + pronounced).
+
+---
+
+## Interaction (`CategoryInteraction`)
+
+Chromatic feedback for input focus. Currently a single token; the
+shipped Identity skins all declare it because the colour is brand-tied.
+
+| Token                  | Suggested value                | Semantics                              |
+|------------------------|--------------------------------|----------------------------------------|
+| `--wings-focus-ring`   | `0 0 0 3px rgba(0,123,255,.3)` | 3px focus halo (boxshadow form)        |
+
+---
+
+## Typography (`CategoryTypography`) — reserved
+
+No tokens yet. Reserved for `--wings-font-body`, `--wings-font-heading`,
+`--wings-font-mono`, `--wings-font-size-base`, `--wings-line-height`,
+`--wings-letter-spacing`, `--wings-font-weight`.
+
+---
+
+## Spacing (`CategorySpacing`) — partial
+
+A full `--wings-space-{xs,sm,md,lg,xl}` scale is reserved. Today the
+core skins already declare the following spacing tokens (currently
+shipped under Identity in the eight built-in themes; they will migrate
+to Spacing-only skins as that category becomes useful for composition):
+
+| Token                   | Suggested value | Semantics                       |
+|-------------------------|-----------------|---------------------------------|
+| `--wings-button-padding`| `8px 16px`      | Block-button inner padding      |
+| `--wings-button-gap`    | `8px`           | Gap between buttons in a row    |
+| `--wings-box-padding`   | `24px`          | Modal/panel inner padding       |
+
+---
+
+## Lighting (`CategoryLighting`)
+
+Gradient accents and emissive halos.
+
+| Token                          | Semantics                                        |
+|--------------------------------|--------------------------------------------------|
+| `--wings-gradient`             | Optional accent gradient string                  |
+| `--wings-gradient-color`       | Text colour to use on gradient backgrounds       |
+| `--wings-gradient-shadow`      | Glow/drop-shadow for elements using `gradient`   |
+
+---
+
+## Atmosphere (`CategoryAtmosphere`)
+
+Translucency and material effects (glass-morphism, blur, noise).
+
+| Token                       | Suggested value | Semantics                                  |
+|-----------------------------|-----------------|--------------------------------------------|
+| `--wings-glass-opacity`     | `0.72`          | Glass surface alpha (used in color-mix)    |
+| `--wings-surface-blur`      | `14px`          | `backdrop-filter: blur(...)` value         |
+| `--wings-surface-saturate`  | `1.4`           | `backdrop-filter: saturate(...)` value     |
+| `--wings-glass-border`      | `rgba(255,255,255,0.18)` | Glass-edge border colour          |
+| `--wings-glass-noise`       | `none`          | Optional noise texture URL                 |
+
+---
+
+## Composing skins
+
+Two registered skins can be active simultaneously when their category
+bitmasks are disjoint. The five orthogonal axes (Identity, Geometry,
+Depth, Motion, Atmosphere) compose freely; pick at most one skin per
+axis. Example stacks:
+
+| Identity   | Geometry | Depth     | Motion  | Atmosphere | Result                                    |
+|------------|----------|-----------|---------|------------|-------------------------------------------|
+| `light`    | `classic`| `lifted`  | `calm`  | —          | ✅ Default look                           |
+| `mushroom` | `soft`   | `floating`| `gentle`| `glass`    | ✅ Romantic dreamy mushroom               |
+| `dark`     | `sharp`  | `flat`    | `brisk` | —          | ✅ Brutalist dark mode                    |
+| `light`    | `soft`   | `floating`| `gentle`| `glass`    | ✅ Apple-ish frosted-glass UI             |
+| `light` + `dark`             | —    | —    | —    | ❌ Identity collision                       |
+| `sharp` + `soft`             | —    | —    | —    | ❌ Geometry collision                       |
+
+Programmatic activation:
+
+```go
+_ = wprana.ApplySkin("mushroom")
+if err := wprana.ApplySkin("glass"); err != nil {
+    var conflict *wprana.SkinConflictError
+    if errors.As(err, &conflict) {
+        log.Printf("conflict on %s with %v", conflict.ConflictingCategories, conflict.Conflicts)
+    }
+}
+```
+
+`wprana.ActiveCategories()` returns the OR of every active skin; useful
+for diagnostic UIs (e.g. the skin-switcher widget displays which
+categories are currently covered).
+
+---
 
 ## Status
 
-- API: `wprana.RegisterSkin(name, css)` and `wprana.ApplySkin(name)` are
-  in place (see `skin.go`).
-- Skins shipped: `light`, `dark`, `darkblueberry`, `darkforest`,
-  `lightblueberry`, `mushroom`, `vividforest`.
-  All define the full core token set including `--wings-secondary`,
-  `--wings-quiet`, `--wings-primary-pale`, and `--wings-gradient*`.
-
-  Activate with `_ "github.com/luisfurquim/wprana/skins/<name>"` plus
-  `wprana.ApplySkin("<name>")` before `wprana.Main()`.
+- API: `wprana.RegisterSkin(name, categories, css)`,
+  `wprana.ApplySkin(name) error`, `wprana.DeactivateSkin(name) error`,
+  `wprana.ClearSkins()`, `wprana.ListSkinInfos()`,
+  `wprana.ActiveSkins()`, `wprana.ActiveCategories()`,
+  `wprana.OnSkinChange(fn)`. See `skin.go`.
+- Identity skins (`IdentitySkinCategories`): `light`, `dark`, `autumn`,
+  `darkblueberry`, `darkforest`, `lightblueberry`, `mushroom`,
+  `vividforest`.
+- Geometry+Spacing skins (`GeometrySkinCategories`): `sharp`, `classic`,
+  `soft`.
+- Depth skins (`DepthSkinCategories`): `flat`, `lifted`, `floating`.
+- Motion skins (`MotionSkinCategories`): `gentle`, `calm`, `brisk`.
+- Atmosphere skins (focused): `glass` (`CategoryAtmosphere`).
 - Widget migration:
-  - **`w-dialog`** ✅ migrated: `design.css` references
-    `var(--wings-dialog-*, fallback)`; `vars.css` is empty.
-  - **`w-navbar`** ✅ migrated: `design.css` references `var(--wings-*, fallback)`
-    for the core token set; `vars.css` is empty.
-  - **`w-combobox`** ✅ migrated: `design.css` references
-    `var(--wings-combobox-*, fallback)`; `vars.css` is empty.
+  - `w-dialog`, `w-navbar`, `w-combobox`, `w-tabs`, `w-tabbutton`,
+    `w-tab` — all consume only documented tokens via
+    `var(--wings-*, fallback)`.
+  - `w-dialog` and `w-combobox` opt into the Atmosphere category by
+    using `backdrop-filter: blur(var(--wings-surface-blur, 0))` so
+    `glass` produces a visible effect without coupling.
