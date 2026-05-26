@@ -1249,13 +1249,14 @@ keyboard support.
 | `options` | JSON array of strings or `[{"label":"...","value":"..."},...]` objects |
 | `placeholder` | Input placeholder text (default: "Type to filter...") |
 | `mode` | `"multi"` (default — tag-based multi-select) or `"single"` (replaces previous selection, hides tag display, shows label in the input) |
+| `value` | Pre-selected value. In `single` mode this attribute is **authoritative**: if it disagrees with the current selection (e.g. the parent reverts it after the user cancels a confirmation dialog), the visible selection re-syncs to match. The re-sync is silent — `@change` does NOT fire — so a controlled parent can safely roll back without re-entering its own change handler. In `multi` mode `value` only seeds the initial selection. |
 
 **Events (via `@`):**
 
 | Event | Args | Description |
 |-------|------|-------------|
 | `@notinlist` | typed string | Enter pressed with text not matching any option |
-| `@change` | `[]any` of selected items | Selection changed (add or remove) |
+| `@change` | `[]any` of selected items | Selection changed by user action. Programmatic re-sync via `value` does not fire this. |
 
 **Theming.** The combobox reads its colours and metrics from the shared
 [`--wings-*` skin tokens](#skins--theming-with---wings--tokens) — `--wings-input-*`
