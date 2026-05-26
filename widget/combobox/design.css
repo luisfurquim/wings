@@ -103,10 +103,12 @@
    left: 0;
    right: 0;
    background: var(--wings-list-box-bg, #ffffff);
+   /* Atmosphere opt-in: tint via glass-opacity so the blur has something to
+      show through; falls through to opaque when no atmosphere skin is active. */
+   background: color-mix(in srgb, var(--wings-list-box-bg, #ffffff) calc(var(--wings-glass-opacity, 1) * 100%), transparent);
    border: 1px solid var(--wings-list-box-border, #d1d5db);
    border-radius: var(--wings-radius-md, 6px);
    box-shadow: var(--wings-list-box-shadow, var(--wings-shadow-md, 0 4px 16px rgba(0, 0, 0, 0.10), 0 1px 4px rgba(0, 0, 0, 0.06)));
-   /* Atmosphere opt-in (see widget/dialog for the same pattern). */
    backdrop-filter: blur(var(--wings-surface-blur, 0)) saturate(var(--wings-surface-saturate, 1));
    -webkit-backdrop-filter: blur(var(--wings-surface-blur, 0)) saturate(var(--wings-surface-saturate, 1));
    max-height: 240px;

@@ -59,9 +59,10 @@
   border: var(--wings-border-width, 1px) var(--wings-border-style, solid) var(--wings-border, #cccccc);
   border-radius: var(--wings-radius-lg, 8px);
   background: var(--wings-surface, #ffffff);
+  /* Atmosphere opt-in: tint via glass-opacity so the blur becomes visible. */
+  background: color-mix(in srgb, var(--wings-surface, #ffffff) calc(var(--wings-glass-opacity, 1) * 100%), transparent);
   box-shadow: var(--wings-shadow-md, 0 4px 16px rgba(0, 0, 0, 0.10));
   z-index: 1100;
-  /* Atmosphere opt-in */
   backdrop-filter: blur(var(--wings-surface-blur, 0)) saturate(var(--wings-surface-saturate, 1));
   -webkit-backdrop-filter: blur(var(--wings-surface-blur, 0)) saturate(var(--wings-surface-saturate, 1));
 }

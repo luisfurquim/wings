@@ -10,6 +10,11 @@
     height:        100%;
     box-sizing:    border-box;
     background:    var(--wings-surface, #ffffff);
+    /* Atmosphere opt-in: glass-opacity tints + backdrop-filter blurs. With no
+       atmosphere skin both fall through to opaque surface + no-op filter. */
+    background:    color-mix(in srgb, var(--wings-surface, #ffffff) calc(var(--wings-glass-opacity, 1) * 100%), transparent);
+    backdrop-filter:         blur(var(--wings-surface-blur, 0)) saturate(var(--wings-surface-saturate, 1));
+    -webkit-backdrop-filter: blur(var(--wings-surface-blur, 0)) saturate(var(--wings-surface-saturate, 1));
     border:        var(--wings-border-width, 1px) var(--wings-border-style, solid) var(--wings-border, #e5e7eb);
     border-top:    none;
     border-radius: 0 var(--wings-radius-md, 6px) var(--wings-radius-md, 6px) var(--wings-radius-md, 6px);
@@ -60,6 +65,10 @@
 }
 :host([mode=accordion]) details {
     background:    var(--wings-surface, #ffffff);
+    /* Atmosphere opt-in (see :host above). */
+    background:    color-mix(in srgb, var(--wings-surface, #ffffff) calc(var(--wings-glass-opacity, 1) * 100%), transparent);
+    backdrop-filter:         blur(var(--wings-surface-blur, 0)) saturate(var(--wings-surface-saturate, 1));
+    -webkit-backdrop-filter: blur(var(--wings-surface-blur, 0)) saturate(var(--wings-surface-saturate, 1));
     border:        var(--wings-border-width, 1px) var(--wings-border-style, solid) var(--wings-border, #e5e7eb);
     border-radius: var(--wings-radius-md, 6px);
     overflow:      hidden;
