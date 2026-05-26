@@ -1,10 +1,10 @@
 [
   {
-    "content": "Pendentes: ",
+    "content": "{{category_headers[ci].aria}}, {{gender_headers[gi].aria}}",
     "revised": false
   },
   {
-    "content": "{{pending_count}}",
+    "content": "Pendentes: ",
     "revised": false
   },
   {
@@ -25,50 +25,6 @@
   },
   {
     "content": "Língua a traduzir...",
-    "revised": false
-  },
-  {
-    "content": "{{context}}",
-    "revised": false
-  },
-  {
-    "content": "{{ctxdetail_text}}",
-    "revised": false
-  },
-  {
-    "content": "{{left_content}}",
-    "revised": false
-  },
-  {
-    "content": "{{right_content}}",
-    "revised": false
-  },
-  {
-    "content": "{{inflection_expr}}",
-    "revised": false
-  },
-  {
-    "content": "{{gender_headers[gi].aria}}",
-    "revised": false
-  },
-  {
-    "content": "{{gender_headers[gi].label}}",
-    "revised": false
-  },
-  {
-    "content": "{{category_headers[ci].aria}}",
-    "revised": false
-  },
-  {
-    "content": "{{category_headers[ci].label}}",
-    "revised": false
-  },
-  {
-    "content": "{{left_cells[ci].cols[gi]}}",
-    "revised": false
-  },
-  {
-    "content": "{{category_headers[ci].aria}}, {{gender_headers[gi].aria}}",
     "revised": false
   },
   {

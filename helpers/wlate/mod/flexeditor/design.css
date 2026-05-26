@@ -1,0 +1,183 @@
+/* ── wl-flex-editor: side-by-side gender×CLDR inflection grids ────────────── */
+
+:host {
+   display: block;
+   width: 100%;
+   height: 100%;
+   color: var(--wl-text);
+}
+
+*, *::before, *::after {
+   box-sizing: border-box;
+}
+
+/* Pragmatic height — see wl-text-editor for the rationale behind subtracting
+   the shell chrome height instead of relying on flex through the w-tab slot. */
+.wl-panels {
+   display: grid;
+   grid-template-columns: 1fr 1fr;
+   gap: 12px;
+   height: calc(100vh - 190px);
+   min-height: 0;
+}
+
+.wl-panel {
+   position: relative;
+   background: var(--wl-panel-bg);
+   border-radius: 8px;
+   box-shadow: var(--wl-panel-shadow);
+   padding: 16px;
+   display: flex;
+   flex-direction: column;
+   overflow: auto;
+   min-height: 0;
+}
+
+.wl-panel-left {
+   border-left: 4px solid var(--wl-primary-pale);
+}
+
+.wl-panel-right {
+   border-left: 4px solid var(--wl-unrevised-border);
+   transition: border-color 0.3s;
+}
+
+.wl-panel-right.wl-revised {
+   border-left-color: var(--wl-revised-border);
+}
+
+/* ── Revised indicator (clickable border area) ──────────────────────────── */
+
+.wl-revised-indicator {
+   position: absolute;
+   left: 0;
+   top: 0;
+   bottom: 0;
+   width: 20px;
+   cursor: pointer;
+   border-radius: 8px 0 0 8px;
+   transition: background 0.2s;
+}
+.wl-revised-indicator:hover {
+   background: color-mix(in srgb, var(--wl-secondary) 8%, transparent);
+}
+
+/* ── Expression display ─────────────────────────────────────────────────── */
+
+.wl-expr {
+   padding: 6px 10px;
+   margin-bottom: 10px;
+   font-family: "SF Mono", "Fira Code", monospace;
+   font-size: 0.85em;
+   color: var(--wl-primary);
+   background: var(--wl-primary-pale);
+   border-radius: 4px;
+   white-space: pre-wrap;
+   word-break: break-all;
+}
+
+/* ── Inflection grid (CSS Grid layout) ──────────────────────────────────── */
+
+.wl-grid {
+   display: grid;
+   font-size: 0.9em;
+   gap: 0;
+   /* 1st col = row header, rest = one per gender; overridden by JS per record */
+   grid-template-columns: auto repeat(2, 1fr);
+}
+
+/* Wrapper spans from * iteration must be transparent to grid layout */
+.wl-grid > span,
+.wl-grid-row > span {
+   display: contents;
+}
+
+/* ** container rows: transparent to grid, children participate directly */
+.wl-grid-rows {
+   display: contents;
+}
+
+/* Each row is transparent so cells sit in the main grid */
+.wl-grid-row {
+   display: contents;
+}
+
+.wl-grid-corner {
+   padding: 6px 10px;
+   background: var(--wl-grid-header-bg);
+   border: 1px solid var(--wl-grid-cell-border);
+}
+
+.wl-grid-col-header {
+   padding: 6px 10px;
+   background: var(--wl-grid-header-bg);
+   color: var(--wl-primary);
+   font-weight: 600;
+   text-align: center;
+   border: 1px solid var(--wl-grid-cell-border);
+   font-size: 0.85em;
+   text-transform: uppercase;
+   letter-spacing: 0.5px;
+}
+
+.wl-grid-row-header {
+   padding: 6px 10px;
+   background: var(--wl-grid-header-bg);
+   color: var(--wl-text-muted);
+   font-weight: 600;
+   text-align: right;
+   border: 1px solid var(--wl-grid-cell-border);
+   font-size: 0.85em;
+   white-space: nowrap;
+}
+
+.wl-grid-cell {
+   padding: 4px 6px;
+   border: 1px solid var(--wl-grid-cell-border);
+   min-width: 120px;
+}
+
+.wl-grid-cell-edit {
+   padding: 0;
+   border: 1px solid var(--wl-grid-cell-border);
+   min-width: 120px;
+   overflow: hidden;
+}
+
+.wl-cell-wrapper {
+   display: flex;
+   align-items: center;
+   width: 100%;
+   height: 100%;
+}
+
+.wl-cell-input {
+   flex: 1;
+   min-width: 0;
+   box-sizing: border-box;
+   padding: 4px 6px;
+   border: 1px solid transparent;
+   border-radius: 3px;
+   font-family: inherit;
+   font-size: 1em;
+   color: var(--wl-text);
+   background: transparent;
+   outline: none;
+   transition: border-color 0.2s, background 0.2s;
+}
+.wl-cell-input:focus {
+   border-color: var(--wl-border-focus);
+   background: var(--wl-grid-cell-focus);
+}
+
+.wl-cell-badge {
+   flex: 0 0 16px;
+   width: 16px;
+   height: 16px;
+   margin-right: 3px;
+   border-radius: 2px;
+   opacity: 0.75;
+}
+.wl-cell-badge[src=""] {
+   display: none;
+}

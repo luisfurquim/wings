@@ -1,0 +1,35 @@
+/* ── wlate token aliases (mirror of mod/wlate/vars.css) ──────────────────────
+   wl-text-editor has its own shadow tree, so it re-declares the --wl-* aliases
+   on its own :host rather than relying on inheritance across the <w-tab> slot
+   boundary. Each maps to the global --wings-* token published by the active
+   skin (ApplySkin sets those on :root, so they reach every shadow tree), with
+   the original wlate palette as fallback. Keep in sync with the shell.        */
+
+:host {
+   /* Primary accent */
+   --wl-primary:        var(--wings-primary, #1B2A4A);
+
+   /* Backgrounds */
+   --wl-bg:             var(--wings-bg, #F7F5F3);
+   --wl-panel-bg:       var(--wings-surface, #FFFFFF);
+
+   /* Pale primary tint — panel accent borders */
+   --wl-primary-pale:   var(--wings-primary-pale, #E8EDF5);
+
+   /* Text */
+   --wl-text:        var(--wings-text, #1a1a2e);
+   --wl-text-muted:  var(--wings-text-muted, #6B7280);
+   --wl-text-light:  var(--wings-text-light, #9CA3AF);
+
+   /* Borders */
+   --wl-border:       var(--wings-border, #E5E7EB);
+   --wl-border-focus: var(--wings-border-focus, #1B2A4A);
+
+   /* Secondary accent (attention / unrevised) and its quiet counterpart */
+   --wl-secondary:        var(--wings-secondary, #6F2A38);
+   --wl-unrevised-border: var(--wings-secondary, #6B2C3E);
+   --wl-revised-border:   var(--wings-quiet, #C8CCD0);
+
+   /* Panel elevation shadow */
+   --wl-panel-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}

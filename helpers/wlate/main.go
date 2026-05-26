@@ -39,6 +39,8 @@ import (
 	_ "github.com/luisfurquim/wprana/widget/navbar"
 	_ "github.com/luisfurquim/wprana/widget/skinswitcher"
 
+	_ "wlate/mod/flexeditor"
+	_ "wlate/mod/texteditor"
 	_ "wlate/mod/wlate"
 )
 

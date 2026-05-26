@@ -2,7 +2,7 @@
 
    <!-- Status bar -->
    <div class="wl-status">
-      <span class="wl-pending">0<strong>1</strong>2</span>
+      <span class="wl-pending">1<strong>{{pending_count}}</strong>2</span>
       <div class="wl-tabs">
          <button type="button" class="wl-tab" id="wl-tab-text" data-tab="text">3</button>
          <button type="button" class="wl-tab" id="wl-tab-inflection" data-tab="inflection">4</button>
@@ -23,80 +23,38 @@
    <!-- Context info -->
    <div class="wl-context-bar">
       <div class="wl-ctx-left">
-         <span class="wl-ctx-file">7</span>
-         <span class="wl-ctx-detail">8</span>
+         <span class="wl-ctx-file">{{context}}</span>
+         <span class="wl-ctx-detail">{{ctxdetail_text}}</span>
       </div>
       <div class="wl-ctx-right">
-         <span class="wl-ctx-file">7</span>
-         <span class="wl-ctx-detail">8</span>
+         <span class="wl-ctx-file">{{context}}</span>
+         <span class="wl-ctx-detail">{{ctxdetail_text}}</span>
       </div>
    </div>
 
-   <!-- TEXT TAB -->
+   <!-- TEXT TAB — panes + edit logic live in the wl-text-editor module.
+        @register hands the editor to the shell; @revised/@input bubble the
+        border-click and keystroke intents back up to the session. -->
    <w-tab tid="text">
-      <div class="wl-panels">
-         <div class="wl-panel wl-panel-left">
-            <div class="wl-content-ro">9</div>
-         </div>
-         <div class="wl-panel wl-panel-right" id="wl-right-panel">
-            <div class="wl-content-wrapper">
-               <textarea class="wl-content-edit">10</textarea>
-               <img class="wl-text-badge" &src="{{right_text_src}}" width="20" height="20" alt="" onerror="this.src=&#39;&#39;"/>
-            </div>
-            <div id="wl-revised-toggle" class="wl-revised-indicator"></div>
-         </div>
-      </div>
+      <wl-text-editor @register="registerEditor" @revised="toggleRevised" @input="markDirty"></wl-text-editor>
    </w-tab>
 
-   <!-- INFLECTION TAB -->
+   <!-- INFLECTION TAB — grids + edit logic live in the wl-flex-editor module. -->
    <w-tab tid="inflection">
-      <div class="wl-panels">
-         <div class="wl-panel wl-panel-left">
-            <div class="wl-expr">11</div>
-            <div class="wl-grid" id="wl-grid-left" role="grid">
-               <div class="wl-grid-corner" role="columnheader"></div>
-               <div class="wl-grid-col-header" role="columnheader" *gender_headers:gi="" aria-label="12">13</div>
-               <div class="wl-grid-rows" **category_headers:ci="">
-                  <div class="wl-grid-row" role="row">
-                     <div class="wl-grid-row-header" role="rowheader" aria-label="14">15</div>
-                     <div class="wl-grid-cell" role="gridcell" *gender_headers:gi="">16</div>
-                  </div>
-               </div>
-            </div>
-         </div>
-         <div class="wl-panel wl-panel-right" id="wl-right-inflection-panel">
-            <div class="wl-expr">11</div>
-            <div class="wl-grid" id="wl-grid-right" role="grid">
-               <div class="wl-grid-corner" role="columnheader"></div>
-               <div class="wl-grid-col-header" role="columnheader" *gender_headers:gi="" aria-label="12">13</div>
-               <div class="wl-grid-rows" **category_headers:ci="">
-                  <div class="wl-grid-row" role="row">
-                     <div class="wl-grid-row-header" role="rowheader" aria-label="14">15</div>
-                     <div class="wl-grid-cell-edit" role="gridcell" *gender_headers:gi="">
-                        <div class="wl-cell-wrapper">
-                           <input class="wl-cell-input" type="text" data-ci="{{ci}}" data-gi="{{gi}}" aria-label="17" &value="{{right_cells[ci].cols[gi]}}"/>
-                           <img class="wl-cell-badge" &src="{{right_srcs[ci].cols[gi]}}" width="16" height="16" alt="" onerror="this.src=&#39;&#39;"/>
-                        </div>
-                     </div>
-                  </div>
-               </div>
-            </div>
-            <div id="wl-revised-toggle-inflection" class="wl-revised-indicator"></div>
-         </div>
-      </div>
+      <wl-flex-editor @register="registerEditor" @revised="toggleRevised"></wl-flex-editor>
    </w-tab>
 
    <!-- Navigation -->
    <div class="wl-nav">
       <label class="wl-filter-toggle" id="wl-filter-toggle">
-         <span class="wl-toggle-track" id="wl-toggle-track"><span class="wl-toggle-thumb"></span></span>18</label>
+         <span class="wl-toggle-track" id="wl-toggle-track"><span class="wl-toggle-thumb"></span></span>7</label>
       <w-navbar nav_input="{{nav_input}}" total_count="{{total_count}}" @first="navFirst" @prevmany="navPrev10" @prev="navPrev" @next="navNext" @nextmany="navNext10" @last="navLast" @change="navJump">
       </w-navbar>
-      <button id="btn-save" class="wl-save-btn" title="19">20</button>
+      <button id="btn-save" class="wl-save-btn" title="8">9</button>
    </div>
 
    <!-- Unsaved changes dialog -->
-   <w-dialog ?show_dialog="" buttons="save,discard,cancel" @save="fnSave" @discard="fnDiscard" @cancel="fnCancel">21</w-dialog>
+   <w-dialog ?show_dialog="" buttons="save,discard,cancel" @save="fnSave" @discard="fnDiscard" @cancel="fnCancel">10</w-dialog>
 
 </w-tabs>
 </body></html>

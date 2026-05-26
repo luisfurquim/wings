@@ -1,12 +1,25 @@
 //go:build js && wasm
 
+// Package wlate provides the wp-wlate custom element: the shell of the wlate
+// translation editor.
+//
+// wp-wlate owns the editing *session* — the loaded record lists, the language
+// pair, navigation position, the filter, the dirty flag, the single Save (which
+// writes both the text and inflection catalogs), the unsaved-changes dialog and
+// the keyboard shortcuts. It does NOT render or harvest individual records:
+// that work lives in two sibling custom elements, wl-text-editor and
+// wl-flex-editor (see packages texteditor and flexeditor), one per tab.
+//
+// Each editor registers itself with the shell at Render time via the @register
+// trigger (the editorReg handshake below). Thereafter the shell drives whichever
+// tab is active through the wldata.TextEditor / wldata.FlexEditor contract:
+// Display(left,right) to show a record, Harvest(&right) to pull edits back, and
+// Clear() when there is nothing to show.
 package wlate
 
 import (
 	_ "embed"
 	"encoding/json"
-	"fmt"
-	"sort"
 	"strconv"
 	"strings"
 	"syscall/js"
@@ -16,8 +29,10 @@ import (
 	"github.com/luisfurquim/wprana/dom"
 	"github.com/luisfurquim/wprana/wi18n"
 	_ "github.com/luisfurquim/wprana/widget/tab"
-	_ "github.com/luisfurquim/wprana/widget/tabs"
 	_ "github.com/luisfurquim/wprana/widget/tabbutton"
+	_ "github.com/luisfurquim/wprana/widget/tabs"
+
+	"wlate/mod/wldata"
 )
 
 // G is this package's goose alert. SetConfig (called from init() with
@@ -45,52 +60,6 @@ func init() {
 	)
 }
 
-// ── Data types ─────────────────────────────────────────────────────────────
-
-type Config struct {
-	DefaultLang string      `json:"defaultLang"`
-	Languages   []string    `json:"languages"`
-	Wlate       WlateConfig `json:"wlate"`
-}
-
-type WlateConfig struct {
-	Keys map[string]string `json:"keys"`
-}
-
-// TextRecord and InflectionRecord are thin aliases over the wi18n merged
-// in-memory views. wlate reads data+meta from split files on disk (data on
-// the browser bundle path, meta on the sibling .meta.json), merges them
-// here, and writes back only the data half on save.
-type TextRecord = wi18n.Entry
-type InflectionRecord = wi18n.FlexEntry
-
-// ── Context detail humanization ────────────────────────────────────────────
-
-var ctxLabels = map[string]string{
-	"title":      "Título da página",
-	"header":     "Cabeçalho",
-	"footer":     "Rodapé",
-	"caption":    "Legenda de tabela",
-	"button":     "Botão",
-	"label":      "Rótulo de campo",
-	"th":         "Cabeçalho de coluna",
-	"nav":        "Área de navegação",
-	"legend":     "Legenda de formulário",
-	"figcaption": "Legenda de figura",
-	"summary":    "Resumo expansível",
-	"a":          "Texto de link",
-	"option":     "Opção de seleção",
-	"abbr":       "Abreviação",
-	"dt":         "Termo de definição",
-}
-
-func humanizeCtx(detail string) string {
-	if label, ok := ctxLabels[detail]; ok {
-		return label
-	}
-	return detail
-}
-
 // ── Default keybindings ────────────────────────────────────────────────────
 
 var defaultKeys = map[string]string{
@@ -104,44 +73,67 @@ var defaultKeys = map[string]string{
 	"revised": "Alt+R",
 }
 
+// ── Editor registration handshake ──────────────────────────────────────────
+
+// editorReg collects the two tab editors as they register from their Render.
+// The shell's init goroutine blocks on ready until both are present, so the
+// first displayRecord always has live editors to drive.
+type editorReg struct {
+	text  wldata.TextEditor
+	flex  wldata.FlexEditor
+	ready chan struct{}
+	done  bool
+}
+
+// register routes a registering editor to the right slot by which contract it
+// satisfies (the two method sets are disjoint, so the type switch is exact),
+// and closes ready once both have arrived. All goroutines share one JS thread,
+// so no locking is needed.
+func (r *editorReg) register(args ...any) {
+	if len(args) == 0 {
+		return
+	}
+	switch e := args[0].(type) {
+	case wldata.TextEditor:
+		r.text = e
+	case wldata.FlexEditor:
+		r.flex = e
+	default:
+		return
+	}
+	if !r.done && r.text != nil && r.flex != nil {
+		r.done = true
+		close(r.ready)
+	}
+}
+
 // ── Component ──────────────────────────────────────────────────────────────
 
-type Wlate struct{}
+type Wlate struct {
+	reg *editorReg
+}
 
 func (w *Wlate) InitData() map[string]any {
+	w.reg = &editorReg{ready: make(chan struct{})}
 	return map[string]any{
 		// Config
 		"default_lang": "",
 		"lang_options": "[]",
 
 		// Current state
-		"left_lang":  "",
-		"right_lang": "",
-		"tab":        "text",
+		"left_lang":    "",
+		"right_lang":   "",
+		"tab":          "text",
 		"filter_unrev": false,
 
 		// Status bar
 		"pending_count": 0,
 		"total_count":   0,
 
-		// Current record display
-		"left_content":   "",
-		"right_content":  "",
-		"right_text_src": "",
+		// Shared context bar (shown for both tabs)
 		"context":        "",
 		"ctxdetail_text": "",
-		"is_revised":     false,
 		"nav_input":      "1",
-
-		// Inflection tab
-		"inflection_expr": "",
-		"genders":         []any{},
-		"categories":      []any{},
-		"gender_headers":  []any{},
-		"category_headers": []any{},
-		"left_cells":      []any{},
-		"right_cells":     []any{},
-		"right_srcs":      []any{},
 
 		// Dialog
 		"show_dialog": false,
@@ -150,13 +142,23 @@ func (w *Wlate) InitData() map[string]any {
 		"fnCancel":    wprana.TriggerHandler(nil),
 
 		// Navbar trigger handlers (set in wireEvents).
-		"navFirst":   wprana.TriggerHandler(nil),
-		"navPrev10":  wprana.TriggerHandler(nil),
-		"navPrev":    wprana.TriggerHandler(nil),
-		"navNext":    wprana.TriggerHandler(nil),
-		"navNext10":  wprana.TriggerHandler(nil),
-		"navLast":    wprana.TriggerHandler(nil),
-		"navJump":    wprana.TriggerHandler(nil),
+		"navFirst":  wprana.TriggerHandler(nil),
+		"navPrev10": wprana.TriggerHandler(nil),
+		"navPrev":   wprana.TriggerHandler(nil),
+		"navNext":   wprana.TriggerHandler(nil),
+		"navNext10": wprana.TriggerHandler(nil),
+		"navLast":   wprana.TriggerHandler(nil),
+		"navJump":   wprana.TriggerHandler(nil),
+
+		// Combobox + editor trigger handlers (set in wireEvents).
+		"on_left_lang":  wprana.TriggerHandler(nil),
+		"on_right_lang": wprana.TriggerHandler(nil),
+		"toggleRevised": wprana.TriggerHandler(nil),
+		"markDirty":     wprana.TriggerHandler(nil),
+
+		// register fires from the editors' Render, which runs after this map is
+		// already bound — so the handler must be live here, not in wireEvents.
+		"registerEditor": wprana.TriggerHandler(func(args ...any) { w.reg.register(args...) }),
 	}
 }
 
@@ -164,14 +166,15 @@ func (w *Wlate) InitData() map[string]any {
 
 type wlateCtx struct {
 	obj              *wprana.PranaObj
-	config           Config
+	reg              *editorReg
+	config           wldata.Config
 	keys             map[string]string
 	leftLang         string
 	rightLang        string
-	leftText         []TextRecord
-	rightText        []TextRecord
-	leftInflections  []InflectionRecord
-	rightInflections []InflectionRecord
+	leftText         []wldata.TextRecord
+	rightText        []wldata.TextRecord
+	leftInflections  []wldata.InflectionRecord
+	rightInflections []wldata.InflectionRecord
 	filteredIdx      []int
 	currentPos       int // position in filteredIdx
 	dirty            bool
@@ -179,8 +182,6 @@ type wlateCtx struct {
 	pendingSide      string
 	filterUnrev      bool
 	activeTab        string // "text" or "inflection"
-	curGenders       []string // current inflection grid column keys
-	curCategories    []string // current inflection grid row keys
 }
 
 func (wc *wlateCtx) currentDataLen() int {
@@ -248,220 +249,95 @@ func (wc *wlateCtx) updateStatusBar() {
 	wc.obj.This.Set("total_count", wc.currentDataLen())
 }
 
-// displayRecord shows the record at the current position.
+// displayRecord shows the record at the current position: it sets the shared
+// chrome (record number, context bar) and delegates the panel rendering to the
+// active editor.
 func (wc *wlateCtx) displayRecord() {
 	idx := wc.actualIdx()
 	if idx < 0 {
-		wc.obj.This.Set("left_content", "")
-		wc.obj.This.Set("right_content", "")
+		if wc.activeTab == "inflection" {
+			if wc.reg.flex != nil {
+				wc.reg.flex.Clear()
+			}
+		} else {
+			if wc.reg.text != nil {
+				wc.reg.text.Clear()
+			}
+		}
 		wc.obj.This.Set("context", "")
 		wc.obj.This.Set("ctxdetail_text", "")
-		wc.obj.This.Set("is_revised", false)
 		wc.obj.This.Set("nav_input", "0")
-		wc.updateRevisedBorder(false)
 		return
 	}
 
 	wc.obj.This.Set("nav_input", strconv.Itoa(idx+1))
 
+	ctx, detail := wc.recordContext(idx)
+	wc.obj.This.Set("context", ctx)
+	wc.obj.This.Set("ctxdetail_text", detail)
+
 	if wc.activeTab == "inflection" {
-		wc.displayInflectionRecord(idx)
+		var left, right wldata.InflectionRecord
+		if idx < len(wc.leftInflections) {
+			left = wc.leftInflections[idx]
+		}
+		if idx < len(wc.rightInflections) {
+			right = wc.rightInflections[idx]
+		}
+		if wc.reg.flex != nil {
+			wc.reg.flex.Display(left, right)
+		}
 	} else {
-		wc.displayTextRecord(idx)
+		var left, right wldata.TextRecord
+		if idx < len(wc.leftText) {
+			left = wc.leftText[idx]
+		}
+		if idx < len(wc.rightText) {
+			right = wc.rightText[idx]
+		}
+		if wc.reg.text != nil {
+			wc.reg.text.Display(left, right)
+		}
 	}
 	wc.updateStatusBar()
 }
 
-func (wc *wlateCtx) displayTextRecord(idx int) {
-	var leftCtx, leftDetail, leftContent string
-	if idx < len(wc.leftText) {
-		leftContent = wc.leftText[idx].Content
-		leftCtx = wc.leftText[idx].Context
-		leftDetail = humanizeCtx(wc.leftText[idx].Ctxdetail)
-	}
-
-	var rightContent, rightSrc string
-	var revised bool
-	var rightCtx, rightDetail string
-	if idx < len(wc.rightText) {
-		rightContent = wc.rightText[idx].Content
-		rightSrc = sourceToAvatarURL(wc.rightText[idx].Source)
-		revised = wc.rightText[idx].Revised
-		rightCtx = wc.rightText[idx].Context
-		rightDetail = humanizeCtx(wc.rightText[idx].Ctxdetail)
-	}
-
-	wc.obj.This.Set("left_content", leftContent)
-	wc.obj.This.Set("right_content", rightContent)
-	wc.obj.This.Set("right_text_src", rightSrc)
-	// Use left context if right is empty (context is shared)
-	ctx := rightCtx
-	if ctx == "" {
-		ctx = leftCtx
-	}
-	detail := rightDetail
-	if detail == "" {
-		detail = leftDetail
-	}
-	wc.obj.This.Set("context", ctx)
-	wc.obj.This.Set("ctxdetail_text", detail)
-	wc.obj.This.Set("is_revised", revised)
-	wc.updateRevisedBorder(revised)
-}
-
-func (wc *wlateCtx) displayInflectionRecord(idx int) {
-	var leftForms map[string]string
-	var expr, ctx, detail string
-
-	if idx < len(wc.leftInflections) {
-		leftForms = wc.leftInflections[idx].Cells
-		expr = wc.leftInflections[idx].Label
-		ctx = wc.leftInflections[idx].Context
-		detail = humanizeCtx(wc.leftInflections[idx].Ctxdetail)
-	}
-
-	var rightForms map[string]string
-	var revised bool
-	if idx < len(wc.rightInflections) {
-		rightForms = wc.rightInflections[idx].Cells
-		revised = wc.rightInflections[idx].Revised
-		if expr == "" {
-			expr = wc.rightInflections[idx].Label
-		}
-		if ctx == "" {
-			ctx = wc.rightInflections[idx].Context
-		}
-		if detail == "" {
-			detail = humanizeCtx(wc.rightInflections[idx].Ctxdetail)
-		}
-	}
-
-	wc.obj.This.Set("inflection_expr", expr)
-	wc.obj.This.Set("context", ctx)
-	wc.obj.This.Set("ctxdetail_text", detail)
-	wc.obj.This.Set("is_revised", revised)
-	wc.updateRevisedBorder(revised)
-
-	// Extract genders and categories from the union of both sides' form keys
-	genderSet := map[string]bool{}
-	catSet := map[string]bool{}
-	allForms := []map[string]string{leftForms, rightForms}
-	for _, forms := range allForms {
-		for key := range forms {
-			parts := strings.SplitN(key, ".", 2)
-			if len(parts) == 2 {
-				genderSet[parts[0]] = true
-				catSet[parts[1]] = true
-			}
-		}
-	}
-
-	genders := sortedKeys(genderSet)
-	categories := sortedCLDR(catSet)
-
-	wc.curGenders = genders
-	wc.curCategories = categories
-
-	gendersAny := make([]any, len(genders))
-	for i, g := range genders {
-		gendersAny[i] = g
-	}
-	categoriesAny := make([]any, len(categories))
-	for i, c := range categories {
-		categoriesAny[i] = c
-	}
-
-	// Translator-facing header labels. Degenerate gender (empty string)
-	// renders visually blank with an ARIA label for screen readers, per the
-	// locked grid design (every language gets the full CLDR × gender grid,
-	// even when one axis has a single column).
-	genderHeaders := make([]any, len(genders))
-	for i, g := range genders {
-		genderHeaders[i] = map[string]any{
-			"label": genderHeaderLabel(g),
-			"aria":  genderAriaLabel(g),
-		}
-	}
-	categoryHeaders := make([]any, len(categories))
-	for i, c := range categories {
-		categoryHeaders[i] = map[string]any{
-			"label": c,
-			"aria":  categoryAriaLabel(c),
-		}
-	}
-
-	// Build cell arrays: left_cells[ci].cols[gi], right_cells[ci].cols[gi],
-	// and right_srcs[ci].cols[gi] (avatar URL or "" for no badge).
-	var rightSources map[string]string
-	if idx < len(wc.rightInflections) {
-		rightSources = wc.rightInflections[idx].Sources
-	}
-	leftCells := make([]any, len(categories))
-	rightCells := make([]any, len(categories))
-	rightSrcs := make([]any, len(categories))
-	for ci, cat := range categories {
-		lcols := make([]any, len(genders))
-		rcols := make([]any, len(genders))
-		srccols := make([]any, len(genders))
-		for gi, gen := range genders {
-			key := gen + "." + cat
-			if leftForms != nil {
-				lcols[gi] = leftForms[key]
-			} else {
-				lcols[gi] = ""
-			}
-			if rightForms != nil {
-				rcols[gi] = rightForms[key]
-			} else {
-				rcols[gi] = ""
-			}
-			src := ""
-			if rightSources != nil {
-				src = sourceToAvatarURL(rightSources[key])
-			}
-			srccols[gi] = src
-		}
-		leftCells[ci] = map[string]any{"cols": lcols}
-		rightCells[ci] = map[string]any{"cols": rcols}
-		rightSrcs[ci] = map[string]any{"cols": srccols}
-	}
-
-	wc.obj.This.Set("genders", gendersAny)
-	wc.obj.This.Set("categories", categoriesAny)
-	wc.obj.This.Set("gender_headers", genderHeaders)
-	wc.obj.This.Set("category_headers", categoryHeaders)
-	wc.obj.This.Set("left_cells", leftCells)
-	wc.obj.This.Set("right_cells", rightCells)
-	wc.obj.This.Set("right_srcs", rightSrcs)
-
-	// Set CSS grid columns dynamically: 1 row-header + N gender columns
-	gridCols := fmt.Sprintf("auto repeat(%d, 1fr)", len(genders))
-	for _, gridID := range []string{"#wl-grid-left", "#wl-grid-right"} {
-		grids := dom.Query(wc.obj.Dom, gridID)
-		for _, g := range grids {
-			g.Get("style").Set("gridTemplateColumns", gridCols)
-		}
-	}
-}
-
-// updateRevisedBorder sets/removes the wl-revised class on the right panel.
-func (wc *wlateCtx) updateRevisedBorder(revised bool) {
-	var panelID string
+// recordContext returns the shared context bar strings for the record at idx.
+// Text prefers the right (target) side's context, falling back to the left
+// (reference); inflection prefers the left, matching the original behaviour.
+func (wc *wlateCtx) recordContext(idx int) (ctx, detail string) {
 	if wc.activeTab == "inflection" {
-		panelID = "#wl-right-inflection-panel"
-	} else {
-		panelID = "#wl-right-panel"
-	}
-	panels := dom.Query(wc.obj.Dom, panelID)
-	if len(panels) == 0 {
+		if idx < len(wc.leftInflections) {
+			ctx = wc.leftInflections[idx].Context
+			detail = wldata.HumanizeCtx(wc.leftInflections[idx].Ctxdetail)
+		}
+		if idx < len(wc.rightInflections) {
+			if ctx == "" {
+				ctx = wc.rightInflections[idx].Context
+			}
+			if detail == "" {
+				detail = wldata.HumanizeCtx(wc.rightInflections[idx].Ctxdetail)
+			}
+		}
 		return
 	}
-	cls := panels[0].Get("classList")
-	if revised {
-		cls.Call("add", "wl-revised")
-	} else {
-		cls.Call("remove", "wl-revised")
+
+	var lctx, ldetail string
+	if idx < len(wc.leftText) {
+		lctx = wc.leftText[idx].Context
+		ldetail = wldata.HumanizeCtx(wc.leftText[idx].Ctxdetail)
 	}
+	if idx < len(wc.rightText) {
+		ctx = wc.rightText[idx].Context
+		detail = wldata.HumanizeCtx(wc.rightText[idx].Ctxdetail)
+	}
+	if ctx == "" {
+		ctx = lctx
+	}
+	if detail == "" {
+		detail = ldetail
+	}
+	return
 }
 
 // navigate moves to a new position in filteredIdx.
@@ -484,64 +360,23 @@ func (wc *wlateCtx) navigate(newPos int) {
 	wc.displayRecord()
 }
 
-// syncRightContent writes the current textarea content back to the right data.
-// Reads directly from the DOM textarea since there is no &value two-way binding.
+// syncRightContent harvests the active editor's edits into the current record,
+// marking the session dirty if anything changed.
 func (wc *wlateCtx) syncRightContent() {
 	idx := wc.actualIdx()
 	if idx < 0 {
 		return
 	}
-	if wc.activeTab == "text" && idx < len(wc.rightText) {
-		textareas := dom.Query(wc.obj.Dom, ".wl-content-edit")
-		if len(textareas) == 0 {
-			return
+	if wc.activeTab == "text" {
+		if idx < len(wc.rightText) && wc.reg.text != nil {
+			if wc.reg.text.Harvest(&wc.rightText[idx]) {
+				wc.dirty = true
+			}
 		}
-		content := textareas[0].Get("value").String()
-		if content != wc.rightText[idx].Content {
-			wc.rightText[idx].Content = content
-			wc.rightText[idx].Source = "manual"
-			wc.rightText[idx].Revised = true
-			wc.obj.This.Set("right_content", content)
-			wc.obj.This.Set("right_text_src", "")
-			wc.dirty = true
-		}
+		return
 	}
-	if wc.activeTab == "inflection" && idx < len(wc.rightInflections) {
-		inputs := dom.Query(wc.obj.Dom, ".wl-cell-input")
-		changed := false
-		for _, inp := range inputs {
-			ci := inp.Get("dataset").Get("ci").String()
-			gi := inp.Get("dataset").Get("gi").String()
-			ciN, err1 := strconv.Atoi(ci)
-			giN, err2 := strconv.Atoi(gi)
-			if err1 != nil || err2 != nil {
-				continue
-			}
-			if ciN >= len(wc.curCategories) || giN >= len(wc.curGenders) {
-				continue
-			}
-			key := wc.curGenders[giN] + "." + wc.curCategories[ciN]
-			val := inp.Get("value").String()
-			if wc.rightInflections[idx].Cells[key] != val {
-				wc.rightInflections[idx].Cells[key] = val
-				if wc.rightInflections[idx].Sources == nil {
-					wc.rightInflections[idx].Sources = make(map[string]string)
-				}
-				wc.rightInflections[idx].Sources[key] = "manual"
-				// Mirror into M["right_cells"] so a reactive sync triggered by
-				// Set("show_dialog", false) renders the new value, not the old one.
-				if rc, ok := wc.obj.This.M["right_cells"].([]any); ok && ciN < len(rc) {
-					if row, ok := rc[ciN].(map[string]any); ok {
-						if cols, ok := row["cols"].([]any); ok && giN < len(cols) {
-							cols[giN] = val
-						}
-					}
-				}
-				changed = true
-			}
-		}
-		if changed {
-			wc.rightInflections[idx].Revised = true
+	if idx < len(wc.rightInflections) && wc.reg.flex != nil {
+		if wc.reg.flex.Harvest(&wc.rightInflections[idx]) {
 			wc.dirty = true
 		}
 	}
@@ -554,14 +389,11 @@ func (wc *wlateCtx) findNextUnrevised() int {
 	startIdx := wc.actualIdx() + 1
 	for i := startIdx; i < total; i++ {
 		if !wc.isRecordRevised(i) {
-			// Find position of this index in filteredIdx
 			for pos, fi := range wc.filteredIdx {
 				if fi == i {
 					return pos
 				}
 			}
-			// Not in filteredIdx (shouldn't happen unless filtered to only revised)
-			// Rebuild filter to include it
 			return -1
 		}
 	}
@@ -577,208 +409,6 @@ func (wc *wlateCtx) findNextUnrevised() int {
 		}
 	}
 	return -1
-}
-
-// ── Badge helpers ──────────────────────────────────────────────────────────
-
-// sourceToAvatarURL converts a provenance tag to an avatar URL for wlate
-// badges. Returns "" for empty, "manual", or unrecognised tags (hides the badge).
-//
-//   "dict:unitex-lingua"  →  "/avatar/unitex-lingua"
-//   "llm:gemma4"          →  "/avatar/llm-gemma4"
-func sourceToAvatarURL(s string) string {
-	switch {
-	case strings.HasPrefix(s, "dict:"):
-		return "/avatar/" + strings.TrimPrefix(s, "dict:")
-	case strings.HasPrefix(s, "llm:"):
-		return "/avatar/llm-" + strings.TrimPrefix(s, "llm:")
-	}
-	return ""
-}
-
-// ── Header label helpers ───────────────────────────────────────────────────
-
-// genderHeaderLabel returns the short visible label for a gender column.
-// Empty string (degenerate inventory) stays visually blank; the aria
-// label carries the semantic meaning for screen readers.
-func genderHeaderLabel(g string) string {
-	switch g {
-	case "m":
-		return "M"
-	case "f":
-		return "F"
-	case "n":
-		return "N"
-	}
-	return g
-}
-
-// genderAriaLabel returns the verbose a11y string for a gender column.
-func genderAriaLabel(g string) string {
-	switch g {
-	case "m":
-		return "Masculino"
-	case "f":
-		return "Feminino"
-	case "n":
-		return "Neutro"
-	case "":
-		return "forma única"
-	}
-	return g
-}
-
-// categoryAriaLabel returns a short Portuguese hint for the CLDR category
-// name, for screen readers that won't recognise the technical term.
-func categoryAriaLabel(c string) string {
-	switch c {
-	case "zero":
-		return "zero (forma explícita para nenhum)"
-	case "one":
-		return "singular"
-	case "two":
-		return "dual"
-	case "few":
-		return "poucos"
-	case "many":
-		return "muitos"
-	case "other":
-		return "plural geral"
-	}
-	return c
-}
-
-// ── Sort helpers ───────────────────────────────────────────────────────────
-
-func sortedKeys(m map[string]bool) []string {
-	out := make([]string, 0, len(m))
-	for k := range m {
-		out = append(out, k)
-	}
-	sort.Strings(out)
-	return out
-}
-
-// sortedCLDR sorts CLDR categories in canonical order.
-var cldrOrder = map[string]int{
-	"zero": 0, "one": 1, "two": 2, "few": 3, "many": 4, "other": 5,
-}
-
-func sortedCLDR(m map[string]bool) []string {
-	out := make([]string, 0, len(m))
-	for k := range m {
-		out = append(out, k)
-	}
-	sort.Slice(out, func(i, j int) bool {
-		oi, oki := cldrOrder[out[i]]
-		oj, okj := cldrOrder[out[j]]
-		if oki && okj {
-			return oi < oj
-		}
-		if oki {
-			return true
-		}
-		if okj {
-			return false
-		}
-		return out[i] < out[j]
-	})
-	return out
-}
-
-// ── Fetch helpers ──────────────────────────────────────────────────────────
-
-type fetchResult struct {
-	body string
-	err  error
-}
-
-func fetchText(url string) (string, error) {
-	ch := make(chan fetchResult, 1)
-
-	var thenFn, catchFn, textThen, textCatch js.Func
-
-	textThen = js.FuncOf(func(this js.Value, args []js.Value) any {
-		ch <- fetchResult{body: args[0].String()}
-		return nil
-	})
-	textCatch = js.FuncOf(func(this js.Value, args []js.Value) any {
-		ch <- fetchResult{err: fmt.Errorf("fetch text error: %s", jsErrMsg(args))}
-		return nil
-	})
-	thenFn = js.FuncOf(func(this js.Value, args []js.Value) any {
-		resp := args[0]
-		if !resp.Get("ok").Bool() {
-			ch <- fetchResult{err: fmt.Errorf("fetch %s: status %d", url, resp.Get("status").Int())}
-			return nil
-		}
-		resp.Call("text").Call("then", textThen).Call("catch", textCatch)
-		return nil
-	})
-	catchFn = js.FuncOf(func(this js.Value, args []js.Value) any {
-		ch <- fetchResult{err: fmt.Errorf("fetch %s: %s", url, jsErrMsg(args))}
-		return nil
-	})
-
-	js.Global().Call("fetch", url).Call("then", thenFn).Call("catch", catchFn)
-	r := <-ch
-	thenFn.Release()
-	catchFn.Release()
-	textThen.Release()
-	textCatch.Release()
-	return r.body, r.err
-}
-
-func postJSON(url string, data []byte) error {
-	ch := make(chan error, 1)
-
-	headers := js.Global().Get("Object").New()
-	headers.Set("Content-Type", "application/json")
-
-	opts := js.Global().Get("Object").New()
-	opts.Set("method", "POST")
-	opts.Set("headers", headers)
-
-	// Create Uint8Array from Go bytes
-	jsBody := js.Global().Get("Uint8Array").New(len(data))
-	js.CopyBytesToJS(jsBody, data)
-	opts.Set("body", jsBody)
-
-	var thenFn, catchFn js.Func
-	thenFn = js.FuncOf(func(this js.Value, args []js.Value) any {
-		resp := args[0]
-		if !resp.Get("ok").Bool() {
-			ch <- fmt.Errorf("save failed: status %d", resp.Get("status").Int())
-			return nil
-		}
-		ch <- nil
-		return nil
-	})
-	catchFn = js.FuncOf(func(this js.Value, args []js.Value) any {
-		ch <- fmt.Errorf("save error: %s", jsErrMsg(args))
-		return nil
-	})
-
-	js.Global().Call("fetch", url, opts).Call("then", thenFn).Call("catch", catchFn)
-	err := <-ch
-	thenFn.Release()
-	catchFn.Release()
-	return err
-}
-
-func jsErrMsg(args []js.Value) string {
-	if len(args) == 0 {
-		return "unknown error"
-	}
-	v := args[0]
-	if v.IsUndefined() || v.IsNull() {
-		return "unknown error"
-	}
-	msg := v.Get("message")
-	if msg.IsUndefined() || msg.IsNull() {
-		return v.String()
-	}
-	return msg.String()
 }
 
 // ── Key matching ───────────────────────────────────────────────────────────
@@ -805,9 +435,8 @@ func matchKey(event js.Value, binding string) bool {
 	}
 
 	if event.Get("key").String() != key {
-		// Try case-insensitive for single letters
 		if len(key) == 1 && strings.EqualFold(event.Get("key").String(), key) {
-			// ok
+			// case-insensitive single-letter match — ok
 		} else {
 			return false
 		}
@@ -840,6 +469,7 @@ func (wc *wlateCtx) getKey(action string) string {
 func (w *Wlate) Render(obj *wprana.PranaObj) {
 	wc := &wlateCtx{
 		obj:         obj,
+		reg:         w.reg,
 		activeTab:   "text",
 		filteredIdx: make([]int, 0, 256),
 		keys:        map[string]string{},
@@ -850,14 +480,14 @@ func (w *Wlate) Render(obj *wprana.PranaObj) {
 
 func (wc *wlateCtx) init() {
 	// Load config
-	body, err := fetchText("wprana.json")
+	body, err := wldata.FetchText("wprana.json")
 	if err != nil {
 		G.Logf(1, "wlate: failed to load wprana.json: %v", err)
 		return
 	}
 	// Apply project-wide settings (debugLevel, traceOn, measure overrides)
-	// before parsing wlate-specific keys, so subsequent G.Logf calls in this
-	// package observe the configured level.
+	// before parsing wlate-specific keys, so subsequent G.Logf calls observe
+	// the configured level.
 	if err := wi18n.SetConfig([]byte(body)); err != nil {
 		G.Logf(1, "wlate: failed to apply wprana.json: %v", err)
 		return
@@ -902,6 +532,11 @@ func (wc *wlateCtx) init() {
 	wc.obj.This.Set("right_lang", wc.rightLang)
 	wc.loadRightData()
 
+	// Wait for both editor panes to register from their Render before the first
+	// paint, so displayRecord has live editors to drive. This receive yields,
+	// letting the editor goroutines run if they have not already.
+	<-wc.reg.ready
+
 	// Build initial filter and display
 	wc.buildFilteredIdx()
 	wc.displayRecord()
@@ -911,79 +546,33 @@ func (wc *wlateCtx) init() {
 	wc.wireEvents()
 }
 
-// loadText fetches a <lang>.json + <lang>.meta.json pair and merges them
-// into the wi18n.Entry shape used in memory. Either half may be absent —
-// legacy combined files ship both fields in the data half, so those still
-// decode correctly.
-func loadText(lang string) []TextRecord {
-	var records []TextRecord
-
-	body, err := fetchText("i18n/" + lang + ".json")
-	if err == nil {
-		json.Unmarshal([]byte(body), &records)
-	}
-	body, err = fetchText("i18n/" + lang + ".meta.json")
-	if err == nil {
-		var metas []wi18n.EntryMeta
-		if json.Unmarshal([]byte(body), &metas) == nil {
-			for i := range records {
-				if i < len(metas) {
-					records[i].EntryMeta = metas[i]
-				}
-			}
-		}
-	}
-	return records
-}
-
-func loadFlex(lang string) []InflectionRecord {
-	var records []InflectionRecord
-
-	body, err := fetchText("i18n/" + lang + ".inflections.json")
-	if err == nil {
-		json.Unmarshal([]byte(body), &records)
-	}
-	body, err = fetchText("i18n/" + lang + ".inflections.meta.json")
-	if err == nil {
-		var metas []wi18n.FlexEntryMeta
-		if json.Unmarshal([]byte(body), &metas) == nil {
-			for i := range records {
-				if i < len(metas) {
-					records[i].FlexEntryMeta = metas[i]
-				}
-			}
-		}
-	}
-	return records
-}
-
 func (wc *wlateCtx) loadLeftData() {
-	wc.leftText = loadText(wc.leftLang)
-	wc.leftInflections = loadFlex(wc.leftLang)
+	wc.leftText = wldata.LoadText(wc.leftLang)
+	wc.leftInflections = wldata.LoadFlex(wc.leftLang)
 }
 
 func (wc *wlateCtx) loadRightData() {
-	wc.rightText = loadText(wc.rightLang)
-	wc.rightInflections = loadFlex(wc.rightLang)
+	wc.rightText = wldata.LoadText(wc.rightLang)
+	wc.rightInflections = wldata.LoadFlex(wc.rightLang)
 	wc.dirty = false
 
 	// If right-side files don't exist, bootstrap from left-side shape so
 	// translators see the full list to fill in.
 	if wc.rightText == nil && len(wc.leftText) > 0 {
-		wc.rightText = make([]TextRecord, len(wc.leftText))
+		wc.rightText = make([]wldata.TextRecord, len(wc.leftText))
 		for i, lt := range wc.leftText {
-			wc.rightText[i] = TextRecord{EntryMeta: lt.EntryMeta}
+			wc.rightText[i] = wldata.TextRecord{EntryMeta: lt.EntryMeta}
 		}
 	}
 
 	if wc.rightInflections == nil && len(wc.leftInflections) > 0 {
-		wc.rightInflections = make([]InflectionRecord, len(wc.leftInflections))
+		wc.rightInflections = make([]wldata.InflectionRecord, len(wc.leftInflections))
 		for i, li := range wc.leftInflections {
 			cells := make(map[string]string, len(li.Cells))
 			for key := range li.Cells {
 				cells[key] = ""
 			}
-			wc.rightInflections[i] = InflectionRecord{
+			wc.rightInflections[i] = wldata.InflectionRecord{
 				FlexEntryData: wi18n.FlexEntryData{
 					Label: li.Label,
 					Cells: cells,
@@ -1057,6 +646,18 @@ func (wc *wlateCtx) wireEvents() {
 		wc.navigate(0)
 	})
 
+	// Revised toggle — fired by either editor's @revised trigger (the clickable
+	// border indicator lives inside the editor's shadow tree now).
+	wc.obj.This.M["toggleRevised"] = wprana.TriggerHandler(func(_ ...any) {
+		wc.toggleRevised()
+	})
+
+	// Dirty signal — fired by wl-text-editor's @input on every keystroke, so the
+	// beforeunload guard works even before the edit is harvested.
+	wc.obj.This.M["markDirty"] = wprana.TriggerHandler(func(_ ...any) {
+		wc.dirty = true
+	})
+
 	// Filter toggle
 	filterToggles := dom.Query(wc.obj.Dom, "#wl-filter-toggle")
 	if len(filterToggles) > 0 {
@@ -1077,24 +678,6 @@ func (wc *wlateCtx) wireEvents() {
 			wc.buildFilteredIdx()
 			wc.currentPos = 0
 			wc.displayRecord()
-			return nil
-		}, false, false)
-	}
-
-	// Revised toggle (text tab)
-	revisedToggles := dom.Query(wc.obj.Dom, "#wl-revised-toggle")
-	if len(revisedToggles) > 0 {
-		dom.AddEvent(revisedToggles[0], "click", func(_ js.Value, _ []js.Value) any {
-			wc.toggleRevised()
-			return nil
-		}, false, false)
-	}
-
-	// Revised toggle (inflection tab)
-	revisedTogglesInfl := dom.Query(wc.obj.Dom, "#wl-revised-toggle-inflection")
-	if len(revisedTogglesInfl) > 0 {
-		dom.AddEvent(revisedTogglesInfl[0], "click", func(_ js.Value, _ []js.Value) any {
-			wc.toggleRevised()
 			return nil
 		}, false, false)
 	}
@@ -1127,15 +710,6 @@ func (wc *wlateCtx) wireEvents() {
 	wc.obj.This.M["fnCancel"] = wprana.TriggerHandler(func(_ ...any) {
 		wc.obj.This.Set("show_dialog", false)
 	})
-
-	// Textarea input tracking for dirty state
-	textareas := dom.Query(wc.obj.Dom, ".wl-content-edit")
-	if len(textareas) > 0 {
-		dom.AddEvent(textareas[0], "input", func(_ js.Value, _ []js.Value) any {
-			wc.dirty = true
-			return nil
-		}, false, false)
-	}
 
 	// Keyboard shortcuts (on document)
 	doc := js.Global().Get("document")
@@ -1310,7 +884,7 @@ func (wc *wlateCtx) save() {
 			G.Logf(1, "wlate: failed to marshal text data: %v", err)
 			return
 		}
-		if err := postJSON("/save?file=i18n/"+wc.rightLang+".json", data); err != nil {
+		if err := wldata.PostJSON("/save?file=i18n/"+wc.rightLang+".json", data); err != nil {
 			G.Logf(1, "wlate: failed to save text data: %v", err)
 			return
 		}
@@ -1327,7 +901,7 @@ func (wc *wlateCtx) save() {
 			G.Logf(1, "wlate: failed to marshal inflection data: %v", err)
 			return
 		}
-		if err := postJSON("/save?file=i18n/"+wc.rightLang+".inflections.json", data); err != nil {
+		if err := wldata.PostJSON("/save?file=i18n/"+wc.rightLang+".inflections.json", data); err != nil {
 			G.Logf(1, "wlate: failed to save inflection data: %v", err)
 			return
 		}

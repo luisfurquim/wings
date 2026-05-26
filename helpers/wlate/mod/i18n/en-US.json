@@ -1,10 +1,10 @@
 [
   {
-    "content": "Pending: ",
-    "revised": true
+    "content": "",
+    "revised": false
   },
   {
-    "content": "{{pending_count}}",
+    "content": "Pending: ",
     "revised": true
   },
   {
@@ -26,50 +26,6 @@
   {
     "content": "Language to translate...",
     "revised": true
-  },
-  {
-    "content": "{{context}}",
-    "revised": true
-  },
-  {
-    "content": "{{ctxdetail_text}}",
-    "revised": true
-  },
-  {
-    "content": "{{left_content}}",
-    "revised": true
-  },
-  {
-    "content": "{{right_content}}",
-    "revised": true
-  },
-  {
-    "content": "{{inflection_expr}}",
-    "revised": true
-  },
-  {
-    "content": "",
-    "revised": false
-  },
-  {
-    "content": "",
-    "revised": false
-  },
-  {
-    "content": "",
-    "revised": false
-  },
-  {
-    "content": "",
-    "revised": false
-  },
-  {
-    "content": "{{left_cells[ci].cols[gi]}}",
-    "revised": true
-  },
-  {
-    "content": "",
-    "revised": false
   },
   {
     "content": "\n         Unreviewed only\n      ",
