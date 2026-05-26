@@ -19,6 +19,10 @@ type fetchResult struct {
 
 // FetchText GETs a URL and returns its body as text. It blocks the calling
 // goroutine on the fetch promise, so it must run off the main loop.
+//
+// Bypasses the HTTP cache entirely (cache: "no-store"): wlate edits these
+// files in place, so any stale disk-cache hit would show pre-save content
+// even though /save wrote the new bytes to disk.
 func FetchText(url string) (string, error) {
 	ch := make(chan fetchResult, 1)
 
@@ -46,7 +50,9 @@ func FetchText(url string) (string, error) {
 		return nil
 	})
 
-	js.Global().Call("fetch", url).Call("then", thenFn).Call("catch", catchFn)
+	opts := js.Global().Get("Object").New()
+	opts.Set("cache", "no-store")
+	js.Global().Call("fetch", url, opts).Call("then", thenFn).Call("catch", catchFn)
 	r := <-ch
 	thenFn.Release()
 	catchFn.Release()
