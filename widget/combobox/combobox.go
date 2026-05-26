@@ -265,8 +265,12 @@ func (cb *cbCtx) applyFilter(query string) {
 }
 
 // loadOptions parses the options attribute (JSON) into all_options.
-// It is a no-op when both the raw options string and the value attribute
-// have not changed since the last call.
+// It is a no-op when nothing relevant changed since the last call.
+//
+// In single mode the external `value` attribute is authoritative: if it
+// disagrees with the current internal selection (e.g., the parent reverted
+// after the user cancelled a pending switch in a confirmation dialog) the
+// selection is silently re-synced to match. This path does not fire @change.
 func (cb *cbCtx) loadOptions() {
 	var raw string
 	if v, ok := cb.obj.This.Get("options").(string); ok {
@@ -274,16 +278,50 @@ func (cb *cbCtx) loadOptions() {
 	}
 	val, _ := cb.obj.This.Get("value").(string)
 
-	if raw == cb.lastRaw && val == cb.lastValue {
+	rawChanged := raw != cb.lastRaw
+	valChanged := val != cb.lastValue
+	singleDrift := cb.isSingle() && val != "" && !cb.selectedVals[val]
+
+	if !rawChanged && !valChanged && !singleDrift {
 		return
 	}
-	if raw != cb.lastRaw {
+	if rawChanged {
 		cb.lastRaw = raw
 		cb.obj.This.Set("all_options", parseOptions(raw))
 		cb.applyFilter(cb.inputVal())
 	}
 	cb.lastValue = val
+
+	if singleDrift {
+		cb.resyncSingleValue(val)
+		return
+	}
 	cb.applyValuePreset(val)
+}
+
+// resyncSingleValue replaces the single-mode selection with the option whose
+// value matches val. Silent — does not fire @change — so a parent revert via
+// the bound `value` attribute can recover the combobox without re-entering
+// the change handler that opened the confirmation dialog in the first place.
+func (cb *cbCtx) resyncSingleValue(val string) {
+	opts, ok := cb.obj.This.Get("all_options").([]any)
+	if !ok {
+		return
+	}
+	for _, o := range opts {
+		m, ok := o.(map[string]any)
+		if !ok {
+			continue
+		}
+		if v, _ := m["value"].(string); v == val {
+			cb.selectedVals = map[string]bool{val: true}
+			cb.obj.This.Set("selected_items", []any{m})
+			label, _ := m["label"].(string)
+			cb.obj.This.Set("input_val", label)
+			cb.applyFilter("")
+			return
+		}
+	}
 }
 
 // applyValuePreset silently pre-selects the option whose value matches val,

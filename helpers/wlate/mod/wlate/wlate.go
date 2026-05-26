@@ -709,6 +709,18 @@ func (wc *wlateCtx) wireEvents() {
 	})
 	wc.obj.This.M["fnCancel"] = wprana.TriggerHandler(func(_ ...any) {
 		wc.obj.This.Set("show_dialog", false)
+		// Combobox still shows the language the user just clicked, but
+		// our state (leftLang/rightLang) never moved. Re-setting the bound
+		// key drives the combobox's single-mode drift detector, which
+		// rewinds the visible selection silently (no @change → no loop).
+		switch wc.pendingSide {
+		case "left":
+			wc.obj.This.Set("left_lang", wc.leftLang)
+		case "right":
+			wc.obj.This.Set("right_lang", wc.rightLang)
+		}
+		wc.pendingLang = ""
+		wc.pendingSide = ""
 	})
 
 	// Keyboard shortcuts (on document)
