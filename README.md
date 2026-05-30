@@ -101,6 +101,13 @@ WASM binaries cannot be loaded from `file://` URLs. The snippet below
 builds a hello-world component, copies the required runtime files, and
 starts a tiny Go server so you can open the page in a browser.
 
+> **Windows users:** the snippets below and the project's `build.sh` scripts
+> assume a POSIX shell. Run them under **WSL** (recommended — official
+> Microsoft path, ships with Windows 10/11) or **Git Bash** (bundled with
+> Git for Windows). Native `cmd.exe` / PowerShell will not execute them
+> directly. For the helper scripts under `helpers/wlate/` and `live-demo/`,
+> also ensure `python3` and `openssl` are on `PATH`.
+
 ```bash
 # 1. Create the project
 mkdir hello-wprana && cd hello-wprana
