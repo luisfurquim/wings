@@ -28,11 +28,13 @@ var G goose.Alert = goose.Alert(2)
 // cmd/dic2tree.go. Gob decodes structs by field name/type, so as long as the
 // shapes match these duplicated declarations work regardless of package path.
 
+// Dict is the in-memory shape of a compiled flexion dictionary (.db file).
 type Dict struct {
 	Lemmas    map[string]*Lemma
 	FormIndex map[string][]FormRef
 }
 
+// FormRef links an inflected form back to its lemma and grammatical features.
 type FormRef struct {
 	Lemma string
 	Class string
@@ -40,11 +42,13 @@ type FormRef struct {
 	Count string
 }
 
+// Lemma is a base word together with its inflected forms.
 type Lemma struct {
 	Category string
 	Forms    map[string]Inflect
 }
 
+// Inflect encodes one inflected form as a suffix diff against the lemma.
 type Inflect struct {
 	DiffPos int
 	Suffix  string

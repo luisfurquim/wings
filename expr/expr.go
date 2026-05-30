@@ -12,6 +12,7 @@ import (
 // TokenType represents the type of a token in the template parser.
 type TokenType int8
 
+// Token types produced by the expression lexer.
 const (
 	TokTxt       TokenType = 0  // literal text
 	TokRef       TokenType = 1  // reference {{ }}

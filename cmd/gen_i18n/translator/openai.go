@@ -36,6 +36,7 @@ func NewOpenAI(url, model, key, sysPrompt string, timeout time.Duration) *OpenAI
 	}
 }
 
+// SourceTag returns the provenance tag stamped on entries this backend translates.
 func (o *OpenAI) SourceTag() string { return "llm:" + o.model }
 
 // Translate sends entries as a single chat completions request and returns the

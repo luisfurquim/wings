@@ -37,6 +37,7 @@ func NewLibreTranslate(url, apiKey string, timeout time.Duration) *LibreTranslat
 	}
 }
 
+// SourceTag returns the provenance tag stamped on entries this backend translates.
 func (l *LibreTranslate) SourceTag() string { return "libretranslate" }
 
 // Translate flattens all entry cells, applies placeholder substitution, sends
