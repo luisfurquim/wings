@@ -23,14 +23,14 @@ type unit struct {
 }
 
 var units = map[string]unit{
-	"k":         {"K", func(k float64) float64 { return k }},
-	"kelvin":    {"K", func(k float64) float64 { return k }},
-	"c":         {"°C", func(k float64) float64 { return k - 273.15 }},
-	"celsius":   {"°C", func(k float64) float64 { return k - 273.15 }},
-	"f":         {"°F", func(k float64) float64 { return (k-273.15)*9/5 + 32 }},
+	"k":          {"K", func(k float64) float64 { return k }},
+	"kelvin":     {"K", func(k float64) float64 { return k }},
+	"c":          {"°C", func(k float64) float64 { return k - 273.15 }},
+	"celsius":    {"°C", func(k float64) float64 { return k - 273.15 }},
+	"f":          {"°F", func(k float64) float64 { return (k-273.15)*9/5 + 32 }},
 	"fahrenheit": {"°F", func(k float64) float64 { return (k-273.15)*9/5 + 32 }},
-	"r":         {"°R", func(k float64) float64 { return k * 9 / 5 }},
-	"rankine":   {"°R", func(k float64) float64 { return k * 9 / 5 }},
+	"r":          {"°R", func(k float64) float64 { return k * 9 / 5 }},
+	"rankine":    {"°R", func(k float64) float64 { return k * 9 / 5 }},
 }
 
 // fromUnits maps unit names to their inverse conversion: input value → Kelvin.

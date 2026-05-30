@@ -43,9 +43,9 @@ type SkinInfo struct {
 }
 
 var (
-	skins             = map[string]*skinEntry{}
-	activeSkins       []string // ordered, FIFO of activations
-	skinChangeHooks   []func()
+	skins           = map[string]*skinEntry{}
+	activeSkins     []string // ordered, FIFO of activations
+	skinChangeHooks []func()
 )
 
 // RegisterSkin registers a named skin with its category bitmask and CSS

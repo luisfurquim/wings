@@ -15,9 +15,9 @@ func TestConvert(t *testing.T) {
 	}{
 		{1, "ms", "m/s", 1},
 		{1, "kmh", "km/h", 3.6},
-		{0.44704, "mph", "mph", 1},       // 1 mph = 0.44704 m/s exactly
-		{0.514444, "kn", "kn", 1},        // ≈1 kn
-		{0.3048, "fps", "ft/s", 1},       // 1 ft/s = 0.3048 m/s
+		{0.44704, "mph", "mph", 1},        // 1 mph = 0.44704 m/s exactly
+		{0.514444, "kn", "kn", 1},         // ≈1 kn
+		{0.3048, "fps", "ft/s", 1},        // 1 ft/s = 0.3048 m/s
 		{100.0 / 3.6, "kmh", "km/h", 100}, // 100 km/h
 	}
 	for _, c := range cases {
@@ -61,7 +61,10 @@ func TestDefaultUnit(t *testing.T) {
 }
 
 func TestNew(t *testing.T) {
-	cases := []struct{ val float64; unit string }{
+	cases := []struct {
+		val  float64
+		unit string
+	}{
 		{30, "ms"}, {108, "kmh"}, {60, "mph"}, {10, "kn"}, {88, "fps"},
 	}
 	for _, c := range cases {

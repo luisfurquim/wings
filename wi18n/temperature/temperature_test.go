@@ -89,7 +89,10 @@ func TestDefaultDecimals(t *testing.T) {
 
 func TestNew(t *testing.T) {
 	// Round-trip: New(v, unit) → Convert(unit) ≈ v
-	cases := []struct{ val float64; unit string }{
+	cases := []struct {
+		val  float64
+		unit string
+	}{
 		{300, "k"}, {300, "kelvin"},
 		{26.85, "c"}, {26.85, "celsius"},
 		{80.33, "f"}, {80.33, "fahrenheit"},

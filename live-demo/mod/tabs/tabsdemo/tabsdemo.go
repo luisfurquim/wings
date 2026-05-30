@@ -33,5 +33,5 @@ func init() {
 	)
 }
 
-func (w *TabsDemo) InitData() map[string]any  { return map[string]any{} }
+func (w *TabsDemo) InitData() map[string]any   { return map[string]any{} }
 func (w *TabsDemo) Render(obj *wings.PranaObj) {}

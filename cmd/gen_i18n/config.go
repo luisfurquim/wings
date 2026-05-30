@@ -8,7 +8,7 @@ import (
 )
 
 type translatorConfig struct {
-	Backend      string `json:"backend"`       // "openai" | "libretranslate" | ""
+	Backend      string `json:"backend"` // "openai" | "libretranslate" | ""
 	URL          string `json:"url"`
 	Model        string `json:"model"`         // OpenAI backend only
 	Key          string `json:"key"`           // optional API key

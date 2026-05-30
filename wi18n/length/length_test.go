@@ -7,11 +7,11 @@ import (
 
 func TestConvert(t *testing.T) {
 	cases := []struct {
-		meters   float64
-		unit     string
-		wantSym  string
+		meters     float64
+		unit       string
+		wantSym    string
 		wantApprox float64
-		eps      float64
+		eps        float64
 	}{
 		{1000, "km", "km", 1, 1e-9},
 		{1609.344, "mi", "mi", 1, 1e-9},
@@ -47,7 +47,10 @@ func TestConvertUnknownUnit(t *testing.T) {
 }
 
 func TestNew(t *testing.T) {
-	cases := []struct{ val float64; unit string }{
+	cases := []struct {
+		val  float64
+		unit string
+	}{
 		{1000, "m"}, {5, "km"}, {100, "cm"}, {500, "mm"},
 		{1, "mi"}, {6, "ft"}, {3, "yd"}, {12, "in"},
 		{2, "nmi"}, {1, "league"},

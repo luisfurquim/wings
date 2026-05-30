@@ -21,7 +21,7 @@
 //   - imperative            (code Y*)         → dropped
 //   - finite verbal forms in 1st/2nd person   → dropped
 //     (the count-controlled i18n use case only needs 3rd person + infinitive
-//     + gerund + participle; see project_i18n_roadmap memory for the reasoning)
+//   - gerund + participle; see project_i18n_roadmap memory for the reasoning)
 //
 // Inflection codes are parsed right-to-left into (Class, Genre, Count):
 //
@@ -95,10 +95,10 @@ var errSkipped = errors.New("filtered")
 
 func main() {
 	var (
-		langFlag  = flag.String("lang", "", "BCP-47 tag to fetch from unitex-lingua (e.g. pt-BR); mutually exclusive with positional input")
-		outDir    = flag.String("out", ".", "directory to write <lang>.db into")
-		stateDir  = flag.String("state-dir", defaultStateDir(), "where to keep cloned unitex-core, built tools, and cached .bin/.inf")
-		toolPath  = flag.String("tool", "", "path to a prebuilt UnitexToolLogger binary (skips the auto-build)")
+		langFlag = flag.String("lang", "", "BCP-47 tag to fetch from unitex-lingua (e.g. pt-BR); mutually exclusive with positional input")
+		outDir   = flag.String("out", ".", "directory to write <lang>.db into")
+		stateDir = flag.String("state-dir", defaultStateDir(), "where to keep cloned unitex-core, built tools, and cached .bin/.inf")
+		toolPath = flag.String("tool", "", "path to a prebuilt UnitexToolLogger binary (skips the auto-build)")
 	)
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage:\n  %s -lang <tag>\n  %s [-out <dir>] <input.dic> <tag>\n\nflags:\n", os.Args[0], os.Args[0])

@@ -25,5 +25,5 @@ func init() {
 	)
 }
 
-func (w *FmtTab) InitData() map[string]any { return map[string]any{} }
-func (w *FmtTab) Render(obj *wings.PranaObj)  {}
+func (w *FmtTab) InitData() map[string]any   { return map[string]any{} }
+func (w *FmtTab) Render(obj *wings.PranaObj) {}

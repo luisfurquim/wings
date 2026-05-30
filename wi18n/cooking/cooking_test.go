@@ -103,7 +103,10 @@ func TestDefaultWeightUnit(t *testing.T) {
 }
 
 func TestNewVolume(t *testing.T) {
-	cases := []struct{ val float64; unit string }{
+	cases := []struct {
+		val  float64
+		unit string
+	}{
 		{1, "L"}, {250, "mL"}, {2, "cup"}, {4, "tbsp"}, {3, "tsp"}, {8, "floz"},
 	}
 	for _, c := range cases {
@@ -124,7 +127,10 @@ func TestNewVolume(t *testing.T) {
 }
 
 func TestNewWeight(t *testing.T) {
-	cases := []struct{ val float64; unit string }{
+	cases := []struct {
+		val  float64
+		unit string
+	}{
 		{1, "kg"}, {500, "g"}, {2, "lb"}, {8, "oz"},
 	}
 	for _, c := range cases {

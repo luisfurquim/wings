@@ -28,10 +28,10 @@ func NewOpenAI(url, model, key, sysPrompt string, timeout time.Duration) *OpenAI
 		sysPrompt = DefaultSystemPrompt
 	}
 	return &OpenAI{
-		url:       strings.TrimRight(url, "/"),
-		model:     model,
-		key:       key,
-		sysPrompt: sysPrompt,
+		url:        strings.TrimRight(url, "/"),
+		model:      model,
+		key:        key,
+		sysPrompt:  sysPrompt,
 		httpClient: &http.Client{Timeout: timeout},
 	}
 }
@@ -133,8 +133,8 @@ type oaiChatResp struct {
 // ── batch payload types (user message / model reply) ─────────────────────────
 
 type oaiBatchReq struct {
-	SrcLang string        `json:"source_lang"`
-	DstLang string        `json:"target_lang"`
+	SrcLang string          `json:"source_lang"`
+	DstLang string          `json:"target_lang"`
 	Entries []oaiBatchEntry `json:"entries"`
 }
 

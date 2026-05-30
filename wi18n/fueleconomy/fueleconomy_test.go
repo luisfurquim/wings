@@ -14,7 +14,7 @@ func TestConvert(t *testing.T) {
 		wantVal float64
 	}{
 		{8, "l100km", "L/100km", 8},
-		{mpgUS, "mpg", "mpg", 1},    // exactly 1 mpg at mpgUS L/100km
+		{mpgUS, "mpg", "mpg", 1},     // exactly 1 mpg at mpgUS L/100km
 		{mpgImp, "mpgimp", "mpg", 1}, // exactly 1 mpg-imp
 		{100, "kml", "km/L", 1},      // 100 L/100km → 1 km/L
 		{10, "kml", "km/L", 10},      // 10 L/100km → 10 km/L
@@ -66,7 +66,10 @@ func TestDefaultUnit(t *testing.T) {
 }
 
 func TestNew(t *testing.T) {
-	cases := []struct{ val float64; unit string }{
+	cases := []struct {
+		val  float64
+		unit string
+	}{
 		{8, "l100km"}, {30, "mpg"}, {25, "mpgimp"}, {12, "kml"},
 	}
 	for _, c := range cases {

@@ -81,7 +81,10 @@ func TestDefaultDecimals(t *testing.T) {
 }
 
 func TestNew(t *testing.T) {
-	cases := []struct{ val float64; unit string }{{1,"L"},{500,"mL"},{5,"dL"},{0.001,"m3"},{8,"floz"},{2,"pt"},{1,"qt"},{1,"gal"},{1,"galimp"}}
+	cases := []struct {
+		val  float64
+		unit string
+	}{{1, "L"}, {500, "mL"}, {5, "dL"}, {0.001, "m3"}, {8, "floz"}, {2, "pt"}, {1, "qt"}, {1, "gal"}, {1, "galimp"}}
 	for _, c := range cases {
 		v, err := New(c.val, c.unit)
 		if err != nil {
