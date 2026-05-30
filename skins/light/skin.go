@@ -19,7 +19,7 @@
 //	}
 //
 // The blank import drives init() to register the skin; ApplySkin then
-// injects the CSS into <style id="wprana-skin"> in document.head.
+// injects the CSS into <style id="wings-skin"> in document.head.
 package light
 
 import (

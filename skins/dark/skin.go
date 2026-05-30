@@ -19,7 +19,7 @@
 //	}
 //
 // Skins can be swapped at runtime with another ApplySkin call; the
-// global <style id="wprana-skin"> element is replaced in place.
+// global <style id="wings-skin"> element is replaced in place.
 package dark
 
 import (

@@ -19,8 +19,8 @@ import (
 // — apenas atmosfera). Two themes that both declare CategoryIdentity
 // will not coexist; ApplySkin returns *SkinConflictError* in that case.
 //
-// Each active skin owns its own `<style id="wprana-skin-NAME"
-// data-wprana-skin="NAME">` element in document.head. The DOM order
+// Each active skin owns its own `<style id="wings-skin-NAME"
+// data-wings-skin="NAME">` element in document.head. The DOM order
 // equals the activation order; later activations cascade over earlier
 // ones in case the same property is set in two skins (which the bitmask
 // gate already prevents — but the cascade still acts as a safety net).
@@ -28,7 +28,7 @@ import (
 // Widgets reference tokens via fallbacks so they remain functional with
 // no skin active, e.g. `color: var(--wings-text, #222);`.
 
-const skinStylePrefix = "wprana-skin-"
+const skinStylePrefix = "wings-skin-"
 
 type skinEntry struct {
 	name       string
@@ -263,14 +263,14 @@ func injectSkinCSS(name, css string) bool {
 	if !style.Truthy() {
 		style = doc.Call("createElement", "style")
 		style.Set("id", id)
-		style.Call("setAttribute", "data-wprana-skin", name)
+		style.Call("setAttribute", "data-wings-skin", name)
 		doc.Get("head").Call("appendChild", style)
 	}
 	style.Set("textContent", css)
 	return true
 }
 
-// removeSkinStyle drops the <style id="wprana-skin-NAME"> element.
+// removeSkinStyle drops the <style id="wings-skin-NAME"> element.
 func removeSkinStyle(name string) {
 	doc := js.Global().Get("document")
 	if !doc.Truthy() {
