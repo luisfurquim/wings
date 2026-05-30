@@ -3,8 +3,8 @@
 The dictionaries listed here are downloaded on demand by `cmd/dictbuild`
 from the [UnitexGramLab/unitex-lingua](https://github.com/UnitexGramLab/unitex-lingua)
 repository and are **not stored in this repository**. They are cached
-locally under `$XDG_CACHE_HOME/wprana/dictbuild/` (or the equivalent
-platform path) and are never bundled into WPrana's WASM binary.
+locally under `$XDG_CACHE_HOME/wings/dictbuild/` (or the equivalent
+platform path) and are never bundled into WINGS's WASM binary.
 
 All dictionaries are distributed under the
 **Lesser General Public License for Linguistic Resources (LGPLLR)**.
@@ -24,7 +24,7 @@ into a compact two-layer lookup structure (Lemmas + FormIndex, encoded
 as a Go gob file `<lang>.db`). This transformation constitutes a
 modification of the original Linguistic Resource.
 
-**Changed by:** WPrana `cmd/dictbuild`  
+**Changed by:** WINGS `cmd/dictbuild`  
 **Date:** 2026-04-27  
 **Nature of change:** decompression from binary DAWG to text DELAF,
 followed by parsing into a language-neutral `Dict{Lemmas, FormIndex}`

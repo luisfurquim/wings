@@ -12,7 +12,7 @@ import (
 // cloned unitex-core checkout. The Makefile target UNITEXTOOLLOGGERONLY=yes
 // links only this single executable, which keeps the build to a fraction of a
 // full Unitex compile (still a few minutes, but tractable). 64BITS=yes matches
-// the platforms WPrana actually runs on; we don't support Windows here because
+// the platforms WINGS actually runs on; we don't support Windows here because
 // the Makefile assumes MSVC/Dev-C++ on that target.
 //
 // The function returns the path to the compiled binary. If a binary already

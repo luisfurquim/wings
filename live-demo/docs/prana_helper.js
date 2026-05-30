@@ -1,7 +1,7 @@
 /**
  * prana_helper.js
  *
- * Helper JS mínimo para interop com o wprana Go/WASM.
+ * Helper JS mínimo para interop com o wings Go/WASM.
  * Deve ser carregado ANTES do wasm_exec.js e do binário .wasm.
  *
  * Define window._pranaDef(tagName, ctor, connected, attrChanged, disconnected, observed)

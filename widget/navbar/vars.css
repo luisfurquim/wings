@@ -2,5 +2,5 @@
    Empty by design: variables (--w-border, --w-btn-bg, --w-text,
    --w-nav-btn-hover-bg, --w-nav-btn-hover-color, --w-btn-hover-shadow,
    --w-primary, --w-border-focus, --w-text-light) are expected to come
-   from the global wprana palette. Override via the Customizable
+   from the global wings palette. Override via the Customizable
    "Vars" key to provide local fallbacks or a custom theme. */

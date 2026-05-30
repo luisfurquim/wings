@@ -1,4 +1,4 @@
-# wprana skin tokens
+# wings skin tokens
 
 This file is the canonical contract between **skins** (which define CSS
 custom properties at `:root`) and **widgets** (which reference them with a
@@ -11,9 +11,9 @@ fallback). Every token name listed here is reserved for that purpose.
 
 ## Authoring rules
 
-- **Skins** declare a `SkinCategory` bitmask at `wprana.RegisterSkin(name,
-  categories, css)`. The CSS is injected by `wprana.ApplySkin(name)` into
-  a `<style id="wprana-skin-<name>" data-wprana-skin="<name>">` element
+- **Skins** declare a `SkinCategory` bitmask at `wings.RegisterSkin(name,
+  categories, css)`. The CSS is injected by `wings.ApplySkin(name)` into
+  a `<style id="wings-skin-<name>" data-wings-skin="<name>">` element
   appended to `document.head`. Multiple skins can be active simultaneously
   if their bitmasks are disjoint.
 - **Skins are decomposed by orthogonal axis**. The shipped families are:
@@ -41,7 +41,7 @@ fallback). Every token name listed here is reserved for that purpose.
 ## Categories
 
 A skin declares which design dimensions it owns by combining the
-`wprana.SkinCategory` constants below with `|`. Two skins coexist iff
+`wings.SkinCategory` constants below with `|`. Two skins coexist iff
 their bitmasks have no bit in common.
 
 | Constant                | Bit | Domain                                                      |
@@ -58,15 +58,15 @@ their bitmasks have no bit in common.
 
 Built-in bitmask helpers (in `skin_category.go`):
 
-- `wprana.IdentitySkinCategories` = `Identity | Lighting | Interaction` —
+- `wings.IdentitySkinCategories` = `Identity | Lighting | Interaction` —
   used by the eight chromatic themes (`light`, `dark`, `autumn`,
   `darkblueberry`, `darkforest`, `lightblueberry`, `mushroom`,
   `vividforest`).
-- `wprana.GeometrySkinCategories` = `Geometry | Spacing` — used by
+- `wings.GeometrySkinCategories` = `Geometry | Spacing` — used by
   `sharp`, `classic`, `soft`.
-- `wprana.DepthSkinCategories` = `Depth` — used by `flat`, `lifted`,
+- `wings.DepthSkinCategories` = `Depth` — used by `flat`, `lifted`,
   `floating`.
-- `wprana.MotionSkinCategories` = `Motion` — used by `gentle`, `calm`,
+- `wings.MotionSkinCategories` = `Motion` — used by `gentle`, `calm`,
   `brisk`.
 
 Each helper's family is internally mutually exclusive; the four helpers
@@ -303,16 +303,16 @@ axis. Example stacks:
 Programmatic activation:
 
 ```go
-_ = wprana.ApplySkin("mushroom")
-if err := wprana.ApplySkin("glass"); err != nil {
-    var conflict *wprana.SkinConflictError
+_ = wings.ApplySkin("mushroom")
+if err := wings.ApplySkin("glass"); err != nil {
+    var conflict *wings.SkinConflictError
     if errors.As(err, &conflict) {
         log.Printf("conflict on %s with %v", conflict.ConflictingCategories, conflict.Conflicts)
     }
 }
 ```
 
-`wprana.ActiveCategories()` returns the OR of every active skin; useful
+`wings.ActiveCategories()` returns the OR of every active skin; useful
 for diagnostic UIs (e.g. the skin-switcher widget displays which
 categories are currently covered).
 
@@ -320,11 +320,11 @@ categories are currently covered).
 
 ## Status
 
-- API: `wprana.RegisterSkin(name, categories, css)`,
-  `wprana.ApplySkin(name) error`, `wprana.DeactivateSkin(name) error`,
-  `wprana.ClearSkins()`, `wprana.ListSkinInfos()`,
-  `wprana.ActiveSkins()`, `wprana.ActiveCategories()`,
-  `wprana.OnSkinChange(fn)`. See `skin.go`.
+- API: `wings.RegisterSkin(name, categories, css)`,
+  `wings.ApplySkin(name) error`, `wings.DeactivateSkin(name) error`,
+  `wings.ClearSkins()`, `wings.ListSkinInfos()`,
+  `wings.ActiveSkins()`, `wings.ActiveCategories()`,
+  `wings.OnSkinChange(fn)`. See `skin.go`.
 - Identity skins (`IdentitySkinCategories`): `light`, `dark`, `autumn`,
   `darkblueberry`, `darkforest`, `lightblueberry`, `mushroom`,
   `vividforest`.

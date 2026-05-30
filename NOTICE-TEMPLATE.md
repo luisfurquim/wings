@@ -1,6 +1,6 @@
 # NOTICE — Third-party linguistic data
 
-> **Instructions for WPrana users who deploy sites built with `gen_i18n -auto-plurals`:**
+> **Instructions for WINGS users who deploy sites built with `gen_i18n -auto-plurals`:**
 > Copy the section below into your own NOTICE file (or equivalent notice page on
 > your site). Replace `[URL]` with the public URL where your `i18n/` directory
 > is accessible (e.g. `https://example.com/i18n/`). Remove this instruction

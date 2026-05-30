@@ -1,7 +1,7 @@
 /* ── wlate token aliases ─────────────────────────────────────────────────────
    The wlate templates and design.css speak in semantic --wl-* names. This
    layer maps each name to the corresponding global --wings-* token so the
-   active wprana skin drives wlate's appearance.
+   active wings skin drives wlate's appearance.
 
    The fallback (second arg of each var(...)) preserves the original wlate
    palette when no skin is active, so nothing regresses if skins are stripped.
