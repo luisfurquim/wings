@@ -6,12 +6,12 @@ package vividforest
 import (
 	_ "embed"
 
-	"github.com/luisfurquim/wprana"
+	"github.com/luisfurquim/wings"
 )
 
 //go:embed skin.css
 var css string
 
 func init() {
-	wprana.RegisterSkin("vividforest", wprana.IdentitySkinCategories, css)
+	wings.RegisterSkin("vividforest", wings.IdentitySkinCategories, css)
 }

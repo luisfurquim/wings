@@ -8,12 +8,12 @@ package soft
 import (
 	_ "embed"
 
-	"github.com/luisfurquim/wprana"
+	"github.com/luisfurquim/wings"
 )
 
 //go:embed skin.css
 var css string
 
 func init() {
-	wprana.RegisterSkin("soft", wprana.GeometrySkinCategories, css)
+	wings.RegisterSkin("soft", wings.GeometrySkinCategories, css)
 }

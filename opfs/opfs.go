@@ -3,7 +3,7 @@
 // Package opfs provides key-value storage backed by the Origin Private File
 // System (OPFS). It accesses OPFS directly from the main thread via
 // syscall/js, using the asynchronous File System API (Promises).
-// It implements wprana.KeyStorage.
+// It implements wings.KeyStorage.
 package opfs
 
 import (
@@ -11,8 +11,8 @@ import (
 	"fmt"
 	"syscall/js"
 
-	"github.com/luisfurquim/wprana"
-	"github.com/luisfurquim/wprana/codec"
+	"github.com/luisfurquim/wings"
+	"github.com/luisfurquim/wings/codec"
 )
 
 // ErrNotFound is returned when the key does not exist in OPFS.
@@ -74,17 +74,17 @@ func await(p js.Value) (js.Value, error) {
 	}
 }
 
-// ── Store (wprana.KeyStorage implementation) ─────────────────────────────────
+// ── Store (wings.KeyStorage implementation) ─────────────────────────────────
 
 // Store wraps OPFS access via the asynchronous File System API and
-// implements wprana.KeyStorage.
+// implements wings.KeyStorage.
 type Store struct {
 	enc Encoder
 	dec Decoder
 }
 
 // compile-time check
-var _ wprana.KeyStorage = (*Store)(nil)
+var _ wings.KeyStorage = (*Store)(nil)
 
 // New creates a Store instance. The Encoder and Decoder are applied
 // transparently on Set and Get respectively. If enc or dec is nil, a
@@ -101,7 +101,7 @@ func New(enc Encoder, dec Decoder) *Store {
 
 // root returns the OPFS root directory handle.
 func root() (js.Value, error) {
-	p := wprana.JSGlobal().Get("navigator").Get("storage").Call("getDirectory")
+	p := wings.JSGlobal().Get("navigator").Get("storage").Call("getDirectory")
 	return await(p)
 }
 
@@ -115,7 +115,7 @@ func (s *Store) Set(key string, val any) error {
 		return fmt.Errorf("opfs set: root: %w", err)
 	}
 
-	opts := wprana.JSGlobal().Get("Object").New()
+	opts := wings.JSGlobal().Get("Object").New()
 	opts.Set("create", true)
 	handle, err := await(dir.Call("getFileHandle", key, opts))
 	if err != nil {
@@ -127,7 +127,7 @@ func (s *Store) Set(key string, val any) error {
 		return fmt.Errorf("opfs set: createWritable: %w", err)
 	}
 
-	enc := wprana.JSGlobal().Get("TextEncoder").New()
+	enc := wings.JSGlobal().Get("TextEncoder").New()
 	jsData := enc.Call("encode", data)
 
 	_, err = await(writable.Call("write", jsData))

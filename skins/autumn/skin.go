@@ -6,12 +6,12 @@ package autumn
 import (
 	_ "embed"
 
-	"github.com/luisfurquim/wprana"
+	"github.com/luisfurquim/wings"
 )
 
 //go:embed skin.css
 var css string
 
 func init() {
-	wprana.RegisterSkin("autumn", wprana.IdentitySkinCategories, css)
+	wings.RegisterSkin("autumn", wings.IdentitySkinCategories, css)
 }

@@ -1,11 +1,11 @@
 //go:build js && wasm
 
-package wprana
+package wings
 
 import (
 	"sync"
 
-	"github.com/luisfurquim/wprana/expr"
+	"github.com/luisfurquim/wings/expr"
 )
 
 // parseCache memoises expr.ParseText so the SetLang re-bind walker does

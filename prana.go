@@ -1,6 +1,6 @@
 //go:build js && wasm
 
-package wprana
+package wings
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"syscall/js"
 	"time"
 
-	"github.com/luisfurquim/wprana/expr"
+	"github.com/luisfurquim/wings/expr"
 )
 
 // ── Module registration ─────────────────────────────────────────────────────

@@ -6,8 +6,8 @@ import (
 	_ "embed"
 	"syscall/js"
 
-	"github.com/luisfurquim/wprana"
-	"github.com/luisfurquim/wprana/dom"
+	"github.com/luisfurquim/wings"
+	"github.com/luisfurquim/wings/dom"
 )
 
 //go:embed itemlist.i18n.html
@@ -23,11 +23,11 @@ const cssContent = `.item-list form { display: flex; gap: 6px; align-items: cent
 type ItemList struct{}
 
 func init() {
-	wprana.Register(
+	wings.Register(
 		"item-list",
 		htmlContent,
 		cssContent,
-		func() wprana.PranaMod { return &ItemList{} },
+		func() wings.PranaMod { return &ItemList{} },
 	)
 }
 
@@ -38,7 +38,7 @@ func (w *ItemList) InitData() map[string]any {
 	}
 }
 
-func (w *ItemList) Render(obj *wprana.PranaObj) {
+func (w *ItemList) Render(obj *wings.PranaObj) {
 	forms := dom.Query(obj.Dom, "#il-form")
 	if len(forms) == 0 {
 		return

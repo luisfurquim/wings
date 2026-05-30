@@ -6,8 +6,8 @@ import (
 	_ "embed"
 	"time"
 
-	"github.com/luisfurquim/wprana"
-	"github.com/luisfurquim/wprana/timer"
+	"github.com/luisfurquim/wings"
+	"github.com/luisfurquim/wings/timer"
 )
 
 //go:embed datedisplay.i18n.html
@@ -19,11 +19,11 @@ const cssContent = `.date-display p { margin: 4px 0; }
 type DateDisplay struct{}
 
 func init() {
-	wprana.Register(
+	wings.Register(
 		"date-display",
 		htmlContent,
 		cssContent,
-		func() wprana.PranaMod { return &DateDisplay{} },
+		func() wings.PranaMod { return &DateDisplay{} },
 	)
 }
 
@@ -33,7 +33,7 @@ func (w *DateDisplay) InitData() map[string]any {
 	}
 }
 
-func (w *DateDisplay) Render(obj *wprana.PranaObj) {
+func (w *DateDisplay) Render(obj *wings.PranaObj) {
 	go func() {
 		tk := timer.NewTicker(1000)
 		defer tk.Stop()

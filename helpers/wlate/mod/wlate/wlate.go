@@ -25,12 +25,12 @@ import (
 	"syscall/js"
 
 	"github.com/luisfurquim/goose"
-	"github.com/luisfurquim/wprana"
-	"github.com/luisfurquim/wprana/dom"
-	"github.com/luisfurquim/wprana/wi18n"
-	_ "github.com/luisfurquim/wprana/widget/tab"
-	_ "github.com/luisfurquim/wprana/widget/tabbutton"
-	_ "github.com/luisfurquim/wprana/widget/tabs"
+	"github.com/luisfurquim/wings"
+	"github.com/luisfurquim/wings/dom"
+	"github.com/luisfurquim/wings/wi18n"
+	_ "github.com/luisfurquim/wings/widget/tab"
+	_ "github.com/luisfurquim/wings/widget/tabbutton"
+	_ "github.com/luisfurquim/wings/widget/tabs"
 
 	"wlate/mod/wldata"
 )
@@ -52,11 +52,11 @@ var varsCSS string
 var designCSS string
 
 func init() {
-	wprana.Register(
+	wings.Register(
 		elementTag,
 		htmlContent,
 		varsCSS+"\n"+designCSS,
-		func() wprana.PranaMod { return &Wlate{} },
+		func() wings.PranaMod { return &Wlate{} },
 	)
 }
 
@@ -137,35 +137,35 @@ func (w *Wlate) InitData() map[string]any {
 
 		// Dialog
 		"show_dialog": false,
-		"fnSave":      wprana.TriggerHandler(nil),
-		"fnDiscard":   wprana.TriggerHandler(nil),
-		"fnCancel":    wprana.TriggerHandler(nil),
+		"fnSave":      wings.TriggerHandler(nil),
+		"fnDiscard":   wings.TriggerHandler(nil),
+		"fnCancel":    wings.TriggerHandler(nil),
 
 		// Navbar trigger handlers (set in wireEvents).
-		"navFirst":  wprana.TriggerHandler(nil),
-		"navPrev10": wprana.TriggerHandler(nil),
-		"navPrev":   wprana.TriggerHandler(nil),
-		"navNext":   wprana.TriggerHandler(nil),
-		"navNext10": wprana.TriggerHandler(nil),
-		"navLast":   wprana.TriggerHandler(nil),
-		"navJump":   wprana.TriggerHandler(nil),
+		"navFirst":  wings.TriggerHandler(nil),
+		"navPrev10": wings.TriggerHandler(nil),
+		"navPrev":   wings.TriggerHandler(nil),
+		"navNext":   wings.TriggerHandler(nil),
+		"navNext10": wings.TriggerHandler(nil),
+		"navLast":   wings.TriggerHandler(nil),
+		"navJump":   wings.TriggerHandler(nil),
 
 		// Combobox + editor trigger handlers (set in wireEvents).
-		"on_left_lang":  wprana.TriggerHandler(nil),
-		"on_right_lang": wprana.TriggerHandler(nil),
-		"toggleRevised": wprana.TriggerHandler(nil),
-		"markDirty":     wprana.TriggerHandler(nil),
+		"on_left_lang":  wings.TriggerHandler(nil),
+		"on_right_lang": wings.TriggerHandler(nil),
+		"toggleRevised": wings.TriggerHandler(nil),
+		"markDirty":     wings.TriggerHandler(nil),
 
 		// register fires from the editors' Render, which runs after this map is
 		// already bound — so the handler must be live here, not in wireEvents.
-		"registerEditor": wprana.TriggerHandler(func(args ...any) { w.reg.register(args...) }),
+		"registerEditor": wings.TriggerHandler(func(args ...any) { w.reg.register(args...) }),
 	}
 }
 
 // ── Internal state ─────────────────────────────────────────────────────────
 
 type wlateCtx struct {
-	obj              *wprana.PranaObj
+	obj              *wings.PranaObj
 	reg              *editorReg
 	config           wldata.Config
 	keys             map[string]string
@@ -466,7 +466,7 @@ func (wc *wlateCtx) getKey(action string) string {
 
 // ── Render ─────────────────────────────────────────────────────────────────
 
-func (w *Wlate) Render(obj *wprana.PranaObj) {
+func (w *Wlate) Render(obj *wings.PranaObj) {
 	wc := &wlateCtx{
 		obj:         obj,
 		reg:         w.reg,
@@ -605,25 +605,25 @@ func (wc *wlateCtx) wireEvents() {
 	wc.highlightTabButtons("text")
 
 	// Navigation — wired to w-navbar widget triggers.
-	wc.obj.This.M["navFirst"] = wprana.TriggerHandler(func(_ ...any) {
+	wc.obj.This.M["navFirst"] = wings.TriggerHandler(func(_ ...any) {
 		wc.navigate(0)
 	})
-	wc.obj.This.M["navPrev10"] = wprana.TriggerHandler(func(_ ...any) {
+	wc.obj.This.M["navPrev10"] = wings.TriggerHandler(func(_ ...any) {
 		wc.navigate(wc.currentPos - 10)
 	})
-	wc.obj.This.M["navPrev"] = wprana.TriggerHandler(func(_ ...any) {
+	wc.obj.This.M["navPrev"] = wings.TriggerHandler(func(_ ...any) {
 		wc.navigate(wc.currentPos - 1)
 	})
-	wc.obj.This.M["navNext"] = wprana.TriggerHandler(func(_ ...any) {
+	wc.obj.This.M["navNext"] = wings.TriggerHandler(func(_ ...any) {
 		wc.navigate(wc.currentPos + 1)
 	})
-	wc.obj.This.M["navNext10"] = wprana.TriggerHandler(func(_ ...any) {
+	wc.obj.This.M["navNext10"] = wings.TriggerHandler(func(_ ...any) {
 		wc.navigate(wc.currentPos + 10)
 	})
-	wc.obj.This.M["navLast"] = wprana.TriggerHandler(func(_ ...any) {
+	wc.obj.This.M["navLast"] = wings.TriggerHandler(func(_ ...any) {
 		wc.navigate(len(wc.filteredIdx) - 1)
 	})
-	wc.obj.This.M["navJump"] = wprana.TriggerHandler(func(args ...any) {
+	wc.obj.This.M["navJump"] = wings.TriggerHandler(func(args ...any) {
 		if len(args) == 0 {
 			return
 		}
@@ -648,13 +648,13 @@ func (wc *wlateCtx) wireEvents() {
 
 	// Revised toggle — fired by either editor's @revised trigger (the clickable
 	// border indicator lives inside the editor's shadow tree now).
-	wc.obj.This.M["toggleRevised"] = wprana.TriggerHandler(func(_ ...any) {
+	wc.obj.This.M["toggleRevised"] = wings.TriggerHandler(func(_ ...any) {
 		wc.toggleRevised()
 	})
 
 	// Dirty signal — fired by wl-text-editor's @input on every keystroke, so the
 	// beforeunload guard works even before the edit is harvested.
-	wc.obj.This.M["markDirty"] = wprana.TriggerHandler(func(_ ...any) {
+	wc.obj.This.M["markDirty"] = wings.TriggerHandler(func(_ ...any) {
 		wc.dirty = true
 	})
 
@@ -694,7 +694,7 @@ func (wc *wlateCtx) wireEvents() {
 	// Dialog button handlers — fired by w-dialog's @save/@discard/@cancel triggers.
 	// save()/loadXxxData() use synchronous fetch via syscall/js, which deadlocks
 	// the main thread when invoked from a click callback; run them off-loop.
-	wc.obj.This.M["fnSave"] = wprana.TriggerHandler(func(_ ...any) {
+	wc.obj.This.M["fnSave"] = wings.TriggerHandler(func(_ ...any) {
 		go func() {
 			wc.save()
 			wc.displayRecord()
@@ -702,12 +702,12 @@ func (wc *wlateCtx) wireEvents() {
 			wc.doLangSwitch()
 		}()
 	})
-	wc.obj.This.M["fnDiscard"] = wprana.TriggerHandler(func(_ ...any) {
+	wc.obj.This.M["fnDiscard"] = wings.TriggerHandler(func(_ ...any) {
 		wc.dirty = false
 		wc.obj.This.Set("show_dialog", false)
 		go wc.doLangSwitch()
 	})
-	wc.obj.This.M["fnCancel"] = wprana.TriggerHandler(func(_ ...any) {
+	wc.obj.This.M["fnCancel"] = wings.TriggerHandler(func(_ ...any) {
 		wc.obj.This.Set("show_dialog", false)
 		// Combobox still shows the language the user just clicked, but
 		// our state (leftLang/rightLang) never moved. Re-setting the bound
@@ -743,7 +743,7 @@ func (wc *wlateCtx) wireEvents() {
 	)
 
 	// Combobox @change handlers are set via wprana trigger system
-	wc.obj.This.M["on_left_lang"] = wprana.TriggerHandler(func(args ...any) {
+	wc.obj.This.M["on_left_lang"] = wings.TriggerHandler(func(args ...any) {
 		if len(args) == 0 {
 			return
 		}
@@ -774,7 +774,7 @@ func (wc *wlateCtx) wireEvents() {
 		}()
 	})
 
-	wc.obj.This.M["on_right_lang"] = wprana.TriggerHandler(func(args ...any) {
+	wc.obj.This.M["on_right_lang"] = wings.TriggerHandler(func(args ...any) {
 		if len(args) == 0 {
 			return
 		}

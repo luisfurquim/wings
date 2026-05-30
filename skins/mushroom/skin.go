@@ -6,12 +6,12 @@ package mushroom
 import (
 	_ "embed"
 
-	"github.com/luisfurquim/wprana"
+	"github.com/luisfurquim/wings"
 )
 
 //go:embed skin.css
 var css string
 
 func init() {
-	wprana.RegisterSkin("mushroom", wprana.IdentitySkinCategories, css)
+	wings.RegisterSkin("mushroom", wings.IdentitySkinCategories, css)
 }

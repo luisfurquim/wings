@@ -19,7 +19,7 @@ var (
 
 // SetCatalogPublicKey configures the ed25519 public key used to verify catalog
 // signatures. pemBytes is the PEM block produced by gen_i18n -genkey (type
-// "ED25519 PUBLIC KEY"). Call this from main() before wprana.Main(), with the
+// "ED25519 PUBLIC KEY"). Call this from main() before wings.Main(), with the
 // key embedded via //go:embed gen_i18n.ed25519.pub.
 //
 // If no public key is configured, catalog verification is skipped and all

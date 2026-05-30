@@ -23,8 +23,8 @@ import (
 	"syscall/js"
 
 	"github.com/luisfurquim/goose"
-	"github.com/luisfurquim/wprana"
-	"github.com/luisfurquim/wprana/dom"
+	"github.com/luisfurquim/wings"
+	"github.com/luisfurquim/wings/dom"
 
 	"wlate/mod/wldata"
 )
@@ -45,21 +45,21 @@ var designCSS string
 
 func init() {
 	G.Set(3)
-	wprana.Register(
+	wings.Register(
 		elementTag,
 		htmlContent,
 		varsCSS+"\n"+designCSS,
-		func() wprana.PranaMod { return &Editor{} },
+		func() wings.PranaMod { return &Editor{} },
 	)
 	G.Logf(3, "wl-flex-editor: module registered\n")
 }
 
-// Editor implements wprana.PranaMod and wldata.FlexEditor. curGenders and
+// Editor implements wings.PranaMod and wldata.FlexEditor. curGenders and
 // curCategories are the column/row keys of the grid currently on screen; they
 // are computed in Display and consumed by Harvest to map a cell's data-ci/gi
 // back to its "gender.category" key.
 type Editor struct {
-	obj           *wprana.PranaObj
+	obj           *wings.PranaObj
 	curGenders    []string
 	curCategories []string
 }
@@ -79,7 +79,7 @@ func (e *Editor) InitData() map[string]any {
 	}
 }
 
-func (e *Editor) Render(obj *wprana.PranaObj) {
+func (e *Editor) Render(obj *wings.PranaObj) {
 	e.obj = obj
 
 	if inds := dom.Query(obj.Dom, "#wl-revised-toggle-inflection"); len(inds) > 0 {

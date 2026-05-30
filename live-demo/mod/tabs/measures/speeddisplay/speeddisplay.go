@@ -5,8 +5,8 @@ package speeddisplay
 import (
 	_ "embed"
 
-	"github.com/luisfurquim/wprana"
-	"github.com/luisfurquim/wprana/wi18n/speed"
+	"github.com/luisfurquim/wings"
+	"github.com/luisfurquim/wings/wi18n/speed"
 )
 
 //go:embed speeddisplay.i18n.html
@@ -20,11 +20,11 @@ const cssContent = `.speed-display table { border-collapse: collapse; margin: 4p
 type SpeedDisplay struct{}
 
 func init() {
-	wprana.Register(
+	wings.Register(
 		"speed-display",
 		htmlContent,
 		cssContent,
-		func() wprana.PranaMod { return &SpeedDisplay{} },
+		func() wings.PranaMod { return &SpeedDisplay{} },
 	)
 }
 
@@ -34,4 +34,4 @@ func (w *SpeedDisplay) InitData() map[string]any {
 	}
 }
 
-func (w *SpeedDisplay) Render(obj *wprana.PranaObj) {}
+func (w *SpeedDisplay) Render(obj *wings.PranaObj) {}

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"syscall/js"
 
-	"github.com/luisfurquim/wprana"
+	"github.com/luisfurquim/wings"
 )
 
 // TranslateCheck mode constants.
@@ -31,7 +31,7 @@ func SetTranslateCheck(mode byte) {
 
 // applyTranslateCheck is called by loadAndInstall after the bundle is ready.
 // Returns true only in Hold mode when unrevised entries exist — the caller
-// must NOT call wprana.InitWG.Done() in that case.
+// must NOT call wings.InitWG.Done() in that case.
 func applyTranslateCheck(bundle *localeBundle) (blocked bool) {
 	switch translateCheckMode {
 	case TranslateCheckNone:
@@ -62,12 +62,12 @@ func updateHighlightSet(bundle *localeBundle) {
 	unrevisedIdx = m
 }
 
-// installNodeAnnotator sets wprana.NodeAnnotator to mark unrevised DOM nodes
+// installNodeAnnotator sets wings.NodeAnnotator to mark unrevised DOM nodes
 // with an inline style (yellow outline). Any subsequent edit by the translator
 // in wlate that flips Revised=true will remove the entry from unrevisedIdx,
 // so a retranslation cycle clears the marker automatically.
 func installNodeAnnotator() {
-	wprana.NodeAnnotator = func(rawIndex string, node js.Value) {
+	wings.NodeAnnotator = func(rawIndex string, node js.Value) {
 		idx, err := strconv.Atoi(rawIndex)
 		if err != nil {
 			return
@@ -131,7 +131,7 @@ func injectIcarusScreen(bundle *localeBundle) {
 	sb.WriteString(`</tbody></table></div>`)
 	sb.WriteString(`</div>`)
 
-	doc := wprana.JSGlobal().Get("document")
+	doc := wings.JSGlobal().Get("document")
 	body := doc.Get("body")
 	if body.IsUndefined() || body.IsNull() {
 		// Body not yet present — wait for DOMContentLoaded.

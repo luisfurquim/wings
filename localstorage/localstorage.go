@@ -8,15 +8,15 @@ import (
 	"errors"
 	"syscall/js"
 
-	"github.com/luisfurquim/wprana"
-	"github.com/luisfurquim/wprana/codec"
+	"github.com/luisfurquim/wings"
+	"github.com/luisfurquim/wings/codec"
 )
 
 // ErrKeyNotFound is returned by LS.Get (and KV.Get) when the key does not
 // exist in localStorage.
 var ErrKeyNotFound = errors.New("localstorage: key not found")
 
-var storage = wprana.JSGlobal().Get("localStorage")
+var storage = wings.JSGlobal().Get("localStorage")
 
 // Encoder encodes a Go value into a string for storage.
 type Encoder interface {
@@ -65,7 +65,7 @@ func New(enc Encoder, dec Decoder) *LS {
 // Set stores val under key using the configured Encoder.
 //
 // Deprecated: Set does not return an error. Use NewKV which returns a
-// wprana.KeyStorage implementation instead.
+// wings.KeyStorage implementation instead.
 func (ls *LS) Set(key string, val any) {
 	ls.st.Call("setItem", key, ls.enc.Encode(val))
 }
@@ -74,7 +74,7 @@ func (ls *LS) Set(key string, val any) {
 // configured Decoder. outval must be a pointer to the destination type.
 // Returns an error if the key does not exist or if decoding fails.
 //
-// Deprecated: Use NewKV which returns a wprana.KeyStorage implementation
+// Deprecated: Use NewKV which returns a wings.KeyStorage implementation
 // instead.
 func (ls *LS) Get(key string, outval any) error {
 	v := ls.st.Call("getItem", key)
@@ -87,7 +87,7 @@ func (ls *LS) Get(key string, outval any) error {
 // Del removes key from localStorage.
 //
 // Deprecated: Del does not return an error. Use NewKV which returns a
-// wprana.KeyStorage implementation instead.
+// wings.KeyStorage implementation instead.
 func (ls *LS) Del(key string) {
 	ls.st.Call("removeItem", key)
 }
@@ -112,9 +112,9 @@ func (ls *LS) Len() int {
 	return ls.st.Get("length").Int()
 }
 
-// ── KV (wprana.KeyStorage implementation) ────────────────────────────────────
+// ── KV (wings.KeyStorage implementation) ────────────────────────────────────
 
-// KV wraps browser localStorage and implements wprana.KeyStorage.
+// KV wraps browser localStorage and implements wings.KeyStorage.
 // Values are transparently transformed through the configured
 // Encoder/Decoder before storage/retrieval. This is the recommended
 // way to use localStorage.
@@ -124,7 +124,7 @@ type KV struct {
 	st  js.Value
 }
 
-// NewKV creates a KV instance that implements wprana.KeyStorage backed by
+// NewKV creates a KV instance that implements wings.KeyStorage backed by
 // browser localStorage. The Encoder and Decoder are applied transparently
 // on Set and Get respectively. If enc or dec is nil, a built-in default
 // codec that handles common Go types is used.

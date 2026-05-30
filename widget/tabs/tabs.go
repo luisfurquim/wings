@@ -1,6 +1,6 @@
 //go:build js && wasm
 
-// Package tabs provides the w-tabs custom element for wprana.
+// Package tabs provides the w-tabs custom element for wings.
 //
 // w-tabs is a controlled tab container. The single source of truth for which
 // panel is visible is the host's `active` attribute — a w-tab tid (or a
@@ -62,8 +62,8 @@ import (
 	"syscall/js"
 
 	"github.com/luisfurquim/goose"
-	"github.com/luisfurquim/wprana"
-	"github.com/luisfurquim/wprana/dom"
+	"github.com/luisfurquim/wings"
+	"github.com/luisfurquim/wings/dom"
 )
 
 const elementTag = "w-tabs"
@@ -80,7 +80,7 @@ var varsCSS string
 //go:embed design.css
 var designCSS string
 
-var cssParts = []wprana.CSSPart{
+var cssParts = []wings.CSSPart{
 	{Name: "Vars", Content: ""},
 	{Name: "Design", Content: ""},
 }
@@ -103,22 +103,22 @@ func init() {
 	G.Set(3)
 	cssParts[0].Content = varsCSS
 	cssParts[1].Content = designCSS
-	wprana.Register(
+	wings.Register(
 		elementTag,
 		htmlContent,
 		buildCSS(),
-		func() wprana.PranaMod { return &Tabs{} },
+		func() wings.PranaMod { return &Tabs{} },
 	)
 	G.Logf(3, "w-tabs: module registered\n")
 }
 
-// Tabs implements wprana.PranaMod and wprana.Customizable for the w-tabs custom element.
+// Tabs implements wings.PranaMod and wings.Customizable for the w-tabs custom element.
 type Tabs struct{}
 
-var _ wprana.Customizable = (*Tabs)(nil)
+var _ wings.Customizable = (*Tabs)(nil)
 
-func (t *Tabs) ListCSS() []wprana.CSSPart {
-	result := make([]wprana.CSSPart, len(cssParts))
+func (t *Tabs) ListCSS() []wings.CSSPart {
+	result := make([]wings.CSSPart, len(cssParts))
 	copy(result, cssParts)
 	return result
 }
@@ -127,7 +127,7 @@ func (t *Tabs) ReplaceCSS(key string, content string) {
 	for i := range cssParts {
 		if cssParts[i].Name == key {
 			cssParts[i].Content = content
-			wprana.Update(elementTag, buildCSS())
+			wings.Update(elementTag, buildCSS())
 			return
 		}
 	}
@@ -329,7 +329,7 @@ func (t *Tabs) initActive(host js.Value) {
 
 // activate is the user-driven path: set `active` to the i-th panel's value,
 // render, and fire @change.
-func (t *Tabs) activate(obj *wprana.PranaObj, idx int) {
+func (t *Tabs) activate(obj *wings.PranaObj, idx int) {
 	host := obj.Element
 	val := t.panelValue(host, idx)
 	host.Call("setAttribute", "active", val)
@@ -339,7 +339,7 @@ func (t *Tabs) activate(obj *wprana.PranaObj, idx int) {
 
 // ── lifecycle ───────────────────────────────────────────────────────────────
 
-func (t *Tabs) Render(obj *wprana.PranaObj) {
+func (t *Tabs) Render(obj *wings.PranaObj) {
 	host := obj.Element
 
 	// Initial arrangement + selection. Silent: the parent's TriggerHandler may

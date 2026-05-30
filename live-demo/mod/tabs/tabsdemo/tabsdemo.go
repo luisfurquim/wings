@@ -5,7 +5,7 @@ package tabsdemo
 import (
 	_ "embed"
 
-	"github.com/luisfurquim/wprana"
+	"github.com/luisfurquim/wings"
 )
 
 //go:embed tabsdemo.i18n.html
@@ -25,13 +25,13 @@ const cssContent = `
 type TabsDemo struct{}
 
 func init() {
-	wprana.Register(
+	wings.Register(
 		"tabs-demo",
 		htmlContent,
 		cssContent,
-		func() wprana.PranaMod { return &TabsDemo{} },
+		func() wings.PranaMod { return &TabsDemo{} },
 	)
 }
 
 func (w *TabsDemo) InitData() map[string]any  { return map[string]any{} }
-func (w *TabsDemo) Render(obj *wprana.PranaObj) {}
+func (w *TabsDemo) Render(obj *wings.PranaObj) {}

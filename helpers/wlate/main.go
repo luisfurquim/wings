@@ -3,41 +3,41 @@
 package main
 
 import (
-	"github.com/luisfurquim/wprana"
-	"github.com/luisfurquim/wprana/wi18n"
+	"github.com/luisfurquim/wings"
+	"github.com/luisfurquim/wings/wi18n"
 
 	// Identity skins
-	_ "github.com/luisfurquim/wprana/skins/autumn"
-	_ "github.com/luisfurquim/wprana/skins/dark"
-	_ "github.com/luisfurquim/wprana/skins/darkblueberry"
-	_ "github.com/luisfurquim/wprana/skins/darkforest"
-	_ "github.com/luisfurquim/wprana/skins/light"
-	_ "github.com/luisfurquim/wprana/skins/lightblueberry"
-	_ "github.com/luisfurquim/wprana/skins/mushroom"
-	_ "github.com/luisfurquim/wprana/skins/vividforest"
+	_ "github.com/luisfurquim/wings/skins/autumn"
+	_ "github.com/luisfurquim/wings/skins/dark"
+	_ "github.com/luisfurquim/wings/skins/darkblueberry"
+	_ "github.com/luisfurquim/wings/skins/darkforest"
+	_ "github.com/luisfurquim/wings/skins/light"
+	_ "github.com/luisfurquim/wings/skins/lightblueberry"
+	_ "github.com/luisfurquim/wings/skins/mushroom"
+	_ "github.com/luisfurquim/wings/skins/vividforest"
 
 	// Geometry skins
-	_ "github.com/luisfurquim/wprana/skins/classic"
-	_ "github.com/luisfurquim/wprana/skins/sharp"
-	_ "github.com/luisfurquim/wprana/skins/soft"
+	_ "github.com/luisfurquim/wings/skins/classic"
+	_ "github.com/luisfurquim/wings/skins/sharp"
+	_ "github.com/luisfurquim/wings/skins/soft"
 
 	// Depth skins
-	_ "github.com/luisfurquim/wprana/skins/flat"
-	_ "github.com/luisfurquim/wprana/skins/floating"
-	_ "github.com/luisfurquim/wprana/skins/lifted"
+	_ "github.com/luisfurquim/wings/skins/flat"
+	_ "github.com/luisfurquim/wings/skins/floating"
+	_ "github.com/luisfurquim/wings/skins/lifted"
 
 	// Motion skins
-	_ "github.com/luisfurquim/wprana/skins/brisk"
-	_ "github.com/luisfurquim/wprana/skins/calm"
-	_ "github.com/luisfurquim/wprana/skins/gentle"
+	_ "github.com/luisfurquim/wings/skins/brisk"
+	_ "github.com/luisfurquim/wings/skins/calm"
+	_ "github.com/luisfurquim/wings/skins/gentle"
 
 	// Atmosphere
-	_ "github.com/luisfurquim/wprana/skins/glass"
+	_ "github.com/luisfurquim/wings/skins/glass"
 
-	_ "github.com/luisfurquim/wprana/widget/combobox"
-	_ "github.com/luisfurquim/wprana/widget/dialog"
-	_ "github.com/luisfurquim/wprana/widget/navbar"
-	_ "github.com/luisfurquim/wprana/widget/skinswitcher"
+	_ "github.com/luisfurquim/wings/widget/combobox"
+	_ "github.com/luisfurquim/wings/widget/dialog"
+	_ "github.com/luisfurquim/wings/widget/navbar"
+	_ "github.com/luisfurquim/wings/widget/skinswitcher"
 
 	_ "wlate/mod/flexeditor"
 	_ "wlate/mod/texteditor"
@@ -50,9 +50,9 @@ func init() {
 
 func main() {
 	for _, name := range []string{"light", "classic", "lifted", "calm"} {
-		if err := wprana.ApplySkin(name); err != nil {
+		if err := wings.ApplySkin(name); err != nil {
 			panic(err)
 		}
 	}
-	wprana.Main()
+	wings.Main()
 }

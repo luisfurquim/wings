@@ -4,7 +4,7 @@ set -e
 cd "$(dirname "$0")"
 
 # Copy JS helpers
-WPRANA=$(go list -m -f '{{.Dir}}' github.com/luisfurquim/wprana)
+WPRANA=$(go list -m -f '{{.Dir}}' github.com/luisfurquim/wings)
 cp "$WPRANA/prana_helper.js" dist/
 
 GOROOT="$(go env GOROOT)"

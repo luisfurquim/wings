@@ -3,7 +3,7 @@ set -e
 
 cd "$(dirname "$0")"
 
-WPRANA=$(go list -m -f '{{.Dir}}' github.com/luisfurquim/wprana)
+WPRANA=$(go list -m -f '{{.Dir}}' github.com/luisfurquim/wings)
 cp "$WPRANA/prana_helper.js" docs/
 
 GOROOT="$(go env GOROOT)"

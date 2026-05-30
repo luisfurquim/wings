@@ -1,18 +1,18 @@
 //go:build js && wasm
 
-// Package wi18n provides internationalization support for wprana.
+// Package wi18n provides internationalization support for wings.
 //
 // The package is designed to be imported for its side effects only:
 //
-//	import _ "github.com/luisfurquim/wprana/wi18n"
+//	import _ "github.com/luisfurquim/wings/wi18n"
 //
 // On init(), wi18n:
 //  1. Detects the browser language via navigator.languages / navigator.language.
-//  2. Registers itself on wprana.InitWG so that wprana.Main() waits for the
+//  2. Registers itself on wings.InitWG so that wings.Main() waits for the
 //     asynchronous load before defining the custom elements.
 //  3. Spawns a goroutine that fetches <BasePath><lang>.json from the same
 //     host/path used to load the current page, decodes it as a JSON array of
-//     [Entry], and overrides wprana.Printer with a lookup function that
+//     [Entry], and overrides wings.Printer with a lookup function that
 //     interprets the TextNode content as a decimal index into the catalog.
 //
 // BasePath defaults to "i18n/". Applications that ship their own catalog
@@ -21,7 +21,7 @@
 // after wi18n's init — typically by importing wi18n from a package that is
 // itself imported later in the main module's dependency graph.
 //
-// If the package is NOT imported, wprana.Printer remains the default ByPass
+// If the package is NOT imported, wings.Printer remains the default ByPass
 // and every TextNode keeps the raw index produced by gen_i18n.
 package wi18n
 
@@ -31,7 +31,7 @@ import (
 	"sync"
 	"syscall/js"
 
-	"github.com/luisfurquim/wprana"
+	"github.com/luisfurquim/wings"
 )
 
 // ── Package state ───────────────────────────────────────────────────────────
@@ -50,7 +50,7 @@ var (
 
 // printerToken is the one-time token consumed at package-level init so that
 // SetPrinter calls from this package are authorized against wprana's token guard.
-var printerToken = wprana.TakePrinterToken()
+var printerToken = wings.TakePrinterToken()
 
 // Lang returns the language tag selected at init time.
 func Lang() string {
@@ -82,27 +82,27 @@ func BasePath() string {
 func init() {
 	lang = detectLang()
 	setHTMLLang(lang)
-	wprana.Locale = lang
+	wings.Locale = lang
 
 	// Install locale-aware formatting immediately — it has no async deps.
 	// Printer / SynPrinter are installed later by the catalog loader.
-	wprana.FmtPrinter = fmtPrinter
+	wings.FmtPrinter = fmtPrinter
 
-	// Register ourselves as an async initializer so that wprana.Main() waits
+	// Register ourselves as an async initializer so that wings.Main() waits
 	// until the JSON has been fetched and parsed before defining the modules.
-	wprana.InitWG.Add(1)
+	wings.InitWG.Add(1)
 	go loadAndInstall()
 }
 
 // loadAndInstall runs in a goroutine. It fetches the JSON for the current
-// language (with fallbacks), decodes it, and replaces wprana.Printer with a
-// lookup function. Calls wprana.InitWG.Done() unless TranslateCheckHold
+// language (with fallbacks), decodes it, and replaces wings.Printer with a
+// lookup function. Calls wings.InitWG.Done() unless TranslateCheckHold
 // blocks startup due to unrevised translations.
 func loadAndInstall() {
 	bundle, err := loadBundle(lang)
 	if err != nil {
-		wprana.G.Logf(1, "wi18n: %v; Printer stays as ByPass\n", err)
-		wprana.InitWG.Done()
+		wings.G.Logf(1, "wi18n: %v; Printer stays as ByPass\n", err)
+		wings.InitWG.Done()
 		return
 	}
 
@@ -118,23 +118,23 @@ func loadAndInstall() {
 	if bundle.picked != lang {
 		lang = bundle.picked
 		setHTMLLang(lang)
-		wprana.Locale = lang
+		wings.Locale = lang
 	}
 
-	wprana.SetPrinter(lookup, printerToken)
-	wprana.G.Logf(2, "wi18n: loaded %d entries for lang=%s\n", len(table), lang)
+	wings.SetPrinter(lookup, printerToken)
+	wings.G.Logf(2, "wi18n: loaded %d entries for lang=%s\n", len(table), lang)
 
 	if bundle.flex != nil {
 		setFlexCatalog(bundle.flex, bundle.tag)
-		wprana.SynPrinter = synPrinter
-		wprana.G.Logf(2, "wi18n: loaded %d flex rules for lang=%s\n", len(bundle.flex), lang)
+		wings.SynPrinter = synPrinter
+		wings.G.Logf(2, "wi18n: loaded %d flex rules for lang=%s\n", len(bundle.flex), lang)
 	}
 
 	if blocked := applyTranslateCheck(bundle); blocked {
-		// Hold mode: never release InitWG — wprana.Main() blocks forever.
+		// Hold mode: never release InitWG — wings.Main() blocks forever.
 		return
 	}
-	wprana.InitWG.Done()
+	wings.InitWG.Done()
 }
 
 // fallbackChain builds the ordered list of language tags to try, starting
@@ -158,7 +158,7 @@ func fallbackChain(tag string) []string {
 	return out
 }
 
-// lookup is installed as wprana.Printer once the catalog is available. The
+// lookup is installed as wings.Printer once the catalog is available. The
 // input is the raw TextNode content that gen_i18n produced: a decimal index
 // into the catalog. Any string that does not parse as a valid in-range
 // index is returned unchanged, matching the ByPass behaviour for dynamic
@@ -186,7 +186,7 @@ func lookup(in string) string {
 // navigator.languages / navigator.language. Returns "en-US" if nothing is
 // available.
 func detectLang() string {
-	doc := wprana.JSGlobal().Get("document")
+	doc := wings.JSGlobal().Get("document")
 	if !doc.IsUndefined() && !doc.IsNull() {
 		html := doc.Get("documentElement")
 		if !html.IsUndefined() && !html.IsNull() {
@@ -196,7 +196,7 @@ func detectLang() string {
 		}
 	}
 
-	nav := wprana.JSGlobal().Get("navigator")
+	nav := wings.JSGlobal().Get("navigator")
 
 	langs := nav.Get("languages")
 	if !langs.IsUndefined() && !langs.IsNull() {
@@ -215,7 +215,7 @@ func detectLang() string {
 
 // setHTMLLang sets the lang attribute on <html>.
 func setHTMLLang(l string) {
-	doc := wprana.JSGlobal().Get("document")
+	doc := wings.JSGlobal().Get("document")
 	html := doc.Get("documentElement")
 	if html.IsUndefined() || html.IsNull() {
 		return
@@ -260,7 +260,7 @@ func fetchText(url string) (string, error) {
 		return nil
 	})
 
-	wprana.JSGlobal().Call("fetch", url).Call("then", thenFn).Call("catch", catchFn)
+	wings.JSGlobal().Call("fetch", url).Call("then", thenFn).Call("catch", catchFn)
 
 	r := <-ch
 	thenFn.Release()

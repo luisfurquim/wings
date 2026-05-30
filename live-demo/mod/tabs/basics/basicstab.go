@@ -5,7 +5,7 @@ package basics
 import (
 	_ "embed"
 
-	"github.com/luisfurquim/wprana"
+	"github.com/luisfurquim/wings"
 )
 
 //go:embed basicstab.i18n.html
@@ -17,13 +17,13 @@ const cssContent = `.basics-tab section { margin: 12px 0; }
 type BasicsTab struct{}
 
 func init() {
-	wprana.Register(
+	wings.Register(
 		"basics-tab",
 		htmlContent,
 		cssContent,
-		func() wprana.PranaMod { return &BasicsTab{} },
+		func() wings.PranaMod { return &BasicsTab{} },
 	)
 }
 
 func (w *BasicsTab) InitData() map[string]any { return map[string]any{} }
-func (w *BasicsTab) Render(obj *wprana.PranaObj)  {}
+func (w *BasicsTab) Render(obj *wings.PranaObj)  {}

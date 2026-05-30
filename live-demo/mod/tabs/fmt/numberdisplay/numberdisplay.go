@@ -5,7 +5,7 @@ package numberdisplay
 import (
 	_ "embed"
 
-	"github.com/luisfurquim/wprana"
+	"github.com/luisfurquim/wings"
 )
 
 //go:embed numberdisplay.i18n.html
@@ -17,11 +17,11 @@ const cssContent = `.number-display p { margin: 4px 0; }
 type NumberDisplay struct{}
 
 func init() {
-	wprana.Register(
+	wings.Register(
 		"number-display",
 		htmlContent,
 		cssContent,
-		func() wprana.PranaMod { return &NumberDisplay{} },
+		func() wings.PranaMod { return &NumberDisplay{} },
 	)
 }
 
@@ -32,4 +32,4 @@ func (w *NumberDisplay) InitData() map[string]any {
 	}
 }
 
-func (w *NumberDisplay) Render(obj *wprana.PranaObj) {}
+func (w *NumberDisplay) Render(obj *wings.PranaObj) {}

@@ -1,6 +1,6 @@
 //go:build js && wasm
 
-// Package tab provides the w-tab custom element for wprana.
+// Package tab provides the w-tab custom element for wings.
 //
 // w-tab is a content panel with a per-form shadow template chosen by the
 // `mode` attribute the parent <w-tabs> stamps on it (see tab.html). In the
@@ -45,7 +45,7 @@ import (
 	"syscall/js"
 
 	"github.com/luisfurquim/goose"
-	"github.com/luisfurquim/wprana"
+	"github.com/luisfurquim/wings"
 )
 
 const elementTag = "w-tab"
@@ -62,7 +62,7 @@ var varsCSS string
 //go:embed design.css
 var designCSS string
 
-var cssParts = []wprana.CSSPart{
+var cssParts = []wings.CSSPart{
 	{Name: "Vars", Content: ""},
 	{Name: "Design", Content: ""},
 }
@@ -85,24 +85,24 @@ func init() {
 	G.Set(3)
 	cssParts[0].Content = varsCSS
 	cssParts[1].Content = designCSS
-	wprana.Register(
+	wings.Register(
 		elementTag,
 		htmlContent,
 		buildCSS(),
-		func() wprana.PranaMod { return &Tab{} },
+		func() wings.PranaMod { return &Tab{} },
 		"tid", "active", "mode",
 	)
 	G.Logf(3, "w-tab: module registered\n")
 }
 
-// Tab implements wprana.PranaMod and wprana.Customizable for the w-tab
+// Tab implements wings.PranaMod and wings.Customizable for the w-tab
 // custom element.
 type Tab struct{}
 
-var _ wprana.Customizable = (*Tab)(nil)
+var _ wings.Customizable = (*Tab)(nil)
 
-func (t *Tab) ListCSS() []wprana.CSSPart {
-	result := make([]wprana.CSSPart, len(cssParts))
+func (t *Tab) ListCSS() []wings.CSSPart {
+	result := make([]wings.CSSPart, len(cssParts))
 	copy(result, cssParts)
 	return result
 }
@@ -111,7 +111,7 @@ func (t *Tab) ReplaceCSS(key string, content string) {
 	for i := range cssParts {
 		if cssParts[i].Name == key {
 			cssParts[i].Content = content
-			wprana.Update(elementTag, buildCSS())
+			wings.Update(elementTag, buildCSS())
 			return
 		}
 	}
@@ -134,7 +134,7 @@ func (t *Tab) InitData() map[string]any {
 // it cannot be data-bound; and the wt template already spends its single ?cond
 // on the mode switch.) Everything else — which form to render, panel
 // visibility — stays CSS/conditional-driven.
-func (t *Tab) Render(obj *wprana.PranaObj) {
+func (t *Tab) Render(obj *wings.PranaObj) {
 	host := obj.Element
 
 	// Mirror active→<details open>. No-op unless mode is accordion AND the

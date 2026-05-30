@@ -5,7 +5,7 @@ package cooking
 import (
 	"fmt"
 
-	"github.com/luisfurquim/wprana/wi18n"
+	"github.com/luisfurquim/wings/wi18n"
 )
 
 // Format implements wi18n.Numerical for cooking volumes. formatName selects

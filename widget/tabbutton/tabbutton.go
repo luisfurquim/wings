@@ -1,6 +1,6 @@
 //go:build js && wasm
 
-// Package tabbutton provides the w-tabbutton custom element for wprana.
+// Package tabbutton provides the w-tabbutton custom element for wings.
 //
 // w-tabbutton is a strictly passive leaf — and that passivity is load-bearing.
 // In accordion mode the parent <w-tabs> physically MOVES this element into the
@@ -39,7 +39,7 @@ import (
 	"strings"
 
 	"github.com/luisfurquim/goose"
-	"github.com/luisfurquim/wprana"
+	"github.com/luisfurquim/wings"
 )
 
 const elementTag = "w-tabbutton"
@@ -56,7 +56,7 @@ var varsCSS string
 //go:embed design.css
 var designCSS string
 
-var cssParts = []wprana.CSSPart{
+var cssParts = []wings.CSSPart{
 	{Name: "Vars", Content: ""},
 	{Name: "Design", Content: ""},
 }
@@ -79,24 +79,24 @@ func init() {
 	G.Set(3)
 	cssParts[0].Content = varsCSS
 	cssParts[1].Content = designCSS
-	wprana.Register(
+	wings.Register(
 		elementTag,
 		htmlContent,
 		buildCSS(),
-		func() wprana.PranaMod { return &TabButton{} },
+		func() wings.PranaMod { return &TabButton{} },
 		"tid", "active",
 	)
 	G.Logf(3, "w-tabbutton: module registered\n")
 }
 
-// TabButton implements wprana.PranaMod and wprana.Customizable for the
+// TabButton implements wings.PranaMod and wings.Customizable for the
 // w-tabbutton custom element.
 type TabButton struct{}
 
-var _ wprana.Customizable = (*TabButton)(nil)
+var _ wings.Customizable = (*TabButton)(nil)
 
-func (b *TabButton) ListCSS() []wprana.CSSPart {
-	result := make([]wprana.CSSPart, len(cssParts))
+func (b *TabButton) ListCSS() []wings.CSSPart {
+	result := make([]wings.CSSPart, len(cssParts))
 	copy(result, cssParts)
 	return result
 }
@@ -105,7 +105,7 @@ func (b *TabButton) ReplaceCSS(key string, content string) {
 	for i := range cssParts {
 		if cssParts[i].Name == key {
 			cssParts[i].Content = content
-			wprana.Update(elementTag, buildCSS())
+			wings.Update(elementTag, buildCSS())
 			return
 		}
 	}
@@ -121,4 +121,4 @@ func (b *TabButton) InitData() map[string]any {
 
 // Render is intentionally empty — the parent <w-tabs> drives the active
 // state via setAttribute, and the click event bubbles naturally.
-func (b *TabButton) Render(obj *wprana.PranaObj) {}
+func (b *TabButton) Render(obj *wings.PranaObj) {}

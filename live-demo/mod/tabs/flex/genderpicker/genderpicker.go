@@ -6,8 +6,8 @@ import (
 	_ "embed"
 	"syscall/js"
 
-	"github.com/luisfurquim/wprana"
-	"github.com/luisfurquim/wprana/dom"
+	"github.com/luisfurquim/wings"
+	"github.com/luisfurquim/wings/dom"
 )
 
 //go:embed genderpicker.i18n.html
@@ -19,17 +19,17 @@ const cssContent = `.gender-picker { display: inline-flex; gap: 6px; align-items
 type GenderPicker struct{}
 
 func init() {
-	wprana.Register(
+	wings.Register(
 		"gender-picker",
 		htmlContent,
 		cssContent,
-		func() wprana.PranaMod { return &GenderPicker{} },
+		func() wings.PranaMod { return &GenderPicker{} },
 	)
 }
 
 func (w *GenderPicker) InitData() map[string]any { return map[string]any{} }
 
-func (w *GenderPicker) Render(obj *wprana.PranaObj) {
+func (w *GenderPicker) Render(obj *wings.PranaObj) {
 	sels := dom.Query(obj.Dom, "#gp-sel")
 	if len(sels) == 0 {
 		return

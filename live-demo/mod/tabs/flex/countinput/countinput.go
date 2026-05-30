@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"syscall/js"
 
-	"github.com/luisfurquim/wprana"
-	"github.com/luisfurquim/wprana/dom"
+	"github.com/luisfurquim/wings"
+	"github.com/luisfurquim/wings/dom"
 )
 
 //go:embed countinput.i18n.html
@@ -21,17 +21,17 @@ const cssContent = `.count-input { display: inline-flex; gap: 6px; align-items: 
 type CountInput struct{}
 
 func init() {
-	wprana.Register(
+	wings.Register(
 		"count-input",
 		htmlContent,
 		cssContent,
-		func() wprana.PranaMod { return &CountInput{} },
+		func() wings.PranaMod { return &CountInput{} },
 	)
 }
 
 func (w *CountInput) InitData() map[string]any { return map[string]any{} }
 
-func (w *CountInput) Render(obj *wprana.PranaObj) {
+func (w *CountInput) Render(obj *wings.PranaObj) {
 	inputs := dom.Query(obj.Dom, "#ci-inp")
 	if len(inputs) == 0 {
 		return

@@ -9,13 +9,13 @@
 // # Activation
 //
 //	import (
-//	    "github.com/luisfurquim/wprana"
-//	    _ "github.com/luisfurquim/wprana/skins/light"
+//	    "github.com/luisfurquim/wings"
+//	    _ "github.com/luisfurquim/wings/skins/light"
 //	)
 //
 //	func main() {
-//	    wprana.ApplySkin("light")
-//	    wprana.Main()
+//	    wings.ApplySkin("light")
+//	    wings.Main()
 //	}
 //
 // The blank import drives init() to register the skin; ApplySkin then
@@ -25,12 +25,12 @@ package light
 import (
 	_ "embed"
 
-	"github.com/luisfurquim/wprana"
+	"github.com/luisfurquim/wings"
 )
 
 //go:embed skin.css
 var css string
 
 func init() {
-	wprana.RegisterSkin("light", wprana.IdentitySkinCategories, css)
+	wings.RegisterSkin("light", wings.IdentitySkinCategories, css)
 }

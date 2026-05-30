@@ -1,6 +1,6 @@
 //go:build js && wasm
 
-package wprana
+package wings
 
 import (
 	"bytes"
@@ -13,7 +13,7 @@ import (
 	"syscall/js"
 
 	"github.com/luisfurquim/goose"
-	"github.com/luisfurquim/wprana/expr"
+	"github.com/luisfurquim/wings/expr"
 )
 
 // itoa is a package-local shortcut used by SynPrinter fallbacks.
@@ -52,7 +52,7 @@ var (
 
 // TakePrinterToken returns the one-time authorization token required by
 // SetPrinter. It can only be called once; subsequent calls return nil.
-// Intended for use by github.com/luisfurquim/wprana/wi18n only.
+// Intended for use by github.com/luisfurquim/wings/wi18n only.
 func TakePrinterToken() []byte {
 	printerMu.Lock()
 	defer printerMu.Unlock()

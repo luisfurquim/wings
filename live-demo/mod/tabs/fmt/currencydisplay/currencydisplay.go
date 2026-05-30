@@ -5,8 +5,8 @@ package currencydisplay
 import (
 	_ "embed"
 
-	"github.com/luisfurquim/wprana"
-	"github.com/luisfurquim/wprana/wi18n"
+	"github.com/luisfurquim/wings"
+	"github.com/luisfurquim/wings/wi18n"
 )
 
 //go:embed currencydisplay.i18n.html
@@ -18,11 +18,11 @@ const cssContent = `.currency-display p { margin: 4px 0; }
 type CurrencyDisplay struct{}
 
 func init() {
-	wprana.Register(
+	wings.Register(
 		"currency-display",
 		htmlContent,
 		cssContent,
-		func() wprana.PranaMod { return &CurrencyDisplay{} },
+		func() wings.PranaMod { return &CurrencyDisplay{} },
 	)
 }
 
@@ -32,4 +32,4 @@ func (w *CurrencyDisplay) InitData() map[string]any {
 	}
 }
 
-func (w *CurrencyDisplay) Render(obj *wprana.PranaObj) {}
+func (w *CurrencyDisplay) Render(obj *wings.PranaObj) {}

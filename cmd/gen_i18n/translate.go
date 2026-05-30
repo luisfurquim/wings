@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/luisfurquim/wprana/cmd/gen_i18n/translator"
-	"github.com/luisfurquim/wprana/wi18n"
+	"github.com/luisfurquim/wings/cmd/gen_i18n/translator"
+	"github.com/luisfurquim/wings/wi18n"
 )
 
 // autoTranslate is set by the -auto-translate flag. When true, gen_i18n

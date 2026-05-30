@@ -5,7 +5,7 @@ package i18ntab
 import (
 	_ "embed"
 
-	"github.com/luisfurquim/wprana"
+	"github.com/luisfurquim/wings"
 )
 
 //go:embed i18ntab.i18n.html
@@ -21,13 +21,13 @@ const cssContent = `.i18n-tab p { color: var(--wings-text, #444); line-height: 1
 type I18nTab struct{}
 
 func init() {
-	wprana.Register(
+	wings.Register(
 		"i18n-tab",
 		htmlContent,
 		cssContent,
-		func() wprana.PranaMod { return &I18nTab{} },
+		func() wings.PranaMod { return &I18nTab{} },
 	)
 }
 
 func (w *I18nTab) InitData() map[string]any { return map[string]any{} }
-func (w *I18nTab) Render(obj *wprana.PranaObj)  {}
+func (w *I18nTab) Render(obj *wings.PranaObj)  {}

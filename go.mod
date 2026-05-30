@@ -1,4 +1,4 @@
-module github.com/luisfurquim/wprana
+module github.com/luisfurquim/wings
 
 go 1.25.0
 

@@ -8,12 +8,12 @@ package gentle
 import (
 	_ "embed"
 
-	"github.com/luisfurquim/wprana"
+	"github.com/luisfurquim/wings"
 )
 
 //go:embed skin.css
 var css string
 
 func init() {
-	wprana.RegisterSkin("gentle", wprana.MotionSkinCategories, css)
+	wings.RegisterSkin("gentle", wings.MotionSkinCategories, css)
 }

@@ -6,10 +6,10 @@ package location
 import (
 	"net/url"
 
-	"github.com/luisfurquim/wprana"
+	"github.com/luisfurquim/wings"
 )
 
-var jsGlobal = wprana.JSGlobal()
+var jsGlobal = wings.JSGlobal()
 
 // Get returns window.location.href as *url.URL.
 func Get() (*url.URL, error) {

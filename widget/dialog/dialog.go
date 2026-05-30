@@ -1,6 +1,6 @@
 //go:build js && wasm
 
-// Package dialog provides a w-dialog custom element for wprana.
+// Package dialog provides a w-dialog custom element for wings.
 //
 // Features:
 //   - Fixed button definitions with configurable order via buttons attribute
@@ -31,7 +31,7 @@
 //
 // # CSS Customization
 //
-// Dialog implements wprana.Customizable. CSS is split into two parts:
+// Dialog implements wings.Customizable. CSS is split into two parts:
 //   - "Vars"   — CSS custom properties (colors, shadows).
 //   - "Design" — Layout and structure rules.
 package dialog
@@ -42,8 +42,8 @@ import (
 	"syscall/js"
 
 	"github.com/luisfurquim/goose"
-	"github.com/luisfurquim/wprana"
-	"github.com/luisfurquim/wprana/dom"
+	"github.com/luisfurquim/wings"
+	"github.com/luisfurquim/wings/dom"
 )
 
 const elementTag = "w-dialog"
@@ -61,7 +61,7 @@ var varsCSS string
 var designCSS string
 
 // cssParts holds the CSS sections; shared by all instances.
-var cssParts = []wprana.CSSPart{
+var cssParts = []wings.CSSPart{
 	{Name: "Vars", Content: ""},
 	{Name: "Design", Content: ""},
 }
@@ -85,39 +85,39 @@ func init() {
 	G.Set(3)
 	cssParts[0].Content = varsCSS
 	cssParts[1].Content = designCSS
-	wprana.Register(
+	wings.Register(
 		elementTag,
 		htmlContent,
 		buildCSS(),
-		func() wprana.PranaMod { return &Dialog{} },
+		func() wings.PranaMod { return &Dialog{} },
 		"buttons", "title",
 	)
 	G.Logf(3, "w-dialog: module registered\n")
 }
 
-// Dialog implements wprana.PranaMod and wprana.Customizable
+// Dialog implements wings.PranaMod and wings.Customizable
 // for the w-dialog custom element.
 type Dialog struct {
-	obj *wprana.PranaObj
+	obj *wings.PranaObj
 }
 
 // Compile-time interface check.
-var _ wprana.Customizable = (*Dialog)(nil)
+var _ wings.Customizable = (*Dialog)(nil)
 
 // ListCSS returns the named CSS parts in order.
-func (d *Dialog) ListCSS() []wprana.CSSPart {
-	result := make([]wprana.CSSPart, len(cssParts))
+func (d *Dialog) ListCSS() []wings.CSSPart {
+	result := make([]wings.CSSPart, len(cssParts))
 	copy(result, cssParts)
 	return result
 }
 
 // ReplaceCSS replaces the CSS part identified by key and updates
-// all live instances via wprana.Update.
+// all live instances via wings.Update.
 func (d *Dialog) ReplaceCSS(key string, content string) {
 	for i := range cssParts {
 		if cssParts[i].Name == key {
 			cssParts[i].Content = content
-			wprana.Update(elementTag, buildCSS())
+			wings.Update(elementTag, buildCSS())
 			return
 		}
 	}
@@ -160,7 +160,7 @@ func (d *Dialog) parseButtons() {
 	d.obj.This.Set("btnCancelOrder", buttonOrder["cancel"])
 }
 
-func (d *Dialog) Render(obj *wprana.PranaObj) {
+func (d *Dialog) Render(obj *wings.PranaObj) {
 	d.obj = obj
 	d.parseButtons()
 	d.bindButton("#dlg-save", "save")

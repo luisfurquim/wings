@@ -16,7 +16,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/luisfurquim/wprana/wi18n"
+	"github.com/luisfurquim/wings/wi18n"
 )
 
 // ── Data types ─────────────────────────────────────────────────────────────

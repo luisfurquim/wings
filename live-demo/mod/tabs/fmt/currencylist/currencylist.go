@@ -5,8 +5,8 @@ package currencylist
 import (
 	_ "embed"
 
-	"github.com/luisfurquim/wprana"
-	"github.com/luisfurquim/wprana/wi18n"
+	"github.com/luisfurquim/wings"
+	"github.com/luisfurquim/wings/wi18n"
 )
 
 //go:embed currencylist.i18n.html
@@ -19,11 +19,11 @@ const cssContent = `.currency-list ul { margin: 0; padding-left: 18px; }
 type CurrencyList struct{}
 
 func init() {
-	wprana.Register(
+	wings.Register(
 		"currency-list",
 		htmlContent,
 		cssContent,
-		func() wprana.PranaMod { return &CurrencyList{} },
+		func() wings.PranaMod { return &CurrencyList{} },
 	)
 }
 
@@ -38,4 +38,4 @@ func (w *CurrencyList) InitData() map[string]any {
 	}
 }
 
-func (w *CurrencyList) Render(obj *wprana.PranaObj) {}
+func (w *CurrencyList) Render(obj *wings.PranaObj) {}

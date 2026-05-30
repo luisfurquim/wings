@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/luisfurquim/wprana/expr"
+	"github.com/luisfurquim/wings/expr"
 )
 
 // ── CLI-tied globals ────────────────────────────────────────────────────────
@@ -30,11 +30,11 @@ var dictDir string
 var dictSource = "dict:unitex-lingua"
 
 // defaultDictDir returns the bundled dict directory. Looks up the module
-// path of github.com/luisfurquim/wprana and joins cmd/gen_i18n/dicts.
+// path of github.com/luisfurquim/wings and joins cmd/gen_i18n/dicts.
 // Falls back to a relative path when go/build cannot resolve the module
 // (e.g. running from a tarball with no GOPATH).
 func defaultDictDir() string {
-	pkg, err := build.Import("github.com/luisfurquim/wprana/cmd/gen_i18n", "", build.FindOnly)
+	pkg, err := build.Import("github.com/luisfurquim/wings/cmd/gen_i18n", "", build.FindOnly)
 	if err != nil || pkg.Dir == "" {
 		return filepath.Join("cmd", "gen_i18n", "dicts")
 	}

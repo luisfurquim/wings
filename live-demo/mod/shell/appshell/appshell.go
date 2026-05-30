@@ -5,7 +5,7 @@ package appshell
 import (
 	_ "embed"
 
-	"github.com/luisfurquim/wprana"
+	"github.com/luisfurquim/wings"
 )
 
 //go:embed appshell.i18n.html
@@ -17,11 +17,11 @@ var cssContent string
 type AppShell struct{}
 
 func init() {
-	wprana.Register(
+	wings.Register(
 		"app-shell",
 		htmlContent,
 		cssContent,
-		func() wprana.PranaMod { return &AppShell{} },
+		func() wings.PranaMod { return &AppShell{} },
 	)
 }
 
@@ -29,4 +29,4 @@ func (w *AppShell) InitData() map[string]any {
 	return map[string]any{}
 }
 
-func (w *AppShell) Render(obj *wprana.PranaObj) {}
+func (w *AppShell) Render(obj *wings.PranaObj) {}

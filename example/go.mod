@@ -1,13 +1,13 @@
-module github.com/luisfurquim/wprana/example
+module github.com/luisfurquim/wings/example
 
-go 1.21
+go 1.25.0
 
 require (
-	github.com/luisfurquim/goose v0.0.0
-	github.com/luisfurquim/wprana v0.0.0
+	github.com/luisfurquim/goose v0.1.0
+	github.com/luisfurquim/wings v0.0.0
 )
 
 replace (
 	github.com/luisfurquim/goose => ../../goose
-	github.com/luisfurquim/wprana => ../
+	github.com/luisfurquim/wings => ../
 )

@@ -5,7 +5,7 @@ package fmt
 import (
 	_ "embed"
 
-	"github.com/luisfurquim/wprana"
+	"github.com/luisfurquim/wings"
 )
 
 //go:embed fmttab.i18n.html
@@ -17,13 +17,13 @@ const cssContent = `.fmt-tab section { margin: 12px 0; }
 type FmtTab struct{}
 
 func init() {
-	wprana.Register(
+	wings.Register(
 		"fmt-tab",
 		htmlContent,
 		cssContent,
-		func() wprana.PranaMod { return &FmtTab{} },
+		func() wings.PranaMod { return &FmtTab{} },
 	)
 }
 
 func (w *FmtTab) InitData() map[string]any { return map[string]any{} }
-func (w *FmtTab) Render(obj *wprana.PranaObj)  {}
+func (w *FmtTab) Render(obj *wings.PranaObj)  {}

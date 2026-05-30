@@ -5,8 +5,8 @@ package counterpair
 import (
 	_ "embed"
 
-	"github.com/luisfurquim/wprana"
-	"github.com/luisfurquim/wprana/timer"
+	"github.com/luisfurquim/wings"
+	"github.com/luisfurquim/wings/timer"
 )
 
 //go:embed counterpair.i18n.html
@@ -18,11 +18,11 @@ const cssContent = `.counter-pair p { margin: 4px 0; }
 type CounterPair struct{}
 
 func init() {
-	wprana.Register(
+	wings.Register(
 		"counter-pair",
 		htmlContent,
 		cssContent,
-		func() wprana.PranaMod { return &CounterPair{} },
+		func() wings.PranaMod { return &CounterPair{} },
 	)
 }
 
@@ -33,7 +33,7 @@ func (w *CounterPair) InitData() map[string]any {
 	}
 }
 
-func (w *CounterPair) Render(obj *wprana.PranaObj) {
+func (w *CounterPair) Render(obj *wings.PranaObj) {
 	go func() {
 		tk := timer.NewTicker(2000)
 		defer tk.Stop()

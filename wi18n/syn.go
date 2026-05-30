@@ -10,8 +10,8 @@ import (
 	"golang.org/x/text/feature/plural"
 	"golang.org/x/text/language"
 
-	"github.com/luisfurquim/wprana"
-	"github.com/luisfurquim/wprana/expr"
+	"github.com/luisfurquim/wings"
+	"github.com/luisfurquim/wings/expr"
 )
 
 // ── Flex catalog state ──────────────────────────────────────────────────────
@@ -32,7 +32,7 @@ func setFlexCatalog(entries []FlexEntry, tag language.Tag) {
 
 // ── SynPrinter: runtime substitution of {{@g %c #N}} ────────────────────────
 
-// synPrinter is installed into wprana.SynPrinter once the inflections
+// synPrinter is installed into wings.SynPrinter once the inflections
 // catalog is available.
 //
 // Flow:
@@ -44,11 +44,11 @@ func setFlexCatalog(entries []FlexEntry, tag language.Tag) {
 //     still empty → return the rule's Label (translator-facing stem) so
 //     the page remains readable instead of blank.
 //  6. Substitute every "{n}" in the chosen cell with the numeric count.
-func synPrinter(toks []wprana.RefNode, ctx wprana.Ctx) string {
-	toksCopy := append([]wprana.RefNode(nil), toks...)
+func synPrinter(toks []wings.RefNode, ctx wings.Ctx) string {
+	toksCopy := append([]wings.RefNode(nil), toks...)
 	fb, err := expr.ParseFlexBlock(&toksCopy)
 	if err != nil {
-		wprana.G.Logf(1, "wi18n: SynPrinter parse error: %v\n", err)
+		wings.G.Logf(1, "wi18n: SynPrinter parse error: %v\n", err)
 		return ""
 	}
 
@@ -58,7 +58,7 @@ func synPrinter(toks []wprana.RefNode, ctx wprana.Ctx) string {
 	flexMu.RUnlock()
 
 	if fb.Idx < 0 || fb.Idx >= len(table) {
-		wprana.G.Logf(2, "wi18n: flex rule #%d out of range (table=%d)\n", fb.Idx, len(table))
+		wings.G.Logf(2, "wi18n: flex rule #%d out of range (table=%d)\n", fb.Idx, len(table))
 		return ""
 	}
 	entry := table[fb.Idx]
@@ -68,7 +68,7 @@ func synPrinter(toks []wprana.RefNode, ctx wprana.Ctx) string {
 	}
 
 	// Resolve variable values from context. Path-valued vars
-	// (`@user.gender`, `%cart[i].qty`) go through wprana.Solve; bare names
+	// (`@user.gender`, `%cart[i].qty`) go through wings.Solve; bare names
 	// use the cheap single-level fallback.
 	genderVal := resolveFlexVar(fb.GenderVar, fb.GenderPath, ctx)
 	countVal := resolveFlexVar(fb.CountVar, fb.CountPath, ctx)
@@ -115,24 +115,24 @@ func synPrinter(toks []wprana.RefNode, ctx wprana.Ctx) string {
 		// grouping and decimal conventions (e.g. "os 1.234 alunos" in pt-BR
 		// vs "the 1,234 students" in en-US). countVal carries the original
 		// Go typed value — the FmtPrinter type switch picks the right path.
-		cell = strings.ReplaceAll(cell, "{n}", wprana.FmtPrinter(countVal, wprana.Locale, ""))
+		cell = strings.ReplaceAll(cell, "{n}", wings.FmtPrinter(countVal, wings.Locale, ""))
 	}
 	return cell
 }
 
 // resolveFlexVar resolves a flex sigil variable. When path is populated
 // (webdev wrote `@user.gender` or `%cart[i].qty`), it delegates to
-// wprana.Solve, which understands `.ident` and sub-expressions and sweeps
+// wings.Solve, which understands `.ident` and sub-expressions and sweeps
 // the context stack like the main template resolver. The bare case
 // (just `@name` / `%name`) keeps the cheap single-level map lookup to
 // avoid the reflection overhead for the overwhelmingly common path.
 //
 // Empty name (and nil path) means the axis is absent in this block —
 // callers treat that as a degenerate axis.
-func resolveFlexVar(name string, path []wprana.RefNode, ctx wprana.Ctx) any {
+func resolveFlexVar(name string, path []wings.RefNode, ctx wings.Ctx) any {
 	if len(path) > 0 {
 		for _, layer := range ctx {
-			if v := wprana.Solve(path, layer, ctx); v != nil {
+			if v := wings.Solve(path, layer, ctx); v != nil {
 				return v
 			}
 		}

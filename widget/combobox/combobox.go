@@ -1,6 +1,6 @@
 //go:build js && wasm
 
-// Package combobox provides a w-combobox custom element for wprana.
+// Package combobox provides a w-combobox custom element for wings.
 //
 // Features:
 //   - Multi-select (default) with tag display, OR single-select that
@@ -42,7 +42,7 @@
 //
 // # CSS Customization
 //
-// Combobox implements wprana.Customizable. CSS is split into two parts:
+// Combobox implements wings.Customizable. CSS is split into two parts:
 //   - "Vars"   — CSS custom properties (colors, shadows). Replace this to
 //     change the color scheme without affecting layout.
 //   - "Design" — Layout and structure rules using var() references.
@@ -61,8 +61,8 @@ import (
 	"syscall/js"
 
 	"github.com/luisfurquim/goose"
-	"github.com/luisfurquim/wprana"
-	"github.com/luisfurquim/wprana/dom"
+	"github.com/luisfurquim/wings"
+	"github.com/luisfurquim/wings/dom"
 )
 
 const elementTag = "w-combobox"
@@ -80,7 +80,7 @@ var varsCSS string
 var designCSS string
 
 // cssParts holds the CSS sections; shared by all instances.
-var cssParts = []wprana.CSSPart{
+var cssParts = []wings.CSSPart{
 	{Name: "Vars", Content: ""},
 	{Name: "Design", Content: ""},
 }
@@ -106,38 +106,38 @@ func init() {
 	G.Set(3)
 	cssParts[0].Content = varsCSS
 	cssParts[1].Content = designCSS
-	wprana.Register(
+	wings.Register(
 		elementTag,
 		htmlContent,
 		buildCSS(),
-		func() wprana.PranaMod { return &Combobox{} },
+		func() wings.PranaMod { return &Combobox{} },
 		"options", "placeholder", "value", "mode",
 	)
 	G.Logf(3, "w-combobox: module registered\n")
 }
 
-// Combobox implements wprana.PranaMod and wprana.Customizable
+// Combobox implements wings.PranaMod and wings.Customizable
 // for the w-combobox custom element.
 type Combobox struct{}
 
 // Compile-time interface check.
-var _ wprana.Customizable = (*Combobox)(nil)
+var _ wings.Customizable = (*Combobox)(nil)
 
 // ListCSS returns the named CSS parts in order.
 // Modifying the returned slice does not affect the component.
-func (c *Combobox) ListCSS() []wprana.CSSPart {
-	result := make([]wprana.CSSPart, len(cssParts))
+func (c *Combobox) ListCSS() []wings.CSSPart {
+	result := make([]wings.CSSPart, len(cssParts))
 	copy(result, cssParts)
 	return result
 }
 
 // ReplaceCSS replaces the CSS part identified by key and updates
-// all live instances via wprana.Update.
+// all live instances via wings.Update.
 func (c *Combobox) ReplaceCSS(key string, content string) {
 	for i := range cssParts {
 		if cssParts[i].Name == key {
 			cssParts[i].Content = content
-			wprana.Update(elementTag, buildCSS())
+			wings.Update(elementTag, buildCSS())
 			return
 		}
 	}
@@ -208,7 +208,7 @@ func parseOptions(raw string) []any {
 // cbCtx holds the runtime state shared across all event handlers
 // of a single combobox instance.
 type cbCtx struct {
-	obj          *wprana.PranaObj
+	obj          *wings.PranaObj
 	inp          js.Value
 	dropWrap     js.Value
 	selectedVals map[string]bool
@@ -556,7 +556,7 @@ func (cb *cbCtx) onDocClick(_ js.Value, _ []js.Value) any {
 	return nil
 }
 
-func (c *Combobox) Render(obj *wprana.PranaObj) {
+func (c *Combobox) Render(obj *wings.PranaObj) {
 	// Query stable elements — none of them are guarded by a ? conditional,
 	// so they are always present in the shadow DOM at Render time.
 	inps := dom.Query(obj.Dom, ".cb-input")

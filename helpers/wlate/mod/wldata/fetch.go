@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"syscall/js"
 
-	"github.com/luisfurquim/wprana/wi18n"
+	"github.com/luisfurquim/wings/wi18n"
 )
 
 // ── Fetch helpers ──────────────────────────────────────────────────────────

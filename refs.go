@@ -1,12 +1,12 @@
 //go:build js && wasm
 
-package wprana
+package wings
 
 import (
 	"strings"
 	"syscall/js"
 
-	"github.com/luisfurquim/wprana/expr"
+	"github.com/luisfurquim/wings/expr"
 )
 
 // ── DOM reference extraction ────────────────────────────────────────────────

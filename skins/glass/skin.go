@@ -8,8 +8,8 @@
 // IdentitySkinCategories and are mutually exclusive), glass touches only
 // Atmosphere, so it composes with any of them:
 //
-//	_ = wprana.ApplySkin("mushroom") // colors + geometry + …
-//	_ = wprana.ApplySkin("glass")    // adds atmospheric blur on top
+//	_ = wings.ApplySkin("mushroom") // colors + geometry + …
+//	_ = wings.ApplySkin("glass")    // adds atmospheric blur on top
 //
 // Widgets opt into the effect by using the documented tokens with a
 // `0` fallback, so the skin is invisible until a widget references it.
@@ -20,12 +20,12 @@ package glass
 import (
 	_ "embed"
 
-	"github.com/luisfurquim/wprana"
+	"github.com/luisfurquim/wings"
 )
 
 //go:embed skin.css
 var css string
 
 func init() {
-	wprana.RegisterSkin("glass", wprana.CategoryAtmosphere, css)
+	wings.RegisterSkin("glass", wings.CategoryAtmosphere, css)
 }

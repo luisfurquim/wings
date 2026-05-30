@@ -1,21 +1,21 @@
 //go:build js && wasm
 
-// Package timer provides setTimeout, setInterval, Sleep and Ticker helpers for wprana.
+// Package timer provides setTimeout, setInterval, Sleep and Ticker helpers for wings.
 package timer
 
 import (
 	"syscall/js"
 
-	"github.com/luisfurquim/wprana"
+	"github.com/luisfurquim/wings"
 )
 
-var jsGlobal = wprana.JSGlobal()
+var jsGlobal = wings.JSGlobal()
 
 // SetTimeout schedules fn to run after delay milliseconds.
 // Returns a channel that closes when fn completes.
 func SetTimeout(fn func(), delay int) <-chan struct{} {
 	done := make(chan struct{})
-	jsGlobal.Call("setTimeout", wprana.JSFuncOnce(func() {
+	jsGlobal.Call("setTimeout", wings.JSFuncOnce(func() {
 		fn()
 		close(done)
 	}), delay)
@@ -41,7 +41,7 @@ func SetInterval(fn func(), interval int) (cancel func()) {
 // to the JavaScript event loop while waiting.
 func Sleep(ms int) {
 	done := make(chan struct{})
-	jsGlobal.Call("setTimeout", wprana.JSFuncOnce(func() {
+	jsGlobal.Call("setTimeout", wings.JSFuncOnce(func() {
 		close(done)
 	}), ms)
 	<-done

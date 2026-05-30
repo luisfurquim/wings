@@ -5,8 +5,8 @@ package tempdisplay
 import (
 	_ "embed"
 
-	"github.com/luisfurquim/wprana"
-	"github.com/luisfurquim/wprana/wi18n/temperature"
+	"github.com/luisfurquim/wings"
+	"github.com/luisfurquim/wings/wi18n/temperature"
 )
 
 //go:embed tempdisplay.i18n.html
@@ -20,11 +20,11 @@ const cssContent = `.temp-display table { border-collapse: collapse; margin: 4px
 type TempDisplay struct{}
 
 func init() {
-	wprana.Register(
+	wings.Register(
 		"temperature-display",
 		htmlContent,
 		cssContent,
-		func() wprana.PranaMod { return &TempDisplay{} },
+		func() wings.PranaMod { return &TempDisplay{} },
 	)
 }
 
@@ -34,4 +34,4 @@ func (w *TempDisplay) InitData() map[string]any {
 	}
 }
 
-func (w *TempDisplay) Render(obj *wprana.PranaObj) {}
+func (w *TempDisplay) Render(obj *wings.PranaObj) {}

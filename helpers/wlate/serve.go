@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/luisfurquim/goose"
-	"github.com/luisfurquim/wprana/wi18n"
+	"github.com/luisfurquim/wings/wi18n"
 )
 
 // G is this binary's goose alert. wprana.json may set the level via SetConfig.

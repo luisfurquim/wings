@@ -6,8 +6,8 @@ import (
 	_ "embed"
 	"syscall/js"
 
-	"github.com/luisfurquim/wprana"
-	"github.com/luisfurquim/wprana/dom"
+	"github.com/luisfurquim/wings"
+	"github.com/luisfurquim/wings/dom"
 )
 
 //go:embed modetoggle.i18n.html
@@ -24,11 +24,11 @@ const cssContent = `.mode-toggle .row { display: flex; gap: 8px; align-items: ce
 type ModeToggle struct{}
 
 func init() {
-	wprana.Register(
+	wings.Register(
 		"mode-toggle",
 		htmlContent,
 		cssContent,
-		func() wprana.PranaMod { return &ModeToggle{} },
+		func() wings.PranaMod { return &ModeToggle{} },
 	)
 }
 
@@ -39,7 +39,7 @@ func (w *ModeToggle) InitData() map[string]any {
 	}
 }
 
-func (w *ModeToggle) Render(obj *wprana.PranaObj) {
+func (w *ModeToggle) Render(obj *wings.PranaObj) {
 	if btns := dom.Query(obj.Dom, "#mt-mode"); len(btns) > 0 {
 		dom.AddEvent(btns[0], "click",
 			func(this js.Value, args []js.Value) any {

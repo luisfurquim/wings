@@ -631,7 +631,7 @@ func consumePathTail(toks *[]RefNode) ([]RefNode, error) {
 // FmtBlock holds the resolved pieces of a locale-aware formatting reference
 // such as `{{%preco}}`, `{{%cart[i].total}}`, or `{{%dist:km}}`. The value
 // is resolved at sync time from the data context and rendered by
-// wprana.FmtPrinter, which chooses the output format from the Go type of the
+// wings.FmtPrinter, which chooses the output format from the Go type of the
 // value, the current locale, and the optional format name.
 //
 // A FmtBlock is the lone-%var form, with an optional `:formatName` suffix.

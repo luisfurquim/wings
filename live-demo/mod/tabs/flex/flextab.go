@@ -5,7 +5,7 @@ package flex
 import (
 	_ "embed"
 
-	"github.com/luisfurquim/wprana"
+	"github.com/luisfurquim/wings"
 )
 
 //go:embed flextab.i18n.html
@@ -17,11 +17,11 @@ const cssContent = `.flex-tab .controls { display: flex; gap: 18px; flex-wrap: w
 type FlexTab struct{}
 
 func init() {
-	wprana.Register(
+	wings.Register(
 		"flex-tab",
 		htmlContent,
 		cssContent,
-		func() wprana.PranaMod { return &FlexTab{} },
+		func() wings.PranaMod { return &FlexTab{} },
 	)
 }
 
@@ -29,13 +29,13 @@ func (w *FlexTab) InitData() map[string]any {
 	return map[string]any{
 		"gender":    "m",
 		"qt":        1,
-		"setgender": wprana.TriggerHandler(nil),
-		"setcount":  wprana.TriggerHandler(nil),
+		"setgender": wings.TriggerHandler(nil),
+		"setcount":  wings.TriggerHandler(nil),
 	}
 }
 
-func (w *FlexTab) Render(obj *wprana.PranaObj) {
-	obj.This.M["setgender"] = wprana.TriggerHandler(func(args ...any) {
+func (w *FlexTab) Render(obj *wings.PranaObj) {
+	obj.This.M["setgender"] = wings.TriggerHandler(func(args ...any) {
 		if len(args) == 0 {
 			return
 		}
@@ -43,7 +43,7 @@ func (w *FlexTab) Render(obj *wprana.PranaObj) {
 			obj.This.Set("gender", s)
 		}
 	})
-	obj.This.M["setcount"] = wprana.TriggerHandler(func(args ...any) {
+	obj.This.M["setcount"] = wings.TriggerHandler(func(args ...any) {
 		if len(args) == 0 {
 			return
 		}

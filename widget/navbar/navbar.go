@@ -1,6 +1,6 @@
 //go:build js && wasm
 
-// Package navbar provides a w-navbar custom element for wprana.
+// Package navbar provides a w-navbar custom element for wings.
 //
 // It renders a record-navigation toolbar — first / prev-many / prev /
 // position input / next / next-many / last — and forwards user actions
@@ -40,7 +40,7 @@
 //
 // # CSS Customization
 //
-// NavBar implements wprana.Customizable. CSS is split into two parts:
+// NavBar implements wings.Customizable. CSS is split into two parts:
 //   - "Vars"   — CSS custom properties (colors, shadows).
 //   - "Design" — Layout and structure rules.
 package navbar
@@ -51,8 +51,8 @@ import (
 	"syscall/js"
 
 	"github.com/luisfurquim/goose"
-	"github.com/luisfurquim/wprana"
-	"github.com/luisfurquim/wprana/dom"
+	"github.com/luisfurquim/wings"
+	"github.com/luisfurquim/wings/dom"
 )
 
 const elementTag = "w-navbar"
@@ -70,7 +70,7 @@ var varsCSS string
 var designCSS string
 
 // cssParts holds the CSS sections; shared by all instances.
-var cssParts = []wprana.CSSPart{
+var cssParts = []wings.CSSPart{
 	{Name: "Vars", Content: ""},
 	{Name: "Design", Content: ""},
 }
@@ -94,39 +94,39 @@ func init() {
 	G.Set(3)
 	cssParts[0].Content = varsCSS
 	cssParts[1].Content = designCSS
-	wprana.Register(
+	wings.Register(
 		elementTag,
 		htmlContent,
 		buildCSS(),
-		func() wprana.PranaMod { return &NavBar{} },
+		func() wings.PranaMod { return &NavBar{} },
 		"nav_input", "total_count",
 	)
 	G.Logf(3, "w-navbar: module registered")
 }
 
-// NavBar implements wprana.PranaMod and wprana.Customizable
+// NavBar implements wings.PranaMod and wings.Customizable
 // for the w-navbar custom element.
 type NavBar struct {
-	obj *wprana.PranaObj
+	obj *wings.PranaObj
 }
 
 // Compile-time interface check.
-var _ wprana.Customizable = (*NavBar)(nil)
+var _ wings.Customizable = (*NavBar)(nil)
 
 // ListCSS returns the named CSS parts in order.
-func (nb *NavBar) ListCSS() []wprana.CSSPart {
-	result := make([]wprana.CSSPart, len(cssParts))
+func (nb *NavBar) ListCSS() []wings.CSSPart {
+	result := make([]wings.CSSPart, len(cssParts))
 	copy(result, cssParts)
 	return result
 }
 
 // ReplaceCSS replaces the CSS part identified by key and updates
-// all live instances via wprana.Update.
+// all live instances via wings.Update.
 func (nb *NavBar) ReplaceCSS(key string, content string) {
 	for i := range cssParts {
 		if cssParts[i].Name == key {
 			cssParts[i].Content = content
-			wprana.Update(elementTag, buildCSS())
+			wings.Update(elementTag, buildCSS())
 			return
 		}
 	}
@@ -140,7 +140,7 @@ func (nb *NavBar) InitData() map[string]any {
 	}
 }
 
-func (nb *NavBar) Render(obj *wprana.PranaObj) {
+func (nb *NavBar) Render(obj *wings.PranaObj) {
 	nb.obj = obj
 	for _, button := range []string{"first", "prevmany", "prev", "next", "nextmany", "last"} {
 		nb.bindButton("#nav-"+button, button)

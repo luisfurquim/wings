@@ -8,12 +8,12 @@ package flat
 import (
 	_ "embed"
 
-	"github.com/luisfurquim/wprana"
+	"github.com/luisfurquim/wings"
 )
 
 //go:embed skin.css
 var css string
 
 func init() {
-	wprana.RegisterSkin("flat", wprana.DepthSkinCategories, css)
+	wings.RegisterSkin("flat", wings.DepthSkinCategories, css)
 }

@@ -9,4 +9,4 @@
 
 package main
 
-//go:generate go run github.com/luisfurquim/wprana/cmd/gen_i18n -path ./mod -deflang pt-BR
+//go:generate go run github.com/luisfurquim/wings/cmd/gen_i18n -path ./mod -deflang pt-BR

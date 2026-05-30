@@ -8,12 +8,12 @@ package lifted
 import (
 	_ "embed"
 
-	"github.com/luisfurquim/wprana"
+	"github.com/luisfurquim/wings"
 )
 
 //go:embed skin.css
 var css string
 
 func init() {
-	wprana.RegisterSkin("lifted", wprana.DepthSkinCategories, css)
+	wings.RegisterSkin("lifted", wings.DepthSkinCategories, css)
 }

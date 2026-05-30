@@ -5,7 +5,7 @@ package measures
 import (
 	_ "embed"
 
-	"github.com/luisfurquim/wprana"
+	"github.com/luisfurquim/wings"
 )
 
 //go:embed measurestab.i18n.html
@@ -17,13 +17,13 @@ const cssContent = `.measures-tab section { margin: 12px 0; }
 type MeasuresTab struct{}
 
 func init() {
-	wprana.Register(
+	wings.Register(
 		"measures-tab",
 		htmlContent,
 		cssContent,
-		func() wprana.PranaMod { return &MeasuresTab{} },
+		func() wings.PranaMod { return &MeasuresTab{} },
 	)
 }
 
 func (w *MeasuresTab) InitData() map[string]any { return map[string]any{} }
-func (w *MeasuresTab) Render(obj *wprana.PranaObj)  {}
+func (w *MeasuresTab) Render(obj *wings.PranaObj)  {}

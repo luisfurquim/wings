@@ -12,7 +12,7 @@
 //     an active skin, its checkbox is disabled and an inline note shows
 //     which skin it conflicts with.
 //   - External-change sync: the widget registers a callback with
-//     wprana.OnSkinChange so programmatic Apply/Deactivate calls keep the
+//     wings.OnSkinChange so programmatic Apply/Deactivate calls keep the
 //     UI in sync without manual refresh.
 //
 // # Usage in parent template
@@ -30,8 +30,8 @@ import (
 	"syscall/js"
 
 	"github.com/luisfurquim/goose"
-	"github.com/luisfurquim/wprana"
-	"github.com/luisfurquim/wprana/dom"
+	"github.com/luisfurquim/wings"
+	"github.com/luisfurquim/wings/dom"
 )
 
 const elementTag = "skin-switcher"
@@ -48,7 +48,7 @@ var varsCSS string
 //go:embed design.css
 var designCSS string
 
-var cssParts = []wprana.CSSPart{
+var cssParts = []wings.CSSPart{
 	{Name: "Vars", Content: ""},
 	{Name: "Design", Content: ""},
 }
@@ -71,24 +71,24 @@ func init() {
 	G.Set(3)
 	cssParts[0].Content = varsCSS
 	cssParts[1].Content = designCSS
-	wprana.Register(
+	wings.Register(
 		elementTag,
 		htmlContent,
 		buildCSS(),
-		func() wprana.PranaMod { return &SkinSwitcher{} },
+		func() wings.PranaMod { return &SkinSwitcher{} },
 	)
 	G.Logf(3, "skin-switcher: module registered\n")
 }
 
-// SkinSwitcher implements wprana.PranaMod and wprana.Customizable.
+// SkinSwitcher implements wings.PranaMod and wings.Customizable.
 type SkinSwitcher struct {
-	obj *wprana.PranaObj
+	obj *wings.PranaObj
 }
 
-var _ wprana.Customizable = (*SkinSwitcher)(nil)
+var _ wings.Customizable = (*SkinSwitcher)(nil)
 
-func (s *SkinSwitcher) ListCSS() []wprana.CSSPart {
-	result := make([]wprana.CSSPart, len(cssParts))
+func (s *SkinSwitcher) ListCSS() []wings.CSSPart {
+	result := make([]wings.CSSPart, len(cssParts))
 	copy(result, cssParts)
 	return result
 }
@@ -97,7 +97,7 @@ func (s *SkinSwitcher) ReplaceCSS(key, content string) {
 	for i := range cssParts {
 		if cssParts[i].Name == key {
 			cssParts[i].Content = content
-			wprana.Update(elementTag, buildCSS())
+			wings.Update(elementTag, buildCSS())
 			return
 		}
 	}
@@ -120,10 +120,10 @@ func (s *SkinSwitcher) InitData() map[string]any {
 // The view-model carries a "replaces X" hint so the user knows what is
 // about to happen before clicking.
 func (s *SkinSwitcher) rebuildList() {
-	infos := wprana.ListSkinInfos()
+	infos := wings.ListSkinInfos()
 	sort.Slice(infos, func(i, j int) bool { return infos[i].Name < infos[j].Name })
 
-	active := wprana.ActiveSkins()
+	active := wings.ActiveSkins()
 	activeSet := make(map[string]bool, len(active))
 	for _, n := range active {
 		activeSet[n] = true
@@ -133,7 +133,7 @@ func (s *SkinSwitcher) rebuildList() {
 	for _, info := range infos {
 		conflicts := []string{}
 		if !activeSet[info.Name] {
-			conflicts = wprana.ConflictsWith(info.Categories)
+			conflicts = wings.ConflictsWith(info.Categories)
 		}
 		hint := ""
 		if len(conflicts) > 0 {
@@ -150,8 +150,8 @@ func (s *SkinSwitcher) rebuildList() {
 	s.obj.This.Set("skin_list", items)
 	s.obj.This.Set("active_count", len(active))
 
-	cats := wprana.ActiveCategories()
-	if cats == wprana.CategoryNone {
+	cats := wings.ActiveCategories()
+	if cats == wings.CategoryNone {
 		s.obj.This.Set("active_cats_label", "")
 	} else {
 		s.obj.This.Set("active_cats_label", "Active categories: "+cats.String())
@@ -222,17 +222,17 @@ func (s *SkinSwitcher) onChange(_ js.Value, args []js.Value) any {
 		// declared bitmask; ConflictsWith narrows to the actives that
 		// overlap. Deactivation errors are logged but do not abort the
 		// flow — the subsequent Apply will surface a real problem.
-		if cats, ok := wprana.SkinCategoriesOf(skin); ok {
-			for _, conflicting := range wprana.ConflictsWith(cats) {
-				if derr := wprana.DeactivateSkin(conflicting); derr != nil {
+		if cats, ok := wings.SkinCategoriesOf(skin); ok {
+			for _, conflicting := range wings.ConflictsWith(cats) {
+				if derr := wings.DeactivateSkin(conflicting); derr != nil {
 					G.Logf(1, "skin-switcher: deactivate %q before %q: %s\n",
 						conflicting, skin, derr.Error())
 				}
 			}
 		}
-		err = wprana.ApplySkin(skin)
+		err = wings.ApplySkin(skin)
 	} else {
-		err = wprana.DeactivateSkin(skin)
+		err = wings.DeactivateSkin(skin)
 	}
 	if err != nil {
 		G.Logf(1, "skin-switcher: %s\n", err.Error())
@@ -245,7 +245,7 @@ func (s *SkinSwitcher) onChange(_ js.Value, args []js.Value) any {
 	return nil
 }
 
-func (s *SkinSwitcher) Render(obj *wprana.PranaObj) {
+func (s *SkinSwitcher) Render(obj *wings.PranaObj) {
 	s.obj = obj
 	s.rebuildList()
 	s.applyCheckboxStates()
@@ -256,7 +256,7 @@ func (s *SkinSwitcher) Render(obj *wprana.PranaObj) {
 	}
 
 	// React to programmatic Apply/Deactivate from anywhere.
-	wprana.OnSkinChange(func() {
+	wings.OnSkinChange(func() {
 		s.rebuildList()
 		s.applyCheckboxStates()
 	})

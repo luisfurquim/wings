@@ -21,7 +21,7 @@ import (
 	"golang.org/x/text/language"
 
 	"github.com/luisfurquim/goose"
-	"github.com/luisfurquim/wprana/wi18n"
+	"github.com/luisfurquim/wings/wi18n"
 )
 
 // G is this binary's goose alert. Default 2 keeps info-level output visible;
@@ -749,7 +749,7 @@ func isPureBindings(s string) bool {
 }
 
 // defaultTranslatableAttrs is the set of HTML attributes whose values are
-// extracted by default. Must stay in sync with wprana.TranslatableAttrs.
+// extracted by default. Must stay in sync with wings.TranslatableAttrs.
 var defaultTranslatableAttrs = []string{"title", "placeholder", "alt", "aria-label", "data-i18n"}
 
 // buildAttrSet resolves the three flags into a lowercase attribute set.

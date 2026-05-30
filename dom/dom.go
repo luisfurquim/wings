@@ -1,6 +1,6 @@
 //go:build js && wasm
 
-// Package dom provides event management and DOM query helpers for wprana.
+// Package dom provides event management and DOM query helpers for wings.
 package dom
 
 import "syscall/js"

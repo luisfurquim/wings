@@ -5,8 +5,8 @@ package lengthdisplay
 import (
 	_ "embed"
 
-	"github.com/luisfurquim/wprana"
-	"github.com/luisfurquim/wprana/wi18n/length"
+	"github.com/luisfurquim/wings"
+	"github.com/luisfurquim/wings/wi18n/length"
 )
 
 //go:embed lengthdisplay.i18n.html
@@ -20,11 +20,11 @@ const cssContent = `.length-display table { border-collapse: collapse; margin: 4
 type LengthDisplay struct{}
 
 func init() {
-	wprana.Register(
+	wings.Register(
 		"length-display",
 		htmlContent,
 		cssContent,
-		func() wprana.PranaMod { return &LengthDisplay{} },
+		func() wings.PranaMod { return &LengthDisplay{} },
 	)
 }
 
@@ -34,4 +34,4 @@ func (w *LengthDisplay) InitData() map[string]any {
 	}
 }
 
-func (w *LengthDisplay) Render(obj *wprana.PranaObj) {}
+func (w *LengthDisplay) Render(obj *wings.PranaObj) {}

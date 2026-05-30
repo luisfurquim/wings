@@ -1,6 +1,6 @@
 //go:build js && wasm
 
-package wprana
+package wings
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/luisfurquim/wprana/expr"
+	"github.com/luisfurquim/wings/expr"
 )
 
 // ── Field and index access ──────────────────────────────────────────────────

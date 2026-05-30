@@ -9,13 +9,13 @@
 // # Activation
 //
 //	import (
-//	    "github.com/luisfurquim/wprana"
-//	    _ "github.com/luisfurquim/wprana/skins/dark"
+//	    "github.com/luisfurquim/wings"
+//	    _ "github.com/luisfurquim/wings/skins/dark"
 //	)
 //
 //	func main() {
-//	    wprana.ApplySkin("dark")
-//	    wprana.Main()
+//	    wings.ApplySkin("dark")
+//	    wings.Main()
 //	}
 //
 // Skins can be swapped at runtime with another ApplySkin call; the
@@ -25,12 +25,12 @@ package dark
 import (
 	_ "embed"
 
-	"github.com/luisfurquim/wprana"
+	"github.com/luisfurquim/wings"
 )
 
 //go:embed skin.css
 var css string
 
 func init() {
-	wprana.RegisterSkin("dark", wprana.IdentitySkinCategories, css)
+	wings.RegisterSkin("dark", wings.IdentitySkinCategories, css)
 }

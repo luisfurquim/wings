@@ -10,7 +10,7 @@ import (
 
 	"golang.org/x/text/language"
 
-	"github.com/luisfurquim/wprana"
+	"github.com/luisfurquim/wings"
 )
 
 // localeBundle holds everything one locale needs at runtime: the text
@@ -33,7 +33,7 @@ var (
 )
 
 // SetLang switches the active locale at runtime. It loads the requested
-// catalog (with fallback to base language and "en-US"), updates wprana.Locale
+// catalog (with fallback to base language and "en-US"), updates wings.Locale
 // and the <html lang> attribute, then asks every live custom element to
 // re-translate its DOM in place. Inputs and component state survive the
 // switch — only the bindings driven by Printer / SynPrinter are refreshed.
@@ -83,26 +83,26 @@ func setLangSync(tag string) error {
 	table = cached.text
 	if cached.flex != nil {
 		setFlexCatalog(cached.flex, cached.tag)
-		wprana.SynPrinter = synPrinter
+		wings.SynPrinter = synPrinter
 	}
 
 	lang = cached.picked
-	wprana.Locale = cached.picked
+	wings.Locale = cached.picked
 	setHTMLLang(cached.picked)
-	wprana.SetPrinter(lookup, printerToken) // idempotent after first install
+	wings.SetPrinter(lookup, printerToken) // idempotent after first install
 
 	if translateCheckMode == TranslateCheckHighlight {
 		updateHighlightSet(cached)
 	}
 
-	wprana.RetranslateAll()
+	wings.RetranslateAll()
 	return nil
 }
 
 // loadBundle fetches the text + (optional) inflections catalog for one
 // locale, walking the standard fallback chain. The returned bundle's
 // `picked` field carries the actually loaded tag, which the caller exposes
-// as the new wprana.Locale.
+// as the new wings.Locale.
 func loadBundle(requested string) (*localeBundle, error) {
 	// Validate BCP-47 format before using the tag in URL construction.
 	// Prevents path-traversal via SetLang("../../etc/passwd").
@@ -121,7 +121,7 @@ func loadBundle(requested string) (*localeBundle, error) {
 		url := base + cand + ".json"
 		body, err = fetchText(url)
 		if err != nil {
-			wprana.G.Logf(3, "wi18n: %s not available (%v), trying next\n", url, err)
+			wings.G.Logf(3, "wi18n: %s not available (%v), trying next\n", url, err)
 			continue
 		}
 		// Verify catalog signature when a .sig sidecar exists. If the sidecar is
@@ -168,7 +168,7 @@ func loadBundle(requested string) (*localeBundle, error) {
 		if err := json.Unmarshal([]byte(flexBody), &flexEntries); err == nil {
 			bundle.flex = flexEntries
 		} else {
-			wprana.G.Logf(1, "wi18n: failed to parse inflections for %s: %v\n", picked, err)
+			wings.G.Logf(1, "wi18n: failed to parse inflections for %s: %v\n", picked, err)
 		}
 	}
 

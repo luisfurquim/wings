@@ -13,8 +13,8 @@ import (
 	"golang.org/x/text/feature/plural"
 	"golang.org/x/text/language"
 
-	"github.com/luisfurquim/wprana/expr"
-	"github.com/luisfurquim/wprana/wi18n"
+	"github.com/luisfurquim/wings/expr"
+	"github.com/luisfurquim/wings/wi18n"
 )
 
 // ── Flex block state (parallel to txt/occurrences) ──────────────────────────

@@ -8,10 +8,10 @@ import (
 	"syscall/js"
 	"time"
 
-	"github.com/luisfurquim/wprana"
+	"github.com/luisfurquim/wings"
 )
 
-// fmtPrinter is installed into wprana.FmtPrinter at init time. It renders a
+// fmtPrinter is installed into wings.FmtPrinter at init time. It renders a
 // resolved %var value into its locale-appropriate form, dispatching on the
 // Go type of the value.
 //
@@ -26,7 +26,7 @@ import (
 //     implements Numerical; Currency is wi18n's built-in example.
 //     A non-nil error stops rendering: the string is discarded and ""
 //     is returned after logging with locale/formatName context.
-//  7. default → fmt-style fallback via wprana.NoFmtFmtPrinter.
+//  7. default → fmt-style fallback via wings.NoFmtFmtPrinter.
 func fmtPrinter(val any, locale, formatName string) string {
 	if val == nil {
 		return ""
@@ -73,7 +73,7 @@ func fmtPrinter(val any, locale, formatName string) string {
 		}
 		return s
 	}
-	return wprana.NoFmtFmtPrinter(val, locale, formatName)
+	return wings.NoFmtFmtPrinter(val, locale, formatName)
 }
 
 // formatInt renders an int64 through Intl.NumberFormat with no fractional

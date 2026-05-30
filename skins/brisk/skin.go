@@ -8,12 +8,12 @@ package brisk
 import (
 	_ "embed"
 
-	"github.com/luisfurquim/wprana"
+	"github.com/luisfurquim/wings"
 )
 
 //go:embed skin.css
 var css string
 
 func init() {
-	wprana.RegisterSkin("brisk", wprana.MotionSkinCategories, css)
+	wings.RegisterSkin("brisk", wings.MotionSkinCategories, css)
 }
