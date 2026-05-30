@@ -18,3 +18,7 @@ cmd/dictbuild/cache/
 cmd/gen_i18n/gen_i18n
 cmd/dictbuild/dictbuild
 helpers/wlate/serve
+# WASM binaries from ad-hoc `go build` (build.sh uses -o, so these are stray)
+example/example
+helpers/wlate/wlate
+live-demo/live-demo
