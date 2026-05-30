@@ -1,20 +1,26 @@
-# wprana
+<p align="center">
+  <img src="https://raw.githubusercontent.com/luisfurquim/wings/main/assets/logo.png" alt="WINGS logo" width="200">
+</p>
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/luisfurquim/wprana.svg)](https://pkg.go.dev/github.com/luisfurquim/wprana)
+<h1 align="center">WINGS</h1>
+
+<p align="center"><strong>Web IN Go Sphere</strong></p>
+
+[![Go Reference](https://pkg.go.dev/badge/github.com/luisfurquim/wings.svg)](https://pkg.go.dev/github.com/luisfurquim/wings)
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
-[![Go Report Card](https://www.goreportcard.com/badge/github.com/luisfurquim/wprana?ts=1712345678)](https://www.goreportcard.com/report/github.com/luisfurquim/wprana?ts=1712345678)
+[![Go Report Card](https://www.goreportcard.com/badge/github.com/luisfurquim/wings?ts=1712345678)](https://www.goreportcard.com/report/github.com/luisfurquim/wings?ts=1712345678)
 
-> **[Live Demo](https://luisfurquim.github.io/wprana/)** — try it in your browser, no install needed.
+> **[Live Demo](https://luisfurquim.github.io/wings/)** — try it in your browser, no install needed.
 > Or run locally: clone the repo, `cd live-demo && bash build.sh && go run serve.go`
 
 **Build reactive Web Components in pure Go — no JavaScript framework required.**
 
-wprana compiles to WebAssembly and gives you custom HTML elements with
+WINGS compiles to WebAssembly and gives you custom HTML elements with
 automatic data binding, conditional rendering, array iteration, two-way
 form binding, hash-based routing, and parent-child communication — all
 authored in Go and running natively in the browser.
 
-### Why WPrana?
+### Why WINGS?
 
 | | |
 |---|---|
@@ -23,7 +29,7 @@ authored in Go and running natively in the browser.
 | **Lightweight** | Direct DOM manipulation via targeted refs. No framework runtime to download beyond your WASM binary. |
 | **Encapsulated** | Each component lives inside a Shadow DOM with scoped CSS — no style leaks, no naming collisions. |
 | **Two-Way Binding** | The `&` prefix syncs `<input>`, `<select>`, and `<textarea>` with your Go data map in both directions. |
-| **Hash Routing** | Built-in `{{#}}` binding and `wprana.GoTo()` for SPA navigation without a router library. |
+| **Hash Routing** | Built-in `{{#}}` binding and `wings.GoTo()` for SPA navigation without a router library. |
 | **Composable** | Nest components freely. Parent-to-child data flows via attributes; child-to-parent events flow via `@` triggers. |
 | **Standard Web** | Uses native Custom Elements v1 and Shadow DOM — works alongside any existing page or framework. |
 | **Internationalized** | Build-time text extraction + runtime catalog lookup, with plural/gender flexion and locale-aware number/date/measure formatting. |
@@ -33,6 +39,7 @@ authored in Go and running natively in the browser.
 
 ## Table of Contents
 
+- [Migrating from `wprana`](#migrating-from-wprana)
 - [Quick Start](#quick-start)
 - [Project Setup](#project-setup)
 - [Creating a Module](#creating-a-module)
@@ -54,29 +61,29 @@ authored in Go and running natively in the browser.
   - [Navigation — Hash Fragment](#navigation--hash-fragment)
 - [How DOM Updates Work](#how-dom-updates-work)
 - [Helper Packages](#helper-packages)
-  - [wprana/dom — Events and Queries](#wpranadom--events-and-queries)
-  - [wprana/timer — Timers](#wpranatimer--timers)
-  - [wprana/location — Browser Location](#wpranalocation--browser-location)
-  - [wprana.KeyStorage — Storage Interface](#wpranakeystorage--storage-interface)
-  - [wprana/localstorage — LocalStorage](#wpranalocalstorage--localstorage)
-  - [wprana/opfs — Origin Private File System](#wpranaopfs--origin-private-file-system)
+  - [wings/dom — Events and Queries](#wingsdom--events-and-queries)
+  - [wings/timer — Timers](#wingstimer--timers)
+  - [wings/location — Browser Location](#wingslocation--browser-location)
+  - [wings.KeyStorage — Storage Interface](#wingskeystorage--storage-interface)
+  - [wings/localstorage — LocalStorage](#wingslocalstorage--localstorage)
+  - [wings/opfs — Origin Private File System](#wingsopfs--origin-private-file-system)
   - [JavaScript Interop (core)](#javascript-interop-core)
 - [Customizable Widgets](#customizable-widgets)
   - [Customizable Interface](#customizable-interface)
-  - [wprana.Update — Dynamic CSS](#wpranaupdate--dynamic-css)
+  - [wings.Update — Dynamic CSS](#wingsupdate--dynamic-css)
 - [Skins — Theming with --wings-* Tokens](#skins--theming-with---wings--tokens)
   - [Multi-skin composition](#multi-skin-composition)
   - [Built-in skins (18)](#built-in-skins-18)
   - [Registering your own skin](#registering-your-own-skin)
   - [Skin API](#skin-api)
 - [Built-in Widgets](#built-in-widgets)
-  - [wprana/widget/combobox — Multi-select Combobox](#wpranawidgetcombobox--multi-select-combobox)
-  - [wprana/widget/tabs — Tabbed Container](#wpranawidgettabs--tabbed-container-w-tabs--w-tabbutton--w-tab)
-  - [wprana/widget/navbar — Record Navigation Toolbar](#wpranawidgetnavbar--record-navigation-toolbar-w-navbar)
-  - [wprana/widget/skinswitcher — Skin Picker](#wpranawidgetskinswitcher--skin-picker-skin-switcher)
+  - [wings/widget/combobox — Multi-select Combobox](#wingswidgetcombobox--multi-select-combobox)
+  - [wings/widget/tabs — Tabbed Container](#wingswidgettabs--tabbed-container-w-tabs--w-tabbutton--w-tab)
+  - [wings/widget/navbar — Record Navigation Toolbar](#wingswidgetnavbar--record-navigation-toolbar-w-navbar)
+  - [wings/widget/skinswitcher — Skin Picker](#wingswidgetskinswitcher--skin-picker-skin-switcher)
 - [Internationalization (i18n)](#internationalization-i18n)
   - [Pipeline Overview](#pipeline-overview)
-  - [wprana/wi18n — Runtime Lookup](#wpranawi18n--runtime-lookup)
+  - [wings/wi18n — Runtime Lookup](#wingswi18n--runtime-lookup)
   - [Runtime Locale Switching (SetLang)](#runtime-locale-switching-setlang)
   - [cmd/gen_i18n — Build-time Extractor](#cmdgen_i18n--build-time-extractor)
     - [Opting out (translate=no)](#opting-out-translateno)
@@ -95,6 +102,38 @@ authored in Go and running natively in the browser.
 
 ---
 
+## Migrating from `wprana`
+
+WINGS was previously published as **`wprana`**. The import path is now
+`github.com/luisfurquim/wings` and the package identifier is `wings`.
+
+**New code** imports it directly:
+
+```go
+import "github.com/luisfurquim/wings"
+
+// wings.Register(...), wings.Main(), wings.GoTo(...), etc.
+```
+
+**Already have code that calls `wprana.Foo(...)`?** You don't have to touch every
+call site. Point your module at the new path and alias the import back to
+`wprana`:
+
+```bash
+go get github.com/luisfurquim/wings
+```
+
+```go
+import wprana "github.com/luisfurquim/wings"
+
+// every existing wprana.Foo(...) call keeps compiling unchanged
+```
+
+Only the `import` line changes — the rest of your code stays as-is. You can
+migrate to the `wings.` name gradually, or not at all.
+
+---
+
 ## Quick Start
 
 WASM binaries cannot be loaded from `file://` URLs. The snippet below
@@ -110,12 +149,12 @@ starts a tiny Go server so you can open the page in a browser.
 
 ```bash
 # 1. Create the project
-mkdir hello-wprana && cd hello-wprana
-go mod init hello-wprana
-go get github.com/luisfurquim/wprana
+mkdir hello-wings && cd hello-wings
+go mod init hello-wings
+go get github.com/luisfurquim/wings
 
-# 2. Copy the JS helpers from the wprana module
-WPRANA=$(go list -m -f '{{.Dir}}' github.com/luisfurquim/wprana)
+# 2. Copy the JS helpers from the wings module
+WPRANA=$(go list -m -f '{{.Dir}}' github.com/luisfurquim/wings)
 mkdir -p static
 cp "$WPRANA/prana_helper.js" static/
 # Go 1.24+: lib/wasm/   Go ≤1.23: misc/wasm/
@@ -154,7 +193,7 @@ package hello
 
 import (
     _ "embed"
-    "github.com/luisfurquim/wprana"
+    "github.com/luisfurquim/wings"
 )
 
 //go:embed hello.html
@@ -163,15 +202,15 @@ var htmlContent string
 type Hello struct{}
 
 func init() {
-    wprana.Register("hello-world", htmlContent, "",
-        func() wprana.PranaMod { return &Hello{} })
+    wings.Register("hello-world", htmlContent, "",
+        func() wings.PranaMod { return &Hello{} })
 }
 
 func (h *Hello) InitData() map[string]any {
     return map[string]any{"greeting": "Hello from Go + WASM!"}
 }
 
-func (h *Hello) Render(_ *wprana.PranaObj) {}
+func (h *Hello) Render(_ *wings.PranaObj) {}
 ```
 
 Create `mod/hello/hello.html`:
@@ -188,11 +227,11 @@ Create `main.go`:
 package main
 
 import (
-    "github.com/luisfurquim/wprana"
-    _ "hello-wprana/mod/hello"
+    "github.com/luisfurquim/wings"
+    _ "hello-wings/mod/hello"
 )
 
-func main() { wprana.Main() }
+func main() { wings.Main() }
 ```
 
 Build and serve:
@@ -231,7 +270,7 @@ Open **http://localhost:8080** and you should see "Hello from Go + WASM!".
 
 ## Project Setup
 
-A wprana project has the following structure:
+A WINGS project has the following structure:
 
 ```
 myapp/
@@ -244,7 +283,7 @@ myapp/
 │       └── mywidget.css    # Component styles
 └── static/
     ├── index.html          # HTML page
-    ├── prana_helper.js     # wprana JS bridge (from wprana package)
+    ├── prana_helper.js     # wings JS bridge (from wings package)
     └── wasm_exec.js        # Go WASM runtime
 ```
 
@@ -257,7 +296,7 @@ and both must come before the WASM binary:
 <!DOCTYPE html>
 <html>
 <head>
-   <!-- 1. wprana JS bridge (defines window._pranaDef) -->
+   <!-- 1. wings JS bridge (defines window._pranaDef) -->
    <script src="prana_helper.js"></script>
 
    <!-- 2. Go WASM runtime -->
@@ -286,14 +325,14 @@ and both must come before the WASM binary:
 package main
 
 import (
-    "github.com/luisfurquim/wprana"
+    "github.com/luisfurquim/wings"
 
-    // Side-effect imports: each init() registers a module via wprana.Register()
+    // Side-effect imports: each init() registers a module via wings.Register()
     _ "myapp/mod/mywidget"
 )
 
 func main() {
-    wprana.Main() // Defines all custom elements and blocks forever
+    wings.Main() // Defines all custom elements and blocks forever
 }
 ```
 
@@ -318,8 +357,8 @@ package counter
 
 import (
     _ "embed"
-    "github.com/luisfurquim/wprana"
-    "github.com/luisfurquim/wprana/timer"
+    "github.com/luisfurquim/wings"
+    "github.com/luisfurquim/wings/timer"
 )
 
 //go:embed counter.html
@@ -331,11 +370,11 @@ var cssContent string
 type Counter struct{}
 
 func init() {
-    wprana.Register(
+    wings.Register(
         "my-counter",       // custom element tag name
         htmlContent,         // embedded HTML template
         cssContent,          // embedded CSS
-        func() wprana.PranaMod { return &Counter{} },
+        func() wings.PranaMod { return &Counter{} },
         "title",             // observed attributes
     )
 }
@@ -347,7 +386,7 @@ func (c *Counter) InitData() map[string]any {
     }
 }
 
-func (c *Counter) Render(obj *wprana.PranaObj) {
+func (c *Counter) Render(obj *wings.PranaObj) {
     // Set up a ticker that increments count every second
     go func() {
         tk := timer.NewTicker(1000)
@@ -407,14 +446,14 @@ The special reference `{{#}}` resolves to the current URL hash fragment
 <div ?#="settings">Settings panel</div>
 ```
 
-wprana automatically monitors `window.location.hash` and triggers a sync on
+wings automatically monitors `window.location.hash` and triggers a sync on
 **all** live component instances whenever the hash changes, so `{{#}}`
 references are always up to date.
 
 To change the hash programmatically from Go:
 
 ```go
-wprana.GoTo("settings")   // sets window.location.hash = "settings"
+wings.GoTo("settings")   // sets window.location.hash = "settings"
 ```
 
 This fires the browser's `hashchange` event, which in turn updates every
@@ -664,24 +703,24 @@ obj.Trigger("login")       // matches @login in parent's template
 obj.Trigger("logout")      // matches @logout in parent's template
 ```
 
-The handler must be a `func(...any)` (or `wprana.TriggerHandler`) in the
+The handler must be a `func(...any)` (or `wings.TriggerHandler`) in the
 parent's data map.
 
 **Important:** In `InitData`, the `obj` parameter is not yet available —
 it only becomes available in `Render`. If your handler needs `obj` (which
-is almost always the case), use `wprana.TriggerHandler(nil)` as a
+is almost always the case), use `wings.TriggerHandler(nil)` as a
 placeholder in `InitData`, then set the real handler in `Render`:
 
 ```go
 func (app *App) InitData() map[string]any {
     return map[string]any{
         // Placeholder — obj is not available here
-        "on_login":  wprana.TriggerHandler(nil),
-        "on_logout": wprana.TriggerHandler(nil),
+        "on_login":  wings.TriggerHandler(nil),
+        "on_logout": wings.TriggerHandler(nil),
     }
 }
 
-func (app *App) Render(obj *wprana.PranaObj) {
+func (app *App) Render(obj *wings.PranaObj) {
     // Now obj is available — define the real handlers
     obj.This.Set("on_login", func(args ...any) {
         obj.This.Set("is_logged", true)
@@ -711,7 +750,7 @@ The `ReactiveData` type wraps a `map[string]any` and triggers automatic DOM
 synchronization on every mutation.
 
 ```go
-func (c *MyComponent) Render(obj *wprana.PranaObj) {
+func (c *MyComponent) Render(obj *wings.PranaObj) {
     // Set a value (triggers DOM sync)
     obj.This.Set("title", "New Title")
 
@@ -739,26 +778,26 @@ func (c *MyComponent) Render(obj *wprana.PranaObj) {
 
 ### Navigation — Hash Fragment
 
-wprana exposes a package-level function to change the URL hash fragment:
+WINGS exposes a package-level function to change the URL hash fragment:
 
 ```go
 // Navigate to a new view
-wprana.GoTo("settings")  // -> window.location.hash = "#settings"
+wings.GoTo("settings")  // -> window.location.hash = "#settings"
 
 // Clear the hash
-wprana.GoTo("")          // -> window.location.hash = ""
+wings.GoTo("")          // -> window.location.hash = ""
 ```
 
 All `{{#}}` bindings and `?#="value"` conditionals update automatically.
 
 ## How DOM Updates Work
 
-wprana does **not** use a Virtual DOM. Instead it relies on **direct,
+WINGS does **not** use a Virtual DOM. Instead it relies on **direct,
 targeted DOM manipulation** guided by a compile-time reference map.
 
 ### Reference Extraction
 
-When a component is first connected, wprana walks the HTML template once
+When a component is first connected, WINGS walks the HTML template once
 and builds a `DOMRefNode` tree — a lightweight map that records, for every
 DOM node, which data keys appear in its text content and attributes. This
 map is stored alongside the component's reactive state and never
@@ -800,7 +839,7 @@ kicks off a synchronization pass:
 ### Why Not a Virtual DOM?
 
 A virtual DOM diffs an entire tree snapshot to compute the minimum set of
-mutations. wprana skips the diff entirely: the reference map already knows
+mutations. WINGS skips the diff entirely: the reference map already knows
 *which* DOM nodes depend on *which* data keys, so it can jump directly to
 the affected nodes. This makes updates O(bindings) rather than O(tree
 size), with no garbage from disposable tree snapshots — an important
@@ -811,15 +850,15 @@ property in a WASM environment where GC pauses are more noticeable.
 Helper functions are organized into subpackages so applications only
 import what they actually use, keeping the WASM binary lean.
 
-### wprana/dom — Events and Queries
+### wings/dom — Events and Queries
 
-`import "github.com/luisfurquim/wprana/dom"`
+`import "github.com/luisfurquim/wings/dom"`
 
 Register DOM event listeners with automatic `preventDefault` and `stopPropagation`
 support:
 
 ```go
-func (c *MyComponent) Render(obj *wprana.PranaObj) {
+func (c *MyComponent) Render(obj *wings.PranaObj) {
     forms := dom.Query(obj.Dom, "form")
     if len(forms) > 0 {
         // Register submit handler with preventDefault
@@ -852,9 +891,9 @@ func dom.RmEvent(id int64)
 func dom.Query(el js.Value, selector string) []js.Value
 ```
 
-### wprana/timer — Timers
+### wings/timer — Timers
 
-`import "github.com/luisfurquim/wprana/timer"`
+`import "github.com/luisfurquim/wings/timer"`
 
 ```go
 // Sleep blocks the current goroutine for ms milliseconds,
@@ -885,9 +924,9 @@ cancel := timer.SetInterval(func() {
 cancel()
 ```
 
-### wprana/location — Browser Location
+### wings/location — Browser Location
 
-`import "github.com/luisfurquim/wprana/location"`
+`import "github.com/luisfurquim/wings/location"`
 
 ```go
 // Get window.location.href as *url.URL
@@ -897,9 +936,9 @@ loc, err := location.Get()
 topLoc, err := location.GetTop()
 ```
 
-### wprana.KeyStorage — Storage Interface
+### wings.KeyStorage — Storage Interface
 
-The `wprana.KeyStorage` interface defines a backend-agnostic key-value
+The `wings.KeyStorage` interface defines a backend-agnostic key-value
 storage API. It accepts arbitrary Go values and relies on an
 Encoder/Decoder pair for serialization. Any storage backend (localStorage,
 OPFS, IndexedDB, etc.) can implement this interface:
@@ -913,17 +952,17 @@ type KeyStorage interface {
 }
 ```
 
-Modules that need persistent storage should accept a `wprana.KeyStorage`
+Modules that need persistent storage should accept a `wings.KeyStorage`
 instead of a concrete type. This way the application's `main()` decides
 which backend to use:
 
 ```go
 // In a module package:
-var Store wprana.KeyStorage
+var Store wings.KeyStorage
 
 // In main():
-import "github.com/luisfurquim/wprana/localstorage"
-import "github.com/luisfurquim/wprana/opfs"
+import "github.com/luisfurquim/wings/localstorage"
+import "github.com/luisfurquim/wings/opfs"
 
 // Option A: localStorage backend
 myModule.Store = localstorage.NewKV(nil, nil)
@@ -932,9 +971,9 @@ myModule.Store = localstorage.NewKV(nil, nil)
 myModule.Store = opfs.New(nil, nil)
 ```
 
-### wprana/localstorage — LocalStorage
+### wings/localstorage — LocalStorage
 
-`import "github.com/luisfurquim/wprana/localstorage"`
+`import "github.com/luisfurquim/wings/localstorage"`
 
 Access browser `localStorage` with pluggable serialization.
 
@@ -965,10 +1004,10 @@ It handles common Go types out of the box:
 | `uint`, `uint8`--`uint64` | `strconv.FormatUint` | `strconv.ParseUint` |
 | `float32`, `float64` | `strconv.FormatFloat` | `strconv.ParseFloat` |
 
-#### KV — Recommended API (implements wprana.KeyStorage)
+#### KV — Recommended API (implements wings.KeyStorage)
 
 `KV` is the recommended way to use localStorage. It implements
-`wprana.KeyStorage`:
+`wings.KeyStorage`:
 
 ```go
 // Create with default codec (handles string, int, float, bool, etc.)
@@ -997,7 +1036,7 @@ err := kv.Del("username")
 #### LS — Legacy API
 
 `LS` provides the original API with pluggable Encoder/Decoder. It does
-**not** implement `wprana.KeyStorage` (its `Set` and `Del` methods do not
+**not** implement `wings.KeyStorage` (its `Set` and `Del` methods do not
 return errors). New code should use `KV` instead.
 
 ```go
@@ -1019,16 +1058,16 @@ name, ok := ls.Key(0)
 ls.Clear()
 ```
 
-### wprana/opfs — Origin Private File System
+### wings/opfs — Origin Private File System
 
-`import "github.com/luisfurquim/wprana/opfs"`
+`import "github.com/luisfurquim/wings/opfs"`
 
 Access the browser's [Origin Private File System](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system)
 directly from Go WASM. Files are stored in a sandboxed, origin-scoped
 filesystem that is invisible to the user and not subject to the same
 storage limits as localStorage.
 
-`opfs.Store` implements `wprana.KeyStorage` and uses the same
+`opfs.Store` implements `wings.KeyStorage` and uses the same
 Encoder/Decoder pattern as `localstorage.KV`. If `nil` is passed for
 either parameter, the built-in default codec is used (same type table
 as localstorage).
@@ -1060,21 +1099,21 @@ The store accesses OPFS via the asynchronous File System API
 
 ### JavaScript Interop (core)
 
-These functions remain in the core `wprana` package:
+These functions remain in the core `wings` package:
 
 ```go
 // Access the global window object
-window := wprana.JSGlobal()
+window := wings.JSGlobal()
 
 // Create a persistent JS callback (must call Release() when done)
-fn := wprana.JSFunc(func(this js.Value, args []js.Value) any {
+fn := wings.JSFunc(func(this js.Value, args []js.Value) any {
     // handle callback
     return nil
 })
 defer fn.Release()
 
 // Create a one-shot JS callback (auto-releases after first call)
-fn := wprana.JSFuncOnce(func() {
+fn := wings.JSFuncOnce(func() {
     // handle callback
 })
 ```
@@ -1107,12 +1146,12 @@ type Customizable interface {
   example, a "Vars" part defining CSS custom properties must come before
   a "Design" part that uses `var()` references.
 - **`ReplaceCSS(key, content)`** replaces the named part and updates all
-  live instances immediately via `wprana.Update()`.
+  live instances immediately via `wings.Update()`.
 
-### wprana.Update — Dynamic CSS
+### wings.Update — Dynamic CSS
 
 ```go
-wprana.Update(tagName string, cssContent string)
+wings.Update(tagName string, cssContent string)
 ```
 
 Replaces the CSS of a registered custom element and updates the `<style>`
@@ -1129,15 +1168,15 @@ globally the moment one is applied. There is no per-widget theming step.
 
 ```go
 import (
-    "github.com/luisfurquim/wprana"
-    _ "github.com/luisfurquim/wprana/skins/light" // blank import → init() registers it
-    _ "github.com/luisfurquim/wprana/skins/glass"
+    "github.com/luisfurquim/wings"
+    _ "github.com/luisfurquim/wings/skins/light" // blank import → init() registers it
+    _ "github.com/luisfurquim/wings/skins/glass"
 )
 
 func main() {
-    if err := wprana.ApplySkin("light"); err != nil { /* … */ }
-    _ = wprana.ApplySkin("glass") // composes on top of light
-    wprana.Main()
+    if err := wings.ApplySkin("light"); err != nil { /* … */ }
+    _ = wings.ApplySkin("glass") // composes on top of light
+    wings.Main()
 }
 ```
 
@@ -1202,9 +1241,9 @@ var css string
 func init() {
     // Declare exactly the dimensions your CSS defines, so composition and
     // conflict detection work. A chromatic theme uses the convenience mask:
-    wprana.RegisterSkin("midnight", wprana.IdentitySkinCategories, css)
+    wings.RegisterSkin("midnight", wings.IdentitySkinCategories, css)
     // A focused skin declares a single bit:
-    // wprana.RegisterSkin("rounded", wprana.GeometrySkinCategories, css)
+    // wings.RegisterSkin("rounded", wings.GeometrySkinCategories, css)
 }
 ```
 
@@ -1232,9 +1271,9 @@ The `<skin-switcher>` built-in widget exposes all of this as UI — see
 
 ## Built-in Widgets
 
-### wprana/widget/combobox — Multi-select Combobox
+### wings/widget/combobox — Multi-select Combobox
 
-`import _ "github.com/luisfurquim/wprana/widget/combobox"`
+`import _ "github.com/luisfurquim/wings/widget/combobox"`
 
 A multi-select combobox with type-ahead filtering, tag display, and
 keyboard support.
@@ -1280,13 +1319,13 @@ translatable through the normal i18n pipeline.
 `"Vars"` and `"Design"` parts, so a single instance can override CSS without a
 skin via `cb.ReplaceCSS("Vars", …)` (see [Customizable Widgets](#customizable-widgets)).
 
-### wprana/widget/tabs — Tabbed Container (`w-tabs` / `w-tabbutton` / `w-tab`)
+### wings/widget/tabs — Tabbed Container (`w-tabs` / `w-tabbutton` / `w-tab`)
 
 ```go
 import (
-    _ "github.com/luisfurquim/wprana/widget/tabs"
-    _ "github.com/luisfurquim/wprana/widget/tabbutton"
-    _ "github.com/luisfurquim/wprana/widget/tab"
+    _ "github.com/luisfurquim/wings/widget/tabs"
+    _ "github.com/luisfurquim/wings/widget/tabbutton"
+    _ "github.com/luisfurquim/wings/widget/tab"
 )
 ```
 
@@ -1345,10 +1384,10 @@ It does **not** fire at init or for programmatic `active` changes.
 > safe. For one-button-to-one-content disclosure, native `<details>` is often
 > simpler than `accordion`.
 
-### wprana/widget/navbar — Record Navigation Toolbar (`w-navbar`)
+### wings/widget/navbar — Record Navigation Toolbar (`w-navbar`)
 
 ```go
-import _ "github.com/luisfurquim/wprana/widget/navbar"
+import _ "github.com/luisfurquim/wings/widget/navbar"
 ```
 
 A record-navigation toolbar — first / prev-many / prev / position input / next /
@@ -1372,10 +1411,10 @@ then fires with the new value (`args[0]`), and Enter fires it immediately
 without waiting for blur. `w-navbar` implements `Customizable` (`"Vars"` /
 `"Design"`).
 
-### wprana/widget/skinswitcher — Skin Picker (`<skin-switcher>`)
+### wings/widget/skinswitcher — Skin Picker (`<skin-switcher>`)
 
 ```go
-import _ "github.com/luisfurquim/wprana/widget/skinswitcher"
+import _ "github.com/luisfurquim/wings/widget/skinswitcher"
 ```
 
 A drop-in UI for the [skin system](#skins--theming-with---wings--tokens): one
@@ -1388,7 +1427,7 @@ into your markup.
 
 ## Internationalization (i18n)
 
-wprana ships with an end-to-end i18n pipeline: a build-time extractor that
+WINGS ships with an end-to-end i18n pipeline: a build-time extractor that
 rewrites HTML templates with stable numeric indices, a per-language catalog
 loaded at runtime by a zero-config package, a GUI editor for translators,
 and (optional) morphological dictionaries used to pre-fill plural/gender
@@ -1417,8 +1456,8 @@ flexions from a Unitex DELAF source.
                          ▼
             ┌────────────────────────────┐
             │ wi18n (WASM, side-effect)  │  ── fetches both JSONs in parallel,
-            │ wprana.Printer   = lookup  │     installs Printer (text index →
-            │ wprana.SynPrinter = flex   │     string) and SynPrinter (flex
+            │ wings.Printer   = lookup  │     installs Printer (text index →
+            │ wings.SynPrinter = flex   │     string) and SynPrinter (flex
             └────────────────────────────┘     block → locale-correct form)
 
    ┌──────────────────────────────────────────────────────────────┐
@@ -1434,25 +1473,25 @@ The runtime side is intentionally tiny: a TextNode whose content is a
 decimal number gets replaced by `table[n]` when the catalog is loaded, and
 left untouched otherwise — so dynamic text produced via `{{expression}}`
 passes through unchanged. The same lookup applies to values of the
-attributes listed in `wprana.TranslatableAttrs` (default: `title`,
+attributes listed in `wings.TranslatableAttrs` (default: `title`,
 `placeholder`, `alt`, `aria-label`, `data-i18n`).
 
 For plurals and gender agreement — cases where a single translation string
-cannot reflect the target locale's grammar — wprana ships a parallel
+cannot reflect the target locale's grammar — WINGS ships a parallel
 pipeline keyed on inline **flex sigils** (`@var`/`%var`/`~word`/`#N`). See
 [Flexion — Plurals & Gender (SynPrinter)](#flexion--plurals--gender-synprinter)
 below for the full syntax and catalog format.
 
-### wprana/wi18n — Runtime Lookup
+### wings/wi18n — Runtime Lookup
 
-`import _ "github.com/luisfurquim/wprana/wi18n"` — side-effect import only.
+`import _ "github.com/luisfurquim/wings/wi18n"` — side-effect import only.
 
 On `init()`, `wi18n`:
 
 1. Detects the browser language from `navigator.languages[0]`, falling back
    to `navigator.language`, then `en-US`.
 2. Sets `<html lang="…">` accordingly.
-3. Registers itself on `wprana.InitWG` so `wprana.Main()` waits for the
+3. Registers itself on `wings.InitWG` so `wings.Main()` waits for the
    catalog to load before defining custom elements.
 4. Fetches `<BasePath><lang>.json` (with fallback chain: full tag → base
    language → `en-US`) relative to the current page. `BasePath` defaults to
@@ -1461,13 +1500,13 @@ On `init()`, `wi18n`:
    `wi18n`'s (see the wlate self-i18n setup below for a concrete example).
 5. Decodes the JSON as a `[]wi18n.Entry` array (see schema below); builds
    the lookup table from each entry's `content` field.
-6. Replaces `wprana.Printer` with a function that parses the TextNode
+6. Replaces `wings.Printer` with a function that parses the TextNode
    content (or attribute value, when the attribute is in
-   `wprana.TranslatableAttrs`) as a decimal index and returns `table[idx]`.
+   `wings.TranslatableAttrs`) as a decimal index and returns `table[idx]`.
    Entries whose `content` is empty fall back to rendering the raw index —
    a deliberate visual signal for missing translations.
 
-If no catalog can be loaded, `wprana.Printer` stays as the default `ByPass`
+If no catalog can be loaded, `wings.Printer` stays as the default `ByPass`
 and TextNodes render their raw numeric indices.
 
 The bundle loaded at init is also stashed in an in-memory cache keyed by
@@ -1478,12 +1517,12 @@ Switching (SetLang)](#runtime-locale-switching-setlang) below.
 ```go
 // Usage: import for side effects, that's it.
 import (
-    "github.com/luisfurquim/wprana"
-    _ "github.com/luisfurquim/wprana/wi18n"
+    "github.com/luisfurquim/wings"
+    _ "github.com/luisfurquim/wings/wi18n"
     _ "myapp/mod/mywidget"
 )
 
-func main() { wprana.Main() }
+func main() { wings.Main() }
 
 // Optional: read the selected language tag
 lang := wi18n.Lang()
@@ -1535,7 +1574,7 @@ only the bindings driven by `Printer` / `SynPrinter` / `FmtPrinter` are
 refreshed in place.
 
 ```go
-import "github.com/luisfurquim/wprana/wi18n"
+import "github.com/luisfurquim/wings/wi18n"
 
 // from a click handler, language picker, etc.
 wi18n.SetLang("en-US", func(err error) {
@@ -1543,7 +1582,7 @@ wi18n.SetLang("en-US", func(err error) {
         // No catalog available for "en-US" or any of its fallbacks.
         return
     }
-    // Locale switch is complete; wprana.Locale is now "en-US"
+    // Locale switch is complete; wings.Locale is now "en-US"
     // and every visible custom element has been re-translated.
 })
 ```
@@ -1562,7 +1601,7 @@ fails. Pass `nil` if you do not need notification.
   bundle keyed by the requested tag. Subsequent calls to the same tag
   reuse the cache, so toggling between languages does not re-fetch.
 - The active text and inflection tables are atomically swapped, then
-  `wprana.Locale` and `<html lang="…">` are updated.
+  `wings.Locale` and `<html lang="…">` are updated.
 - Every live custom-element instance is then walked: each text node and
   attribute that the constructor stashed (via `_wi18nSrc` /
   `_wi18nAttr_*` JS expandos on the node) is re-translated, the new
@@ -1580,13 +1619,13 @@ on it.
 **Performance caches.** Two memoisation layers sit underneath the
 runtime so the per-switch cost stays low even for large pages:
 
-- *Intl instance cache* (`wprana/wi18n/intl_cache.go`).
+- *Intl instance cache* (`wings/wi18n/intl_cache.go`).
   `Intl.NumberFormat` / `Intl.DateTimeFormat` instances are expensive to
   construct (each one parses CLDR locale data behind the syscall/js
   boundary) and essentially free to call. They are cached keyed by
   `(locale, options)` and reused across `SetLang` calls — so toggling
   back to a previous locale always hits warm formatters.
-- *Parsed-template cache* (`wprana/parse_cache.go`). The re-bind walker
+- *Parsed-template cache* (`wings/parse_cache.go`). The re-bind walker
   memoises `expr.ParseText` by its input string. Many instances of the
   same custom element produce identical translated strings, so the parse
   cost is paid once per unique `(locale, source string)` pair instead of
@@ -1604,7 +1643,7 @@ fmt and i18n tabs across pt-BR / en-US / es-AR.
 ### cmd/gen_i18n — Build-time Extractor
 
 ```
-go run github.com/luisfurquim/wprana/cmd/gen_i18n \
+go run github.com/luisfurquim/wings/cmd/gen_i18n \
     --path ./mod \
     --deflang pt-BR
 ```
@@ -1719,22 +1758,22 @@ self-referential demo: a table whose cells contain literal catalog indices
 under `translate="no"` won't be re-indexed by `gen_i18n`, yet the runtime
 renders each index live (the live-demo's "Tradução" tab does exactly this).
 
-**Runtime mirror.** At runtime, `wprana.TranslatableAttrs` controls which
+**Runtime mirror.** At runtime, `wings.TranslatableAttrs` controls which
 attributes the engine passes through `Printer`. Its default matches the
 default `gen_i18n` set, and **must mirror** whatever flags produced the
 catalog, otherwise attribute values render as raw decimal indices:
 
 ```go
 // Option 1: assign a fresh slice (full override)
-wprana.TranslatableAttrs = []string{"title", "placeholder"}
+wings.TranslatableAttrs = []string{"title", "placeholder"}
 
 // Option 2: incremental — safe with other packages that may also tweak it
-wprana.AddTranslatableAttrs("data-tip", "aria-placeholder")
-wprana.RemoveTranslatableAttrs("title")
+wings.AddTranslatableAttrs("data-tip", "aria-placeholder")
+wings.RemoveTranslatableAttrs("title")
 ```
 
 The helpers are case-insensitive, trim whitespace, and skip duplicates.
-Both the assignment and the helper calls must run before `wprana.Main()`
+Both the assignment and the helper calls must run before `wings.Main()`
 finishes initialization (an `init()` in `package main` is the canonical
 spot).
 
@@ -1751,7 +1790,7 @@ files are remapped in place across runs, same as the text catalog.
 | Flag | Effect |
 |---|---|
 | `--auto-flex` | Consult per-language dictionaries (`.db` files built by `cmd/dictbuild`) to auto-fill empty inflection cells. Output is tagged `source: "dict:unitex-lingua"` and flagged for human review. |
-| `--dict-dir <dir>` | Directory holding `<lang>.db` files. Default: `cmd/gen_i18n/dicts` under the wprana module. |
+| `--dict-dir <dir>` | Directory holding `<lang>.db` files. Default: `cmd/gen_i18n/dicts` under the WINGS module. |
 | `--auto-translate` | Use the LLM/MT backend configured in `gen_i18n.json` to pre-fill text and flex entries that the dictionary pass could not fill. All LLM output is tagged with the model name and flagged `revised: false` for human review. |
 
 **Degenerate-deflang lint.** When the deflang has no gender axis (e.g. `en-US`)
@@ -1767,7 +1806,7 @@ Text catalogs work when one source string maps to exactly one translated
 string. They break down for grammars that inflect: English "1 student / 2
 students" has two forms, Portuguese "1 aluno aprovado / 2 alunos aprovados
 / 1 aluna aprovada / 2 alunas aprovadas" has four, and Arabic has six CLDR
-plural categories per gender. wprana's flex pipeline handles this by making
+plural categories per gender. WINGS's flex pipeline handles this by making
 the grammar-shaping variables visible to the runtime via inline **sigils**.
 
 **Template syntax.** Inside a `{{...}}` binding, four sigils signal a flex
@@ -1789,7 +1828,7 @@ paths — useful when the axis lives inside a struct or array element:
 ```
 
 The resolver falls back to the cheap single-level lookup for bare names
-(`@genero`, `%qt`) and routes path-bearing sigils through `wprana.Solve`
+(`@genero`, `%qt`) and routes path-bearing sigils through `wings.Solve`
 against the live data context.
 
 **Order matters inside the block.** `%var` emits the count value where it
@@ -1846,7 +1885,7 @@ across two parallel files.
 
 **Runtime behavior.** When `wi18n` is imported, it fetches
 `<lang>.inflections.json` in parallel with the main text catalog and
-installs `wprana.SynPrinter` — a second printer hook invoked by the syncer
+installs `wings.SynPrinter` — a second printer hook invoked by the syncer
 on every flex block. `SynPrinter` resolves the gender and count variables
 from the live data context, computes the CLDR plural category for the
 current locale, and looks up `cells["<gender>.<cat>"]`.
@@ -1860,7 +1899,7 @@ The fallback chain handles sparse catalogs:
 4. Still empty → render the rule `Label` (the translator-facing stem) as a
    visible placeholder, rather than blank.
 
-Without `wi18n` loaded, the default `wprana.NoFlexSynPrinter` renders the
+Without `wi18n` loaded, the default `wings.NoFlexSynPrinter` renders the
 rule index as `#N` — missing inflection support stays obvious on the page
 instead of silently dropping content.
 
@@ -1875,7 +1914,7 @@ used for the count axis of flex blocks: `%var`.
 
 **Template syntax.** When a `{{...}}` binding contains exactly one `%var`
 (optionally followed by a path tail), it is a **format block** — the
-value is resolved from the data context and handed to `wprana.FmtPrinter`,
+value is resolved from the data context and handed to `wings.FmtPrinter`,
 which picks the rendering based on the Go type of the value:
 
 ```html
@@ -1977,7 +2016,7 @@ number of fractional digits — most currencies use 2, with documented
 exceptions for zero-decimal (JPY, KRW, VND, …), three-decimal (BHD, KWD,
 …), and four-decimal (CLF, UYW) cases.
 
-**Fallback behaviour.** Without `wi18n` imported, `wprana.FmtPrinter`
+**Fallback behaviour.** Without `wi18n` imported, `wings.FmtPrinter`
 stays as the default `NoFmtFmtPrinter`, which renders values via
 `fmt.Sprint` — locale-incorrect but never blank. When `wi18n` is loaded
 but the browser's `Intl` rejects a locale/currency combination (or the
@@ -2178,7 +2217,7 @@ FormIndex["passou"] → 1 reference(s):
 
 ### helpers/wlate — Translation Editor GUI
 
-`helpers/wlate/` is a wprana-built WASM app designed for translators to
+`helpers/wlate/` is a wings-built WASM app designed for translators to
 review and edit catalogs side-by-side with a reference language.
 
 **Features (implemented):**
@@ -2219,7 +2258,7 @@ review and edit catalogs side-by-side with a reference language.
   [{"context": "...", "ctxdetail": "caption"}]
   ```
 
-**Self-i18n.** wlate itself is built as a translatable wprana app — the
+**Self-i18n.** wlate itself is built as a translatable WINGS app — the
 editor eats its own dog food. Its templates live under
 `helpers/wlate/mod/wlate/`, `build.sh` runs `gen_i18n` against that tree
 before compiling the WASM, and the resulting catalogs are published to
@@ -2301,7 +2340,7 @@ dependencies).
 
 ## Component Lifecycle
 
-1. **Registration** (`init()`): Module calls `wprana.Register()` to register the
+1. **Registration** (`init()`): Module calls `wings.Register()` to register the
    custom element tag, template, CSS, factory function, and observed attributes.
 
 2. **Construction** (automatic): When the browser encounters the custom element tag,
@@ -2359,11 +2398,11 @@ The `@` attribute in the parent's template maps event names to handler names:
 func (app *App) InitData() map[string]any {
     return map[string]any{
         // Placeholder — obj not available yet
-        "on_login": wprana.TriggerHandler(nil),
+        "on_login": wings.TriggerHandler(nil),
     }
 }
 
-func (app *App) Render(obj *wprana.PranaObj) {
+func (app *App) Render(obj *wings.PranaObj) {
     // Real handler with obj in scope
     obj.This.Set("on_login", func(args ...any) {
         obj.This.Set("is_logged", true)
@@ -2373,7 +2412,7 @@ func (app *App) Render(obj *wprana.PranaObj) {
 
 **Child Render (login.go):**
 ```go
-func (lgn *Login) Render(obj *wprana.PranaObj) {
+func (lgn *Login) Render(obj *wings.PranaObj) {
     // Trigger uses the event name (without @), not the handler name
     obj.Trigger("login", username)  // matches @login in parent template
 }
@@ -2440,7 +2479,7 @@ for consistency, snake_case is recommended everywhere.
 
 ### Template Root Element
 
-If your template has multiple top-level elements, wprana automatically wraps them
+If your template has multiple top-level elements, WINGS automatically wraps them
 in a `<span>`. For predictable styling, consider using a single root element:
 
 ```html
@@ -2464,12 +2503,12 @@ in a `<span>`. For predictable styling, consider using a single root element:
 package main
 
 import (
-    "github.com/luisfurquim/wprana"
+    "github.com/luisfurquim/wings"
     _ "myapp/mod/mywidget"
 )
 
 func main() {
-    wprana.Main()
+    wings.Main()
 }
 ```
 
@@ -2483,9 +2522,9 @@ import (
     _ "embed"
     "syscall/js"
 
-    "github.com/luisfurquim/wprana"
-    "github.com/luisfurquim/wprana/dom"
-    "github.com/luisfurquim/wprana/timer"
+    "github.com/luisfurquim/wings"
+    "github.com/luisfurquim/wings/dom"
+    "github.com/luisfurquim/wings/timer"
 )
 
 //go:embed mywidget.html
@@ -2497,18 +2536,18 @@ var cssContent string
 type MyWidget struct{}
 
 func init() {
-    wprana.Register(
+    wings.Register(
         "my-widget",
         htmlContent,
         cssContent,
-        func() wprana.PranaMod { return &MyWidget{} },
+        func() wings.PranaMod { return &MyWidget{} },
         "title",
     )
 }
 
 func (w *MyWidget) InitData() map[string]any {
     return map[string]any{
-        "title":      "wprana live demo",
+        "title":      "wings live demo",
         "count":      0,
         "count2":     0,
         "items":      []any{},
@@ -2519,10 +2558,10 @@ func (w *MyWidget) InitData() map[string]any {
     }
 }
 
-func (w *MyWidget) Render(obj *wprana.PranaObj) {
+func (w *MyWidget) Render(obj *wings.PranaObj) {
     // Default to #list page if no hash fragment
     if js.Global().Get("location").Get("hash").String() == "" {
-        wprana.GoTo("list")
+        wings.GoTo("list")
     }
 
     // Populate items
@@ -2587,7 +2626,7 @@ func (w *MyWidget) Render(obj *wprana.PranaObj) {
     if len(navList) > 0 {
         dom.AddEvent(navList[0], "click",
             func(this js.Value, args []js.Value) any {
-                wprana.GoTo("list")
+                wings.GoTo("list")
                 return nil
             }, true, false)
     }
@@ -2595,7 +2634,7 @@ func (w *MyWidget) Render(obj *wprana.PranaObj) {
     if len(navDash) > 0 {
         dom.AddEvent(navDash[0], "click",
             func(this js.Value, args []js.Value) any {
-                wprana.GoTo("dashboard")
+                wings.GoTo("dashboard")
                 return nil
             }, true, false)
     }
@@ -2769,14 +2808,14 @@ If you need stronger DOM isolation, use `RegisterWithOpts` and set
 `ComponentOpts.Closed = true`:
 
 ```go
-wprana.RegisterWithOpts("my-widget", html, css,
-    wprana.ComponentOpts{Closed: true},
-    func() wprana.PranaMod { return &MyWidget{} },
+wings.RegisterWithOpts("my-widget", html, css,
+    wings.ComponentOpts{Closed: true},
+    func() wings.PranaMod { return &MyWidget{} },
 )
 ```
 
 With `Closed: true` the shadow root's `mode` is `"closed"` — external scripts
-get `null` from `element.shadowRoot`.  The wprana runtime itself accesses the
+get `null` from `element.shadowRoot`.  The WINGS runtime itself accesses the
 shadow root via the reference stored at construction time, so all internal
 features (CSS injection, `Update()`, data binding) continue to work normally.
 
@@ -2852,7 +2891,7 @@ func main() {
     if err := wi18n.SetCatalogPublicKey(catalogPubKey); err != nil {
         log.Fatal(err)
     }
-    wprana.Main()
+    wings.Main()
 }
 ```
 
@@ -2868,7 +2907,7 @@ repository. These dictionaries are distributed under the
 **[Lesser General Public License for Linguistic Resources (LGPLLR)](LICENSES/LGPLLR.txt)**.
 They are **not stored in this repository** — they are fetched on demand
 by `dictbuild -lang <tag>` and cached locally on the developer's machine.
-WPrana's source code is not affected by the LGPLLR.
+WINGS's source code is not affected by the LGPLLR.
 
 Copyright and per-language modification notices are in
 [`cmd/gen_i18n/dicts/NOTICE.md`](cmd/gen_i18n/dicts/NOTICE.md).
@@ -2879,6 +2918,21 @@ dictionaries. Before deploying them on your site, copy
 [`NOTICE-TEMPLATE.md`](NOTICE-TEMPLATE.md) into your project's NOTICE
 file and fill in the URL where your `i18n/` directory is accessible.
 Users who fill plural forms by hand are not affected.
+
+## Logo & credits
+
+The WINGS logo (`assets/logo.png`) is a winged adaptation of the **Go gopher**.
+The Go gopher was designed by **Renée French** and is licensed under the
+[Creative Commons Attribution 3.0 license](https://creativecommons.org/licenses/by/3.0/).
+This derivative keeps that attribution.
+
+The illustration was produced with AI assistance and is provided **for use as
+the WINGS project mascot only**. It is a separate asset from the source code:
+it is *not* covered by the project's MPL 2.0 license, and (as an
+AI-generated work) no independent copyright is claimed over it.
+
+"Go" and the Go gopher are associated with the Go project / Google; WINGS is an
+independent project and is **not affiliated with or endorsed by** them.
 
 ## License
 
