@@ -1,4 +1,4 @@
-// Package area provides a locale-aware area type for wprana templates.
+// Package area provides a locale-aware area type for wings templates.
 //
 // Store areas as [Area]{SquareMeters: v} and bind them with %var:unit
 // (e.g. {{%plot:ac}}). When the unit suffix is omitted the locale default

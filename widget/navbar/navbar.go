@@ -22,7 +22,7 @@
 //	    @change="onPositionEdited">
 //	</w-navbar>
 //
-// The input uses wprana two-way binding (&value), so typing into it
+// The input uses wings two-way binding (&value), so typing into it
 // updates nav_input on the widget; the @change trigger then fires with
 // the new value so the parent can react (e.g. seek to that record).
 // Pressing Enter while focused on the input also fires @change without

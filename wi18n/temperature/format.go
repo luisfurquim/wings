@@ -10,7 +10,7 @@ import (
 
 // Format implements wi18n.Numerical. formatName selects the display unit
 // ("k"/"kelvin", "c"/"celsius", "f"/"fahrenheit", "r"/"rankine"); an empty
-// formatName uses the locale default from wprana.json or the built-in table.
+// formatName uses the locale default from wings.json or the built-in table.
 func (t Temperature) Format(locale, formatName string) (string, error) {
 	unitName := formatName
 	if unitName == "" {

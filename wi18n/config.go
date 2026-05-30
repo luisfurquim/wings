@@ -6,14 +6,14 @@ import (
 	"github.com/luisfurquim/goose"
 )
 
-type wpranaMeasureEntry struct {
+type wingsMeasureEntry struct {
 	Defaults map[string]string `json:"defaults"`
 }
 
-type wpranaCfgJSON struct {
-	Measures   map[string]wpranaMeasureEntry `json:"measures"`
-	DebugLevel int                           `json:"debugLevel"`
-	TraceOn    bool                          `json:"traceOn"`
+type wingsCfgJSON struct {
+	Measures   map[string]wingsMeasureEntry `json:"measures"`
+	DebugLevel int                          `json:"debugLevel"`
+	TraceOn    bool                         `json:"traceOn"`
 }
 
 var (
@@ -22,22 +22,22 @@ var (
 	traceEnabled    bool
 )
 
-// SetConfig parses a wprana.json configuration file and applies the
+// SetConfig parses a wings.json configuration file and applies the
 // project-wide settings: measure unit overrides, goose debug level, and
 // optional goose stack tracing. Safe to call multiple times; each call
 // replaces the previous configuration.
 //
 // Typical usage with go:embed:
 //
-//	//go:embed wprana.json
-//	var wpranaCfg []byte
+//	//go:embed wings.json
+//	var wingsCfg []byte
 //
-//	func init() { wi18n.SetConfig(wpranaCfg) }
+//	func init() { wi18n.SetConfig(wingsCfg) }
 //
 // To propagate the debug level to a package-local goose.Alert, call
 // ConfigureGoose(&pkg.G) after SetConfig.
 func SetConfig(data []byte) error {
-	var cfg wpranaCfgJSON
+	var cfg wingsCfgJSON
 	if err := json.Unmarshal(data, &cfg); err != nil {
 		return err
 	}
@@ -70,11 +70,11 @@ func MeasureDefault(quantity, locale string) (unit string, ok bool) {
 	return u, ok
 }
 
-// DebugLevel returns the goose debug level loaded from wprana.json.
+// DebugLevel returns the goose debug level loaded from wings.json.
 // Zero until SetConfig has been called with a non-zero "debugLevel" key.
 func DebugLevel() int { return debugLevel }
 
-// TraceEnabled reports whether the wprana.json "traceOn" key was true.
+// TraceEnabled reports whether the wings.json "traceOn" key was true.
 // SetConfig already calls goose.TraceOn() in that case; this getter is
 // for diagnostic display only.
 func TraceEnabled() bool { return traceEnabled }

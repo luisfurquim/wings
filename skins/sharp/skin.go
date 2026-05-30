@@ -1,6 +1,6 @@
 //go:build js && wasm
 
-// Package sharp provides a focused wprana skin covering only Geometry
+// Package sharp provides a focused wings skin covering only Geometry
 // and Spacing: minimal radius, tight padding. Composes with any
 // Identity / Depth / Motion skin.
 package sharp

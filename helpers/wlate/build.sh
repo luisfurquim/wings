@@ -20,8 +20,8 @@ fi
 # Regenerate wlate's own i18n template + catalogs.
 # Deflang is pt-BR (wlate's source language); en-US and es-CO catalogs
 # are remapped when source strings survive, seeded otherwise.
-# gen_i18n is built from the wprana tree so its transitive deps (x/net/html,
-# x/text/language) resolve against wprana's go.sum, not this sub-module's.
+# gen_i18n is built from the wings tree so its transitive deps (x/net/html,
+# x/text/language) resolve against wings's go.sum, not this sub-module's.
 GEN_I18N_BIN="$(mktemp -d)/gen_i18n"
 (cd "$WPRANA" && go build -buildvcs=false -o "$GEN_I18N_BIN" ./cmd/gen_i18n)
 "$GEN_I18N_BIN" --path ./mod --deflang pt-BR

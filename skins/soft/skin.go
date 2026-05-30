@@ -1,6 +1,6 @@
 //go:build js && wasm
 
-// Package soft provides a focused wprana skin covering only Geometry
+// Package soft provides a focused wings skin covering only Geometry
 // and Spacing: generous corner radius, airy padding. Composes with any
 // Identity / Depth / Motion skin.
 package soft

@@ -1,4 +1,4 @@
-// Package cooking provides locale-aware cooking measurement types for wprana
+// Package cooking provides locale-aware cooking measurement types for wings
 // templates.
 //
 // Two separate types cover the two axes of cooking measurement:
@@ -12,7 +12,7 @@
 //
 // When the unit suffix is omitted the locale default is used: cup/oz for
 // en-US, mL/g for all others. Apps may override via wi18n.SetConfig
-// (wprana.json) using quantity keys "cooking_volume" and "cooking_weight".
+// (wings.json) using quantity keys "cooking_volume" and "cooking_weight".
 //
 // Unit names safe for template use:
 //

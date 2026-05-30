@@ -236,7 +236,7 @@ func SolveAll(segs []TextSegment, ctx Ctx) string {
 			toksCopy := append([]RefNode(nil), segs[i].Ref...)
 			fb, err := expr.ParseFmtBlock(&toksCopy)
 			if err != nil {
-				G.Logf(1, "wprana: ParseFmtBlock: %v\n", err)
+				G.Logf(1, "wings: ParseFmtBlock: %v\n", err)
 				continue
 			}
 			path := fb.Path

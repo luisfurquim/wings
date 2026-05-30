@@ -20,7 +20,7 @@ import (
 var autoFlex bool
 
 // dictDir is where loadDict looks for <lang>.db files. Resolved from
-// -dict-dir, defaulting to the wprana module's bundled dict directory.
+// -dict-dir, defaulting to the wings module's bundled dict directory.
 var dictDir string
 
 // dictSource is the value stamped into FlexEntryData.Source when a cell is

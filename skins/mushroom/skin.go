@@ -1,6 +1,6 @@
 //go:build js && wasm
 
-// Package mushroom provides the "mushroom" wprana skin.
+// Package mushroom provides the "mushroom" wings skin.
 package mushroom
 
 import (

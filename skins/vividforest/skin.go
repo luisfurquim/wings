@@ -1,6 +1,6 @@
 //go:build js && wasm
 
-// Package vividforest provides the "vividforest" wprana skin.
+// Package vividforest provides the "vividforest" wings skin.
 package vividforest
 
 import (

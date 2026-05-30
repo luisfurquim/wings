@@ -24,7 +24,7 @@ import (
 	"github.com/luisfurquim/wings/wi18n"
 )
 
-// G is this binary's goose alert. wprana.json may set the level via SetConfig.
+// G is this binary's goose alert. wings.json may set the level via SetConfig.
 var G goose.Alert = goose.Alert(2)
 
 type serverConfig struct {
@@ -409,9 +409,9 @@ func (a *authManager) middleware(next http.Handler) http.Handler {
 // -state-dir flag, so serve.go finds provider avatars without configuration.
 func defaultDictStateDir() string {
 	if d, err := os.UserCacheDir(); err == nil {
-		return filepath.Join(d, "wprana", "dictbuild")
+		return filepath.Join(d, "wings", "dictbuild")
 	}
-	return filepath.Join(os.Getenv("HOME"), ".cache", "wprana", "dictbuild")
+	return filepath.Join(os.Getenv("HOME"), ".cache", "wings", "dictbuild")
 }
 
 // reName restricts avatar file names to alphanumerics, hyphens, and
@@ -451,10 +451,10 @@ func main() {
 		projectRoot = cfg.root
 	}
 
-	// Apply project-wide debug settings from wprana.json (if present).
-	if data, err := os.ReadFile(filepath.Join(projectRoot, "wprana.json")); err == nil {
+	// Apply project-wide debug settings from wings.json (if present).
+	if data, err := os.ReadFile(filepath.Join(projectRoot, "wings.json")); err == nil {
 		if err := wi18n.SetConfig(data); err != nil {
-			G.Logf(1, "wprana.json: %v", err)
+			G.Logf(1, "wings.json: %v", err)
 		}
 		wi18n.ConfigureGoose(&G)
 	}
@@ -562,8 +562,8 @@ func main() {
 			return
 		}
 
-		if r.URL.Path == "/wprana.json" {
-			target := filepath.Join(projectRoot, "wprana.json")
+		if r.URL.Path == "/wings.json" {
+			target := filepath.Join(projectRoot, "wings.json")
 			http.ServeFile(w, r, target)
 			return
 		}

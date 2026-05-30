@@ -1,6 +1,6 @@
 //go:build js && wasm
 
-// Package flat provides a focused wprana Depth skin: minimal,
+// Package flat provides a focused wings Depth skin: minimal,
 // near-flush shadow geometry. Combines with any Identity skin's
 // shadow colour to produce a discreet elevation feel.
 package flat

@@ -1,4 +1,4 @@
-// Package fueleconomy provides a locale-aware fuel economy type for wprana
+// Package fueleconomy provides a locale-aware fuel economy type for wings
 // templates.
 //
 // Store fuel consumption as [FuelEconomy]{LitersPer100km: v} and bind with

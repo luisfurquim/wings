@@ -1,6 +1,6 @@
 //go:build js && wasm
 
-// Package light provides the baseline "light" wprana skin.
+// Package light provides the baseline "light" wings skin.
 //
 // The skin defines every --wings-* token documented in skins/tokens.md
 // at :root, using values extracted from the current widget defaults so

@@ -14,7 +14,7 @@ type SkinNotRegisteredError struct {
 }
 
 func (e *SkinNotRegisteredError) Error() string {
-	return fmt.Sprintf("wprana: skin %q is not registered", e.Name)
+	return fmt.Sprintf("wings: skin %q is not registered", e.Name)
 }
 
 // SkinConflictError is returned by ApplySkin when activating a skin would
@@ -31,7 +31,7 @@ type SkinConflictError struct {
 
 func (e *SkinConflictError) Error() string {
 	var sb strings.Builder
-	fmt.Fprintf(&sb, "wprana: skin %q (%s) conflicts on categories %s with active skin",
+	fmt.Fprintf(&sb, "wings: skin %q (%s) conflicts on categories %s with active skin",
 		e.Name, e.Categories, e.ConflictingCategories)
 	if len(e.Conflicts) == 1 {
 		fmt.Fprintf(&sb, " %q", e.Conflicts[0])

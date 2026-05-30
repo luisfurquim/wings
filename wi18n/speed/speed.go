@@ -1,4 +1,4 @@
-// Package speed provides a locale-aware speed type for wprana templates.
+// Package speed provides a locale-aware speed type for wings templates.
 //
 // Store speeds as [Speed]{MetersPerSecond: v} and bind them with %var:unit
 // (e.g. {{%wind:kmh}}). When the unit suffix is omitted the locale default

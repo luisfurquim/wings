@@ -1,4 +1,4 @@
-// Package volume provides a locale-aware volume type for wprana templates.
+// Package volume provides a locale-aware volume type for wings templates.
 //
 // Store volumes as [Volume]{Liters: v} and bind them with %var:unit
 // (e.g. {{%capacity:mL}}). When the unit suffix is omitted the locale

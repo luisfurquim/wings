@@ -1,6 +1,6 @@
 //go:build js && wasm
 
-// Package autumn provides the "autumn" wprana skin.
+// Package autumn provides the "autumn" wings skin.
 package autumn
 
 import (

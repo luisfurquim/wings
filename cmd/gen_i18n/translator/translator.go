@@ -1,5 +1,5 @@
 // Package translator provides a backend-agnostic interface for machine
-// translation of wprana i18n catalog entries. Two implementations are
+// translation of wings i18n catalog entries. Two implementations are
 // available: OpenAI-compatible chat completions (openai.go) and LibreTranslate
 // (libretranslate.go). Both are selected via the gen_i18n.json config file.
 package translator

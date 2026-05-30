@@ -21,7 +21,7 @@ import (
 
 // ── Data types ─────────────────────────────────────────────────────────────
 
-// Config is the relevant slice of wprana.json for wlate.
+// Config is the relevant slice of wings.json for wlate.
 type Config struct {
 	DefaultLang string      `json:"defaultLang"`
 	Languages   []string    `json:"languages"`

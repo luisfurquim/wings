@@ -1,6 +1,6 @@
 //go:build js && wasm
 
-// Package darkforest provides the "darkforest" wprana skin.
+// Package darkforest provides the "darkforest" wings skin.
 package darkforest
 
 import (

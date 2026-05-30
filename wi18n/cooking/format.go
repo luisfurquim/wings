@@ -10,7 +10,7 @@ import (
 
 // Format implements wi18n.Numerical for cooking volumes. formatName selects
 // the display unit ("L", "mL", "cup", "tbsp", "tsp", "floz"); empty
-// formatName uses the locale default from wprana.json ("cooking_volume") or
+// formatName uses the locale default from wings.json ("cooking_volume") or
 // the built-in table.
 func (cv Volume) Format(locale, formatName string) (string, error) {
 	unitName := formatName
@@ -34,7 +34,7 @@ func (cv Volume) Format(locale, formatName string) (string, error) {
 
 // Format implements wi18n.Numerical for cooking weights. formatName selects
 // the display unit ("kg", "g", "lb", "oz"); empty formatName uses the locale
-// default from wprana.json ("cooking_weight") or the built-in table.
+// default from wings.json ("cooking_weight") or the built-in table.
 func (cw Weight) Format(locale, formatName string) (string, error) {
 	unitName := formatName
 	if unitName == "" {

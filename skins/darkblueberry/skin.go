@@ -1,6 +1,6 @@
 //go:build js && wasm
 
-// Package darkblueberry provides the "darkblueberry" wprana skin.
+// Package darkblueberry provides the "darkblueberry" wings skin.
 package darkblueberry
 
 import (

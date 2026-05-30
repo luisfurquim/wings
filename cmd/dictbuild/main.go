@@ -118,7 +118,7 @@ func main() {
 	}
 }
 
-// defaultStateDir resolves $XDG_CACHE_HOME/wprana/dictbuild (or the platform
+// defaultStateDir resolves $XDG_CACHE_HOME/wings/dictbuild (or the platform
 // equivalent). Errors fall back to the current directory: that keeps dictbuild
 // usable on minimal environments where os.UserCacheDir is unset, at the cost
 // of placing tool/ and cache/ under wherever the user happens to invoke it.
@@ -127,7 +127,7 @@ func defaultStateDir() string {
 	if err != nil {
 		return "."
 	}
-	return filepath.Join(cache, "wprana", "dictbuild")
+	return filepath.Join(cache, "wings", "dictbuild")
 }
 
 // runFetch implements the modern flow: pull the .bin/.inf from unitex-lingua,

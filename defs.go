@@ -74,7 +74,7 @@ func SetPrinter(fn func(string) string, token []byte) {
 	printerMu.Lock()
 	defer printerMu.Unlock()
 	if !bytes.Equal(h[:], printerTokenHash[:]) {
-		panic("wprana: SetPrinter: invalid authorization token")
+		panic("wings: SetPrinter: invalid authorization token")
 	}
 	if printerSet {
 		return
@@ -148,7 +148,7 @@ func NoFmtFmtPrinter(val any, _ string, _ string) string {
 }
 
 // ── Type aliases for expr package ───────────────────────────────────────────
-// These aliases allow the rest of the wprana package to use the parser
+// These aliases allow the rest of the wings package to use the parser
 // types without qualifying every reference with "expr.".
 
 type TokenType = expr.TokenType
@@ -392,7 +392,7 @@ func init() {
 func initPrinterToken() {
 	tok := make([]byte, 32)
 	if _, err := cryptorand.Read(tok); err != nil {
-		panic("wprana: crypto/rand unavailable: " + err.Error())
+		panic("wings: crypto/rand unavailable: " + err.Error())
 	}
 	printerTokenVal = tok
 	printerTokenHash = sha256.Sum256(tok)

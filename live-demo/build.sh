@@ -19,8 +19,8 @@ fi
 # Regenerate component i18n templates (mod/**/*.i18n.html) and catalogs
 # (mod/i18n/*.json) from the .html sources. Deflang is pt-BR (the demo's source
 # language); es-AR/en-US catalogs are remapped where source strings survive and
-# seeded empty otherwise. gen_i18n is built from the wprana tree so its
-# transitive deps resolve against wprana's go.sum, not this sub-module's.
+# seeded empty otherwise. gen_i18n is built from the wings tree so its
+# transitive deps resolve against wings's go.sum, not this sub-module's.
 GEN_I18N_BIN="$(mktemp -d)/gen_i18n"
 (cd "$WPRANA" && go build -buildvcs=false -o "$GEN_I18N_BIN" ./cmd/gen_i18n)
 "$GEN_I18N_BIN" --path ./mod --deflang pt-BR

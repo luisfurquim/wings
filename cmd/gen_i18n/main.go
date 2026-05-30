@@ -25,7 +25,7 @@ import (
 )
 
 // G is this binary's goose alert. Default 2 keeps info-level output visible;
-// project's wprana.json may raise it via wi18n.SetConfig + ConfigureGoose.
+// project's wings.json may raise it via wi18n.SetConfig + ConfigureGoose.
 var G goose.Alert = goose.Alert(2)
 
 // Node is a trie node for octal-keyed strings.
@@ -73,7 +73,7 @@ func main() {
 	addAttrsFlag := flag.String("add-attrs", "", "comma-separated attributes to add to the default list")
 	noAttrsFlag := flag.String("no-attrs", "", "comma-separated attributes to remove from the default list")
 	autoFlexFlag := flag.Bool("auto-flex", false, "consult per-language dictionaries to auto-fill empty inflection cells (LGPLLR-derivative output — see README)")
-	dictDirFlag := flag.String("dict-dir", "", "directory holding <lang>.db files produced by cmd/dictbuild (default: cmd/gen_i18n/dicts under the wprana module)")
+	dictDirFlag := flag.String("dict-dir", "", "directory holding <lang>.db files produced by cmd/dictbuild (default: cmd/gen_i18n/dicts under the wings module)")
 	autoTranslateFlag := flag.Bool("auto-translate", false, "use the configured LLM/MT backend (gen_i18n.json) to pre-fill entries that the dictionary pass could not fill; output is flagged for human review")
 	genKeyFlag := flag.Bool("genkey", false, "generate a fresh ed25519 signing keypair (gen_i18n.ed25519.key + gen_i18n.ed25519.pub) and exit")
 	genKeyDirFlag := flag.String("genkey-dir", ".", "directory to write the generated keypair when using -genkey")
@@ -123,10 +123,10 @@ func main() {
 
 	rootDir := *pathFlag
 
-	// Apply project-wide debug settings from wprana.json (if present).
-	if data, err := os.ReadFile(filepath.Join(rootDir, "wprana.json")); err == nil {
+	// Apply project-wide debug settings from wings.json (if present).
+	if data, err := os.ReadFile(filepath.Join(rootDir, "wings.json")); err == nil {
 		if err := wi18n.SetConfig(data); err != nil {
-			G.Logf(1, "wprana.json: %v", err)
+			G.Logf(1, "wings.json: %v", err)
 		}
 		wi18n.ConfigureGoose(&G)
 	}

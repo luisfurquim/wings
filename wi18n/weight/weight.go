@@ -1,4 +1,4 @@
-// Package weight provides a locale-aware weight/mass type for wprana templates.
+// Package weight provides a locale-aware weight/mass type for wings templates.
 //
 // Store masses as [Weight]{Kilograms: v} and bind them with %var:unit
 // (e.g. {{%pkg:lb}}). When the unit suffix is omitted the locale default

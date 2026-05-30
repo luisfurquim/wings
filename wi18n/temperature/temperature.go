@@ -1,11 +1,11 @@
-// Package temperature provides a locale-aware temperature type for wprana
+// Package temperature provides a locale-aware temperature type for wings
 // templates.
 //
 // Store temperatures as [Temperature]{Kelvin: v} and bind them with
 // %var:unit in templates (e.g. {{%temp:c}}). When the unit suffix is omitted,
 // the locale default is used (Fahrenheit for en-US and a handful of other
 // locales, Celsius for all others). Apps may override the per-locale default
-// via wi18n.SetConfig (wprana.json).
+// via wi18n.SetConfig (wings.json).
 //
 // Canonical storage unit is Kelvin (SI). Conversions to Celsius, Fahrenheit,
 // and Rankine are exact arithmetic; no approximations beyond float64.
@@ -67,7 +67,7 @@ func (t Temperature) Convert(unitName string) (val float64, sym string, err erro
 
 // DefaultUnit returns the built-in display unit for the given BCP 47 locale
 // tag. en-US, en-BS, en-BZ, and en-KY default to Fahrenheit; all others
-// default to Celsius. Apps may override this via wi18n.SetConfig (wprana.json).
+// default to Celsius. Apps may override this via wi18n.SetConfig (wings.json).
 func DefaultUnit(locale string) string {
 	switch locale {
 	case "en-US", "en-BS", "en-BZ", "en-KY":

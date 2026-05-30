@@ -1,6 +1,6 @@
 //go:build js && wasm
 
-// Package glass provides a focused wprana skin covering only the
+// Package glass provides a focused wings skin covering only the
 // CategoryAtmosphere dimension — glass-morphism via backdrop-filter blur
 // and translucent surface alpha.
 //

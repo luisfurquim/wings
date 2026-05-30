@@ -10,7 +10,7 @@ import (
 
 // Format implements wi18n.Numerical. formatName selects the display unit
 // (e.g. "km", "mi", "ft", "in"); an empty formatName uses the locale default
-// from wprana.json or the built-in table.
+// from wings.json or the built-in table.
 //
 // The returned string uses "." as the decimal separator regardless of locale;
 // number localisation (grouping, decimal sign) can be layered on top by

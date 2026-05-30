@@ -36,7 +36,7 @@ import (
 )
 
 // G is this package's goose alert. SetConfig (called from init() with
-// wprana.json bytes) propagates the project-wide debugLevel here via
+// wings.json bytes) propagates the project-wide debugLevel here via
 // wi18n.ConfigureGoose.
 var G goose.Alert
 
@@ -480,21 +480,21 @@ func (w *Wlate) Render(obj *wings.PranaObj) {
 
 func (wc *wlateCtx) init() {
 	// Load config
-	body, err := wldata.FetchText("wprana.json")
+	body, err := wldata.FetchText("wings.json")
 	if err != nil {
-		G.Logf(1, "wlate: failed to load wprana.json: %v", err)
+		G.Logf(1, "wlate: failed to load wings.json: %v", err)
 		return
 	}
 	// Apply project-wide settings (debugLevel, traceOn, measure overrides)
 	// before parsing wlate-specific keys, so subsequent G.Logf calls observe
 	// the configured level.
 	if err := wi18n.SetConfig([]byte(body)); err != nil {
-		G.Logf(1, "wlate: failed to apply wprana.json: %v", err)
+		G.Logf(1, "wlate: failed to apply wings.json: %v", err)
 		return
 	}
 	wi18n.ConfigureGoose(&G)
 	if err := json.Unmarshal([]byte(body), &wc.config); err != nil {
-		G.Logf(1, "wlate: failed to parse wprana.json: %v", err)
+		G.Logf(1, "wlate: failed to parse wings.json: %v", err)
 		return
 	}
 
@@ -742,7 +742,7 @@ func (wc *wlateCtx) wireEvents() {
 		}),
 	)
 
-	// Combobox @change handlers are set via wprana trigger system
+	// Combobox @change handlers are set via wings trigger system
 	wc.obj.This.M["on_left_lang"] = wings.TriggerHandler(func(args ...any) {
 		if len(args) == 0 {
 			return

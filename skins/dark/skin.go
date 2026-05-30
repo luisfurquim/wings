@@ -1,6 +1,6 @@
 //go:build js && wasm
 
-// Package dark provides a dark wprana skin.
+// Package dark provides a dark wings skin.
 //
 // Mirrors every --wings-* token documented in skins/tokens.md, swapping
 // the surface and text values for dark-mode-friendly palette while

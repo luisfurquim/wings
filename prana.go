@@ -670,12 +670,12 @@ func Update(tagName string, cssContent string) {
 // packages (e.g. wi18n) to register asynchronous initialization via
 // InitWG.Add(1) in their init() and InitWG.Done() when ready.
 func Main() {
-	G.Logf(2, "wprana: starting")
+	G.Logf(2, "wings: starting")
 
-	G.Logf(2, "wprana: waiting for async initializers")
+	G.Logf(2, "wings: waiting for async initializers")
 	InitWG.Wait()
 
-	G.Logf(2, "wprana: defining %d modules", len(moduleRegistry))
+	G.Logf(2, "wings: defining %d modules", len(moduleRegistry))
 	DefineAll()
 
 	// Keep the WASM runtime alive. The deadlock detector does not consider

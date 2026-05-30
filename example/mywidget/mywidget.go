@@ -2,7 +2,7 @@
 
 // Package mywidget demonstrates how to implement a Go web component using wings.
 //
-// Structure of a wprana module:
+// Structure of a wings module:
 //   - mywidget.html   → HTML template with bindings {{expr}}, *arr, ?cond, &attr
 //   - mywidget.css    → component styles
 //   - mywidget.go     → Go logic: init() registers, MyWidget implements PranaMod

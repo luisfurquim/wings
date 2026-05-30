@@ -49,7 +49,7 @@ var (
 )
 
 // printerToken is the one-time token consumed at package-level init so that
-// SetPrinter calls from this package are authorized against wprana's token guard.
+// SetPrinter calls from this package are authorized against wings's token guard.
 var printerToken = wings.TakePrinterToken()
 
 // Lang returns the language tag selected at init time.

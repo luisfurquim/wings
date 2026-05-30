@@ -597,7 +597,7 @@ func (c *Combobox) Render(obj *wings.PranaObj) {
 	// Document: close dropdown when clicking outside the component.
 	// This handler persists on the document even if the component is later
 	// removed from the DOM.  In that scenario it becomes a harmless no-op because
-	// wprana stops syncing disconnected components.
+	// wings stops syncing disconnected components.
 	doc := js.Global().Get("document")
 	dom.AddEvent(doc, "click", cb.onDocClick, false, false)
 }

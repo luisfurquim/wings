@@ -1180,7 +1180,7 @@ func main() {
 }
 ```
 
-Each active skin owns a `<style id="wprana-skin-NAME" data-wprana-skin="NAME">`
+Each active skin owns a `<style id="wings-skin-NAME" data-wings-skin="NAME">`
 in `document.head`; DOM order is activation order, so later skins cascade over
 earlier ones.
 
@@ -2068,7 +2068,7 @@ options.
 
 **`wi18n.SetConfig` — app-level unit overrides.** Call
 `wi18n.SetConfig(jsonBytes)` at startup (e.g. from an embedded
-`wprana.json`) to set per-locale default units for any quantity:
+`wings.json`) to set per-locale default units for any quantity:
 
 ```json
 { "measures": { "pt-BR": { "length": "km" }, "en-US": { "length": "mi" } } }
@@ -2150,7 +2150,7 @@ during the build.
   with `make UNITEXTOOLLOGGERONLY=yes 64BITS=yes`, expands the compiled
   dictionary back to UTF-16 text via `Uncompress`, and parses the result.
   Persistent state (cloned tools, compiled binary, cached `.bin`/`.inf`)
-  lives under `-state-dir` (defaults to `$XDG_CACHE_HOME/wprana/dictbuild`).
+  lives under `-state-dir` (defaults to `$XDG_CACHE_HOME/wings/dictbuild`).
   Pass `-tool /path/to/UnitexToolLogger` to skip the auto-build if you
   already have the binary. Output: `<tag>.db` in `-out` (defaults to `.`).
   Linux/macOS only — Windows requires a manual MSVC build.
@@ -2229,7 +2229,7 @@ review and edit catalogs side-by-side with a reference language.
   plural category grid, using CSS Grid with `display: contents` on
   iteration wrappers).
 - Keyboard shortcuts for navigation and toggling revised state (all
-  rebindable via `wprana.json`).
+  rebindable via `wings.json`).
 - Filter toggle: show only unrevised entries.
 - Unsaved-changes guard (in-app dialog + `beforeunload`).
 - On-save file creation: if the target catalog doesn't exist, wlate

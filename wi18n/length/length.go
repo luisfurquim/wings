@@ -1,9 +1,9 @@
-// Package length provides a locale-aware length type for wprana templates.
+// Package length provides a locale-aware length type for wings templates.
 //
 // Store distances as [Length]{Meters: v} and bind them with %var:unit in
 // templates (e.g. {{%dist:km}}). When the unit suffix is omitted, the locale's
 // default unit is used (miles for en-US/en-GB, meters for all others). Apps
-// may override the per-locale default via wi18n.SetConfig (wprana.json).
+// may override the per-locale default via wi18n.SetConfig (wings.json).
 //
 // Canonical storage unit is the metre (SI). All conversions are exact
 // rational factors; no floating-point rounding beyond float64 arithmetic.
@@ -56,7 +56,7 @@ func (l Length) Convert(unitName string) (val float64, sym string, err error) {
 
 // DefaultUnit returns the built-in display unit for the given BCP 47 locale
 // tag. en-US, en-GB, en-LR and my-MM default to miles; all others default to
-// metres. Apps may override this via wi18n.SetConfig (wprana.json).
+// metres. Apps may override this via wi18n.SetConfig (wings.json).
 func DefaultUnit(locale string) string {
 	switch locale {
 	case "en-US", "en-GB", "en-LR", "my", "my-MM":

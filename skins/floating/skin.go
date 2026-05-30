@@ -1,6 +1,6 @@
 //go:build js && wasm
 
-// Package floating provides a focused wprana Depth skin with diffuse,
+// Package floating provides a focused wings Depth skin with diffuse,
 // generous shadow geometry — pairs naturally with `soft` for an
 // "elevated cards" aesthetic.
 package floating
