@@ -77,3 +77,65 @@ func TestParseFmtBlockRejectsFlex(t *testing.T) {
 		t.Error("ParseFmtBlock on FlexBlock tokens: expected error, got nil")
 	}
 }
+
+func TestTokenizeCustomSigils(t *testing.T) {
+	cases := []struct {
+		expr     string
+		wantType TokenType
+		wantVal  string
+	}{
+		{"*foo", TokStarVar, "foo"},
+		{"$foo", TokDollarVar, "foo"},
+		{"~$foo", TokFlexBind, "foo"},
+		{"**foo", TokStr, "*foo"}, // escape → literal
+		{"$$foo", TokStr, "$foo"}, // escape → literal
+	}
+	for _, c := range cases {
+		toks := Tokenize(c.expr)
+		if len(toks) != 1 || toks[0].Type != c.wantType || toks[0].StrVal != c.wantVal {
+			t.Errorf("%q: got %+v, want type=%d val=%q", c.expr, toks, c.wantType, c.wantVal)
+		}
+	}
+}
+
+func TestClassifyCustomSigils(t *testing.T) {
+	for _, e := range []string{
+		"*motor ~aluno",
+		"$item",
+		"*item",
+		"~$item",
+		"@g %count *motor ~$dyn",
+		"~$itens[i].type",
+	} {
+		toks := Tokenize(e)
+		if !IsFlexBlock(toks) {
+			t.Errorf("%q: IsFlexBlock=false, want true", e)
+		}
+		if IsFmtBlock(toks) {
+			t.Errorf("%q: IsFmtBlock=true, want false", e)
+		}
+	}
+}
+
+func TestParseFlexBlockCustomSigils(t *testing.T) {
+	toks := Tokenize("@gender %count ~o ~aluno *motor[i].kind $item ~$adj.form")
+	fb, err := ParseFlexBlock(&toks)
+	if err != nil {
+		t.Fatalf("ParseFlexBlock: %v", err)
+	}
+	if fb.GenderVar != "gender" || fb.CountVar != "count" {
+		t.Errorf("gender/count = %q/%q", fb.GenderVar, fb.CountVar)
+	}
+	if len(fb.TildeWords) != 2 {
+		t.Errorf("TildeWords = %v, want 2", fb.TildeWords)
+	}
+	if len(fb.StarVars) != 1 || fb.StarVars[0].Var != "motor" || len(fb.StarVars[0].Path) == 0 {
+		t.Errorf("StarVars = %+v (want one 'motor' with path)", fb.StarVars)
+	}
+	if len(fb.DollarVars) != 1 || fb.DollarVars[0].Var != "item" || fb.DollarVars[0].Path != nil {
+		t.Errorf("DollarVars = %+v (want one bare 'item')", fb.DollarVars)
+	}
+	if len(fb.FlexBinds) != 1 || fb.FlexBinds[0].Var != "adj" || len(fb.FlexBinds[0].Path) == 0 {
+		t.Errorf("FlexBinds = %+v (want one 'adj' with path)", fb.FlexBinds)
+	}
+}

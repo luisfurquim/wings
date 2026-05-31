@@ -30,6 +30,9 @@ const (
 	TokTildeWord TokenType = 13 // ~ident  — flex marker (build-time only)
 	TokFlexIdx   TokenType = 14 // #N      — inflection rule index
 	TokColon     TokenType = 15 // :       — format-name separator in %var:name
+	TokStarVar   TokenType = 16 // *ident  — CustomFlex object (engine/selector)
+	TokDollarVar TokenType = 17 // $ident  — dynamic bind value, emitted verbatim
+	TokFlexBind  TokenType = 18 // ~$ident — dynamic value to be inflected at runtime
 )
 
 // ── Template parse structures ───────────────────────────────────────────────
@@ -277,7 +280,7 @@ func splitSymbols(s string) []RefNode {
 				toks = append(toks, RefNode{Type: TokIdent, StrVal: "#"})
 				i++
 			}
-		case '%', '@', '~':
+		case '%', '@', '~', '*', '$':
 			tok, next, ok := consumeSigil(s, i)
 			if ok {
 				toks = append(toks, tok)
@@ -304,23 +307,26 @@ func splitSymbols(s string) []RefNode {
 	return toks
 }
 
-// consumeSigil reads one of the i18n flexion sigils (`%`, `@`, `~`) followed
-// by an identifier. A doubled sigil (`%%ident`, `@@ident`, `~~ident`) is an
-// escape: the returned token is a TokStr with the single-sigil form as value,
-// so the output is rendered literally.
+// consumeSigil reads one of the i18n flexion sigils (`%`, `@`, `~`, `*`, `$`)
+// followed by an identifier. A doubled sigil (`%%ident`, `@@ident`, `~~ident`,
+// `**ident`, `$$ident`) is an escape: the returned token is a TokStr with the
+// single-sigil form as value, so the output is rendered literally.
 //
-// `%var` and `@var` consume ASCII-only identifiers (variable names from app
-// code). `~word` consumes a natural-language token: any sequence of Unicode
-// letters/digits, plus the literal '|' character for the dual-lemma form
-// (`~pai|mãe`). This lets templates carry accented Portuguese/Spanish/etc.
-// words verbatim — without it, "~está" would split as `~est` + `á…`.
+// `%var`, `@var`, `*var` and `$var` consume ASCII-only identifiers (variable
+// names from app code; only the root ident here — the `.field`/`[expr]` path
+// tail is assembled later by ParseFlexBlock, same as for `@`/`%`). `~word`
+// consumes a natural-language token: any sequence of Unicode letters/digits,
+// plus the literal '|' character for the dual-lemma form (`~pai|mãe`). This
+// lets templates carry accented words verbatim — without it, "~está" would
+// split as `~est` + `á…`. The special form `~$ident` is a flexbind: a dynamic
+// value (resolved from the data context) to be inflected at runtime.
 //
 // Returns (tok, nextPos, ok). ok=false means no token was produced (bare
 // sigil with no identifier — the char is skipped silently).
 func consumeSigil(s string, i int) (RefNode, int, bool) {
 	c := s[i]
 	n := len(s)
-	// Escape form: `%%`, `@@`, `~~`
+	// Escape form: `%%`, `@@`, `~~`, `**`, `$$`
 	if i+1 < n && s[i+1] == c {
 		j := i + 2
 		if c == '~' {
@@ -332,31 +338,53 @@ func consumeSigil(s string, i int) (RefNode, int, bool) {
 		}
 		return RefNode{Type: TokStr, StrVal: s[i+1 : j]}, j, true
 	}
-	// Sigil form
-	j := i + 1
+	// `~` family: ~word (literal lemma) or ~$ident (flexbind dynamic value).
 	if c == '~' {
+		j := i + 1
+		if j < n && s[j] == '$' {
+			if k, ok := scanIdent(s, j+1); ok {
+				return RefNode{Type: TokFlexBind, StrVal: s[j+1 : k]}, k, true
+			}
+			// `~$` with no identifier — skip the `~`, let `$` be handled next.
+			return RefNode{}, i + 1, false
+		}
 		k := consumeTildeWord(s, j)
 		if k == j {
 			return RefNode{}, i + 1, false
 		}
 		return RefNode{Type: TokTildeWord, StrVal: s[j:k]}, k, true
 	}
-	if j < n && isIdentStart(s[j]) {
-		k := j + 1
-		for k < n && isIdentChar(s[k]) {
-			k++
-		}
+	// `%`, `@`, `*`, `$`: sigil + ASCII ident (root only; path tail later).
+	if k, ok := scanIdent(s, i+1); ok {
 		var t TokenType
 		switch c {
 		case '%':
 			t = TokPctVar
 		case '@':
 			t = TokAtVar
+		case '*':
+			t = TokStarVar
+		case '$':
+			t = TokDollarVar
 		}
-		return RefNode{Type: t, StrVal: s[j:k]}, k, true
+		return RefNode{Type: t, StrVal: s[i+1 : k]}, k, true
 	}
 	// Bare sigil with no identifier — skip.
 	return RefNode{}, i + 1, false
+}
+
+// scanIdent reads an identifier starting at j (must begin with an ident-start
+// char). Returns the end position and true, or (j, false) if s[j] is not a
+// valid identifier start.
+func scanIdent(s string, j int) (int, bool) {
+	if j >= len(s) || !isIdentStart(s[j]) {
+		return j, false
+	}
+	k := j + 1
+	for k < len(s) && isIdentChar(s[k]) {
+		k++
+	}
+	return k, true
 }
 
 // consumeTildeWord scans s starting at j, advancing past every byte that
@@ -503,7 +531,22 @@ type FlexBlock struct {
 	TildeWords []string  // ~word lemmas in original order (build-time only)
 	Tokens     []RefNode // input token sequence in original order; path-tail tokens consumed
 	// by @var/%var are NOT re-emitted here (they are metadata attached to the
-	// sigil RefNode that precedes them).
+	// sigil RefNode that precedes them). For *var/$var/~$var the path tail is
+	// stored in the token's Sub field, so Tokens carries enough for runtime
+	// assembly in order.
+	StarVars   []FlexVarRef // *var participants (CustomFlex engine/selector), in order
+	DollarVars []FlexVarRef // $var plain dynamic binds (emitted verbatim), in order
+	FlexBinds  []FlexVarRef // ~$var dynamic values to be inflected at runtime, in order
+}
+
+// FlexVarRef is a resolved variable reference inside a flex block for one of
+// the path-bearing sigils (*var, $var, ~$var). Var is the root identifier;
+// Path is the full reference (root ident + `.field`/`[expr]` tail), nil when
+// the reference is a bare name. Resolution at runtime goes through wings.Solve
+// when Path is non-nil, or the cheap single-level lookup for bare Var.
+type FlexVarRef struct {
+	Var  string
+	Path []RefNode
 }
 
 // IsFlexBlock reports whether the token slice begins with a flexion sigil
@@ -516,7 +559,7 @@ func IsFlexBlock(toks []RefNode) bool {
 		return false
 	}
 	switch toks[0].Type {
-	case TokAtVar, TokTildeWord, TokFlexIdx:
+	case TokAtVar, TokTildeWord, TokFlexIdx, TokStarVar, TokDollarVar, TokFlexBind:
 		return true
 	case TokPctVar:
 		// %var alone (plus optional path tail) is a FmtBlock, not a FlexBlock.
@@ -584,6 +627,30 @@ func ParseFlexBlock(toks *[]RefNode) (FlexBlock, error) {
 			fb.Idx = t.IntVal
 			fb.Tokens = append(fb.Tokens, t)
 			seenIdx = true
+		case TokStarVar:
+			path, err := buildFlexPath(t.StrVal, toks)
+			if err != nil {
+				return fb, fmt.Errorf("ParseFlexBlock: *var path: %w", err)
+			}
+			t.Sub = path
+			fb.StarVars = append(fb.StarVars, FlexVarRef{Var: t.StrVal, Path: path})
+			fb.Tokens = append(fb.Tokens, t)
+		case TokDollarVar:
+			path, err := buildFlexPath(t.StrVal, toks)
+			if err != nil {
+				return fb, fmt.Errorf("ParseFlexBlock: $var path: %w", err)
+			}
+			t.Sub = path
+			fb.DollarVars = append(fb.DollarVars, FlexVarRef{Var: t.StrVal, Path: path})
+			fb.Tokens = append(fb.Tokens, t)
+		case TokFlexBind:
+			path, err := buildFlexPath(t.StrVal, toks)
+			if err != nil {
+				return fb, fmt.Errorf("ParseFlexBlock: ~$var path: %w", err)
+			}
+			t.Sub = path
+			fb.FlexBinds = append(fb.FlexBinds, FlexVarRef{Var: t.StrVal, Path: path})
+			fb.Tokens = append(fb.Tokens, t)
 		case TokIdent, TokStr, TokNum:
 			// Passthrough literal word: kept in Tokens for build-time use.
 			fb.Tokens = append(fb.Tokens, t)
@@ -593,6 +660,21 @@ func ParseFlexBlock(toks *[]RefNode) (FlexBlock, error) {
 	}
 
 	return fb, nil
+}
+
+// buildFlexPath consumes the `.field`/`[expr]` path tail for a path-bearing
+// flex sigil (*var/$var/~$var) and returns the full reference (root ident +
+// tail), or nil when the reference is a bare name. Mirrors the GenderPath /
+// CountPath assembly used for @var/%var.
+func buildFlexPath(root string, toks *[]RefNode) ([]RefNode, error) {
+	tail, err := consumePathTail(toks)
+	if err != nil {
+		return nil, err
+	}
+	if len(tail) == 0 {
+		return nil, nil
+	}
+	return append([]RefNode{{Type: TokIdent, StrVal: root}}, tail...), nil
 }
 
 // consumePathTail greedily consumes `.ident` / `[expr]` pairs from the head
