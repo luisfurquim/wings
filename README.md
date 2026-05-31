@@ -2289,6 +2289,17 @@ review and edit catalogs side-by-side with a reference language.
   [{"context": "...", "ctxdetail": "caption"}]
   ```
 
+**Collaboration & review come from your VCS.** Translation and inflection
+catalogs are plain files in your repo tree, so branch / PR / merge / blame /
+review apply to them exactly as to code — no separate TMS to provision or
+sync. A translator works on a branch, opens a pull request, and reviewers diff
+the JSON like any other change. wlate adds the editing ergonomics on top:
+per-entry approval (`revised`), per-cell provenance (translator email when
+OAuth2 is configured), and integrated MT/LLM pre-fill (`--auto-translate`). The
+design premise is deliberate — a team that versions its code already has the
+workflow translations need, and a team that doesn't version its code won't
+want a heavier localization pipeline either.
+
 **Self-i18n.** wlate itself is built as a translatable WINGS app — the
 editor eats its own dog food. Its templates live under
 `helpers/wlate/mod/wlate/`, `build.sh` runs `gen_i18n` against that tree
