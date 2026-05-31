@@ -1609,12 +1609,31 @@ fails. Pass `nil` if you do not need notification.
   re-synced. Existing `*items:i` clones, conditional state, two-way
   bindings and timer goroutines are preserved.
 
-**Limitation.** The walker rewrites `TextSegs` / `Attrs.Segs` in place;
-it does not currently create or destroy `DOMRefNode`s. If a translation
-introduces or removes `{{...}}` placeholders that were absent from the
-source-language version, those placeholders may render as raw text. Keep
-the `{{...}}` shape consistent across locales for templates that depend
-on it.
+**Limitation — placeholder *set*, not order.** Translations may freely
+**reorder** `{{...}}` placeholders to match the target language's word order.
+A mixed text node (words *and* placeholders) is indexed **whole, with its
+`{{...}}` inline**, so the catalog string for
+
+```text
+pt-BR:  O usuário {{nome}} comprou {{produto}}
+```
+
+is translated as a single unit and the placeholders can move anywhere:
+
+```text
+ja:     {{produto}} を {{nome}} が購入しました
+```
+
+At construction and on every `SetLang`, the runtime sets the node to
+`Printer(index)` (the translated string) **and then re-parses it for
+bindings**, so any permutation of the *same* placeholders binds correctly —
+word-order differences (SVO → SOV, etc.) are fully supported.
+
+What the `SetLang` walker does **not** do is create or destroy `DOMRefNode`s
+on the fly: if a translation *adds* a `{{...}}` placeholder that was **absent**
+from the source-language string, or *removes* one, that delta may render as
+raw text. In short: keep the *set* of placeholders identical across locales;
+their *order* is free.
 
 **Performance caches.** Two memoisation layers sit underneath the
 runtime so the per-switch cost stays low even for large pages:
@@ -1808,6 +1827,18 @@ students" has two forms, Portuguese "1 aluno aprovado / 2 alunos aprovados
 / 1 aluna aprovada / 2 alunas aprovadas" has four, and Arabic has six CLDR
 plural categories per gender. WINGS's flex pipeline handles this by making
 the grammar-shaping variables visible to the runtime via inline **sigils**.
+
+**The sigils *are* selectors, not just morphology.** `@var` selects a row by
+gender — exactly what Fluent expresses as
+`{ $gender -> [male] … [female] … *[other] … }` — and `%var` selects the
+CLDR plural category for the count. The per-cell table (`m.one`, `f.other`,
+…) is the variant set those selectors choose from, so contextual selection
+by gender and number is a first-class feature, not a side effect. What WINGS
+adds on top is optional **morphological auto-fill**: `gen_i18n --auto-flex`
+pre-populates those cells from Unitex DELAF dictionaries (see
+[cmd/dictbuild](#cmddictbuild--cmddictlookup--flexion-dictionaries)), so a
+translator reviews suggestions instead of hand-writing every gender×number
+form.
 
 **Template syntax.** Inside a `{{...}}` binding, four sigils signal a flex
 block (as opposed to a plain reference):
