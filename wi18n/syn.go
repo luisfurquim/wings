@@ -3,6 +3,7 @@
 package wi18n
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"sync"
@@ -62,6 +63,13 @@ func synPrinter(toks []wings.RefNode, ctx wings.Ctx) string {
 		return ""
 	}
 	entry := table[fb.Idx]
+
+	// Programmable rule: assemble the per-locale flex-content phrase, inflecting
+	// ~word/~$var via the elected CustomFlex engine. (project_customflex_design)
+	if entry.Content != "" {
+		return assembleFlexContent(fb, entry.Content, ctx)
+	}
+
 	cells := entry.Cells
 	if cells == nil {
 		return entry.Label
@@ -118,6 +126,121 @@ func synPrinter(toks []wings.RefNode, ctx wings.Ctx) string {
 		cell = strings.ReplaceAll(cell, "{n}", wings.FmtPrinter(countVal, wings.Locale, ""))
 	}
 	return cell
+}
+
+// ── Programmable flex (CustomFlex) ──────────────────────────────────────────
+
+// assembleFlexContent renders a programmable flex rule. fb is the parsed
+// control block (`{{@g %c *engine #N}}`); content is the per-locale phrase from
+// the catalog. It elects the engine and builds the selector list, then walks
+// the content tokens (expr.TokenizeFlexContent): literal text and whitespace go
+// out verbatim, $var is resolved and emitted verbatim, %count is locale-
+// formatted, and each ~word/~$var is inflected by the engine.
+func assembleFlexContent(fb expr.FlexBlock, content string, ctx wings.Ctx) string {
+	selectors, engine := flexParticipants(fb, ctx)
+
+	var sb strings.Builder
+	for _, tk := range expr.TokenizeFlexContent(content) {
+		switch tk.Type {
+		case expr.TokTxt:
+			sb.WriteString(tk.StrVal)
+		case expr.TokSpace:
+			sb.WriteByte(' ')
+		case expr.TokDollarVar:
+			sb.WriteString(sprintVal(resolveFlexVar(tk.StrVal, tk.Sub, ctx)))
+		case expr.TokPctVar:
+			cv := resolveFlexVar(tk.StrVal, tk.Sub, ctx)
+			sb.WriteString(wings.FmtPrinter(cv, wings.Locale, ""))
+		case expr.TokTildeWord:
+			sb.WriteString(inflectWord(engine, tk.StrVal, selectors))
+		case expr.TokFlexBind:
+			word := sprintVal(resolveFlexVar(tk.StrVal, tk.Sub, ctx))
+			sb.WriteString(inflectWord(engine, word, selectors))
+		}
+	}
+	return sb.String()
+}
+
+// flexParticipants resolves the control-block bindings into the FlexSelector
+// list handed to the engine, and elects the engine from the *var candidates
+// (highest Priority wins; a tie logs and yields no engine, so words fall back
+// to verbatim — a visible, webdev-owned failure). A *var that does not resolve
+// to a wings.CustomFlex is logged and skipped.
+func flexParticipants(fb expr.FlexBlock, ctx wings.Ctx) ([]wings.FlexSelector, wings.CustomFlex) {
+	var selectors []wings.FlexSelector
+	if fb.GenderVar != "" || len(fb.GenderPath) > 0 {
+		selectors = append(selectors, wings.FlexSelector{
+			Sigil: '@', Name: fb.GenderVar, Value: resolveFlexVar(fb.GenderVar, fb.GenderPath, ctx),
+		})
+	}
+	if fb.CountVar != "" || len(fb.CountPath) > 0 {
+		selectors = append(selectors, wings.FlexSelector{
+			Sigil: '%', Name: fb.CountVar, Value: resolveFlexVar(fb.CountVar, fb.CountPath, ctx),
+		})
+	}
+
+	var winners []wings.CustomFlex
+	var bestPrio uint
+	for _, sv := range fb.StarVars {
+		v := resolveFlexVar(sv.Var, sv.Path, ctx)
+		cf, ok := v.(wings.CustomFlex)
+		if !ok {
+			wings.G.Logf(1, "wi18n: flex *%s does not implement wings.CustomFlex\n", sv.Var)
+			continue
+		}
+		selectors = append(selectors, wings.FlexSelector{Sigil: '*', Name: sv.Var, Value: v})
+		p := priorityOf(cf)
+		switch {
+		case winners == nil || p > bestPrio:
+			winners, bestPrio = []wings.CustomFlex{cf}, p
+		case p == bestPrio:
+			winners = append(winners, cf)
+		}
+	}
+
+	switch len(winners) {
+	case 1:
+		return selectors, winners[0]
+	case 0:
+		return selectors, nil
+	default:
+		wings.G.Logf(1, "wi18n: flex engine tie (%d at priority %d); words rendered verbatim\n", len(winners), bestPrio)
+		return selectors, nil
+	}
+}
+
+// priorityOf returns a CustomFlex's engine priority (0 when it does not
+// implement wings.Prioritized).
+func priorityOf(cf wings.CustomFlex) uint {
+	if p, ok := cf.(wings.Prioritized); ok {
+		return p.Priority()
+	}
+	return 0
+}
+
+// inflectWord runs word through the engine, falling back to the verbatim word
+// (plus a log) when there is no engine or Flex errors — a missing inflection
+// stays visible instead of blank, and is the webdev's responsibility to fix by
+// supplying an engine.
+func inflectWord(engine wings.CustomFlex, word string, selectors []wings.FlexSelector) string {
+	if engine == nil {
+		wings.G.Logf(2, "wi18n: flex word %q has no engine; rendered verbatim\n", word)
+		return word
+	}
+	out, err := engine.Flex(word, selectors...)
+	if err != nil {
+		wings.G.Logf(1, "wi18n: flex engine error on %q: %v\n", word, err)
+		return word
+	}
+	return out
+}
+
+// sprintVal stringifies a resolved $var/~$var value ("" for nil).
+func sprintVal(v any) string {
+	if v == nil {
+		return ""
+	}
+	return fmt.Sprint(v)
 }
 
 // resolveFlexVar resolves a flex sigil variable. When path is populated

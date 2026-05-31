@@ -64,8 +64,16 @@ type FlexEntryData struct {
 	Label string `json:"label"`
 	// Cells maps "<gender>.<cldr_category>" to the inflected string (e.g.
 	// "m.one", "f.other"). For degenerate-gender templates the gender
-	// prefix is empty, so keys look like ".one", ".other".
-	Cells map[string]string `json:"cells"`
+	// prefix is empty, so keys look like ".one", ".other". Empty/nil for a
+	// programmable rule (which uses Content instead).
+	Cells map[string]string `json:"cells,omitempty"`
+	// Content is the per-locale flex-content phrase for a *programmable* rule
+	// (one whose source block uses *var/$var/~$var). It is a mini flex-template
+	// — literal text interleaved with $var/~$var/~word/%count sigils — that the
+	// runtime re-tokenizes (expr.TokenizeFlexContent) and assembles, letting the
+	// translator reorder freely per locale (e.g. SVO→SOV). Empty for legacy
+	// gender×CLDR rules, which use Cells.
+	Content string `json:"content,omitempty"`
 	// Revised flag, flipped in wlate.
 	Revised bool `json:"revised"`
 	// Sources maps each "<gender>.<cldr_category>" key to the provenance of
