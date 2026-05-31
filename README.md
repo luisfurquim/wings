@@ -1251,7 +1251,54 @@ The token contract every skin fills lives in `skins/tokens.md`, organised one
 section per category. Define the tokens your declared categories own; widgets
 supply literal fallbacks for everything else.
 
+### Private categories (your own design dimensions)
+
+`SkinCategory` is a `uint64`, and its bit space is partitioned like IANA
+address space. The low bits are framework-owned built-ins (9 today) and grow
+upward; the **high 16 bits (48–63) are permanently reserved for you**. A
+built-in will never be assigned a bit in that range, so a private category you
+mint today keeps working across WINGS upgrades. Mint one with `UserCategory`,
+give it a display name (optional, shown by `<skin-switcher>`), then use it like
+any built-in category — it participates in the same disjoint-mask conflict
+detection:
+
+```go
+// A private "Brand" dimension, orthogonal to every built-in category.
+var CategoryBrand wings.SkinCategory
+
+func init() {
+    b, err := wings.UserCategory(0) // n in [0,16)
+    if err != nil {
+        log.Fatal(err) // your call — the library returns the error, never panics
+    }
+    CategoryBrand = b
+    _ = wings.RegisterCategoryName(CategoryBrand, "Brand")
+    wings.RegisterSkin("acme", CategoryBrand, acmeCSS)
+}
+```
+
+An `acme` skin declared this way composes freely with `light + classic + …`
+and only conflicts with another skin that also claims `CategoryBrand`.
+
 ### Skin API
+
+| Function | Purpose |
+|---|---|
+| `RegisterSkin(name, categories, css)` | Register a skin (call from `init()`). |
+| `ApplySkin(name) error` | Activate. Idempotent; returns `*SkinNotRegisteredError` or `*SkinConflictError`. |
+| `DeactivateSkin(name) error` | Remove one active skin. |
+| `ClearSkins()` | Deactivate all. |
+| `ActiveSkins() []string` / `ActiveSkin() string` | All active (activation order) / most-recent. |
+| `ActiveCategories() SkinCategory` | OR of every active skin's mask. |
+| `ConflictsWith(categories) []string` | Active skins that would block `categories`. |
+| `ListSkins() []string` / `ListSkinInfos() []SkinInfo` | Registered names / names+categories. |
+| `SkinCategoriesOf(name) (SkinCategory, bool)` | A skin's declared mask. |
+| `UserCategory(n) (SkinCategory, error)` | Mint the n-th private category bit (n in [0,16)); reserved from built-ins. |
+| `RegisterCategoryName(bit, name) error` | Name a private category so it shows in `Names()`/`String()`/`<skin-switcher>`. |
+| `CategoryUserMask` | Mask of all 16 private bits — `c & CategoryUserMask != 0` tests for any private category. |
+| `OnSkinChange(fn func())` | Hook fired after every apply/deactivate/clear (used by `<skin-switcher>` to stay in sync). |
+
+The `<skin-switcher>` built-in widget exposes all of this as UI — see
 
 | Function | Purpose |
 |---|---|
