@@ -33,6 +33,7 @@ const (
 	TokStarVar   TokenType = 16 // *ident  — CustomFlex object (engine/selector)
 	TokDollarVar TokenType = 17 // $ident  — dynamic bind value, emitted verbatim
 	TokFlexBind  TokenType = 18 // ~$ident — dynamic value to be inflected at runtime
+	TokSpace     TokenType = 19 // collapsed whitespace run (\s+ → one space) in flex content
 )
 
 // ── Template parse structures ───────────────────────────────────────────────
@@ -435,6 +436,132 @@ func Tokenize(s string) []RefNode {
 	}
 
 	return toks
+}
+
+// ── Flex-content tokenizer ──────────────────────────────────────────────────
+
+// TokenizeFlexContent tokenizes a flex block authored as inline content: a run
+// of literal text interleaved with flex sigils. Unlike Tokenize (which discards
+// whitespace, treating the block as a reference expression), this preserves the
+// authored text faithfully, following HTML text-node semantics:
+//
+//   - a whitespace run (\s+: spaces, tabs, newlines) collapses to a single
+//     TokSpace token (the browser collapses it anyway in a text node);
+//   - a run of non-whitespace, non-sigil characters becomes one TokTxt token,
+//     preserving punctuation and non-ASCII (e.g. Japanese) verbatim;
+//   - a sigil ($var, ~$var, ~word, @var, %var, *var, #N) becomes its token;
+//     path-bearing sigils ($/*/~$/@/%) carry their `.field`/`[expr]` tail in
+//     Sub. `$$`/`**`/`~~`/`%%`/`@@` are escapes → literal text.
+//
+// A sigil character that does not form a valid sigil (e.g. a lone `$` before a
+// digit, as in a price "US$ 5") is treated as literal text. This is the
+// tokenizer for the per-locale content phrase of a programmable flex rule; the
+// legacy `{{@g %c ~word}}` path keeps using Tokenize + ParseFlexBlock.
+func TokenizeFlexContent(s string) []RefNode {
+	var toks []RefNode
+	var lit []byte
+	flush := func() {
+		if len(lit) > 0 {
+			toks = append(toks, RefNode{Type: TokTxt, StrVal: string(lit)})
+			lit = lit[:0]
+		}
+	}
+	i, n := 0, len(s)
+	for i < n {
+		c := s[i]
+		switch {
+		case isWhitespace(c):
+			flush()
+			j := i + 1
+			for j < n && isWhitespace(s[j]) {
+				j++
+			}
+			toks = append(toks, RefNode{Type: TokSpace, StrVal: " "})
+			i = j
+		case c == '#' && i+1 < n && s[i+1] >= '0' && s[i+1] <= '9':
+			flush()
+			j := i + 1
+			for j < n && s[j] >= '0' && s[j] <= '9' {
+				j++
+			}
+			val, _ := strconv.Atoi(s[i+1 : j])
+			toks = append(toks, RefNode{Type: TokFlexIdx, IntVal: val})
+			i = j
+		case c == '@' || c == '%' || c == '~' || c == '*' || c == '$':
+			tok, next, ok := consumeSigil(s, i)
+			if !ok {
+				lit = append(lit, c) // not a valid sigil → literal char
+				i++
+				continue
+			}
+			if tok.Type == TokStr {
+				lit = append(lit, tok.StrVal...) // escape → literal text
+				i = next
+				continue
+			}
+			switch tok.Type {
+			case TokDollarVar, TokStarVar, TokFlexBind, TokAtVar, TokPctVar:
+				tok.Sub, next = consumeContentPathTail(s, next, tok.StrVal)
+			}
+			flush()
+			toks = append(toks, tok)
+			i = next
+		default:
+			lit = append(lit, c)
+			i++
+		}
+	}
+	flush()
+	return toks
+}
+
+// consumeContentPathTail consumes the `.field` / `[expr]` tail of a
+// path-bearing sigil inside flex content, starting at position i (just past
+// the root ident). A `.` is a path accessor only when immediately followed by
+// an identifier-start char — otherwise (end, space, punctuation) it is left for
+// the literal scanner, so "comprou $produto." keeps its trailing period. A `[`
+// is consumed only when it has a matching `]` whose contents parse as a
+// reference. Returns the full path (root ident + tail) and the new position, or
+// (nil, i) when there is no tail.
+func consumeContentPathTail(s string, i int, root string) ([]RefNode, int) {
+	var tail []RefNode
+	n := len(s)
+	for i < n {
+		if s[i] == '.' && i+1 < n && isIdentStart(s[i+1]) {
+			end, _ := scanIdent(s, i+1)
+			tail = append(tail, RefNode{Type: TokIdent, StrVal: s[i+1 : end]})
+			i = end
+			continue
+		}
+		if s[i] == '[' {
+			depth, j := 1, i+1
+			for j < n && depth > 0 {
+				switch s[j] {
+				case '[':
+					depth++
+				case ']':
+					depth--
+				}
+				j++
+			}
+			if depth != 0 {
+				break // unbalanced → leave '[' to the literal scanner
+			}
+			sub := Tokenize(s[i+1 : j-1])
+			ref, err := ParseReference(&sub)
+			if err != nil {
+				break
+			}
+			tail = append(tail, RefNode{Type: TokExpr, Sub: ref})
+			i = j
+			continue
+		}
+		break
+	}
+	if len(tail) == 0 {
+		return nil, i
+	}
+	return append([]RefNode{{Type: TokIdent, StrVal: root}}, tail...), i
 }
 
 // ── Reference parser ────────────────────────────────────────────────────────

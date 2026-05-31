@@ -117,6 +117,81 @@ func TestClassifyCustomSigils(t *testing.T) {
 	}
 }
 
+func TestTokenizeFlexContent(t *testing.T) {
+	type tok struct {
+		typ TokenType
+		val string
+	}
+	cases := []struct {
+		name string
+		in   string
+		want []tok
+	}{
+		{
+			name: "pt with collapsing whitespace and tab",
+			in:   "O usuário $nome comprou\t  $produto",
+			want: []tok{
+				{TokTxt, "O"}, {TokSpace, " "}, {TokTxt, "usuário"}, {TokSpace, " "},
+				{TokDollarVar, "nome"}, {TokSpace, " "}, {TokTxt, "comprou"}, {TokSpace, " "},
+				{TokDollarVar, "produto"},
+			},
+		},
+		{
+			name: "japanese, no spaces",
+			in:   "$produtoを$nomeが購入しました",
+			want: []tok{
+				{TokDollarVar, "produto"}, {TokTxt, "を"},
+				{TokDollarVar, "nome"}, {TokTxt, "が購入しました"},
+			},
+		},
+		{
+			name: "trailing period stays literal (not a path)",
+			in:   "comprou $produto.",
+			want: []tok{
+				{TokTxt, "comprou"}, {TokSpace, " "}, {TokDollarVar, "produto"}, {TokTxt, "."},
+			},
+		},
+		{
+			name: "price: lone $ before digit is literal",
+			in:   "US$ 5",
+			want: []tok{{TokTxt, "US$"}, {TokSpace, " "}, {TokTxt, "5"}},
+		},
+	}
+	for _, c := range cases {
+		toks := TokenizeFlexContent(c.in)
+		if len(toks) != len(c.want) {
+			t.Errorf("%s: got %d tokens %+v, want %d", c.name, len(toks), toks, len(c.want))
+			continue
+		}
+		for i, w := range c.want {
+			if toks[i].Type != w.typ || toks[i].StrVal != w.val {
+				t.Errorf("%s: tok[%d]={type:%d val:%q}, want {type:%d val:%q}",
+					c.name, i, toks[i].Type, toks[i].StrVal, w.typ, w.val)
+			}
+		}
+	}
+}
+
+func TestTokenizeFlexContentPath(t *testing.T) {
+	toks := TokenizeFlexContent(" vendeu $user.name e $cart[i].qty itens")
+	// find the two dollar vars and check their paths
+	var dollars []RefNode
+	for _, tk := range toks {
+		if tk.Type == TokDollarVar {
+			dollars = append(dollars, tk)
+		}
+	}
+	if len(dollars) != 2 {
+		t.Fatalf("want 2 dollar vars, got %d (%+v)", len(dollars), toks)
+	}
+	if dollars[0].StrVal != "user" || len(dollars[0].Sub) != 2 {
+		t.Errorf("dollars[0]=%+v, want user with 2-node path", dollars[0])
+	}
+	if dollars[1].StrVal != "cart" || len(dollars[1].Sub) != 3 {
+		t.Errorf("dollars[1]=%+v, want cart with 3-node path", dollars[1])
+	}
+}
+
 func TestParseFlexBlockCustomSigils(t *testing.T) {
 	toks := Tokenize("@gender %count ~o ~aluno *motor[i].kind $item ~$adj.form")
 	fb, err := ParseFlexBlock(&toks)
