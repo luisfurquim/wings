@@ -2066,6 +2066,85 @@ demo's `RemoteFlexer` demonstrates this end to end.
 a `Flex` that returns an error each emit the raw value and log. `gen_i18n` emits a
 soft `lint:` note when it sees `~$` without a `*` in a block.
 
+#### By example — built-in vs custom
+
+The live demo runs both kinds of block side by side. Comparing them shows where
+each one keeps its inflection knowledge.
+
+**Built-in (catalog-backed).** Gender and number, looked up from a table:
+
+```html
+<p>{{ @gender %qt #0 }}</p>
+```
+
+```go
+// The component supplies only the *values* the selectors read:
+func (w *Demo) InitData() map[string]any {
+    return map[string]any{"gender": "f", "qt": 2}
+}
+```
+
+There is **no inflection code**. A translator fills the per-cell table
+(`m.one`, `m.other`, `f.one`, `f.other`, …) in `<lang>.inflections.json` —
+optionally pre-filled by `gen_i18n --auto-flex` from dictionaries — and at runtime
+WINGS picks the cell by gender + CLDR plural category. The forms exist **at build
+time**; runtime is an indexed lookup.
+
+**Custom (engine-backed).** A lemma chosen at runtime, inflected by your code:
+
+```html
+<p>{{ %qt *flexer ~$produto }}</p>
+```
+
+```go
+// A minimal synchronous engine: pluralise Portuguese by appending "s".
+type PtPluralizer struct{}
+
+func (PtPluralizer) String() string { return "" } // contributes no text of its own
+
+func (PtPluralizer) Flex(word string, sel ...wings.FlexSelector) (string, error) {
+    n := 1
+    for _, s := range sel {
+        if s.Sigil == '%' { // the count axis, arriving from %qt
+            if v, ok := s.Value.(int); ok {
+                n = v
+            }
+        }
+    }
+    if n == 1 {
+        return word, nil
+    }
+    return word + "s", nil // toy rule — a real engine would handle irregulars
+}
+
+// Optionally implement Priority() uint to outrank other engines / the catalog.
+
+func (w *Demo) InitData() map[string]any {
+    return map[string]any{
+        "qt":      1,
+        "produto": "maçã",         // dynamic: e.g. bound to a <select>
+        "flexer":  PtPluralizer{},  // the *flexer engine
+    }
+}
+```
+
+Here `~$produto` is a lemma whose **text is dynamic** (the user picks it from a
+dropdown), so it cannot live in a build-time catalog; `*flexer` inflects it at
+runtime, and `%qt` is handed to the engine as a selector.
+
+| | Built-in (`@`/`%` + `~word`) | Custom (`*engine` + `~$var`) |
+|---|---|---|
+| Who provides the forms | translator (catalog cells) + optional dict auto-fill | app developer (engine code) |
+| When | build time → indexed lookup at runtime | runtime |
+| Best for | fixed phrases, known lemmas, gender/number | dynamic lemmas, remote services, rules a table can't hold |
+| When absent | renders the `Label` stem | renders the raw value |
+
+The engine above is synchronous. For a backend-driven engine — where `Flex`
+cannot block on the network — see the demo's
+[`RemoteFlexer`](live-demo/mod/tabs/flex/remoteflexer.go): it returns the raw word
+as a placeholder on a cache miss, fetches in a goroutine, and re-runs the render
+(`obj.This.Set`) once the form arrives.
+
 ### Locale-Aware Formatting (FmtPrinter)
 
 Text catalogs translate strings and flex blocks resolve plurals/gender. A
