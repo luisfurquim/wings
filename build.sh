@@ -16,22 +16,18 @@ sri_hash() {
 }
 
 inject_sri() {
-    local html="$1"
-    local file="$2"
-    local name
+    local html="$1" file="$2" name hash
     name=$(basename "$file")
-    local hash
     hash=$(sri_hash "$file")
-    # Replace: src="<name>" or src="<name>" integrity="..." → add/update integrity=""
+    # Idempotent: matches src="<name>" plus any integrity/crossorigin already
+    # present and rewrites the trio fresh (re-runs don't duplicate attributes).
     sed -i.bak \
-        "s|src=\"${name}\" integrity=\"[^\"]*\"|src=\"${name}\" integrity=\"${hash}\"|g;
-         s|src=\"${name}\"\\([^/]\\)|src=\"${name}\" integrity=\"${hash}\" crossorigin=\"anonymous\"\\1|g" \
+        "s|src=\"${name}\"\\( integrity=\"[^\"]*\"\\)\\{0,1\\}\\( crossorigin=\"[^\"]*\"\\)\\{0,1\\}|src=\"${name}\" integrity=\"${hash}\" crossorigin=\"anonymous\"|g" \
         "$html"
     rm -f "${html}.bak"
 }
 
-for html in docs/index.html live-demo/docs/index.html; do
-    [ -f "$html" ] || continue
-    inject_sri "$html" "prana_helper.js"
-    inject_sri "$html" "wasm_exec.js"
-done
+# Hash the files actually served from docs/ (the repo root has no wasm_exec.js).
+# live-demo/ owns its own SRI injection in its own build.sh.
+inject_sri docs/index.html docs/prana_helper.js
+inject_sri docs/index.html docs/wasm_exec.js

@@ -112,6 +112,18 @@
     "ctxdetail": "p@tabs/flex/flextab.html:7:21"
   },
   {
+    "context": "tabs/flex/flextab.html:9:7",
+    "ctxdetail": "h2@tabs/flex/flextab.html:9:7"
+  },
+  {
+    "context": "tabs/flex/flextab.html:10:19",
+    "ctxdetail": "p@tabs/flex/flextab.html:10:19"
+  },
+  {
+    "context": "tabs/flex/flextab.html:15:21",
+    "ctxdetail": "p@tabs/flex/flextab.html:15:21"
+  },
+  {
     "context": "tabs/flex/genderpicker/genderpicker.html:2:23",
     "ctxdetail": "label@tabs/flex/genderpicker/genderpicker.html:2:23"
   },
@@ -122,6 +134,10 @@
   {
     "context": "tabs/flex/genderpicker/genderpicker.html:5:23",
     "ctxdetail": "option@tabs/flex/genderpicker/genderpicker.html:5:23"
+  },
+  {
+    "context": "tabs/flex/productpicker/productpicker.html:2:23",
+    "ctxdetail": "label@tabs/flex/productpicker/productpicker.html:2:23"
   },
   {
     "context": "tabs/fmt/currencydisplay/currencydisplay.html:2:12",

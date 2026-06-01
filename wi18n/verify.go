@@ -22,8 +22,11 @@ var (
 // "ED25519 PUBLIC KEY"). Call this from main() before wings.Main(), with the
 // key embedded via //go:embed gen_i18n.ed25519.pub.
 //
-// If no public key is configured, catalog verification is skipped and all
-// catalogs are accepted (backward-compatible behaviour for apps without signing).
+// If no public key is configured, catalog verification is skipped, no .sig
+// sidecars are fetched, and all catalogs are accepted (backward-compatible
+// behaviour for apps without signing). Once a key IS configured, verification
+// becomes mandatory: every loaded catalog must carry a valid .sig — a missing
+// sidecar (404) is treated as tampering and the catalog is rejected.
 func SetCatalogPublicKey(pemBytes []byte) error {
 	block, _ := pem.Decode(pemBytes)
 	if block == nil || block.Type != "ED25519 PUBLIC KEY" {
@@ -37,6 +40,16 @@ func SetCatalogPublicKey(pemBytes []byte) error {
 	catalogPubKey = ed25519.PublicKey(block.Bytes)
 	catalogPubKeyMu.Unlock()
 	return nil
+}
+
+// signaturesRequired reports whether catalog signature verification is enabled,
+// i.e. a public key was configured via SetCatalogPublicKey. When it returns
+// false, callers MUST NOT fetch .sig sidecars at all (no signing in use). When
+// true, every loaded catalog must carry a valid .sig or be rejected.
+func signaturesRequired() bool {
+	catalogPubKeyMu.RLock()
+	defer catalogPubKeyMu.RUnlock()
+	return catalogPubKey != nil
 }
 
 // verifyCatalog checks the ed25519 signature of jsonBody against the base64

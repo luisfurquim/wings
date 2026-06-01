@@ -3,9 +3,11 @@
 package main
 
 import (
+	_ "embed"
+
 	"github.com/luisfurquim/wings"
 
-	_ "github.com/luisfurquim/wings/wi18n"
+	"github.com/luisfurquim/wings/wi18n"
 
 	// Identity skins (mutually exclusive)
 	_ "github.com/luisfurquim/wings/skins/autumn"
@@ -52,6 +54,7 @@ import (
 	_ "live-demo/mod/tabs/flex"
 	_ "live-demo/mod/tabs/flex/countinput"
 	_ "live-demo/mod/tabs/flex/genderpicker"
+	_ "live-demo/mod/tabs/flex/productpicker"
 
 	_ "live-demo/mod/tabs/fmt"
 	_ "live-demo/mod/tabs/fmt/currencydisplay"
@@ -69,7 +72,20 @@ import (
 	_ "live-demo/mod/tabs/tabsdemo"
 )
 
+// catalogPubKeyPEM is the ed25519 public key matching the keypair that
+// build.sh uses to sign the published catalogs (see gen_i18n.ed25519.key).
+// With a key configured, every <lang>.json must carry a valid .sig sidecar or
+// SetLang rejects it — this dogfoods catalog signature verification on the
+// static GitHub Pages deployment.
+//
+//go:embed gen_i18n.ed25519.pub
+var catalogPubKeyPEM []byte
+
 func main() {
+	if err := wi18n.SetCatalogPublicKey(catalogPubKeyPEM); err != nil {
+		panic(err)
+	}
+
 	// One skin per orthogonal family. Categories are disjoint so all four
 	// can stack: Identity (light) + Geometry/Spacing (classic) +
 	// Depth (lifted) + Motion (calm).

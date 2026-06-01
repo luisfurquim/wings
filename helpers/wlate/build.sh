@@ -53,4 +53,27 @@ PYEOF
 # Build WASM binary (embeds mod/wlate/wlate.i18n.html)
 CGO_ENABLED=0 GOOS=js GOARCH=wasm go build -buildvcs=false -o dist/main.wasm .
 
+# ── SRI hash injection ────────────────────────────────────────────────────────
+# Compute SHA-384 integrity hashes for the JS helpers copied into dist/ and
+# inject them into dist/index.html (adding integrity + crossorigin to the bare
+# <script> tags). Requires: openssl, sed (GNU or BSD both work).
+sri_hash() {
+    printf 'sha384-%s' "$(openssl dgst -sha384 -binary "$1" | openssl base64 -A)"
+}
+
+inject_sri() {
+    local html="$1" file="$2" name hash
+    name=$(basename "$file")
+    hash=$(sri_hash "$file")
+    # Idempotent: rewrites src="<name>" plus any existing integrity/crossorigin
+    # so re-runs don't duplicate attributes.
+    sed -i.bak \
+        "s|src=\"${name}\"\\( integrity=\"[^\"]*\"\\)\\{0,1\\}\\( crossorigin=\"[^\"]*\"\\)\\{0,1\\}|src=\"${name}\" integrity=\"${hash}\" crossorigin=\"anonymous\"|g" \
+        "$html"
+    rm -f "${html}.bak"
+}
+
+inject_sri dist/index.html dist/prana_helper.js
+inject_sri dist/index.html dist/wasm_exec.js
+
 echo "Build complete. Run: go run serve.go"

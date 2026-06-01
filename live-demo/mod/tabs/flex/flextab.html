@@ -5,4 +5,12 @@
     <count-input @countchange="setcount"></count-input>
   </div>
   <p class="result">{{@gender %qt #0}}</p>
+
+  <h2>Flexão em runtime — motor CustomFlex com backend</h2>
+  <p class="hint">O motor busca no backend a forma flexionada do produto conforme a quantidade e a re-renderiza quando a resposta chega; troque a língua para ver a busca no novo idioma.</p>
+  <p class="hint hint-code" translate="no">*flexer + ~$produto → /flex-mock/&lt;língua&gt;/&lt;lema&gt;.json</p>
+  <div class="controls">
+    <product-picker @productchange="setproduto"></product-picker>
+  </div>
+  <p class="result">{{%qt *flexer ~$produto}}</p>
 </div>

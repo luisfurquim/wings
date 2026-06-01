@@ -87,35 +87,27 @@ func synPrinter(toks []wings.RefNode, ctx wings.Ctx) string {
 	gender := firstNonEmpty(asStr(genderVal), "")
 
 	// Explicit-zero override: when count is exactly 0 and the translator
-	// supplied a `<gender>.zero` cell, use it even in locales where CLDR
-	// folds 0 into `one` (e.g. pt-BR). Empty zero cells fall through to the
-	// CLDR-derived category.
+	// supplied a zero cell, use it even in locales where CLDR folds 0 into
+	// `one` (e.g. pt-BR). Checks the gendered key and the gender-degenerate
+	// one, so an en-US ".zero" still wins. Empty zero cells fall through.
 	if fb.CountVar != "" && countInt == 0 {
-		if v, ok := cells[gender+".zero"]; ok && v != "" {
+		if cells[gender+".zero"] != "" || cells[".zero"] != "" {
 			cat = "zero"
 		}
 	}
 
-	key := gender + "." + cat
-
-	cell, ok := cells[key]
-	if !ok || cell == "" {
-		// Fallback chain.
-		if cat == "zero" {
-			if v, ok := cells[gender+".one"]; ok && v != "" {
-				cell = v
-			}
-		}
-		if cell == "" {
-			if v, ok := cells[gender+".other"]; ok && v != "" {
-				cell = v
-			}
-		}
-		if cell == "" {
-			// Last resort: the translator-facing label. Not a locale-clean
-			// string, but better than blank.
-			cell = entry.Label
-		}
+	// Pick the cell for the resolved gender. When the locale does not inflect
+	// by gender (e.g. en-US has ".one"/".other", never "m."/"f."), the gendered
+	// key never matches — retry with the empty gender prefix before falling
+	// back to the translator-facing label.
+	cell := pickCell(cells, gender, cat)
+	if cell == "" && gender != "" {
+		cell = pickCell(cells, "", cat)
+	}
+	if cell == "" {
+		// Last resort: the translator-facing label. Not a locale-clean
+		// string, but better than blank.
+		cell = entry.Label
 	}
 
 	if fb.CountVar != "" && strings.Contains(cell, "{n}") {
@@ -126,6 +118,22 @@ func synPrinter(toks []wings.RefNode, ctx wings.Ctx) string {
 		cell = strings.ReplaceAll(cell, "{n}", wings.FmtPrinter(countVal, wings.Locale, ""))
 	}
 	return cell
+}
+
+// pickCell returns the best filled cell for (gender, cat): the exact form,
+// then the "one" form when a "zero" is missing (CLDR folds 0 into one), then
+// the "other" form. Returns "" when none is filled, letting the caller retry
+// with a different gender prefix or fall back to the label.
+func pickCell(cells map[string]string, gender, cat string) string {
+	if v := cells[gender+"."+cat]; v != "" {
+		return v
+	}
+	if cat == "zero" {
+		if v := cells[gender+".one"]; v != "" {
+			return v
+		}
+	}
+	return cells[gender+".other"]
 }
 
 // ── Programmable flex (CustomFlex) ──────────────────────────────────────────

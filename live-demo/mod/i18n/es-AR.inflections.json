@@ -2,13 +2,18 @@
   {
     "label": "{n}",
     "cells": {
-      "f.one": "",
-      "f.other": "",
-      "f.zero": "",
-      "m.one": "",
-      "m.other": "",
-      "m.zero": ""
+      "f.one": "la alumna",
+      "f.other": "las {n} alumnas",
+      "f.zero": "ninguna alumna",
+      "m.one": "el alumno",
+      "m.other": "los {n} alumnos",
+      "m.zero": "ningún alumno"
     },
+    "revised": true
+  },
+  {
+    "label": "%qt ~$produto",
+    "content": "%qt ~$produto",
     "revised": false
   }
 ]

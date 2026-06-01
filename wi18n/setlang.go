@@ -124,10 +124,16 @@ func loadBundle(requested string) (*localeBundle, error) {
 			wings.G.Logf(3, "wi18n: %s not available (%v), trying next\n", url, err)
 			continue
 		}
-		// Verify catalog signature when a .sig sidecar exists. If the sidecar is
-		// absent the verification step is skipped (backward-compatible). If it
-		// exists but the signature is invalid, the catalog is rejected entirely.
-		if sigBody, sigErr := fetchText(url + ".sig"); sigErr == nil {
+		// Signature enforcement is opt-in via SetCatalogPublicKey. When a public
+		// key is configured, every catalog MUST carry a valid .sig: a missing
+		// sidecar (404) or a bad signature is treated as tampering — reject and
+		// stop, never silently fall through to an unsigned (possibly forged)
+		// catalog. Without a configured key the .sig is not fetched at all.
+		if signaturesRequired() {
+			sigBody, sigErr := fetchText(url + ".sig")
+			if sigErr != nil {
+				return nil, fmt.Errorf("wi18n: catalog %s requires a signature but its .sig is unavailable: %w", url, sigErr)
+			}
 			if vErr := verifyCatalog(body, sigBody); vErr != nil {
 				return nil, fmt.Errorf("wi18n: catalog %s rejected: %w", url, vErr)
 			}

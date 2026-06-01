@@ -112,6 +112,18 @@
     "revised": false
   },
   {
+    "content": "Runtime inflection — CustomFlex engine with a backend",
+    "revised": false
+  },
+  {
+    "content": "The engine fetches the product's inflected form from the backend based on the quantity and re-renders when the response arrives; switch the language to see the lookup in the new locale.",
+    "revised": false
+  },
+  {
+    "content": "{{%qt *flexer #1}}",
+    "revised": false
+  },
+  {
     "content": "Gender:",
     "revised": false
   },
@@ -121,6 +133,10 @@
   },
   {
     "content": "Feminine",
+    "revised": false
+  },
+  {
+    "content": "Product:",
     "revised": false
   },
   {

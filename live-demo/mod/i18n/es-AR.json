@@ -112,6 +112,18 @@
     "revised": false
   },
   {
+    "content": "Flexión en runtime — motor CustomFlex con backend",
+    "revised": false
+  },
+  {
+    "content": "El motor busca en el backend la forma flexionada del producto según la cantidad y la vuelve a renderizar cuando llega la respuesta; cambiá el idioma para ver la búsqueda en el nuevo idioma.",
+    "revised": false
+  },
+  {
+    "content": "{{%qt *flexer #1}}",
+    "revised": false
+  },
+  {
     "content": "Género:",
     "revised": false
   },
@@ -121,6 +133,10 @@
   },
   {
     "content": "Femenino",
+    "revised": false
+  },
+  {
+    "content": "Producto:",
     "revised": false
   },
   {

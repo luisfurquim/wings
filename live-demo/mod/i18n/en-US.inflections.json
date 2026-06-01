@@ -2,10 +2,15 @@
   {
     "label": "{n}",
     "cells": {
-      ".one": "",
-      ".other": "",
-      ".zero": ""
+      ".one": "the student",
+      ".other": "the {n} students",
+      ".zero": "no students"
     },
+    "revised": true
+  },
+  {
+    "label": "%qt ~$produto",
+    "content": "%qt ~$produto",
     "revised": false
   }
 ]
