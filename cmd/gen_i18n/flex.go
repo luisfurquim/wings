@@ -40,6 +40,21 @@ var flexKeyIdx = map[string]int32{}
 // keyed by its position in flexBlocks.
 var flexOccurrences = map[int32][]Occurrence{}
 
+// flexContent holds the deflang content phrase of every *programmable* flex
+// block (one whose source uses *var/$var/~$var), keyed by its position in
+// flexBlocks. A block's presence in this map is what marks it programmable:
+// it gets a Content-based catalog entry instead of the gender×CLDR cells grid.
+// Legacy gender/count blocks never appear here. (project_customflex_design)
+var flexContent = map[int32]string{}
+
+// isProgrammableFlex reports whether a flex block carries any of the
+// CustomFlex sigils (*var engine/selector, $var verbatim bind, ~$var dynamic
+// flexbind). Such blocks are assembled at runtime from a per-locale Content
+// phrase rather than looked up in the gender×CLDR cells grid.
+func isProgrammableFlex(fb expr.FlexBlock) bool {
+	return len(fb.StarVars) > 0 || len(fb.DollarVars) > 0 || len(fb.FlexBinds) > 0
+}
+
 // canonicalFlexKey normalises the inner content of a {{...}} flex block so
 // that semantically-identical blocks written with different whitespace
 // collapse to the same key.
@@ -109,6 +124,16 @@ func rewriteFlexBlocks(text string, recordOccurrence func(idx int32)) (string, b
 			if recordOccurrence != nil {
 				recordOccurrence(idx)
 			}
+			// Programmable block: capture the per-locale content phrase
+			// (literal text + $var/~$var/~word/%count, control sigils stripped)
+			// from the raw inner — which still has its whitespace, unlike the
+			// Tokenize-d token stream above. First occurrence of a canonical key
+			// wins, matching the index assignment.
+			if isProgrammableFlex(fb) {
+				if _, ok := flexContent[idx]; !ok {
+					flexContent[idx] = buildFlexContent(inner)
+				}
+			}
 			// Emit runtime form. Path-valued vars keep their full path
 			// (`@user.gender`, `%cart[i].qty`) so the browser-side parser
 			// reconstructs the same GenderPath/CountPath after rewrite.
@@ -133,6 +158,20 @@ func rewriteFlexBlocks(text string, recordOccurrence func(idx int32)) (string, b
 				}
 				sep = " "
 			}
+			// *engine candidates: kept in the runtime control block so the
+			// browser-side election (highest Priority wins) sees them. $var and
+			// ~$var are NOT emitted here — they live in the Content phrase and
+			// are resolved from there at assembly time.
+			for _, sv := range fb.StarVars {
+				b.WriteString(sep)
+				b.WriteString("*")
+				if len(sv.Path) > 0 {
+					b.WriteString(pathToStr(sv.Path))
+				} else {
+					b.WriteString(sv.Var)
+				}
+				sep = " "
+			}
 			b.WriteString(sep)
 			b.WriteString("#")
 			b.WriteString(strconv.Itoa(int(idx)))
@@ -145,6 +184,75 @@ func rewriteFlexBlocks(text string, recordOccurrence func(idx int32)) (string, b
 		i++
 	}
 	return b.String(), changed
+}
+
+// buildFlexContent serialises the per-locale Content phrase of a programmable
+// flex block from its raw inner text. It keeps the content tokens (literal
+// text, whitespace, $var, ~$var, ~word, %count) and drops the control sigils
+// (@var, *var, #N), which live in the rewritten runtime block instead.
+//
+// inner is tokenised with TokenizeFlexContent (NOT Tokenize) so authored
+// whitespace survives — the JP-vs-PT spacing decision lives in this phrase.
+// Whitespace orphaned by a removed control sigil is collapsed: leading,
+// trailing, and doubled TokSpace runs fold to nothing / a single space. The
+// browser collapses runs in a text node anyway, so this is lossless for
+// display and keeps the translator-facing phrase clean.
+func buildFlexContent(inner string) string {
+	var kept []expr.RefNode
+	for _, t := range expr.TokenizeFlexContent(inner) {
+		switch t.Type {
+		case expr.TokAtVar, expr.TokStarVar, expr.TokFlexIdx:
+			// control sigil — stripped from the content phrase
+		case expr.TokSpace:
+			// drop leading/doubled space (a removed control sigil may have
+			// left an orphan)
+			if len(kept) == 0 || kept[len(kept)-1].Type == expr.TokSpace {
+				continue
+			}
+			kept = append(kept, t)
+		default:
+			kept = append(kept, t)
+		}
+	}
+	// Trim a trailing space left after the last content token.
+	for len(kept) > 0 && kept[len(kept)-1].Type == expr.TokSpace {
+		kept = kept[:len(kept)-1]
+	}
+
+	var b strings.Builder
+	for _, t := range kept {
+		switch t.Type {
+		case expr.TokTxt:
+			b.WriteString(t.StrVal)
+		case expr.TokSpace:
+			b.WriteByte(' ')
+		case expr.TokDollarVar:
+			b.WriteByte('$')
+			b.WriteString(flexVarStr(t))
+		case expr.TokFlexBind:
+			b.WriteString("~$")
+			b.WriteString(flexVarStr(t))
+		case expr.TokTildeWord:
+			b.WriteByte('~')
+			b.WriteString(t.StrVal)
+		case expr.TokPctVar:
+			b.WriteByte('%')
+			b.WriteString(flexVarStr(t))
+		}
+	}
+	return b.String()
+}
+
+// flexVarStr serialises a path-bearing content token ($var/~$var/%count) back
+// to its source form. TokenizeFlexContent stores the full path (root ident +
+// `.field`/`[expr]` tail) in Sub when one is present; otherwise the bare root
+// is in StrVal. The serialisation round-trips through TokenizeFlexContent at
+// runtime to the same reference.
+func flexVarStr(t expr.RefNode) string {
+	if len(t.Sub) > 0 {
+		return pathToStr(t.Sub)
+	}
+	return t.StrVal
 }
 
 // ── Translator-facing label ─────────────────────────────────────────────────
@@ -185,6 +293,19 @@ func flexLabel(fb expr.FlexBlock) string {
 		}
 	}
 	return strings.Join(out, " ")
+}
+
+// flexLabelFor returns the remap key / translator-facing label for the flex
+// block at index i. For a programmable block the label IS its deflang Content
+// phrase: locale-invariant, stored in every language's entry, so prior
+// translations remap by content across runs (the source phrase changing drops
+// the stale translation, exactly like the text catalog). Legacy gender/count
+// blocks fall back to the sigil-stripped flexLabel stem.
+func flexLabelFor(i int32, fb expr.FlexBlock) string {
+	if c, ok := flexContent[i]; ok {
+		return c
+	}
+	return flexLabel(fb)
 }
 
 // pathToStr serialises a FlexBlock Gender/Count path back to its source-
@@ -436,6 +557,25 @@ func lintFlexBlocks(langs map[string]bool, defLang string) {
 	}
 }
 
+// lintProgrammableFlex emits a soft diagnostic for any programmable block that
+// has a ~$var (dynamic flexbind) but no *var engine candidate. Such a block
+// has nothing to inflect the dynamic value with, so at runtime it falls back to
+// the verbatim value (a webdev-owned, visible degradation). It is a soft lint,
+// not a hard error: a future ~$var-as-its-own-engine (deferred to v0.15.1)
+// could supply the engine via Priority, which the build cannot see.
+func lintProgrammableFlex() {
+	for i, fb := range flexBlocks {
+		if len(fb.FlexBinds) > 0 && len(fb.StarVars) == 0 {
+			loc := firstFlexContext(int32(i))
+			if loc == "" {
+				loc = "<unknown>"
+			}
+			G.Logf(2, "lint: flex block #%d %q at %s has ~$ flexbind but no *engine; dynamic value rendered verbatim — add a *<engine> to inflect it",
+				i, flexLabelFor(int32(i), fb), loc)
+		}
+	}
+}
+
 // emitFlexCatalogs writes one <lang>.inflections.json per language currently
 // present in i18nDir (using the text catalogs as the language set) plus the
 // deflang catalog. Existing cells are remapped by canonical key.
@@ -462,6 +602,7 @@ func emitFlexCatalogs(i18nDir, defLang string) error {
 	}
 
 	lintFlexBlocks(langs, defLang)
+	lintProgrammableFlex()
 
 	// If no flex blocks were found, prune any orphan inflections files so we
 	// don't leave stale rules behind.
@@ -475,7 +616,7 @@ func emitFlexCatalogs(i18nDir, defLang string) error {
 	}
 
 	// Process deflang first to get source cells for the translator.
-	defOut, err := buildFlexEntriesForLang(i18nDir, defLang)
+	defOut, err := buildFlexEntriesForLang(i18nDir, defLang, defLang)
 	if err != nil {
 		return err
 	}
@@ -488,7 +629,7 @@ func emitFlexCatalogs(i18nDir, defLang string) error {
 		if lang == defLang {
 			continue
 		}
-		out, err := buildFlexEntriesForLang(i18nDir, lang)
+		out, err := buildFlexEntriesForLang(i18nDir, lang, defLang)
 		if err != nil {
 			return err
 		}
@@ -505,7 +646,7 @@ func emitFlexCatalogs(i18nDir, defLang string) error {
 // carry from the previous run, then the dict pass (when -auto-flex is set).
 // The translator pass is NOT applied here — the caller does that after deflang
 // is available as source.
-func buildFlexEntriesForLang(i18nDir, lang string) ([]wi18n.FlexEntry, error) {
+func buildFlexEntriesForLang(i18nDir, lang, defLang string) ([]wi18n.FlexEntry, error) {
 	path := filepath.Join(i18nDir, lang+".inflections.json")
 	old, err := loadFlexJSON(path)
 	if err != nil {
@@ -531,6 +672,34 @@ func buildFlexEntriesForLang(i18nDir, lang string) ([]wi18n.FlexEntry, error) {
 
 	out := make([]wi18n.FlexEntry, len(flexBlocks))
 	for i, fb := range flexBlocks {
+		// Programmable block: a per-locale Content phrase, no gender×CLDR grid
+		// and no dict auto-fill. The deflang carries the source phrase; other
+		// locales start empty and remap their translation by content (Label).
+		if content, ok := flexContent[int32(i)]; ok {
+			label := content
+			outContent := ""
+			revised := false
+			if prev, ok := oldByKey[label]; ok {
+				outContent = prev.Content
+				revised = prev.Revised
+			}
+			if lang == defLang {
+				outContent = content
+			}
+			out[i] = wi18n.FlexEntry{
+				FlexEntryData: wi18n.FlexEntryData{
+					Label:   label,
+					Content: outContent,
+					Revised: revised,
+				},
+				FlexEntryMeta: wi18n.FlexEntryMeta{
+					Context:   firstFlexContext(int32(i)),
+					Ctxdetail: flexCtxdetail(int32(i)),
+				},
+			}
+			continue
+		}
+
 		label := flexLabel(fb)
 		cells := emptyCells(lang)
 		revised := false
