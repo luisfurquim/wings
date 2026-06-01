@@ -1,7 +1,23 @@
 [
   {
-    "context": "flexeditor/flexeditor.html:35:41",
-    "ctxdetail": "input[aria-label]@flexeditor/flexeditor.html:35:41"
+    "context": "flexeditor/flexeditor.html:36:41",
+    "ctxdetail": "input[aria-label]@flexeditor/flexeditor.html:36:41"
+  },
+  {
+    "context": "flexeditor/flexeditor.html:48:25",
+    "ctxdetail": "button[title]@flexeditor/flexeditor.html:48:25"
+  },
+  {
+    "context": "flexeditor/flexeditor.html:49:30",
+    "ctxdetail": "button[aria-label]@flexeditor/flexeditor.html:49:30"
+  },
+  {
+    "context": "flexeditor/flexeditor.html:55:21",
+    "ctxdetail": "w-dialog[title]@flexeditor/flexeditor.html:55:21"
+  },
+  {
+    "context": "flexeditor/flexeditor.html:56:62",
+    "ctxdetail": "w-dialog@flexeditor/flexeditor.html:56:62"
   },
   {
     "context": "wlate/wlate.html:5:32",

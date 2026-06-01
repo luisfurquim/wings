@@ -1,7 +1,7 @@
-<html><head></head><body><div class="wl-panels">
+<html><head></head><body><div class="wl-panels" data-mode="{{flex_mode}}">
    <div class="wl-panel wl-panel-left">
-      <div class="wl-expr">{{inflection_expr}}</div>
-      <div class="wl-grid" id="wl-grid-left" role="grid">
+      <div class="wl-expr wl-cells-only">{{inflection_expr}}</div>
+      <div class="wl-grid wl-cells-only" id="wl-grid-left" role="grid">
          <div class="wl-grid-corner" role="columnheader"></div>
          <div class="wl-grid-col-header" role="columnheader" *gender_headers:gi="" aria-label="{{gender_headers[gi].aria}}">{{gender_headers[gi].label}}</div>
          <div class="wl-grid-rows" **category_headers:ci="">
@@ -11,10 +11,11 @@
             </div>
          </div>
       </div>
+      <div class="wl-phrase-ro wl-content-only">{{left_content}}</div>
    </div>
    <div class="wl-panel wl-panel-right" id="wl-right-inflection-panel">
-      <div class="wl-expr">{{inflection_expr}}</div>
-      <div class="wl-grid" id="wl-grid-right" role="grid">
+      <div class="wl-expr wl-cells-only">{{inflection_expr}}</div>
+      <div class="wl-grid wl-cells-only" id="wl-grid-right" role="grid">
          <div class="wl-grid-corner" role="columnheader"></div>
          <div class="wl-grid-col-header" role="columnheader" *gender_headers:gi="" aria-label="{{gender_headers[gi].aria}}">{{gender_headers[gi].label}}</div>
          <div class="wl-grid-rows" **category_headers:ci="">
@@ -29,7 +30,12 @@
             </div>
          </div>
       </div>
+      <div class="wl-phrase-toolbar wl-content-only">
+         <button type="button" id="wl-copy-to-right" class="wl-copy-btn" title="1" aria-label="2"><span translate="no">→</span></button>
+      </div>
+      <textarea class="wl-phrase-edit wl-content-only">{{right_content}}</textarea>
       <div id="wl-revised-toggle-inflection" class="wl-revised-indicator"></div>
    </div>
+   <w-dialog ?confirm_overwrite="" buttons="overwrite,cancel" title="3" @overwrite="dlg_overwrite" @cancel="dlg_cancel">4</w-dialog>
 </div>
 </body></html>

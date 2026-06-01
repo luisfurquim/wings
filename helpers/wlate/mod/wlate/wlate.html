@@ -41,7 +41,7 @@
 
    <!-- INFLECTION TAB — grids + edit logic live in the wl-flex-editor module. -->
    <w-tab tid="inflection">
-      <wl-flex-editor @register="registerEditor" @revised="toggleRevised"></wl-flex-editor>
+      <wl-flex-editor @register="registerEditor" @revised="toggleRevised" @input="markDirty"></wl-flex-editor>
    </w-tab>
 
    <!-- Navigation -->

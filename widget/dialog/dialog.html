@@ -7,9 +7,10 @@
          <slot></slot>
       </div>
       <div class="w-dialog-buttons">
-         <button id="dlg-save" data-i18n="dlg_btn_save" style="order:{{btnSaveOrder}};">Salvar</button>
-         <button id="dlg-discard" data-i18n="dlg_btn_discard" style="order:{{btnDiscardOrder}};">Descartar</button>
-         <button id="dlg-cancel" data-i18n="dlg_btn_cancel" style="order:{{btnCancelOrder}};">Cancelar</button>
+         <button id="dlg-save" data-i18n="dlg_btn_save" ?btn_save_show style="order:{{btnSaveOrder}};">Salvar</button>
+         <button id="dlg-discard" data-i18n="dlg_btn_discard" ?btn_discard_show style="order:{{btnDiscardOrder}};">Descartar</button>
+         <button id="dlg-overwrite" data-i18n="dlg_btn_overwrite" ?btn_overwrite_show style="order:{{btnOverwriteOrder}};">Sobrescrever</button>
+         <button id="dlg-cancel" data-i18n="dlg_btn_cancel" ?btn_cancel_show style="order:{{btnCancelOrder}};">Cancelar</button>
       </div>
    </div>
 </div>

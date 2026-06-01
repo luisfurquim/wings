@@ -62,13 +62,26 @@ type Editor struct {
 	obj           *wings.PranaObj
 	curGenders    []string
 	curCategories []string
+	// contentMode is true while the current record is a programmable flex rule
+	// (a per-locale Content phrase) rather than a gender×CLDR cells grid. It is
+	// set in Display and read in Harvest to pick the right pane to read back.
+	contentMode bool
 }
 
 var _ wldata.FlexEditor = (*Editor)(nil)
 
 func (e *Editor) InitData() map[string]any {
 	return map[string]any{
-		"inflection_expr":  "",
+		"inflection_expr":   "",
+		"flex_mode":         "cells",
+		"left_content":      "",
+		"right_content":     "",
+		"confirm_overwrite": false,
+		// Dialog button handlers: nil placeholders so the child <w-dialog>'s
+		// @overwrite/@cancel bindings resolve at bind time; the real handlers
+		// are installed in Render (same pattern as the shell's fnSave et al.).
+		"dlg_overwrite":    wings.TriggerHandler(nil),
+		"dlg_cancel":       wings.TriggerHandler(nil),
 		"genders":          []any{},
 		"categories":       []any{},
 		"gender_headers":   []any{},
@@ -89,7 +102,50 @@ func (e *Editor) Render(obj *wings.PranaObj) {
 		}, false, false)
 	}
 
+	// Copy-to-right (content mode): copy the reference phrase into the editable
+	// textarea verbatim, so the translator keeps the fragile sigils ($var,
+	// ~$var, %count with paths) intact and only edits the words. When the
+	// textarea already has content, ask before overwriting.
+	if btns := dom.Query(obj.Dom, "#wl-copy-to-right"); len(btns) > 0 {
+		dom.AddEvent(btns[0], "click", func(_ js.Value, _ []js.Value) any {
+			if e.rightPhrase() == "" {
+				e.copyToRight()
+			} else {
+				e.obj.This.Set("confirm_overwrite", true)
+			}
+			return nil
+		}, false, false)
+	}
+
+	// Real dialog handlers (the InitData placeholders were nil).
+	obj.This.M["dlg_overwrite"] = wings.TriggerHandler(func(_ ...any) {
+		e.obj.This.Set("confirm_overwrite", false)
+		e.copyToRight()
+	})
+	obj.This.M["dlg_cancel"] = wings.TriggerHandler(func(_ ...any) {
+		e.obj.This.Set("confirm_overwrite", false)
+	})
+
 	obj.Trigger("register", e)
+}
+
+// rightPhrase returns the current value of the editable phrase textarea, or ""
+// when it is not present (cells mode).
+func (e *Editor) rightPhrase() string {
+	tas := dom.Query(e.obj.Dom, ".wl-phrase-edit")
+	if len(tas) == 0 {
+		return ""
+	}
+	return tas[0].Get("value").String()
+}
+
+// copyToRight copies the reference (left) phrase into the editable textarea and
+// signals the shell to mark the session dirty (the flex editor otherwise only
+// goes dirty at Harvest time; this is an explicit edit before any keystroke).
+func (e *Editor) copyToRight() {
+	left, _ := e.obj.This.M["left_content"].(string)
+	e.obj.This.Set("right_content", left)
+	e.obj.Trigger("input")
 }
 
 // Display builds both grids from the union of the left (reference) and right
@@ -105,6 +161,26 @@ func (e *Editor) Display(left, right wldata.InflectionRecord) {
 	}
 	e.obj.This.Set("inflection_expr", expr)
 	e.setRevisedBorder(right.Revised)
+
+	// Programmable rule: a per-locale Content phrase the translator edits as
+	// free text (reordering words, keeping the sigils) instead of the
+	// gender×CLDR grid. Detected by a non-empty Content on either side.
+	// (project_customflex_design)
+	if left.Content != "" || right.Content != "" {
+		e.contentMode = true
+		e.curGenders = nil
+		e.curCategories = nil
+		e.obj.This.Set("flex_mode", "content")
+		e.obj.This.Set("left_content", left.Content)
+		e.obj.This.Set("right_content", right.Content)
+		e.clearGridData()
+		return
+	}
+
+	e.contentMode = false
+	e.obj.This.Set("flex_mode", "cells")
+	e.obj.This.Set("left_content", "")
+	e.obj.This.Set("right_content", "")
 
 	// Axes = union of both sides' "gender.category" keys.
 	genderSet := map[string]bool{}
@@ -193,6 +269,23 @@ func (e *Editor) Display(left, right wldata.InflectionRecord) {
 // Harvest reads the editable cell inputs back into right, marking changed cells
 // manual and the record revised. Returns true if anything changed.
 func (e *Editor) Harvest(right *wldata.InflectionRecord) bool {
+	if e.contentMode {
+		tas := dom.Query(e.obj.Dom, ".wl-phrase-edit")
+		if len(tas) == 0 {
+			return false
+		}
+		content := tas[0].Get("value").String()
+		if content == right.Content {
+			return false
+		}
+		right.Content = content
+		right.Revised = true
+		// Mirror back so a reactive sync (e.g. the unsaved-changes dialog
+		// closing) re-renders the freshly harvested phrase, not the old one.
+		e.obj.This.Set("right_content", content)
+		return true
+	}
+
 	inputs := dom.Query(e.obj.Dom, ".wl-cell-input")
 	changed := false
 	for _, inp := range inputs {
@@ -236,11 +329,22 @@ func (e *Editor) Harvest(right *wldata.InflectionRecord) bool {
 	return changed
 }
 
-// Clear blanks the grids when there is no current record.
+// Clear blanks both panes when there is no current record.
 func (e *Editor) Clear() {
+	e.contentMode = false
 	e.curGenders = nil
 	e.curCategories = nil
 	e.obj.This.Set("inflection_expr", "")
+	e.obj.This.Set("flex_mode", "cells")
+	e.obj.This.Set("left_content", "")
+	e.obj.This.Set("right_content", "")
+	e.clearGridData()
+	e.setRevisedBorder(false)
+}
+
+// clearGridData empties the gender×CLDR grid's reactive arrays. Shared by
+// Clear and by Display when switching to a programmable (content) record.
+func (e *Editor) clearGridData() {
 	e.obj.This.Set("genders", []any{})
 	e.obj.This.Set("categories", []any{})
 	e.obj.This.Set("gender_headers", []any{})
@@ -248,7 +352,6 @@ func (e *Editor) Clear() {
 	e.obj.This.Set("left_cells", []any{})
 	e.obj.This.Set("right_cells", []any{})
 	e.obj.This.Set("right_srcs", []any{})
-	e.setRevisedBorder(false)
 }
 
 func (e *Editor) setRevisedBorder(revised bool) {

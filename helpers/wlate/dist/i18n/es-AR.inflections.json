@@ -2,21 +2,26 @@
   {
     "label": "{n} o aluno aprovado",
     "cells": {
-      "m.one": "el único estudiante que aprobó",
-      "m.other": "los {n} estudiantes que aprobaron",
       "f.one": "la única estudiante que aprobó",
-      "f.other": "las {n} estudiantes que aprobaron"
+      "f.other": "las {n} estudiantes que aprobaron",
+      "m.one": "el único estudiante que aprobó",
+      "m.other": "los {n} estudiantes que aprobaron"
     },
     "revised": true
   },
   {
     "label": "{n} o professor presente",
     "cells": {
-      "m.one": "",
-      "m.other": "",
       "f.one": "",
-      "f.other": ""
+      "f.other": "",
+      "m.one": "",
+      "m.other": ""
     },
     "revised": false
+  },
+  {
+    "label": "~$nome comprou %qt ~maçã madura",
+    "content": "~$nome compró %qt ~manzana madura",
+    "revised": true
   }
 ]

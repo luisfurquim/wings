@@ -17,17 +17,21 @@
 //	    Deseja salvar antes de continuar?
 //	</w-dialog>
 //
-// The buttons attribute specifies which buttons to show and in what order.
-// Supported button IDs: save, discard, cancel.
+// The buttons attribute is the authoritative button set: only the listed IDs
+// are shown, in listed order; any unlisted ID is hidden. Supported button IDs:
+// save, discard, cancel, overwrite. Omitting the attribute keeps the default
+// save,discard,cancel.
 //
-// Visibility is controlled by the parent through a conditional render
-// (e.g. `?show_dialog`). The widget itself has no internal hidden flag.
+// Dialog visibility (the whole element) is controlled by the parent through a
+// conditional render (e.g. `?show_dialog`). The widget itself has no internal
+// hidden flag.
 //
 // # Events fired to parent
 //
-//	@save    — Save button clicked
-//	@discard — Discard button clicked
-//	@cancel  — Cancel button clicked
+//	@save      — Save button clicked
+//	@discard   — Discard button clicked
+//	@cancel    — Cancel button clicked
+//	@overwrite — Overwrite button clicked
 //
 // # CSS Customization
 //
@@ -126,38 +130,51 @@ func (d *Dialog) ReplaceCSS(key string, content string) {
 
 func (d *Dialog) InitData() map[string]any {
 	return map[string]any{
-		"buttons":         "save,discard,cancel",
-		"title":           "",
-		"btnSaveOrder":    1,
-		"btnDiscardOrder": 2,
-		"btnCancelOrder":  3,
+		"buttons":           "save,discard,cancel",
+		"title":             "",
+		"btnSaveOrder":      1,
+		"btnDiscardOrder":   2,
+		"btnCancelOrder":    3,
+		"btnOverwriteOrder": 0,
+		// Show flags live in `?…` attribute NAMES, which the HTML parser
+		// lowercases — so they MUST be snake_case (not camelCase) to match the
+		// data key at cond-eval time. (Value bindings like {{btnSaveOrder}} are
+		// immune; only attribute-NAME identifiers are lowercased.)
+		"btn_save_show":      true,
+		"btn_discard_show":   true,
+		"btn_cancel_show":    true,
+		"btn_overwrite_show": false,
 	}
 }
 
 func (d *Dialog) parseButtons() {
 	buttonsAttr, ok := d.obj.This.Get("buttons").(string)
 	if !ok || buttonsAttr == "" {
-		return
+		return // no attribute → keep the InitData defaults
 	}
 
-	// Default order
-	buttonOrder := map[string]int{
-		"save":    1,
-		"discard": 2,
-		"cancel":  3,
-	}
-
-	// Parse buttons attribute and reorder
-	buttons := strings.Split(buttonsAttr, ",")
-	for i, btn := range buttons {
+	// The attribute is the authoritative set: a button is shown only if listed,
+	// in listed order. Unlisted buttons get show=false (and order 0, unused).
+	show := map[string]bool{}
+	order := map[string]int{}
+	for i, btn := range strings.Split(buttonsAttr, ",") {
 		btn = strings.TrimSpace(btn)
-		buttonOrder[btn] = i + 1
+		show[btn] = true
+		order[btn] = i + 1
 	}
 
-	// Update the order variables (data binding will sync to DOM)
-	d.obj.This.Set("btnSaveOrder", buttonOrder["save"])
-	d.obj.This.Set("btnDiscardOrder", buttonOrder["discard"])
-	d.obj.This.Set("btnCancelOrder", buttonOrder["cancel"])
+	// Push the show flags and order into the bound data (synced to the DOM).
+	// Show flags use snake_case keys to survive HTML attribute-name lowercasing
+	// (they back `?btn_*_show` conditionals); order keys stay camelCase because
+	// they are read from attribute VALUES ({{btnSaveOrder}}), which are not.
+	d.obj.This.Set("btn_save_show", show["save"])
+	d.obj.This.Set("btn_discard_show", show["discard"])
+	d.obj.This.Set("btn_cancel_show", show["cancel"])
+	d.obj.This.Set("btn_overwrite_show", show["overwrite"])
+	d.obj.This.Set("btnSaveOrder", order["save"])
+	d.obj.This.Set("btnDiscardOrder", order["discard"])
+	d.obj.This.Set("btnCancelOrder", order["cancel"])
+	d.obj.This.Set("btnOverwriteOrder", order["overwrite"])
 }
 
 func (d *Dialog) Render(obj *wings.PranaObj) {
@@ -165,6 +182,7 @@ func (d *Dialog) Render(obj *wings.PranaObj) {
 	d.parseButtons()
 	d.bindButton("#dlg-save", "save")
 	d.bindButton("#dlg-discard", "discard")
+	d.bindButton("#dlg-overwrite", "overwrite")
 	d.bindButton("#dlg-cancel", "cancel")
 }
 

@@ -426,6 +426,51 @@ const llmAvatarSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20
 	`font-size="8" font-weight="700" fill="#fff">AI</text>` +
 	`</svg>`
 
+// requiredAppFiles are the front-end bundle artifacts build.sh produces in the
+// app directory (dist/). Their absence means the server was started before a
+// build, or from the wrong working directory.
+var requiredAppFiles = []string{"index.html", "main.wasm", "prana_helper.js", "wasm_exec.js"}
+
+// validateLayout fails fast when the directories the server depends on are not
+// laid out as expected. appDir holds the front-end bundle served as the web
+// root; projectRoot holds the translation project (wings.json + the i18n/
+// catalogs). The most common mistake — launching without the project-root
+// argument, so it defaults to "." — leaves wings.json and i18n/ unreachable and
+// the UI silently empty; this turns that into one clear error instead of a wall
+// of runtime 404s. Returns nil when both directories are conformant.
+func validateLayout(appDir, projectRoot string) error {
+	var problems []string
+
+	if fi, err := os.Stat(appDir); err != nil || !fi.IsDir() {
+		problems = append(problems, fmt.Sprintf("app bundle directory %q not found — run ./build.sh and launch from helpers/wlate/", appDir))
+	} else {
+		for _, name := range requiredAppFiles {
+			if _, err := os.Stat(filepath.Join(appDir, name)); err != nil {
+				problems = append(problems, fmt.Sprintf("%s missing from app bundle %q — run ./build.sh", name, appDir))
+			}
+		}
+	}
+
+	if fi, err := os.Stat(projectRoot); err != nil || !fi.IsDir() {
+		problems = append(problems, fmt.Sprintf("project root %q is not a directory", projectRoot))
+	} else {
+		if _, err := os.Stat(filepath.Join(projectRoot, "wings.json")); err != nil {
+			problems = append(problems, fmt.Sprintf("wings.json missing from project root %q", projectRoot))
+		}
+		if fi, err := os.Stat(filepath.Join(projectRoot, "i18n")); err != nil || !fi.IsDir() {
+			problems = append(problems, fmt.Sprintf("i18n/ directory missing from project root %q", projectRoot))
+		}
+	}
+
+	if len(problems) == 0 {
+		return nil
+	}
+	return fmt.Errorf("startup layout check failed:\n  - %s\n\n"+
+		"Usage: serve <project-root>   (e.g. run `go run serve.go ./dist` from helpers/wlate/)\n"+
+		"The project root holds wings.json and i18n/; the app bundle is served from %q.",
+		strings.Join(problems, "\n  - "), appDir)
+}
+
 // ----------------- main -----------------
 
 func main() {
@@ -451,6 +496,16 @@ func main() {
 		projectRoot = cfg.root
 	}
 
+	// appDir holds the wlate front-end bundle (served as the web root); it is
+	// relative to the working directory, so the server must be launched from
+	// helpers/wlate/. Fail fast with an actionable message when the bundle or
+	// the project layout is wrong — the alternative is a silently empty UI and
+	// a wall of 404s (the project root defaulting to "." is the usual cause).
+	appDir := "dist"
+	if err := validateLayout(appDir, projectRoot); err != nil {
+		G.Fatalf(1, "%v", err)
+	}
+
 	// Apply project-wide debug settings from wings.json (if present).
 	if data, err := os.ReadFile(filepath.Join(projectRoot, "wings.json")); err == nil {
 		if err := wi18n.SetConfig(data); err != nil {
@@ -469,7 +524,7 @@ func main() {
 		dictStateDir = cfg.dictStateDir
 	}
 
-	fs := http.FileServer(http.Dir("dist"))
+	fs := http.FileServer(http.Dir(appDir))
 
 	mux := http.NewServeMux()
 

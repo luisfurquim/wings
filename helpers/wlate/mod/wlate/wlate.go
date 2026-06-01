@@ -568,6 +568,15 @@ func (wc *wlateCtx) loadRightData() {
 	if wc.rightInflections == nil && len(wc.leftInflections) > 0 {
 		wc.rightInflections = make([]wldata.InflectionRecord, len(wc.leftInflections))
 		for i, li := range wc.leftInflections {
+			// Programmable rule: mirror as a content-mode record (empty Content
+			// for the translator to fill), no cells grid.
+			if li.Content != "" {
+				wc.rightInflections[i] = wldata.InflectionRecord{
+					FlexEntryData: wi18n.FlexEntryData{Label: li.Label},
+					FlexEntryMeta: li.FlexEntryMeta,
+				}
+				continue
+			}
 			cells := make(map[string]string, len(li.Cells))
 			for key := range li.Cells {
 				cells[key] = ""

@@ -24,5 +24,10 @@
       "m.other": ""
     },
     "revised": false
+  },
+  {
+    "label": "~$nome comprou %qt ~maçã madura",
+    "content": "~$nome bought %qt ripe ~apple",
+    "revised": true
   }
 ]

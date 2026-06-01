@@ -76,6 +76,79 @@
    word-break: break-all;
 }
 
+/* ── Mode toggle: gender×CLDR grid vs programmable content phrase ────────── */
+
+.wl-panels[data-mode="content"] .wl-cells-only {
+   display: none;
+}
+.wl-panels[data-mode="cells"] .wl-content-only {
+   display: none;
+}
+
+/* ── Programmable flex: per-locale content phrase ───────────────────────── */
+
+/* Reference (left) phrase + editable (right) phrase share a monospace look so
+   the sigils ($var, ~$var, %count, ~word) stay legible while editing. */
+.wl-phrase-ro,
+.wl-phrase-edit {
+   flex: 1;
+   min-height: 0;
+   width: 100%;
+   padding: 10px 12px;
+   font-family: "SF Mono", "Fira Code", monospace;
+   font-size: 0.95em;
+   line-height: 1.6;
+   color: var(--wl-text);
+   border-radius: 6px;
+   white-space: pre-wrap;
+   word-break: break-word;
+   overflow: auto;
+}
+.wl-phrase-ro {
+   background: var(--wl-primary-pale);
+}
+.wl-phrase-edit {
+   resize: none;
+   background: transparent;
+   border: 1px solid var(--wl-grid-cell-border);
+   outline: none;
+   transition: border-color 0.2s, background 0.2s;
+}
+.wl-phrase-edit:focus {
+   border-color: var(--wl-border-focus);
+   background: var(--wl-grid-cell-focus);
+}
+
+/* Copy-to-right toolbar above the editable phrase. */
+.wl-phrase-toolbar {
+   display: flex;
+   justify-content: flex-end;
+   margin-bottom: 8px;
+}
+.wl-copy-btn {
+   display: inline-flex;
+   align-items: center;
+   justify-content: center;
+   width: 32px;
+   height: 28px;
+   font-size: 1.1em;
+   line-height: 1;
+   color: var(--wl-primary);
+   background: var(--wl-primary-pale);
+   border: 1px solid var(--wl-grid-cell-border);
+   border-radius: var(--wings-radius-sm, 4px);
+   cursor: pointer;
+   transition: background var(--wings-transition-fast, 150ms ease),
+               border-color var(--wings-transition-fast, 150ms ease);
+}
+.wl-copy-btn:hover {
+   background: var(--wl-grid-cell-focus);
+   border-color: var(--wl-border-focus);
+}
+.wl-copy-btn:active {
+   transform: translateY(1px);
+}
+
 /* ── Inflection grid (CSS Grid layout) ──────────────────────────────────── */
 
 .wl-grid {

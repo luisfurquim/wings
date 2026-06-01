@@ -18,5 +18,10 @@
       "f.other": "as {n} professoras presentes"
     },
     "revised": true
+  },
+  {
+    "label": "~$nome comprou %qt ~maçã madura",
+    "content": "~$nome comprou %qt ~maçã madura",
+    "revised": true
   }
 ]
