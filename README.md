@@ -37,8 +37,30 @@ authored in Go and running natively in the browser.
 
 ---
 
+## What's New
+
+Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
+
+### v0.15.0
+
+- **Programmable flex (CustomFlex)** — plug in your own inflection engine via the new `*var` / `$var` / `~$var` sigils.
+- **Catalog signing** — opt-in ed25519 verification of i18n catalogs (`-genkey` / `-sign-key` + `SetCatalogPublicKey`).
+- **Idempotent SRI** — `integrity` injection in the build scripts fixed and unified (`wlate` now included).
+
+  → [Internationalization](#internationalization-i18n) · [Security](#security)
+
+### v0.14.x
+
+- **`wprana` → WINGS** — project rename ([migration guide](#migrating-from-wprana)).
+- **i18n suite** — flexion, locale-aware formatting, physical measures, runtime `SetLang`.
+- **Skins** — 18 composable skins across five families, plus user-defined categories (bits 48–63).
+- **Widgets** — the `w-tabs` family and friends ([widgets](#built-in-widgets)), and the **wlate** translation editor.
+
+---
+
 ## Table of Contents
 
+- [What's New](#whats-new)
 - [Migrating from `wprana`](#migrating-from-wprana)
 - [Quick Start](#quick-start)
 - [Project Setup](#project-setup)
@@ -88,6 +110,7 @@ authored in Go and running natively in the browser.
   - [cmd/gen_i18n — Build-time Extractor](#cmdgen_i18n--build-time-extractor)
     - [Opting out (translate=no)](#opting-out-translateno)
   - [Flexion — Plurals & Gender (SynPrinter)](#flexion--plurals--gender-synprinter)
+  - [Programmable Flex — Custom Inflection Engines (CustomFlex)](#programmable-flex--custom-inflection-engines-customflex)
   - [Locale-Aware Formatting (FmtPrinter)](#locale-aware-formatting-fmtprinter)
   - [Physical Measure Packages](#physical-measure-packages)
   - [cmd/dictbuild & cmd/dictlookup — Flexion Dictionaries](#cmddictbuild--cmddictlookup--flexion-dictionaries)
@@ -1981,6 +2004,68 @@ Without `wi18n` loaded, the default `wings.NoFlexSynPrinter` renders the
 rule index as `#N` — missing inflection support stays obvious on the page
 instead of silently dropping content.
 
+### Programmable Flex — Custom Inflection Engines (CustomFlex)
+
+The built-in `@`/`%` selectors plus dictionary auto-fill cover gender and number
+out of the box, zero-config. When an app needs inflection the catalog can't
+express — a remote morphology service, a domain-specific declension, a language
+the dictionaries don't cover — it can supply its **own** engine. The principle:
+WINGS shapes flexion at build time and integrates it at runtime; *implementing*
+the inflection becomes the app's responsibility. With no engine available the raw
+lemma is emitted (visible, not a silent drop) — by design.
+
+**Additional sigils.** Three sigils extend the block grammar for custom engines:
+
+| Sigil | Role |
+|---|---|
+| `*var` | A **CustomFlex engine** — a candidate to inflect the block's lemmas, elected by `Priority()`. May also act as a selector. |
+| `$var` | A **dynamic value emitted verbatim** (not inflected) — e.g. a proper name interleaved in the sentence. Also exposed to the engine as a selector. |
+| `~$var` | A **dynamic value to be inflected** — a `~word` whose text arrives at runtime. |
+
+`~` means "inflect this", `$` means "dynamic value", `*` means "engine" — they're
+orthogonal (`~$var` = `~` + `$var`). The engine is always `*` (a `$` value is pure
+data and can't be a motor). Blocks must not be nested.
+
+**The contract** (core `wings` package):
+
+```go
+type CustomFlex interface {
+    // Flex returns the inflected form of word given the context. Selector
+    // order is not guaranteed — identify by Name/Sigil, never by position.
+    Flex(word string, selectors ...FlexSelector) (string, error)
+    String() string // text this token emits at its position ("" = selector only)
+}
+type Prioritized interface { Priority() uint } // optional; absent ⇒ 0
+type FlexSelector struct { Sigil byte; Name string; Value any }
+```
+
+**Engine election (one per block).** Candidates are the `*var` / `~$var` values
+that implement `CustomFlex`; the highest `Priority()` wins and the others become
+selectors passed to it. `@gender` / `%count` are selectors, never candidates. The
+built-in catalog is the implicit engine, used only when there is no custom
+candidate — so the zero-config path is unchanged. A tie between user candidates is
+an error: it logs and falls back to emitting the raw lemmas.
+
+**Build-time split.** `gen_i18n` keys the catalog format on the sigils it sees. A
+block with only `@`/`%`/`~word` keeps the per-cell phrase catalog above. A block
+carrying `*`/`~$` is split into locale-invariant **control** metadata (the
+`@gender` / `%count` bindings, the `*engine`, the `#N` index) and a per-locale
+**content** template (literal text + `$var`/`~$var`/`~word` + the count position)
+that translators reorder freely — whitespace is preserved token-by-token, so a
+space-free script like Japanese composes correctly.
+
+**Async engines (the critical pattern).** `Flex` is synchronous and runs inside
+the render epoch — it must not block on `fetch` (the same deadlock class as
+`SetLang`). For a remote source: return the **cached** form; on a miss return a
+**placeholder** (the raw value) and start the request in a goroutine; when it
+resolves, populate the cache and re-trigger the render (`obj.This.Set`). The live
+demo's `RemoteFlexer` demonstrates this end to end.
+
+**Failure modes** — all visible, never silent: a tie between user engines, a
+`~$var` left to the catalog-default engine (which has no runtime form for it), or
+a `Flex` that returns an error each emit the raw value and log. `gen_i18n` emits a
+soft `lint:` note when it sees `~$` without a `*` in a block.
+
 ### Locale-Aware Formatting (FmtPrinter)
 
 Text catalogs translate strings and flex blocks resolve plurals/gender. A
@@ -2984,9 +3069,13 @@ func main() {
 }
 ```
 
-If no public key is configured, catalog verification is skipped (backward
-compatible). If a `.json.sig` sidecar exists but fails verification, the
-catalog is rejected and an error is logged.
+Enforcement is opt-in and, once on, strict. With **no** public key configured,
+verification is skipped and no `.sig` sidecar is even fetched (backward
+compatible). Once a key **is** configured, every catalog the app loads MUST carry
+a valid `.sig`: a missing sidecar is treated as tampering and the catalog is
+rejected — the loader never falls through to an unsigned, possibly forged
+catalog. This currently covers the main `<lang>.json`; `inflections.json` /
+`fmt.json` enforcement is planned.
 
 ## Third-party data
 
