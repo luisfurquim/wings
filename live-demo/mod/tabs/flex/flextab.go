@@ -18,6 +18,7 @@ const cssContent = `.flex-tab .controls { display: flex; gap: 18px; flex-wrap: w
 
 type FlexTab struct {
 	flexer *RemoteFlexer
+	helper *PlatformHelper
 }
 
 func init() {
@@ -31,14 +32,19 @@ func init() {
 
 func (w *FlexTab) InitData() map[string]any {
 	w.flexer = NewRemoteFlexer()
+	w.helper = NewPlatformHelper()
 	return map[string]any{
-		"gender":     "m",
-		"qt":         1,
-		"produto":    "maçã",
-		"flexer":     w.flexer,
-		"setgender":  wings.TriggerHandler(nil),
-		"setcount":   wings.TriggerHandler(nil),
-		"setproduto": wings.TriggerHandler(nil),
+		"gender":      "m",
+		"qt":          1,
+		"produto":     "maçã",
+		"flexer":      w.flexer,
+		"platform":    "linux",
+		"action":      "copy",
+		"help":        w.helper,
+		"setgender":   wings.TriggerHandler(nil),
+		"setcount":    wings.TriggerHandler(nil),
+		"setproduto":  wings.TriggerHandler(nil),
+		"setplatform": wings.TriggerHandler(nil),
 	}
 }
 
@@ -65,6 +71,15 @@ func (w *FlexTab) Render(obj *wings.PranaObj) {
 		}
 		if s, ok := args[0].(string); ok {
 			obj.This.Set("produto", s)
+		}
+	})
+
+	obj.This.M["setplatform"] = wings.TriggerHandler(func(args ...any) {
+		if len(args) == 0 {
+			return
+		}
+		if s, ok := args[0].(string); ok {
+			obj.This.Set("platform", s)
 		}
 	})
 

@@ -54,6 +54,7 @@ import (
 	_ "live-demo/mod/tabs/flex"
 	_ "live-demo/mod/tabs/flex/countinput"
 	_ "live-demo/mod/tabs/flex/genderpicker"
+	_ "live-demo/mod/tabs/flex/platformpicker"
 	_ "live-demo/mod/tabs/flex/productpicker"
 
 	_ "live-demo/mod/tabs/fmt"

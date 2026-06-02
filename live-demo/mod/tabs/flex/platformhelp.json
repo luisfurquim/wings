@@ -1,0 +1,8 @@
+{
+  "copy": {
+    "linux":   "Ctrl + C",
+    "windows": "Ctrl + C",
+    "macos":   "⌘ + C",
+    "*":       "Ctrl + C"
+  }
+}

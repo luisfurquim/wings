@@ -41,6 +41,13 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
+### v0.15.2
+
+- **Arbitrary contextual selection** — a `$var` is now passed to your CustomFlex
+  engine as a selector (and still emitted, like `%count`), so an engine can branch
+  on any key — platform, formality, tenant — and inflect in the same block. WINGS's
+  analog of Fluent's selectors. See [Programmable Flex](#programmable-flex--custom-inflection-engines-customflex).
+
 ### v0.15.0
 
 - **Programmable flex (CustomFlex)** — plug in your own inflection engine via the new `*var` / `$var` / `~$var` sigils.
@@ -2144,6 +2151,64 @@ cannot block on the network — see the demo's
 [`RemoteFlexer`](live-demo/mod/tabs/flex/remoteflexer.go): it returns the raw word
 as a placeholder on a cache miss, fetches in a goroutine, and re-runs the render
 (`obj.This.Set`) once the form arrives.
+
+#### Arbitrary selection (coming from Fluent)
+
+Selection in a flex block is not limited to gender and number. Every participant
+is handed to the engine as a `FlexSelector`, so an engine can branch on an
+**arbitrary** key — the role Fluent gives an arbitrary selector:
+
+```properties
+# Fluent
+shortcut = { $platform ->
+    [macos]  ⌘ + C
+   *[other]  Ctrl + C
+}
+```
+
+In WINGS that selection lives in a CustomFlex engine. The variants can be a plain
+JSON table — shaped like the Fluent selector above, though an engine is free to
+store its data however it likes:
+
+```json
+{ "copy": { "macos": "⌘ + C", "*": "Ctrl + C" } }
+```
+
+```go
+type Shortcuts struct{ table map[string]map[string]string }
+
+func (s Shortcuts) String() string { return "" }
+func (s Shortcuts) Priority() uint  { return 10 }
+
+func (s Shortcuts) Flex(word string, sel ...wings.FlexSelector) (string, error) {
+    platform := "*"
+    for _, sl := range sel {
+        if sl.Sigil == '$' && sl.Name == "platform" { // the $platform selector
+            if p, ok := sl.Value.(string); ok && p != "" {
+                platform = p
+            }
+        }
+    }
+    if v, ok := s.table[word][platform]; ok {
+        return v, nil
+    }
+    return s.table[word]["*"], nil
+}
+```
+
+```html
+<p>{{ *help Copy on $platform uses ~$action }}</p>
+```
+
+With `"platform": "macos"`, `"action": "copy"`, `"help": myShortcuts` this renders
+**"Copy on macos uses ⌘ + C"**. Note that `$platform` plays two roles at once (like
+`%count`): it is **emitted** in the sentence *and* handed to the engine as a
+selector. The surrounding words remain ordinary catalog i18n (translated per
+locale) while the engine resolves only the variant — so selection composes with
+translation. And because the same engine inflects `~word`/`~$var`, WINGS unifies
+*selecting* a variant with *generating* one, where Fluent selects among
+pre-authored variants only. See the live demo's
+[`PlatformHelper`](live-demo/mod/tabs/flex/platformhelper.go).
 
 ### Locale-Aware Formatting (FmtPrinter)
 

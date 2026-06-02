@@ -13,4 +13,12 @@
     <product-picker @productchange="setproduto"></product-picker>
   </div>
   <p class="result">{{%qt *flexer ~$produto}}</p>
+
+  <h2>Seleção contextual arbitrária — motor CustomFlex com tabela embutida</h2>
+  <p class="hint">Sem catálogo e sem rede: o motor escolhe a variante por um seletor arbitrário (a plataforma) numa tabela JSON. A frase em volta continua i18n normal de catálogo; só o atalho vem do motor.</p>
+  <p class="hint hint-code" translate="no">tabela { "copy": { "linux": "Ctrl + C", "macos": "⌘ + C" } } · *help + $platform + ~$action</p>
+  <div class="controls">
+    <platform-picker @platformchange="setplatform"></platform-picker>
+  </div>
+  <p class="result">{{*help Copiar em $platform usa ~$action}}</p>
 </div>

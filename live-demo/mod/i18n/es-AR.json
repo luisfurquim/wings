@@ -124,6 +124,18 @@
     "revised": false
   },
   {
+    "content": "Selección contextual arbitraria — motor CustomFlex con tabla embebida",
+    "revised": true
+  },
+  {
+    "content": "Sin catálogo ni red: el motor elige la variante por un selector arbitrario (la plataforma) en una tabla JSON. La frase alrededor sigue siendo i18n normal de catálogo; solo el atajo viene del motor.",
+    "revised": true
+  },
+  {
+    "content": "{{*help #2}}",
+    "revised": true
+  },
+  {
     "content": "Género:",
     "revised": false
   },
@@ -134,6 +146,10 @@
   {
     "content": "Femenino",
     "revised": false
+  },
+  {
+    "content": "Plataforma:",
+    "revised": true
   },
   {
     "content": "Producto:",

@@ -124,6 +124,18 @@
     "ctxdetail": "p@tabs/flex/flextab.html:15:21"
   },
   {
+    "context": "tabs/flex/flextab.html:17:7",
+    "ctxdetail": "h2@tabs/flex/flextab.html:17:7"
+  },
+  {
+    "context": "tabs/flex/flextab.html:18:19",
+    "ctxdetail": "p@tabs/flex/flextab.html:18:19"
+  },
+  {
+    "context": "tabs/flex/flextab.html:23:21",
+    "ctxdetail": "p@tabs/flex/flextab.html:23:21"
+  },
+  {
     "context": "tabs/flex/genderpicker/genderpicker.html:2:23",
     "ctxdetail": "label@tabs/flex/genderpicker/genderpicker.html:2:23"
   },
@@ -134,6 +146,10 @@
   {
     "context": "tabs/flex/genderpicker/genderpicker.html:5:23",
     "ctxdetail": "option@tabs/flex/genderpicker/genderpicker.html:5:23"
+  },
+  {
+    "context": "tabs/flex/platformpicker/platformpicker.html:2:25",
+    "ctxdetail": "label@tabs/flex/platformpicker/platformpicker.html:2:25"
   },
   {
     "context": "tabs/flex/productpicker/productpicker.html:2:23",

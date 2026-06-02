@@ -147,8 +147,22 @@ func pickCell(cells map[string]string, gender, cat string) string {
 func assembleFlexContent(fb expr.FlexBlock, content string, ctx wings.Ctx) string {
 	selectors, engine := flexParticipants(fb, ctx)
 
+	toks := expr.TokenizeFlexContent(content)
+
+	// $var is both emitted (in the walk below) and offered to the engine as a
+	// selector, mirroring %count. Unlike @/%/*, $vars live in the content (not
+	// the control block), so collect them up front — before any ~word is
+	// inflected, since selectors must be complete on the first Flex call.
+	for _, tk := range toks {
+		if tk.Type == expr.TokDollarVar {
+			selectors = append(selectors, wings.FlexSelector{
+				Sigil: '$', Name: tk.StrVal, Value: resolveFlexVar(tk.StrVal, tk.Sub, ctx),
+			})
+		}
+	}
+
 	var sb strings.Builder
-	for _, tk := range expr.TokenizeFlexContent(content) {
+	for _, tk := range toks {
 		switch tk.Type {
 		case expr.TokTxt:
 			sb.WriteString(tk.StrVal)

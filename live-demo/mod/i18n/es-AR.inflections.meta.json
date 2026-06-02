@@ -6,5 +6,9 @@
   {
     "context": "tabs/flex/flextab.html:15:21",
     "ctxdetail": "p@tabs/flex/flextab.html:15:21"
+  },
+  {
+    "context": "tabs/flex/flextab.html:23:21",
+    "ctxdetail": "p@tabs/flex/flextab.html:23:21"
   }
 ]
