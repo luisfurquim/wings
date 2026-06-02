@@ -214,3 +214,24 @@ func TestParseFlexBlockCustomSigils(t *testing.T) {
 		t.Errorf("FlexBinds = %+v (want one 'adj' with path)", fb.FlexBinds)
 	}
 }
+
+// Literal punctuation in a programmable block (e.g. a colon) must not abort the
+// parse: ParseFlexBlock only extracts control sigils, so punctuation is kept as
+// literal content. Regression for the `:` that used to error (TokColon) and
+// silently leave the whole block un-rewritten.
+func TestParseFlexBlockLiteralPunctuation(t *testing.T) {
+	for _, src := range []string{
+		"*help Copy on $platform: ~$action",
+		"%qt ~aluno aprovado: nota.final",
+	} {
+		toks := Tokenize(src)
+		fb, err := ParseFlexBlock(&toks)
+		if err != nil {
+			t.Fatalf("ParseFlexBlock(%q): unexpected error %v", src, err)
+		}
+		// Control sigils are still extracted correctly past the punctuation.
+		if src[0] == '*' && (len(fb.StarVars) != 1 || fb.StarVars[0].Var != "help") {
+			t.Errorf("%q: StarVars = %+v (want one 'help')", src, fb.StarVars)
+		}
+	}
+}

@@ -778,11 +778,15 @@ func ParseFlexBlock(toks *[]RefNode) (FlexBlock, error) {
 			t.Sub = path
 			fb.FlexBinds = append(fb.FlexBinds, FlexVarRef{Var: t.StrVal, Path: path})
 			fb.Tokens = append(fb.Tokens, t)
-		case TokIdent, TokStr, TokNum:
-			// Passthrough literal word: kept in Tokens for build-time use.
-			fb.Tokens = append(fb.Tokens, t)
 		default:
-			return fb, fmt.Errorf("ParseFlexBlock: unexpected token type=%d in flex block", t.Type)
+			// Any other token is literal content of the phrase — a word
+			// (TokIdent/TokStr/TokNum) or punctuation (`:`, `.`, …). It is kept
+			// in Tokens for build-time use; ParseFlexBlock only extracts the
+			// control sigils, and the per-locale phrase is assembled separately
+			// by TokenizeFlexContent (which already treats these as literal). So
+			// a literal colon — or a mistyped sigil — degrades to visible text
+			// instead of aborting the block's rewrite.
+			fb.Tokens = append(fb.Tokens, t)
 		}
 	}
 
