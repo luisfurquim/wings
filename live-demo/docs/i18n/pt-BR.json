@@ -136,6 +136,26 @@
     "revised": false
   },
   {
+    "content": "Reuso de mensagem — uma definição, vários usos",
+    "revised": false
+  },
+  {
+    "content": "Uma mensagem nomeada fica definida num só lugar e pode ser referenciada em qualquer outro ponto: a frase e a flexão moram numa única entrada, o tradutor edita uma vez só, e cada referência resolve as variáveis no contexto onde aparece. Mude o produto ou a quantidade acima — as duas frases reusadas acompanham.",
+    "revised": false
+  },
+  {
+    "content": "{{%qt *flexer #3}}",
+    "revised": false
+  },
+  {
+    "content": "No seu carrinho: {{%qt *flexer #3}}.",
+    "revised": false
+  },
+  {
+    "content": "Pagamento de {{%qt *flexer #3}} confirmado.",
+    "revised": false
+  },
+  {
     "content": "Gênero:",
     "revised": false
   },

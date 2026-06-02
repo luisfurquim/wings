@@ -136,6 +136,26 @@
     "revised": true
   },
   {
+    "content": "Reutilización de mensaje — una definición, varios usos",
+    "revised": true
+  },
+  {
+    "content": "Un mensaje con nombre se define en un solo lugar y puede referenciarse en cualquier otro punto: la frase y la flexión viven en una única entrada, el traductor edita una sola vez, y cada referencia resuelve las variables en el contexto donde aparece. Cambiá el producto o la cantidad arriba — las dos frases reutilizadas acompañan.",
+    "revised": true
+  },
+  {
+    "content": "{{%qt *flexer #3}}",
+    "revised": true
+  },
+  {
+    "content": "En tu carrito: {{%qt *flexer #3}}.",
+    "revised": true
+  },
+  {
+    "content": "Pago de {{%qt *flexer #3}} confirmado.",
+    "revised": true
+  },
+  {
     "content": "Género:",
     "revised": false
   },

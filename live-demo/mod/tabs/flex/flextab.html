@@ -21,4 +21,11 @@
     <platform-picker @platformchange="setplatform"></platform-picker>
   </div>
   <p class="result">{{*help Copiar em $platform usa ~$action}}</p>
+
+  <h2>Reuso de mensagem — uma definição, vários usos</h2>
+  <p class="hint">Uma mensagem nomeada fica definida num só lugar e pode ser referenciada em qualquer outro ponto: a frase e a flexão moram numa única entrada, o tradutor edita uma vez só, e cada referência resolve as variáveis no contexto onde aparece. Mude o produto ou a quantidade acima — as duas frases reusadas acompanham.</p>
+  <p class="hint hint-code" translate="no">=cesta %qt *flexer ~$produto (define) · #cesta (reusa, herda %qt + *flexer)</p>
+  <p class="result">{{=cesta %qt *flexer ~$produto}}</p>
+  <p class="result">No seu carrinho: {{#cesta}}.</p>
+  <p class="result">Pagamento de {{#cesta}} confirmado.</p>
 </div>

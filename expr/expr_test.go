@@ -235,3 +235,115 @@ func TestParseFlexBlockLiteralPunctuation(t *testing.T) {
 		}
 	}
 }
+
+// Reuse sigils: `=name` (define), `#name` (use). `#N` stays a numeric index;
+// `==` escapes to a literal `=`.
+func TestTokenizeReuseSigils(t *testing.T) {
+	cases := []struct {
+		expr     string
+		wantType TokenType
+		wantVal  string
+		wantInt  int
+	}{
+		{"=greeting", TokDefName, "greeting", 0},
+		{"#greeting", TokFlexName, "greeting", 0},
+		{"#42", TokFlexIdx, "", 42},
+		{"==eq", TokStr, "=", 0}, // escape → literal '='
+	}
+	for _, c := range cases {
+		toks := Tokenize(c.expr)
+		if c.wantType == TokStr {
+			// `==eq` yields the literal '=' then the identifier `eq`.
+			if len(toks) < 1 || toks[0].Type != TokStr || toks[0].StrVal != "=" {
+				t.Errorf("%q: got %+v, want leading TokStr %q", c.expr, toks, "=")
+			}
+			continue
+		}
+		if len(toks) != 1 || toks[0].Type != c.wantType || toks[0].StrVal != c.wantVal || toks[0].IntVal != c.wantInt {
+			t.Errorf("%q: got %+v, want type=%d val=%q int=%d", c.expr, toks, c.wantType, c.wantVal, c.wantInt)
+		}
+	}
+	for _, e := range []string{"=greeting ~$nome", "#greeting %qt"} {
+		if !IsFlexBlock(Tokenize(e)) {
+			t.Errorf("%q: IsFlexBlock=false, want true", e)
+		}
+	}
+}
+
+// In flex content, `=name`/`#name` are recognized as control tokens (so the
+// build can strip them), a lone `=` stays literal, and `==` escapes.
+func TestTokenizeFlexContentReuse(t *testing.T) {
+	type tok struct {
+		typ TokenType
+		val string
+	}
+	cases := []struct {
+		name string
+		in   string
+		want []tok
+	}{
+		{
+			name: "define name then content",
+			in:   "=greeting Olá ~$nome",
+			want: []tok{
+				{TokDefName, "greeting"}, {TokSpace, " "}, {TokTxt, "Olá"},
+				{TokSpace, " "}, {TokFlexBind, "nome"},
+			},
+		},
+		{
+			name: "lone equals stays literal",
+			in:   "a = b",
+			want: []tok{
+				{TokTxt, "a"}, {TokSpace, " "}, {TokTxt, "="}, {TokSpace, " "}, {TokTxt, "b"},
+			},
+		},
+		{
+			name: "doubled equals escapes",
+			in:   "x ==y",
+			want: []tok{
+				{TokTxt, "x"}, {TokSpace, " "}, {TokTxt, "=y"},
+			},
+		},
+	}
+	for _, c := range cases {
+		toks := TokenizeFlexContent(c.in)
+		if len(toks) != len(c.want) {
+			t.Errorf("%s: got %d tokens %+v, want %d", c.name, len(toks), toks, len(c.want))
+			continue
+		}
+		for i, w := range c.want {
+			if toks[i].Type != w.typ || toks[i].StrVal != w.val {
+				t.Errorf("%s: tok[%d]={type:%d val:%q}, want {type:%d val:%q}",
+					c.name, i, toks[i].Type, toks[i].StrVal, w.typ, w.val)
+			}
+		}
+	}
+}
+
+// ParseFlexBlock records =name/#name and enforces one of each per block.
+func TestParseFlexBlockReuse(t *testing.T) {
+	toks := Tokenize("=greeting *motor @g ~$nome")
+	fb, err := ParseFlexBlock(&toks)
+	if err != nil {
+		t.Fatalf("ParseFlexBlock define: %v", err)
+	}
+	if fb.DefName != "greeting" {
+		t.Errorf("DefName = %q, want greeting", fb.DefName)
+	}
+
+	toks = Tokenize("#greeting %qt")
+	fb, err = ParseFlexBlock(&toks)
+	if err != nil {
+		t.Fatalf("ParseFlexBlock use: %v", err)
+	}
+	if fb.RefName != "greeting" || fb.CountVar != "qt" {
+		t.Errorf("RefName/CountVar = %q/%q, want greeting/qt", fb.RefName, fb.CountVar)
+	}
+
+	for _, bad := range []string{"=a =b", "#a #b"} {
+		toks = Tokenize(bad)
+		if _, err := ParseFlexBlock(&toks); err == nil {
+			t.Errorf("%q: ParseFlexBlock should reject a second reuse name", bad)
+		}
+	}
+}

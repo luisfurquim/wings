@@ -34,6 +34,8 @@ const (
 	TokDollarVar TokenType = 17 // $ident  — dynamic bind value, emitted verbatim
 	TokFlexBind  TokenType = 18 // ~$ident — dynamic value to be inflected at runtime
 	TokSpace     TokenType = 19 // collapsed whitespace run (\s+ → one space) in flex content
+	TokDefName   TokenType = 20 // =ident  — names this block's message for reuse
+	TokFlexName  TokenType = 21 // #ident  — reuse: render the message named by ident
 )
 
 // ── Template parse structures ───────────────────────────────────────────────
@@ -276,9 +278,25 @@ func splitSymbols(s string) []RefNode {
 				val, _ := strconv.Atoi(s[i+1 : j])
 				toks = append(toks, RefNode{Type: TokFlexIdx, IntVal: val})
 				i = j
+			} else if k, ok := scanIdent(s, i+1); ok {
+				// #ident → TokFlexName: reuse the message named `ident`.
+				toks = append(toks, RefNode{Type: TokFlexName, StrVal: s[i+1 : k]})
+				i = k
 			} else {
 				// Bare `#` (legacy) — keep old behavior.
 				toks = append(toks, RefNode{Type: TokIdent, StrVal: "#"})
+				i++
+			}
+		case '=':
+			// `==` escape → literal `=`; `=ident` → TokDefName (names this
+			// block's message); a lone `=` is skipped (no token).
+			if i+1 < n && s[i+1] == '=' {
+				toks = append(toks, RefNode{Type: TokStr, StrVal: "="})
+				i += 2
+			} else if k, ok := scanIdent(s, i+1); ok {
+				toks = append(toks, RefNode{Type: TokDefName, StrVal: s[i+1 : k]})
+				i = k
+			} else {
 				i++
 			}
 		case '%', '@', '~', '*', '$':
@@ -487,6 +505,30 @@ func TokenizeFlexContent(s string) []RefNode {
 			val, _ := strconv.Atoi(s[i+1 : j])
 			toks = append(toks, RefNode{Type: TokFlexIdx, IntVal: val})
 			i = j
+		case c == '#':
+			if k, ok := scanIdent(s, i+1); ok {
+				flush()
+				toks = append(toks, RefNode{Type: TokFlexName, StrVal: s[i+1 : k]})
+				i = k
+			} else {
+				lit = append(lit, c) // bare `#` → literal char
+				i++
+			}
+		case c == '=':
+			// `==` escape → literal `=`; `=ident` → TokDefName (control sigil,
+			// stripped from the content phrase by buildFlexContent); a lone `=`
+			// (e.g. "a = b") stays literal.
+			if i+1 < n && s[i+1] == '=' {
+				lit = append(lit, '=')
+				i += 2
+			} else if k, ok := scanIdent(s, i+1); ok {
+				flush()
+				toks = append(toks, RefNode{Type: TokDefName, StrVal: s[i+1 : k]})
+				i = k
+			} else {
+				lit = append(lit, c)
+				i++
+			}
 		case c == '@' || c == '%' || c == '~' || c == '*' || c == '$':
 			tok, next, ok := consumeSigil(s, i)
 			if !ok {
@@ -664,6 +706,8 @@ type FlexBlock struct {
 	StarVars   []FlexVarRef // *var participants (CustomFlex engine/selector), in order
 	DollarVars []FlexVarRef // $var plain dynamic binds (emitted verbatim), in order
 	FlexBinds  []FlexVarRef // ~$var dynamic values to be inflected at runtime, in order
+	DefName    string       // =name: names this block's message for reuse, "" when absent
+	RefName    string       // #name: reuse — render the message named here, "" when absent
 }
 
 // FlexVarRef is a resolved variable reference inside a flex block for one of
@@ -686,7 +730,7 @@ func IsFlexBlock(toks []RefNode) bool {
 		return false
 	}
 	switch toks[0].Type {
-	case TokAtVar, TokTildeWord, TokFlexIdx, TokStarVar, TokDollarVar, TokFlexBind:
+	case TokAtVar, TokTildeWord, TokFlexIdx, TokStarVar, TokDollarVar, TokFlexBind, TokDefName, TokFlexName:
 		return true
 	case TokPctVar:
 		// %var alone (plus optional path tail) is a FmtBlock, not a FlexBlock.
@@ -712,6 +756,7 @@ func IsFlexBlock(toks []RefNode) bool {
 func ParseFlexBlock(toks *[]RefNode) (FlexBlock, error) {
 	fb := FlexBlock{Idx: -1}
 	seenPct, seenAt, seenIdx := false, false, false
+	seenDef, seenRef := false, false
 
 	for len(*toks) > 0 {
 		t := popRef(toks)
@@ -778,6 +823,20 @@ func ParseFlexBlock(toks *[]RefNode) (FlexBlock, error) {
 			t.Sub = path
 			fb.FlexBinds = append(fb.FlexBinds, FlexVarRef{Var: t.StrVal, Path: path})
 			fb.Tokens = append(fb.Tokens, t)
+		case TokDefName:
+			if seenDef {
+				return fb, fmt.Errorf("ParseFlexBlock: only one =name allowed per block, found %q after %q", t.StrVal, fb.DefName)
+			}
+			fb.DefName = t.StrVal
+			fb.Tokens = append(fb.Tokens, t)
+			seenDef = true
+		case TokFlexName:
+			if seenRef {
+				return fb, fmt.Errorf("ParseFlexBlock: only one #name allowed per block, found %q after %q", t.StrVal, fb.RefName)
+			}
+			fb.RefName = t.StrVal
+			fb.Tokens = append(fb.Tokens, t)
+			seenRef = true
 		default:
 			// Any other token is literal content of the phrase — a word
 			// (TokIdent/TokStr/TokNum) or punctuation (`:`, `.`, …). It is kept

@@ -47,6 +47,101 @@ var flexOccurrences = map[int32][]Occurrence{}
 // Legacy gender/count blocks never appear here. (project_customflex_design)
 var flexContent = map[int32]string{}
 
+// flexDef is a `=name` definition collected by the name pre-pass: the block's
+// canonical key (the resolveFlex lookup key) plus its parsed FlexBlock (the
+// control axes a `#name` reuse inherits). The rule index is intentionally NOT
+// stored here — it is assigned in natural walk order, so merely naming a block
+// does not renumber the rest of the catalog.
+type flexDef struct {
+	canonical string
+	fb        expr.FlexBlock
+}
+
+// flexDefs maps a reuse name (from a `=name` definition) to its definition. It
+// is populated by the name pre-pass (collectFlexNames) before the main rewrite
+// walk, so a `#name` reuse in any file can resolve a `=name` defined in any
+// other file — names are global per catalog, regardless of the order gen_i18n
+// happens to walk the files.
+var flexDefs = map[string]flexDef{}
+
+// registerFlexName records a `=name` definition. The same name defining the
+// same message twice (e.g. copy-pasted across files) is fine and idempotent;
+// the same name defining two *different* messages is a hard error, since a
+// `#name` reuse could not pick one unambiguously.
+func registerFlexName(inner string, fb expr.FlexBlock) {
+	canonical := canonicalFlexKey(inner)
+	if prev, ok := flexDefs[fb.DefName]; ok && prev.canonical != canonical {
+		G.Fatalf(1, "error: duplicate flex name =%s defines two different messages (%q vs %q)", fb.DefName, prev.canonical, canonical)
+	}
+	flexDefs[fb.DefName] = flexDef{canonical: canonical, fb: fb}
+}
+
+// resolveReuse returns the rule index a `#name` reuse points at. The index is
+// resolved through resolveFlex on the definition's canonical key, which assigns
+// it in natural walk order — or, for a forward reference (a `#name` reached
+// before its `=name`), assigns it now, on first reference. Returns false when
+// no `=name` defined the name.
+func resolveReuse(name string) (int32, bool) {
+	def, ok := flexDefs[name]
+	if !ok {
+		return 0, false
+	}
+	return resolveFlex(def.canonical, def.fb), true
+}
+
+// scanFlexNames finds every {{...}} flex block in text that carries a `=name`
+// and registers it. It is the per-string worker of the name pre-pass: it
+// mirrors the block-locating loop of rewriteFlexBlocks but only collects
+// definitions — no rewriting, no occurrence tracking.
+func scanFlexNames(text string) {
+	i, n := 0, len(text)
+	for i < n {
+		if i+1 < n && text[i] == '{' && text[i+1] == '{' {
+			j := i + 2
+			for j+1 < n && !(text[j] == '}' && text[j+1] == '}') {
+				j++
+			}
+			if j+1 >= n {
+				return
+			}
+			inner := text[i+2 : j]
+			toks := expr.Tokenize(inner)
+			if expr.IsFlexBlock(toks) {
+				toksCopy := append([]expr.RefNode(nil), toks...)
+				if fb, err := expr.ParseFlexBlock(&toksCopy); err == nil && fb.DefName != "" {
+					registerFlexName(inner, fb)
+				}
+			}
+			i = j + 2
+			continue
+		}
+		i++
+	}
+}
+
+// mergeFlexControl builds the runtime control block for a `#name` reuse site.
+// It starts from the definer's control (gender/count axes and *engine
+// candidates) and lets the reuse site override per slot: an @var or %var
+// declared at the site wins (else the definer's is inherited); *engine
+// candidates are replaced wholesale when the site declares any (else the
+// definer's engines are inherited). The message content (~word/$var/~$var)
+// always comes from the definer's catalog entry, so it plays no part in the
+// merge — only the control axes are emitted at the reuse site.
+func mergeFlexControl(def, site expr.FlexBlock) expr.FlexBlock {
+	out := def
+	out.DefName, out.RefName = "", ""
+	if site.GenderVar != "" {
+		out.GenderVar, out.GenderPath = site.GenderVar, site.GenderPath
+	}
+	if site.CountVar != "" {
+		out.CountVar, out.CountPath = site.CountVar, site.CountPath
+	}
+	if len(site.StarVars) > 0 {
+		out.StarVars = site.StarVars
+	}
+	return out
+}
+
 // isProgrammableFlex reports whether a flex block carries any of the
 // CustomFlex sigils (*var engine/selector, $var verbatim bind, ~$var dynamic
 // flexbind). Such blocks are assembled at runtime from a per-locale Content
@@ -119,20 +214,40 @@ func rewriteFlexBlocks(text string, recordOccurrence func(idx int32)) (string, b
 				i = j + 2
 				continue
 			}
-			canonical := canonicalFlexKey(inner)
-			idx := resolveFlex(canonical, fb)
+			var idx int32
+			if fb.RefName != "" {
+				// Reuse site (#name): resolve the named message and merge this
+				// site's control sigils over the definer's. The runtime sees a
+				// plain {{@ % * #idx}} pointing at the definer's catalog entry —
+				// no new runtime concept. A name with no matching =name is left
+				// verbatim (visible degradation, webdev-owned).
+				named, ok := resolveReuse(fb.RefName)
+				if !ok {
+					G.Logf(2, "warn: flex reuse #%s has no matching =%s definition (left as-is)", fb.RefName, fb.RefName)
+					b.WriteString(text[i : j+2])
+					i = j + 2
+					continue
+				}
+				if len(fb.TildeWords) > 0 || len(fb.DollarVars) > 0 || len(fb.FlexBinds) > 0 {
+					G.Logf(2, "lint: flex reuse #%s carries its own content (~word/$var/~$var); ignored — content comes from the =%s definition", fb.RefName, fb.RefName)
+				}
+				idx = named
+				fb = mergeFlexControl(flexBlocks[idx], fb)
+			} else {
+				idx = resolveFlex(canonicalFlexKey(inner), fb)
+				// Programmable block: capture the per-locale content phrase
+				// (literal text + $var/~$var/~word/%count, control sigils
+				// stripped) from the raw inner — which still has its whitespace,
+				// unlike the Tokenize-d token stream above. First occurrence of a
+				// canonical key wins, matching the index assignment.
+				if isProgrammableFlex(fb) {
+					if _, ok := flexContent[idx]; !ok {
+						flexContent[idx] = buildFlexContent(inner)
+					}
+				}
+			}
 			if recordOccurrence != nil {
 				recordOccurrence(idx)
-			}
-			// Programmable block: capture the per-locale content phrase
-			// (literal text + $var/~$var/~word/%count, control sigils stripped)
-			// from the raw inner — which still has its whitespace, unlike the
-			// Tokenize-d token stream above. First occurrence of a canonical key
-			// wins, matching the index assignment.
-			if isProgrammableFlex(fb) {
-				if _, ok := flexContent[idx]; !ok {
-					flexContent[idx] = buildFlexContent(inner)
-				}
 			}
 			// Emit runtime form. Path-valued vars keep their full path
 			// (`@user.gender`, `%cart[i].qty`) so the browser-side parser
@@ -201,7 +316,7 @@ func buildFlexContent(inner string) string {
 	var kept []expr.RefNode
 	for _, t := range expr.TokenizeFlexContent(inner) {
 		switch t.Type {
-		case expr.TokAtVar, expr.TokStarVar, expr.TokFlexIdx:
+		case expr.TokAtVar, expr.TokStarVar, expr.TokFlexIdx, expr.TokDefName, expr.TokFlexName:
 			// control sigil — stripped from the content phrase
 		case expr.TokSpace:
 			// drop leading/doubled space (a removed control sigil may have

@@ -136,6 +136,26 @@
     "revised": true
   },
   {
+    "content": "Message reuse — one definition, many uses",
+    "revised": true
+  },
+  {
+    "content": "A named message is defined in a single place and can be referenced anywhere else: the phrase and its inflection live in one entry, the translator edits it once, and each reference resolves its variables in the context where it appears. Change the product or the quantity above — both reused sentences follow.",
+    "revised": true
+  },
+  {
+    "content": "{{%qt *flexer #3}}",
+    "revised": true
+  },
+  {
+    "content": "In your cart: {{%qt *flexer #3}}.",
+    "revised": true
+  },
+  {
+    "content": "Payment for {{%qt *flexer #3}} confirmed.",
+    "revised": true
+  },
+  {
     "content": "Gender:",
     "revised": false
   },

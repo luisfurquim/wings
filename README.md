@@ -41,6 +41,13 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
+### v0.15.4
+
+- **Message reuse** — name a flex message with `=name` and reuse it anywhere with
+  `#name`; the reference inherits the definition's engine/selectors (overridable
+  per slot) and resolves its variables in the context where it appears. Names are
+  global per catalog and resolved at build time. See [Programmable Flex](#programmable-flex--custom-inflection-engines-customflex).
+
 ### v0.15.2
 
 - **Arbitrary contextual selection** — a `$var` is now passed to your CustomFlex
@@ -2209,6 +2216,65 @@ translation. And because the same engine inflects `~word`/`~$var`, WINGS unifies
 *selecting* a variant with *generating* one, where Fluent selects among
 pre-authored variants only. See the live demo's
 [`PlatformHelper`](live-demo/mod/tabs/flex/platformhelper.go).
+
+#### Message reuse (`=name` / `#name`)
+
+The last piece Fluent has that a per-block syntax otherwise lacks is **one
+message referencing another** — define a phrase once, reuse it in many places so
+the translator edits a single entry:
+
+```properties
+# Fluent
+-product = { $count } apples
+cart    = In your cart: { -product }
+receipt = Payment for { -product } confirmed
+```
+
+WINGS expresses this with two sigils that reuse the `#` you already know:
+
+- `=name` **defines**: it names *this* block's message. The block still renders
+  in place — naming is additive.
+- `#name` **uses**: it renders the named message here. This unifies `#`: `#42`
+  is "the message at index 42" (the literal index `gen_i18n` injects), and
+  `#name` is "the message at the index bound to `name`" — literal vs. variable,
+  the same distinction the rest of WINGS draws.
+
+```html
+<!-- define once (and render it here) -->
+<p>{{ =cart %count *flexer ~$product }}</p>
+
+<!-- reuse anywhere -->
+<p>In your cart: {{ #cart }}.</p>
+<p>Payment for {{ #cart }} confirmed.</p>
+```
+
+Names are **global per catalog**: a `#name` in any file resolves a `=name` in
+any other file, in any order. Resolution happens entirely at **build time** —
+`gen_i18n` rewrites `#name` to the definer's `#N` and emits a plain runtime
+block, so the browser sees nothing new and reuse works for both catalog
+(gender×number) and programmable messages.
+
+A reuse site **inherits the definer's control axes and may override them per
+slot**: an `@gender` or `%count` declared at the site wins (otherwise the
+definer's is inherited), and declaring any `*engine` replaces the inherited
+engines wholesale. The message *content* (`~word`/`$var`/`~$var`) always comes
+from the definition — so each reference resolves its variables in the **context
+where it appears**, which is strictly more than Fluent (whose message references
+are static; only its terms take arguments):
+
+```html
+<!-- inherits *flexer and %count from =cart -->
+<p>{{ #cart }}</p>
+
+<!-- same message, but counted by a different variable at this site -->
+<p>{{ #cart %backorder }}</p>
+```
+
+A literal `=` glued to a word (`price=value`) would otherwise read as `=value`;
+write `==` to escape it. A `#name` with no matching `=name` is left verbatim and
+logged — a visible, fixable degradation rather than a silent blank. See the live
+demo's reuse section in
+[`flextab.html`](live-demo/mod/tabs/flex/flextab.html).
 
 ### Locale-Aware Formatting (FmtPrinter)
 

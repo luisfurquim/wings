@@ -17,5 +17,10 @@
     "label": "Copiar em $platform usa ~$action",
     "content": "Copy on $platform uses ~$action",
     "revised": true
+  },
+  {
+    "label": "%qt ~$produto",
+    "content": "%qt ~$produto",
+    "revised": false
   }
 ]

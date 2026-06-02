@@ -8,6 +8,21 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
+## [0.15.4] — 2026-06-02
+
+### Added
+- **Message reuse / composition (`=name` / `#name`).** Name a flex message with
+  `=name` and render it elsewhere with `#name` — the last gap versus Fluent's
+  message references. `#` is unified: `#42` is the literal rule index `gen_i18n`
+  injects, `#name` is the index bound by a `=name`. A reuse site inherits the
+  definition's control axes and overrides them per slot (`@gender`/`%count` win
+  when present; declaring any `*engine` replaces the inherited engines), while the
+  message content comes from the definition and resolves its variables in the
+  context where it appears — strictly more than Fluent's static references. Names
+  are global per catalog and resolved entirely at build time, so the runtime is
+  unchanged and reuse works for both catalog and programmable messages. `==`
+  escapes a literal `=`. The live demo's flex tab gains a reuse section.
+
 ## [0.15.3] — 2026-06-01
 
 ### Fixed

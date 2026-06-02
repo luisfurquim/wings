@@ -156,6 +156,13 @@ func main() {
 	// Map hash → original text (used for collision detection during processing).
 	dbMap := map[string]string{}
 
+	// Pre-pass: register every `=name` flex definition before the rewrite walk,
+	// so a `#name` reuse resolves regardless of which file is walked first
+	// (names are global per catalog). See collectFlexNames.
+	if err := collectFlexNames(rootDir, attrSet); err != nil {
+		G.Fatalf(1, "error collecting flex names: %v", err)
+	}
+
 	err := filepath.WalkDir(rootDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -606,6 +613,78 @@ func processHTMLFile(path, relPath string, dbMap map[string]string, attrSet map[
 
 	fmt.Printf("processed: %s → %s\n", path, outPath)
 	return nil
+}
+
+// collectFlexNames does a pre-pass over every HTML source, registering each
+// `=name` flex definition in flexNameTable. It must run before the main rewrite
+// walk so a `#name` reuse can resolve a `=name` defined in any file (names are
+// global per catalog) no matter the file-processing order — gen_i18n's main
+// walk writes each .i18n.html inline, so it cannot resolve a forward reference
+// to a definition in a not-yet-walked file.
+func collectFlexNames(rootDir string, attrSet map[string]bool) error {
+	return filepath.WalkDir(rootDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+		name := strings.ToLower(d.Name())
+		if !strings.HasSuffix(name, ".html") || strings.HasSuffix(name, ".i18n.html") {
+			return nil
+		}
+		src, err := os.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("read %s: %w", path, err)
+		}
+		doc, err := html.Parse(bytes.NewReader(src))
+		if err != nil {
+			return fmt.Errorf("parse %s: %w", path, err)
+		}
+		collectNamesNode(doc, attrSet, false)
+		return nil
+	})
+}
+
+// collectNamesNode mirrors replaceTextNodes' traversal — honoring translate="no"
+// subtrees and skipping <style>/<script> — but only scans text nodes and
+// translatable attributes for `=name` definitions, leaving the tree untouched.
+func collectNamesNode(n *html.Node, attrSet map[string]bool, noTranslate bool) {
+	if n.Type == html.ElementNode {
+		for _, a := range n.Attr {
+			if strings.EqualFold(a.Key, "translate") {
+				switch strings.ToLower(strings.TrimSpace(a.Val)) {
+				case "no":
+					noTranslate = true
+				case "yes", "":
+					noTranslate = false
+				}
+				break
+			}
+		}
+	}
+
+	if n.Type == html.TextNode {
+		if n.Parent != nil && n.Parent.Type == html.ElementNode && (n.Parent.Data == "style" || n.Parent.Data == "script") {
+			return
+		}
+		if !noTranslate && !isBlank(n.Data) {
+			scanFlexNames(n.Data)
+		}
+		return
+	}
+
+	if n.Type == html.ElementNode && len(attrSet) > 0 && !noTranslate {
+		for _, a := range n.Attr {
+			if attrSet[strings.ToLower(a.Key)] && a.Val != "" && !isBlank(a.Val) {
+				scanFlexNames(a.Val)
+			}
+		}
+	}
+
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		collectNamesNode(c, attrSet, noTranslate)
+	}
 }
 
 // replaceTextNodes walks the HTML tree and replaces every TextNode's
