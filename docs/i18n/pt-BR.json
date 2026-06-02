@@ -1,0 +1,286 @@
+[
+  {
+    "content": "wings — live demo",
+    "revised": false
+  },
+  {
+    "content": "Básico",
+    "revised": false
+  },
+  {
+    "content": "Flexão",
+    "revised": false
+  },
+  {
+    "content": "Formatação",
+    "revised": false
+  },
+  {
+    "content": "Tradução",
+    "revised": false
+  },
+  {
+    "content": "Medidas",
+    "revised": false
+  },
+  {
+    "content": "Abas",
+    "revised": false
+  },
+  {
+    "content": "Idioma:",
+    "revised": false
+  },
+  {
+    "content": "Lista de itens",
+    "revised": false
+  },
+  {
+    "content": "Contadores",
+    "revised": false
+  },
+  {
+    "content": "Modo e extras",
+    "revised": false
+  },
+  {
+    "content": "Contador rápido (a cada 2 s):",
+    "revised": false
+  },
+  {
+    "content": "Contador lento (a cada 5 s):",
+    "revised": false
+  },
+  {
+    "content": "Adicione um item:",
+    "revised": false
+  },
+  {
+    "content": "Adicionar",
+    "revised": false
+  },
+  {
+    "content": "Alternar modo",
+    "revised": false
+  },
+  {
+    "content": "Modo:",
+    "revised": false
+  },
+  {
+    "content": "Alternar extra",
+    "revised": false
+  },
+  {
+    "content": "Conteúdo extra revelado!",
+    "revised": false
+  },
+  {
+    "content": "Clique em \"Alternar extra\" para revelar.",
+    "revised": false
+  },
+  {
+    "content": "Modo é exatamente \"edit\"",
+    "revised": false
+  },
+  {
+    "content": "Modo é diferente de \"readonly\"",
+    "revised": false
+  },
+  {
+    "content": "Modo começa com \"ed\"",
+    "revised": false
+  },
+  {
+    "content": "Modo termina com \"t\"",
+    "revised": false
+  },
+  {
+    "content": "Modo contém \"d\"",
+    "revised": false
+  },
+  {
+    "content": "Quantidade:",
+    "revised": false
+  },
+  {
+    "content": "Demonstração de flexão",
+    "revised": false
+  },
+  {
+    "content": "{{@gender %qt #0}}",
+    "revised": false
+  },
+  {
+    "content": "Flexão em runtime — motor CustomFlex com backend",
+    "revised": false
+  },
+  {
+    "content": "O motor busca no backend a forma flexionada do produto conforme a quantidade e a re-renderiza quando a resposta chega; troque a língua para ver a busca no novo idioma.",
+    "revised": false
+  },
+  {
+    "content": "{{%qt *flexer #1}}",
+    "revised": false
+  },
+  {
+    "content": "Seleção contextual arbitrária — motor CustomFlex com tabela embutida",
+    "revised": false
+  },
+  {
+    "content": "Sem catálogo e sem rede: o motor escolhe a variante por um seletor arbitrário (a plataforma) numa tabela JSON. A frase em volta continua i18n normal de catálogo; só o atalho vem do motor.",
+    "revised": false
+  },
+  {
+    "content": "{{*help #2}}",
+    "revised": false
+  },
+  {
+    "content": "Reuso de mensagem — uma definição, vários usos",
+    "revised": false
+  },
+  {
+    "content": "Uma mensagem nomeada fica definida num só lugar e pode ser referenciada em qualquer outro ponto: a frase e a flexão moram numa única entrada, o tradutor edita uma vez só, e cada referência resolve as variáveis no contexto onde aparece. Mude o produto ou a quantidade acima — as duas frases reusadas acompanham.",
+    "revised": false
+  },
+  {
+    "content": "{{%qt *flexer #3}}",
+    "revised": false
+  },
+  {
+    "content": "No seu carrinho: {{%qt *flexer #3}}.",
+    "revised": false
+  },
+  {
+    "content": "Pagamento de {{%qt *flexer #3}} confirmado.",
+    "revised": false
+  },
+  {
+    "content": "Gênero:",
+    "revised": false
+  },
+  {
+    "content": "Masculino",
+    "revised": false
+  },
+  {
+    "content": "Feminino",
+    "revised": false
+  },
+  {
+    "content": "Plataforma:",
+    "revised": false
+  },
+  {
+    "content": "Produto:",
+    "revised": false
+  },
+  {
+    "content": "Preço:",
+    "revised": false
+  },
+  {
+    "content": "Agora:",
+    "revised": false
+  },
+  {
+    "content": "Demonstração de formatação",
+    "revised": false
+  },
+  {
+    "content": "Números",
+    "revised": false
+  },
+  {
+    "content": "Moedas",
+    "revised": false
+  },
+  {
+    "content": "Carrinho",
+    "revised": false
+  },
+  {
+    "content": "Data e hora",
+    "revised": false
+  },
+  {
+    "content": "Inteiro:",
+    "revised": false
+  },
+  {
+    "content": "Decimal:",
+    "revised": false
+  },
+  {
+    "content": "Catálogo de traduções por dentro",
+    "revised": false
+  },
+  {
+    "content": "Cada texto traduzível recebeu um índice numérico durante a compilação. A coluna do meio mostra o que o desenvolvedor escreveu em pt-BR (a língua-fonte); a da direita mostra o que está renderizado agora — troque o idioma no topo para vê-la mudar.",
+    "revised": false
+  },
+  {
+    "content": "Índice",
+    "revised": false
+  },
+  {
+    "content": "Texto na fonte (pt-BR)",
+    "revised": false
+  },
+  {
+    "content": "Renderizado agora",
+    "revised": false
+  },
+  {
+    "content": "padrão (locale):",
+    "revised": false
+  },
+  {
+    "content": ":km",
+    "revised": false
+  },
+  {
+    "content": ":mi",
+    "revised": false
+  },
+  {
+    "content": ":ft",
+    "revised": false
+  },
+  {
+    "content": "Demonstração de medidas físicas",
+    "revised": false
+  },
+  {
+    "content": "Comprimento",
+    "revised": false
+  },
+  {
+    "content": "Temperatura",
+    "revised": false
+  },
+  {
+    "content": "Velocidade",
+    "revised": false
+  },
+  {
+    "content": ":kmh",
+    "revised": false
+  },
+  {
+    "content": ":mph",
+    "revised": false
+  },
+  {
+    "content": ":c (Celsius):",
+    "revised": false
+  },
+  {
+    "content": ":f (Fahrenheit):",
+    "revised": false
+  },
+  {
+    "content": ":k (Kelvin):",
+    "revised": false
+  }
+]

@@ -1,0 +1,286 @@
+[
+  {
+    "content": "wings — live demo",
+    "revised": false
+  },
+  {
+    "content": "Basics",
+    "revised": false
+  },
+  {
+    "content": "Inflection",
+    "revised": false
+  },
+  {
+    "content": "Formatting",
+    "revised": false
+  },
+  {
+    "content": "Translation",
+    "revised": false
+  },
+  {
+    "content": "Measures",
+    "revised": false
+  },
+  {
+    "content": "Tabs",
+    "revised": true
+  },
+  {
+    "content": "Language:",
+    "revised": false
+  },
+  {
+    "content": "Item list",
+    "revised": false
+  },
+  {
+    "content": "Counters",
+    "revised": false
+  },
+  {
+    "content": "Mode and extras",
+    "revised": false
+  },
+  {
+    "content": "Fast counter (every 2 s):",
+    "revised": false
+  },
+  {
+    "content": "Slow counter (every 5 s):",
+    "revised": false
+  },
+  {
+    "content": "Add an item:",
+    "revised": false
+  },
+  {
+    "content": "Add",
+    "revised": false
+  },
+  {
+    "content": "Toggle mode",
+    "revised": false
+  },
+  {
+    "content": "Mode:",
+    "revised": false
+  },
+  {
+    "content": "Toggle extra",
+    "revised": false
+  },
+  {
+    "content": "Extra content revealed!",
+    "revised": false
+  },
+  {
+    "content": "Click \"Toggle extra\" to reveal.",
+    "revised": false
+  },
+  {
+    "content": "Mode equals \"edit\"",
+    "revised": false
+  },
+  {
+    "content": "Mode differs from \"readonly\"",
+    "revised": false
+  },
+  {
+    "content": "Mode starts with \"ed\"",
+    "revised": false
+  },
+  {
+    "content": "Mode ends with \"t\"",
+    "revised": false
+  },
+  {
+    "content": "Mode contains \"d\"",
+    "revised": false
+  },
+  {
+    "content": "Quantity:",
+    "revised": false
+  },
+  {
+    "content": "Inflection demo",
+    "revised": false
+  },
+  {
+    "content": "{{@gender %qt #0}}",
+    "revised": false
+  },
+  {
+    "content": "Runtime inflection — CustomFlex engine with a backend",
+    "revised": false
+  },
+  {
+    "content": "The engine fetches the product's inflected form from the backend based on the quantity and re-renders when the response arrives; switch the language to see the lookup in the new locale.",
+    "revised": false
+  },
+  {
+    "content": "{{%qt *flexer #1}}",
+    "revised": false
+  },
+  {
+    "content": "Arbitrary contextual selection — CustomFlex engine with an embedded table",
+    "revised": true
+  },
+  {
+    "content": "No catalog and no network: the engine picks the variant by an arbitrary selector (the platform) from a JSON table. The surrounding sentence stays normal catalog i18n; only the shortcut comes from the engine.",
+    "revised": true
+  },
+  {
+    "content": "{{*help #2}}",
+    "revised": true
+  },
+  {
+    "content": "Message reuse — one definition, many uses",
+    "revised": true
+  },
+  {
+    "content": "A named message is defined in a single place and can be referenced anywhere else: the phrase and its inflection live in one entry, the translator edits it once, and each reference resolves its variables in the context where it appears. Change the product or the quantity above — both reused sentences follow.",
+    "revised": true
+  },
+  {
+    "content": "{{%qt *flexer #3}}",
+    "revised": true
+  },
+  {
+    "content": "In your cart: {{%qt *flexer #3}}.",
+    "revised": true
+  },
+  {
+    "content": "Payment for {{%qt *flexer #3}} confirmed.",
+    "revised": true
+  },
+  {
+    "content": "Gender:",
+    "revised": false
+  },
+  {
+    "content": "Masculine",
+    "revised": false
+  },
+  {
+    "content": "Feminine",
+    "revised": false
+  },
+  {
+    "content": "Platform:",
+    "revised": true
+  },
+  {
+    "content": "Product:",
+    "revised": false
+  },
+  {
+    "content": "Price:",
+    "revised": false
+  },
+  {
+    "content": "Now:",
+    "revised": false
+  },
+  {
+    "content": "Formatting demo",
+    "revised": false
+  },
+  {
+    "content": "Numbers",
+    "revised": false
+  },
+  {
+    "content": "Currencies",
+    "revised": false
+  },
+  {
+    "content": "Cart",
+    "revised": false
+  },
+  {
+    "content": "Date and time",
+    "revised": false
+  },
+  {
+    "content": "Integer:",
+    "revised": false
+  },
+  {
+    "content": "Decimal:",
+    "revised": false
+  },
+  {
+    "content": "Translation catalog under the hood",
+    "revised": false
+  },
+  {
+    "content": "Each translatable string received a numeric index at build time. The middle column shows what the developer wrote in pt-BR (the source language); the right column shows what is rendered right now — switch the language at the top to see it change.",
+    "revised": false
+  },
+  {
+    "content": "Index",
+    "revised": false
+  },
+  {
+    "content": "Source text (pt-BR)",
+    "revised": false
+  },
+  {
+    "content": "Currently rendered",
+    "revised": false
+  },
+  {
+    "content": "default (locale):",
+    "revised": false
+  },
+  {
+    "content": ":km",
+    "revised": false
+  },
+  {
+    "content": ":mi",
+    "revised": false
+  },
+  {
+    "content": ":ft",
+    "revised": false
+  },
+  {
+    "content": "Physical measures demo",
+    "revised": false
+  },
+  {
+    "content": "Length",
+    "revised": false
+  },
+  {
+    "content": "Temperature",
+    "revised": false
+  },
+  {
+    "content": "Speed",
+    "revised": false
+  },
+  {
+    "content": ":kmh",
+    "revised": false
+  },
+  {
+    "content": ":mph",
+    "revised": false
+  },
+  {
+    "content": ":c (Celsius):",
+    "revised": false
+  },
+  {
+    "content": ":f (Fahrenheit):",
+    "revised": false
+  },
+  {
+    "content": ":k (Kelvin):",
+    "revised": false
+  }
+]

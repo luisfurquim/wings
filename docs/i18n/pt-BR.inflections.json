@@ -1,0 +1,29 @@
+[
+  {
+    "label": "{n}",
+    "cells": {
+      "f.one": "a aluna",
+      "f.other": "as {n} alunas",
+      "f.zero": "nenhuma aluna",
+      "m.one": "o aluno",
+      "m.other": "os {n} alunos",
+      "m.zero": "nenhum aluno"
+    },
+    "revised": true
+  },
+  {
+    "label": "%qt ~$produto",
+    "content": "%qt ~$produto",
+    "revised": false
+  },
+  {
+    "label": "Copiar em $platform usa ~$action",
+    "content": "Copiar em $platform usa ~$action",
+    "revised": false
+  },
+  {
+    "label": "%qt ~$produto",
+    "content": "%qt ~$produto",
+    "revised": false
+  }
+]
