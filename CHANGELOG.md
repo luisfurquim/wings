@@ -8,6 +8,12 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
+## [0.15.7] — 2026-06-04
+
+### Documentation
+- Cite in-web testing (`<w-test>` / `Testable()` / `<w-test-report>`) in the
+  "Why WINGS?" table.
+
 ## [0.15.6] — 2026-06-04
 
 ### Added

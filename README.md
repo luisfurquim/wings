@@ -34,6 +34,7 @@ authored in Go and running natively in the browser.
 | **Standard Web** | Uses native Custom Elements v1 and Shadow DOM — works alongside any existing page or framework. |
 | **Internationalized** | Build-time text extraction + runtime catalog lookup, with plural/gender flexion and locale-aware number/date/measure formatting. |
 | **Themeable** | Global `--wings-*` design tokens; compose multiple runtime [skins](#skins--theming-with---wings--tokens) (colours, geometry, depth, motion, atmosphere). |
+| **Testable in-web** | Wrap any widget in [`<w-test>`](#wingswidgettest--in-web-test-harness-w-test) to spy its events and seal a pass/fail; modules declare self-tests via `Testable()`, and [`<w-test-report>`](#wingswidgettestreport--module-self-tests-testable--w-test-report) collects the whole page (auto + visual) into one JSON report. |
 
 ---
 
