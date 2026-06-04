@@ -3042,6 +3042,7 @@ in a `<span>`. For predictable styling, consider using a single root element:
 ## Full Example
 
 ### main.go
+
 ```go
 //go:build js && wasm
 
@@ -3058,6 +3059,7 @@ func main() {
 ```
 
 ### mod/mywidget/mywidget.go
+
 ```go
 //go:build js && wasm
 
@@ -3209,6 +3211,7 @@ func (w *MyWidget) Render(obj *wings.PranaObj) {
 ```
 
 ### mod/mywidget/mywidget.html
+
 ```html
 <div class="widget">
    <h1>{{title}}</h1>
@@ -3303,6 +3306,7 @@ func (w *MyWidget) Render(obj *wings.PranaObj) {
 ```
 
 ### mod/mywidget/mywidget.css
+
 ```css
 .widget {
    max-width: 600px;
