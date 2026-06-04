@@ -28,6 +28,10 @@
     "ctxdetail": "w-tabbutton@shell/appshell/appshell.html:28:20"
   },
   {
+    "context": "shell/appshell/appshell.html:31:20",
+    "ctxdetail": "w-tabbutton@shell/appshell/appshell.html:31:20"
+  },
+  {
     "context": "shell/localeswitcher/localeswitcher.html:2:24",
     "ctxdetail": "label@shell/localeswitcher/localeswitcher.html:2:24"
   },
@@ -282,5 +286,29 @@
   {
     "context": "tabs/measures/tempdisplay/tempdisplay.html:6:13",
     "ctxdetail": "td@tabs/measures/tempdisplay/tempdisplay.html:6:13"
+  },
+  {
+    "context": "tabs/wtest/wtesttab.html:2:7",
+    "ctxdetail": "h2@tabs/wtest/wtesttab.html:2:7"
+  },
+  {
+    "context": "tabs/wtest/wtesttab.html:0:0",
+    "ctxdetail": "p@tabs/wtest/wtesttab.html:0:0"
+  },
+  {
+    "context": "tabs/wtest/wtesttab.html:6:18",
+    "ctxdetail": "w-test[title]@tabs/wtest/wtesttab.html:6:18"
+  },
+  {
+    "context": "tabs/wtest/wtesttab.html:7:19",
+    "ctxdetail": "w-test[expect]@tabs/wtest/wtesttab.html:7:19"
+  },
+  {
+    "context": "tabs/wtest/wtesttab.html:12:18",
+    "ctxdetail": "w-test[title]@tabs/wtest/wtesttab.html:12:18"
+  },
+  {
+    "context": "tabs/wtest/wtesttab.html:13:19",
+    "ctxdetail": "w-test[expect]@tabs/wtest/wtesttab.html:13:19"
   }
 ]

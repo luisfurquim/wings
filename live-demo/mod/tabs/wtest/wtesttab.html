@@ -1,0 +1,16 @@
+<div class="wtest-tab">
+  <h2>Testador in-web</h2>
+  <p class="hint">Cada controle abaixo está embrulhado num &lt;w-test&gt;: a moldura espia todos os eventos que o controle dispara pelo canal @all, mostra um log ao vivo e um selo. Com uma asserção registrada o selo é automático; sem ela, o teste é visual e o selo é clicado por quem confere.</p>
+  <p class="hint hint-code" translate="no">&lt;w-test check="…"&gt; → wings.RegisterCheck · &lt;w-test&gt; sem check → selo manual</p>
+
+  <w-test title="count-input dispara countchange"
+          expect="Altere o número: o evento countchange deve aparecer no log e o selo ficar verde."
+          check="countChanged">
+    <count-input></count-input>
+  </w-test>
+
+  <w-test title="gender-picker — conferência visual"
+          expect="Confirme a olho que o seletor de gênero está estilizado pela skin ativa e clique no selo para registrar o resultado.">
+    <gender-picker></gender-picker>
+  </w-test>
+</div>

@@ -127,7 +127,7 @@ func defineCustomElement(tagName string, def *modDef) {
 // attribute set gen_i18n was run with; the default matches gen_i18n's
 // default. Apps can assign a new slice directly to override, or call
 // AddTranslatableAttrs / RemoveTranslatableAttrs to tweak the list.
-var TranslatableAttrs = []string{"title", "placeholder", "alt", "aria-label", "data-i18n"}
+var TranslatableAttrs = []string{"title", "placeholder", "alt", "aria-label", "data-i18n", "expect"}
 
 // AddTranslatableAttrs appends attrs to TranslatableAttrs, skipping those
 // already present. Attribute names are compared case-insensitively.
@@ -490,63 +490,107 @@ func isConnected(self js.Value) bool {
 	return !v.IsUndefined() && v.Bool()
 }
 
-// buildTrigger creates the trigger function that fires events from a child module
-// to the parent module via @eventName attributes.
+// triggerRoute is one handler dispatch produced by resolveTrigger: the handler
+// name to look up in a prana ancestor, and whether the fired event's name must
+// be prepended to the call args. prependEvent is true for the @all/@else
+// catch-alls (which need to know which event fired) and false for a specific
+// @<event> handler.
+type triggerRoute struct {
+	handler      string
+	prependEvent bool
+}
+
+// resolveTrigger decides which handler(s) a fired event routes to, given a
+// getter for the emitting element's attributes. It returns at most two routes
+// in dispatch order:
+//
+//   - the primary route — the specific @<event> handler if declared, otherwise
+//     the @else catch-all ("every event not otherwise wired"). These two can
+//     never fire for the same event, so at most one of them appears;
+//   - the @all spy route, if declared — always LAST, so an assertion driven
+//     from it observes DOM/state already mutated by the primary handler.
+//
+// @all/@else handlers receive the event name as their first argument
+// (prependEvent); specific handlers do not. resolveTrigger is pure (no DOM) so
+// it is unit-testable without a document.
+func resolveTrigger(getAttr func(name string) string, eventName string) []triggerRoute {
+	routes := make([]triggerRoute, 0, 2)
+	if named := getAttr("@" + eventName); named != "" {
+		routes = append(routes, triggerRoute{handler: named})
+	} else if elseH := getAttr("@else"); elseH != "" {
+		routes = append(routes, triggerRoute{handler: elseH, prependEvent: true})
+	}
+	if allH := getAttr("@all"); allH != "" {
+		routes = append(routes, triggerRoute{handler: allH, prependEvent: true})
+	}
+	return routes
+}
+
+// dispatchToAncestor walks up the prana ancestor chain from self and invokes
+// the first ancestor that declares a non-placeholder handler named handlerName,
+// passing args. Returns false if the chain is exhausted with no live handler.
 //
 // Triggers bubble through container prana elements: if the immediate parent
-// prana element does not declare the named handler (e.g. it is a transparent
-// wrapper like <w-tabs> hosting other prana children), the lookup walks
-// further up until a prana ancestor with the handler is found, or the chain
-// is exhausted. This keeps "navFirst" (declared on the wlate root) reachable
-// from <w-navbar> even when <w-tabs> sits between them.
+// does not declare the handler (e.g. a transparent wrapper like <w-tabs>
+// hosting other prana children), the walk continues upward. This keeps
+// "navFirst" (declared on the wlate root) reachable from <w-navbar> even when
+// <w-tabs> sits between them.
+func dispatchToAncestor(self js.Value, handlerName string, args []any) bool {
+	for cur := findParentPranaElement(self); !cur.IsNull() && !cur.IsUndefined(); cur = findParentPranaElement(cur) {
+		pst := getPranaState(cur)
+		if pst == nil {
+			continue
+		}
+		handler := getField(pst.Data.M, handlerName)
+		if handler == nil {
+			continue
+		}
+		switch fn := handler.(type) {
+		case func(...any):
+			if fn == nil {
+				continue // nil placeholder — a real handler may sit higher up
+			}
+			G.Logf(4, "trigger: calling %q with %d args\n", handlerName, len(args))
+			fn(args...)
+			return true
+		case TriggerHandler:
+			// TriggerHandler(nil) is the conventional placeholder used in
+			// InitData() while the real handler is wired up in Render().
+			if fn == nil {
+				continue
+			}
+			G.Logf(4, "trigger: calling %q with %d args\n", handlerName, len(args))
+			fn(args...)
+			return true
+		default:
+			G.Logf(1, "trigger: handler %q is not a function\n", handlerName)
+			return false
+		}
+	}
+	return false
+}
+
+// buildTrigger creates the trigger function that fires events from a child
+// module to handlers declared on prana ancestors via @<event> attributes, plus
+// the @all (spy: every event) and @else (catch-all: every un-wired event)
+// channels. See resolveTrigger for routing and dispatchToAncestor for bubbling.
 func buildTrigger(self js.Value, rd *ReactiveData) func(eventName string, args ...any) {
 	return func(eventName string, args ...any) {
-		attrName := "@" + eventName
-		handlerName := attrVal(self, attrName)
-		if handlerName == "" {
-			G.Logf(4, "trigger: attribute %q not defined on %s\n", attrName, self.Get("_pranaTag").String())
+		routes := resolveTrigger(func(name string) string { return attrVal(self, name) }, eventName)
+		if len(routes) == 0 {
+			G.Logf(4, "trigger: %q has no @%s, @else or @all on %s\n",
+				eventName, eventName, self.Get("_pranaTag").String())
 			return
 		}
-
-		// Walk up through prana ancestors until one declares the handler.
-		cur := findParentPranaElement(self)
-		for !cur.IsNull() && !cur.IsUndefined() {
-			pst := getPranaState(cur)
-			if pst == nil {
-				cur = findParentPranaElement(cur)
-				continue
+		for _, r := range routes {
+			callArgs := args
+			if r.prependEvent {
+				callArgs = append([]any{eventName}, args...)
 			}
-			handler := getField(pst.Data.M, handlerName)
-			if handler == nil {
-				cur = findParentPranaElement(cur)
-				continue
+			if !dispatchToAncestor(self, r.handler, callArgs) {
+				G.Logf(3, "trigger: %q without handler %q in any prana ancestor\n", eventName, r.handler)
 			}
-			if fn, ok := handler.(func(...any)); ok {
-				if fn == nil {
-					// Nil placeholder at this level — keep walking up in case
-					// a real handler is declared higher in the tree.
-					cur = findParentPranaElement(cur)
-					continue
-				}
-				G.Logf(4, "trigger: calling %q with %d args\n", handlerName, len(args))
-				fn(args...)
-				return
-			}
-			if fn, ok := handler.(TriggerHandler); ok {
-				// `TriggerHandler(nil)` is the conventional placeholder used in
-				// InitData() while the real handler is wired up in Render().
-				if fn == nil {
-					cur = findParentPranaElement(cur)
-					continue
-				}
-				G.Logf(4, "trigger: calling %q with %d args\n", handlerName, len(args))
-				fn(args...)
-				return
-			}
-			G.Logf(1, "trigger: handler %q is not a function\n", handlerName)
-			return
 		}
-		G.Logf(3, "trigger: %q without handler %q in any prana ancestor\n", eventName, handlerName)
 	}
 }
 

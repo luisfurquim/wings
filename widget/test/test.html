@@ -1,0 +1,24 @@
+<div class="wt-card">
+   <div class="wt-head">
+      <span class="wt-name" ?title>{{title}}</span>
+      <div class="wt-seals" title="">
+         <span class="wt-seal wt-pending" ?seal_pending>&#x23F3;</span>
+         <span class="wt-seal wt-pass" ?seal_pass>&#x2705;</span>
+         <span class="wt-seal wt-fail" ?seal_fail>&#x274C;</span>
+      </div>
+   </div>
+   <div class="wt-expect" ?expect>{{expect}}</div>
+   <div class="wt-subject">
+      <slot></slot>
+   </div>
+   <div class="wt-detail" ?detail>{{detail}}</div>
+   <div class="wt-log">
+      <div class="wt-log-head">
+         <span class="wt-log-title">Events</span>
+         <button class="wt-rerun" ?check>Re-run</button>
+      </div>
+      <ul class="wt-log-list" **events:ei>
+         <li class="wt-log-item"><b>{{events[ei].seq}}.</b> {{events[ei].name}} {{events[ei].args}}</li>
+      </ul>
+   </div>
+</div>

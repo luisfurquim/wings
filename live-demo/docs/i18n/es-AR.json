@@ -28,6 +28,10 @@
     "revised": true
   },
   {
+    "content": "Pruebas",
+    "revised": true
+  },
+  {
     "content": "Idioma:",
     "revised": false
   },
@@ -282,5 +286,29 @@
   {
     "content": ":k (Kelvin):",
     "revised": false
+  },
+  {
+    "content": "Probador in-web",
+    "revised": true
+  },
+  {
+    "content": "Cada control de abajo está envuelto en un <w-test>: el marco espía todos los eventos que el control dispara por el canal @all, muestra un registro en vivo y un sello. Con una aserción registrada el sello es automático; sin ella, la prueba es visual y el sello lo hace clic quien verifica.",
+    "revised": true
+  },
+  {
+    "content": "count-input emite countchange",
+    "revised": true
+  },
+  {
+    "content": "Cambiá el número: el evento countchange debe aparecer en el registro y el sello ponerse verde.",
+    "revised": true
+  },
+  {
+    "content": "gender-picker — verificación visual",
+    "revised": true
+  },
+  {
+    "content": "Confirmá a ojo que el selector de género está estilizado por la skin activa y hacé clic en el sello para registrar el resultado.",
+    "revised": true
   }
 ]

@@ -42,6 +42,7 @@ import (
 	_ "github.com/luisfurquim/wings/widget/tab"
 	_ "github.com/luisfurquim/wings/widget/tabbutton"
 	_ "github.com/luisfurquim/wings/widget/tabs"
+	_ "github.com/luisfurquim/wings/widget/test"
 
 	_ "live-demo/mod/shell/appshell"
 	_ "live-demo/mod/shell/localeswitcher"
@@ -71,6 +72,8 @@ import (
 	_ "live-demo/mod/tabs/measures/tempdisplay"
 
 	_ "live-demo/mod/tabs/tabsdemo"
+
+	_ "live-demo/mod/tabs/wtest"
 )
 
 // catalogPubKeyPEM is the ed25519 public key matching the keypair that

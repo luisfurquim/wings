@@ -28,6 +28,10 @@
     "revised": true
   },
   {
+    "content": "Tests",
+    "revised": true
+  },
+  {
     "content": "Language:",
     "revised": false
   },
@@ -282,5 +286,29 @@
   {
     "content": ":k (Kelvin):",
     "revised": false
+  },
+  {
+    "content": "In-web tester",
+    "revised": true
+  },
+  {
+    "content": "Each control below is wrapped in a <w-test>: the frame spies on every event the control fires through the @all channel, shows a live log and a seal. With a registered assertion the seal is automatic; without one, the test is visual and the seal is clicked by whoever is checking.",
+    "revised": true
+  },
+  {
+    "content": "count-input fires countchange",
+    "revised": true
+  },
+  {
+    "content": "Change the number: the countchange event should appear in the log and the seal turn green.",
+    "revised": true
+  },
+  {
+    "content": "gender-picker — visual check",
+    "revised": true
+  },
+  {
+    "content": "Visually confirm the gender selector is styled by the active skin and click the seal to record the result.",
+    "revised": true
   }
 ]
