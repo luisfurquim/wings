@@ -1,5 +1,7 @@
 package main
 
+import "golang.org/x/text/language"
+
 // langSource describes where the LGPLLR DELAF for a given BCP-47 tag lives in
 // the unitex-lingua GitHub repository. The repository organises each language
 // under a per-tag subdirectory (e.g. "pt-BR/", "pt-PT/") containing a Dela/
@@ -93,6 +95,18 @@ var providerAvatarURLs = map[string]string{
 func resolveLangSource(tag string) (langSource, string, bool) {
 	if src, ok := langSources[tag]; ok {
 		return src, tag, true
+	}
+	// Fall back to BCP-47 canonicalisation so case/format variants
+	// ("PT-BR", "pt-br") resolve to the canonical registry key ("pt-BR").
+	// Tried second, after the raw-key path above, so non-standard ISO 639-3
+	// codes such as "oge" — which language.Parse would canonicalise away —
+	// still resolve via their verbatim key.
+	if t, err := language.Parse(tag); err == nil {
+		if canon := t.String(); canon != tag {
+			if src, ok := langSources[canon]; ok {
+				return src, canon, true
+			}
+		}
 	}
 	return langSource{}, "", false
 }
