@@ -527,7 +527,7 @@ func resolveTrigger(getAttr func(name string) string, eventName string) []trigge
 }
 
 // dispatchToAncestor walks up the prana ancestor chain from self and invokes
-// the first ancestor that declares a non-placeholder handler named handlerName,
+// the first ancestor that declares a non-placeholder handler for route r,
 // passing args. Returns false if the chain is exhausted with no live handler.
 //
 // Triggers bubble through container prana elements: if the immediate parent
@@ -535,23 +535,50 @@ func resolveTrigger(getAttr func(name string) string, eventName string) []trigge
 // hosting other prana children), the walk continues upward. This keeps
 // "navFirst" (declared on the wlate root) reachable from <w-navbar> even when
 // <w-tabs> sits between them.
-func dispatchToAncestor(self js.Value, handlerName string, args []any) bool {
+//
+// Handler signatures:
+//   - a specific @<event> handler is func(...any) (or TriggerHandler) and
+//     receives the trigger args verbatim;
+//   - an @all/@else catch-all is func(name string, ...any) and receives the
+//     event name as its first argument, so one handler can serve many events
+//     without a manual args[0].(string). For back-compat a catch-all may also
+//     be a plain func(...any), in which case the event name is prepended to the
+//     args slice instead.
+func dispatchToAncestor(self js.Value, r triggerRoute, eventName string, args []any) bool {
 	for cur := findParentPranaElement(self); !cur.IsNull() && !cur.IsUndefined(); cur = findParentPranaElement(cur) {
 		pst := getPranaState(cur)
 		if pst == nil {
 			continue
 		}
-		handler := getField(pst.Data.M, handlerName)
+		handler := getField(pst.Data.M, r.handler)
 		if handler == nil {
 			continue
 		}
 		switch fn := handler.(type) {
+		case func(string, ...any):
+			// The idiomatic catch-all signature: name comes typed, separate.
+			if fn == nil {
+				continue
+			}
+			if !r.prependEvent {
+				G.Logf(1, "trigger: handler %q uses the catch-all signature "+
+					"func(string, ...any) but is wired as @%s; named events use func(...any)\n",
+					r.handler, eventName)
+				return false
+			}
+			G.Logf(4, "trigger: calling catch-all %q for %q with %d args\n", r.handler, eventName, len(args))
+			fn(eventName, args...)
+			return true
 		case func(...any):
 			if fn == nil {
 				continue // nil placeholder — a real handler may sit higher up
 			}
-			G.Logf(4, "trigger: calling %q with %d args\n", handlerName, len(args))
-			fn(args...)
+			callArgs := args
+			if r.prependEvent {
+				callArgs = append([]any{eventName}, args...)
+			}
+			G.Logf(4, "trigger: calling %q with %d args\n", r.handler, len(callArgs))
+			fn(callArgs...)
 			return true
 		case TriggerHandler:
 			// TriggerHandler(nil) is the conventional placeholder used in
@@ -559,11 +586,15 @@ func dispatchToAncestor(self js.Value, handlerName string, args []any) bool {
 			if fn == nil {
 				continue
 			}
-			G.Logf(4, "trigger: calling %q with %d args\n", handlerName, len(args))
-			fn(args...)
+			callArgs := args
+			if r.prependEvent {
+				callArgs = append([]any{eventName}, args...)
+			}
+			G.Logf(4, "trigger: calling %q with %d args\n", r.handler, len(callArgs))
+			fn(callArgs...)
 			return true
 		default:
-			G.Logf(1, "trigger: handler %q is not a function\n", handlerName)
+			G.Logf(1, "trigger: handler %q is not a function\n", r.handler)
 			return false
 		}
 	}
@@ -583,11 +614,7 @@ func buildTrigger(self js.Value, rd *ReactiveData) func(eventName string, args .
 			return
 		}
 		for _, r := range routes {
-			callArgs := args
-			if r.prependEvent {
-				callArgs = append([]any{eventName}, args...)
-			}
-			if !dispatchToAncestor(self, r.handler, callArgs) {
+			if !dispatchToAncestor(self, r, eventName, args) {
 				G.Logf(3, "trigger: %q without handler %q in any prana ancestor\n", eventName, r.handler)
 			}
 		}

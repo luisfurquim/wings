@@ -8,6 +8,43 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
+## [0.15.6] — 2026-06-04
+
+### Added
+- **In-web test harness (`<w-test>`).** A framework widget that wraps any prana
+  widget and turns the live demo into a public, self-verifying test page. It
+  spies on every event the wrapped subject fires (via the new `@all` channel),
+  renders a live event log, and shows a ⏳/✅/❌ seal. With a `check="name"`
+  attribute the seal is driven by a Go assertion registered via
+  `wings.RegisterCheck` (`CheckFunc` over a `CheckCtx{Subject, Dom, Events}`),
+  run on mount, after every captured event, and on a Re-run button; without
+  `check=` the test is manual (human-toggled seal) for purely visual checks. The
+  host carries `data-wtest-state` so a later headless runner can scrape results.
+- **Catch-all event channels.** Two wildcard event bindings complement named
+  `@handler` bindings: `@all` is an additive spy that fires on every event
+  (including handled ones) and routes last, so assertions see the applied effect;
+  `@else` fires only for events with no named handler. Their handler signature is
+  `func(name string, params ...any)` — the event name is delivered typed as the
+  first argument, since one handler serves many events (a plain `func(...any)` is
+  still accepted, receiving the name prepended to the args). These make `<w-test>`
+  able to observe any widget's full event stream.
+- **Test suites.** Unit tests plus a `js/wasm` harness (`run-wasm-tests.sh`) that
+  runs the DOM-touching core under a minimal DOM shim, so the widget/runtime
+  layer is testable without a browser.
+
+### Fixed
+- **`dictbuild` language matching.** BCP-47 case/format variants (e.g. `PT-BR`,
+  `pt-br`) now resolve to the canonical key (`pt-BR`) after the raw-key match,
+  while non-standard ISO 639-3 codes are preserved.
+
+## [0.15.5] — 2026-06-02
+
+### Fixed
+- **Live-demo deployment.** The published site is served from the repository
+  root `docs/`, but the build wrote to `live-demo/docs/`; the two had drifted, so
+  the live site was stuck on a pre-i18n build. Synced the published `docs/` with
+  the current build and dropped the stale `en-US.csv` catalog.
+
 ## [0.15.4] — 2026-06-02
 
 ### Added

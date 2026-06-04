@@ -104,7 +104,7 @@ func (t *Test) Render(obj *wings.PranaObj) {
 		// Stamp the @all spy channel and provide its handler. buildTrigger reads
 		// @all live at fire time, so stamping now captures every subsequent event.
 		t.subject.Call("setAttribute", "@all", captureHandler)
-		obj.This.M[captureHandler] = func(args ...any) { t.onCapture(args...) }
+		obj.This.M[captureHandler] = func(name string, args ...any) { t.onCapture(name, args...) }
 	}
 
 	t.bindRerun()
@@ -116,17 +116,9 @@ func (t *Test) Render(obj *wings.PranaObj) {
 	}
 }
 
-// onCapture records one event (the @all channel prepends the event name as the
-// first arg) and re-runs the check.
-func (t *Test) onCapture(args ...any) {
-	name := ""
-	if len(args) > 0 {
-		name, _ = args[0].(string)
-	}
-	var eventArgs []any
-	if len(args) > 1 {
-		eventArgs = args[1:]
-	}
+// onCapture records one event (the @all channel delivers the event name typed,
+// followed by the event's own args) and re-runs the check.
+func (t *Test) onCapture(name string, eventArgs ...any) {
 	t.events = append(t.events, wings.CheckEvent{Name: name, Args: eventArgs})
 
 	argStr := ""

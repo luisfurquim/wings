@@ -41,6 +41,14 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
+### v0.15.6
+
+- **In-web test harness (`<w-test>`)** — wrap any widget to spy on every event it
+  fires, render a live event log, and show a pass/fail seal driven by a Go
+  assertion (`wings.RegisterCheck`) or a human toggle. See [wings/widget/test](#wingswidgettest--in-web-test-harness-w-test).
+- **Catch-all event channels** — `@all` (additive spy, runs last) and `@else`
+  (fires only for events with no named `@handler`). See [Catch-all event channels](#catch-all-event-channels-all--else).
+
 ### v0.15.4
 
 - **Message reuse** — name a flex message with `=name` and reuse it anywhere with
@@ -781,6 +789,47 @@ attributes whose values change at runtime (like `&` bindings) need to be observe
 
 See [Parent-Child Communication](#parent-child-communication) for a complete example.
 
+#### Catch-all event channels (`@all` / `@else`)
+
+A named binding like `@login` only routes the `login` event. Two wildcard
+channels let a parent observe events without naming each one:
+
+- **`@all`** — the **spy**. It fires on *every* event the child triggers,
+  including events that also have a named `@handler`. It routes **last**, after
+  the primary handler, so by the time `@all` runs the DOM and state already
+  reflect the event's effect — ideal for assertions and logging.
+- **`@else`** — the **rest**. It fires only for events that have *no* named
+  `@handler`. For any given event, `@<event>` and `@else` never both fire
+  (`@else` means "there was no specific handler").
+
+Because one catch-all serves many events, its handler has a different signature
+— `func(name string, params ...any)` — receiving the **event name typed as its
+first argument** (a spy needs to know which event fired). A named handler keeps
+the plain `func(...any)`.
+
+```html
+<my-widget
+    @save="onSave"          <!-- specific handler -->
+    @else="onOther"         <!-- fires for everything except save -->
+    @all="onAny">           <!-- fires for everything, including save, last -->
+</my-widget>
+```
+
+```go
+obj.This.Set("onSave", func(args ...any) { /* args = save's args */ })
+obj.This.Set("onOther", func(name string, params ...any) {
+    // name = the event name, params = the event's own args
+})
+obj.This.Set("onAny", func(name string, params ...any) {
+    // fires for every event, after the specific/else handler
+})
+```
+
+These power the [`<w-test>`](#wingswidgettest--in-web-test-harness-w-test)
+harness, which stamps `@all` on the widget it wraps to capture its whole event
+stream. Like other `@` bindings they are read from the DOM at fire time and need
+no observed-attribute declaration.
+
 ## Reactive Data API
 
 The `ReactiveData` type wraps a `map[string]any` and triggers automatic DOM
@@ -1508,6 +1557,49 @@ on selecting a conflicting skin, auto-replaces the colliding active skin rather
 than blocking. It registers an `OnSkinChange` hook so its UI stays in sync with
 programmatic `ApplySkin` / `DeactivateSkin` calls. Just drop `<skin-switcher>`
 into your markup.
+
+### wings/widget/test — In-web Test Harness (`w-test`)
+
+```go
+import _ "github.com/luisfurquim/wings/widget/test"
+```
+
+Wrap any prana widget (the *subject*) in `<w-test>` to get an in-web integration
+test: it stamps the [`@all`](#catch-all-event-channels-all--else) spy channel on
+the subject to capture every event it fires, renders a live event log, and shows
+a ⏳/✅/❌ seal. This complements the testing tripod — unit tests for pure logic,
+`<w-test>` for DOM integration, the human eye for aesthetics — and the tests are
+visible to everyone, right next to the thing they exercise.
+
+```html
+<w-test title="Counter fires changed"
+        expect="Typing a new count should fire the changed event"
+        check="countChanged">
+    <count-input value="{{count}}"></count-input>
+</w-test>
+```
+
+The assertion is a Go function registered by name (mirroring `RegisterSkin`),
+run on mount, after every captured event, and on the **Re-run** button:
+
+```go
+wings.RegisterCheck("countChanged", func(ctx wings.CheckCtx) (bool, string) {
+    for _, e := range ctx.Events {
+        if e.Name == "changed" {
+            return true, "saw changed"
+        }
+    }
+    return false, "no changed event yet"
+})
+```
+
+A `CheckFunc` receives a `CheckCtx{Subject, Dom, Events}` — the wrapped element,
+a node to query, and the ordered event log — and returns `(pass bool, detail
+string)`. With **no `check=` attribute** the test is manual: the seal is a
+human-toggled ✅/❌ for purely visual checks (e.g. skin aesthetics). The host
+carries `data-wtest-state="pending|pass|fail"`, so a later headless runner
+(Playwright) can scrape seals without re-deriving them. The widget's own chrome
+("Events", "Re-run") is in English.
 
 ## Internationalization (i18n)
 
