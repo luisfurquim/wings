@@ -109,6 +109,15 @@ func (t *Test) Render(obj *wings.PranaObj) {
 
 	t.bindRerun()
 
+	// Register a probe so this card — auto or visual — shows up in the page
+	// report collected by <w-test-report>.
+	wings.RegisterWTest(obj.Element, func() (string, string, string) {
+		title, _ := obj.This.Get("title").(string)
+		state, _ := obj.This.Get("state").(string)
+		detail, _ := obj.This.Get("detail").(string)
+		return title, state, detail
+	})
+
 	if t.manual {
 		t.setSeal("pending", "")
 	} else {

@@ -28,6 +28,17 @@ per-commit record see the git log and tags.
   first argument, since one handler serves many events (a plain `func(...any)` is
   still accepted, receiving the name prepended to the args). These make `<w-test>`
   able to observe any widget's full event stream.
+- **Module self-tests + page report (`Testable()` + `<w-test-report>`).** A module
+  can declare its own integration checks by implementing the optional `Testabler`
+  interface (`Testable() map[string]wings.CheckFunc`); the runtime discovers them
+  per live instance on mount. `<w-test-report>` collects the whole page's result
+  via `wings.RunReport()` — every `<w-test>` card (including the human-judged
+  visual ones, in whatever state they were left) plus every `Testable()` check —
+  renders it as JSON (`{kind, label, state, detail}`), and fires a `report` event
+  with that JSON. So a tester delivers one report of what passed and what failed
+  with a single click. Transport/persistence is the app's job — WINGS only
+  produces the report. Declare `Testable()` in a `wings_test`-tagged file so it
+  compiles only into test builds, never production.
 - **Test suites.** Unit tests plus a `js/wasm` harness (`run-wasm-tests.sh`) that
   runs the DOM-touching core under a minimal DOM shim, so the widget/runtime
   layer is testable without a browser.

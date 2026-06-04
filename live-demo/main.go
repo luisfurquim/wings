@@ -43,6 +43,7 @@ import (
 	_ "github.com/luisfurquim/wings/widget/tabbutton"
 	_ "github.com/luisfurquim/wings/widget/tabs"
 	_ "github.com/luisfurquim/wings/widget/test"
+	_ "github.com/luisfurquim/wings/widget/testreport"
 
 	_ "live-demo/mod/shell/appshell"
 	_ "live-demo/mod/shell/localeswitcher"

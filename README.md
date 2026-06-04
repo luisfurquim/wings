@@ -48,6 +48,10 @@ Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
   assertion (`wings.RegisterCheck`) or a human toggle. See [wings/widget/test](#wingswidgettest--in-web-test-harness-w-test).
 - **Catch-all event channels** — `@all` (additive spy, runs last) and `@else`
   (fires only for events with no named `@handler`). See [Catch-all event channels](#catch-all-event-channels-all--else).
+- **Module self-tests + page report** — a module declares its own integration
+  tests via `Testable()` (gated by the `wings_test` build tag); `<w-test-report>`
+  collects the whole page's result — every `<w-test>` card (including visual ones)
+  plus every `Testable()` check — as JSON. See [Module Self-tests](#wingswidgettestreport--module-self-tests-testable--w-test-report).
 
 ### v0.15.4
 
@@ -1600,6 +1604,71 @@ human-toggled ✅/❌ for purely visual checks (e.g. skin aesthetics). The host
 carries `data-wtest-state="pending|pass|fail"`, so a later headless runner
 (Playwright) can scrape seals without re-deriving them. The widget's own chrome
 ("Events", "Re-run") is in English.
+
+### wings/widget/testreport — Module Self-tests (`Testable()` + `w-test-report`)
+
+```go
+import _ "github.com/luisfurquim/wings/widget/testreport"
+```
+
+Instead of (or alongside) hand-wiring `<w-test>` cards, a module can **declare its
+own integration tests** by implementing the optional `Testabler` interface:
+
+```go
+type Testabler interface {
+    Testable() map[string]wings.CheckFunc
+}
+```
+
+The runtime discovers them **per live instance**: when an element whose module
+implements `Testabler` mounts, its checks are registered against that element;
+they are dropped when it disconnects. Each check sees a `CheckCtx` whose
+`Subject`/`Dom` are the live element (`Events` is empty — event-stream
+assertions belong in a `<w-test>` wrapper, which spies via `@all`).
+
+Declare `Testable()` in a file gated by the **`wings_test` build tag** so the
+tests compile only into test builds, never production:
+
+```go
+//go:build js && wasm && wings_test
+
+func (w *CountInput) Testable() map[string]wings.CheckFunc {
+    return map[string]wings.CheckFunc{
+        "renders-number-input": func(ctx wings.CheckCtx) (bool, string) {
+            inputs := dom.Query(ctx.Subject.Get("shadowRoot"), "#ci-inp")
+            if len(inputs) == 0 {
+                return false, "no #ci-inp rendered"
+            }
+            return true, "number input present"
+        },
+    }
+}
+```
+
+Drop `<w-test-report>` into your markup; its button collects the **whole page's
+test result** (`wings.RunReport()`) — every `<w-test>` card *including the
+human-judged visual ones, in whatever state the tester left them*, plus every
+`Testable()` check — shows it as JSON, and fires a `report` event carrying that
+JSON:
+
+```html
+<w-test-report @report="on_report"></w-test-report>
+```
+
+Each entry is `{kind, label, state, detail}`, where `kind` is `"w-test"` or
+`"testable"` and `state` is `"pass"`, `"fail"`, or `"pending"`. So a tester runs
+the whole page, judges the visual cards by eye, and delivers one report of what
+passed and what failed with a single click — no hand-written "these 100 of 500
+failed".
+
+**Transport is your call.** WINGS only *produces* the report — sending it to a
+server, writing it to a file, or diffing it in CI is the app's decision, handled
+in your `@report` handler. WINGS implements none of that.
+
+To test **everything**, don't ask the framework to enumerate widgets — that is a
+composition concern. Build a throwaway test app that imports and mounts all your
+modules *flat* (no app hierarchy), compile it with `-tags wings_test`, and open
+it only in your dev/CI pipeline — never publish it.
 
 ## Internationalization (i18n)
 

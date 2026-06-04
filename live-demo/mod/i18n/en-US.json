@@ -310,5 +310,21 @@
   {
     "content": "Visually confirm the gender selector is styled by the active skin and click the seal to record the result.",
     "revised": true
+  },
+  {
+    "content": "Test report",
+    "revised": true
+  },
+  {
+    "content": "The button below gathers EVERY test on this page into one JSON report: the cards above (including the visual ones, in whatever state you left them) and the tests each widget declares via Testable(). The idea is to run everything, judge the visual ones by eye, and deliver what passed and what failed in one click — no hand-written report.",
+    "revised": true
+  },
+  {
+    "content": "This demo was built with the wings_test tag, which enables the Testable() tests; without it, a normal build ships no test code at all.",
+    "revised": true
+  },
+  {
+    "content": "What to do with this JSON — send it to a server, write it to a file, diff it in CI — is up to you: WINGS only produces the report and fires a report event with it.",
+    "revised": true
   }
 ]

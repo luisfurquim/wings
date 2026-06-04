@@ -411,6 +411,8 @@ func elementDisconnected(self js.Value) {
 		renderDone = st.RenderDone
 	}
 
+	unregisterTestable(self)
+	unregisterWTest(self)
 	releaseTwoWayBindings(nodeID)
 	delete(nodeRegistry, nodeID)
 
@@ -482,6 +484,11 @@ func waitAndRender(ctx context.Context, done chan struct{}, self js.Value, mod P
 
 	G.Logf(3, "waitAndRender: calling Render() for %s\n", self.Get("_pranaTag").String())
 	mod.Render(pObj)
+
+	// Discovery for module-declared self-tests (Testabler): now that the element
+	// is connected and rendered, record its checks so <w-test-report> can run
+	// them. No-op unless the module implements Testabler (wings_test builds).
+	registerTestable(self, self.Get("_pranaTag").String(), mod)
 }
 
 // isConnected checks if the element is connected to the DOM.

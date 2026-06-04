@@ -13,4 +13,13 @@
           expect="Confirme a olho que o seletor de gênero está estilizado pela skin ativa e clique no selo para registrar o resultado.">
     <gender-picker></gender-picker>
   </w-test>
+
+  <section class="wtr-section">
+    <h3>Relatório de testes</h3>
+    <p class="hint">O botão abaixo reúne TODOS os testes desta página num só relatório JSON: os cards acima (inclusive os visuais, no estado em que você os deixou) e os testes que cada widget declara via Testable(). A ideia é rodar tudo, conferir os visuais a olho e, com um clique, entregar o que passou e o que falhou — sem escrever relatório à mão.</p>
+    <p class="hint">Esta demonstração foi compilada com a tag wings_test, que ativa os testes Testable(); sem ela, um build normal não embarca código de teste algum.</p>
+    <p class="hint">O que fazer com esse JSON — enviar a um servidor, gravar em arquivo, comparar no CI — é decisão sua: o WINGS só produz o relatório e dispara um evento report com ele.</p>
+    <p class="hint hint-code" translate="no">&lt;w-test-report @report="fn"&gt; · Testable() map[string]wings.CheckFunc · wings.RunAllTestables()</p>
+    <w-test-report @report="on_report"></w-test-report>
+  </section>
 </div>

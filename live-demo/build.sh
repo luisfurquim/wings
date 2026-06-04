@@ -39,7 +39,10 @@ cp mod/i18n/*.json docs/i18n/
 cp mod/i18n/*.json.sig docs/i18n/
 rm -f docs/i18n/*.meta.json
 
-GOOS=js GOARCH=wasm go build -buildvcs=false -o docs/main.wasm .
+# -tags wings_test compiles modules' Testable() self-tests into the demo so the
+# <w-test-report> card has something to run. A real app omits this tag for
+# production builds (and uses it only for a throwaway test app in dev/CI).
+GOOS=js GOARCH=wasm go build -buildvcs=false -tags wings_test -o docs/main.wasm .
 
 # ── SRI hash injection ────────────────────────────────────────────────────────
 # Compute SHA-384 integrity hashes for the JS helpers we just copied into docs/

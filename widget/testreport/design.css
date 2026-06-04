@@ -1,0 +1,42 @@
+.wtr {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.wtr-run {
+  padding: 6px 14px;
+  border: var(--wings-border-width, 1px) var(--wings-border-style, solid) var(--wings-border, #ccc);
+  border-radius: var(--wings-radius-sm, 4px);
+  background: var(--wings-button-bg, var(--wings-surface, #fff));
+  color: var(--wings-button-color, var(--wings-text, #111));
+  cursor: pointer;
+  transition: var(--wings-transition-fast, 0.12s) ease;
+}
+
+.wtr-run:hover {
+  filter: brightness(0.97);
+}
+
+.wtr-count {
+  font-size: 0.85rem;
+  color: var(--wings-text-muted, #555);
+}
+
+.wtr-json {
+  box-sizing: border-box;
+  width: 100%;
+  max-height: 320px;
+  overflow: auto;
+  margin: 0;
+  padding: 10px 12px;
+  background: var(--wings-surface, #f6f6f6);
+  border: var(--wings-border-width, 1px) var(--wings-border-style, solid) var(--wings-border, #ddd);
+  border-radius: var(--wings-radius-sm, 4px);
+  color: var(--wings-text, #111);
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  white-space: pre;
+}

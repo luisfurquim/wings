@@ -310,5 +310,21 @@
   {
     "context": "tabs/wtest/wtesttab.html:13:19",
     "ctxdetail": "w-test[expect]@tabs/wtest/wtesttab.html:13:19"
+  },
+  {
+    "context": "tabs/wtest/wtesttab.html:18:9",
+    "ctxdetail": "h3@tabs/wtest/wtesttab.html:18:9"
+  },
+  {
+    "context": "tabs/wtest/wtesttab.html:19:21",
+    "ctxdetail": "p@tabs/wtest/wtesttab.html:19:21"
+  },
+  {
+    "context": "tabs/wtest/wtesttab.html:20:21",
+    "ctxdetail": "p@tabs/wtest/wtesttab.html:20:21"
+  },
+  {
+    "context": "tabs/wtest/wtesttab.html:21:21",
+    "ctxdetail": "p@tabs/wtest/wtesttab.html:21:21"
   }
 ]

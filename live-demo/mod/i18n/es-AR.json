@@ -310,5 +310,21 @@
   {
     "content": "Confirmá a ojo que el selector de género está estilizado por la skin activa y hacé clic en el sello para registrar el resultado.",
     "revised": true
+  },
+  {
+    "content": "Informe de pruebas",
+    "revised": true
+  },
+  {
+    "content": "El botón de abajo reúne TODAS las pruebas de esta página en un solo informe JSON: las tarjetas de arriba (incluidas las visuales, en el estado en que las dejaste) y las pruebas que cada widget declara via Testable(). La idea es correr todo, revisar las visuales a ojo y, con un clic, entregar lo que pasó y lo que falló — sin escribir un informe a mano.",
+    "revised": true
+  },
+  {
+    "content": "Esta demostración se compiló con el tag wings_test, que activa las pruebas Testable(); sin él, un build normal no incluye ningún código de prueba.",
+    "revised": true
+  },
+  {
+    "content": "Qué hacer con ese JSON — enviarlo a un servidor, guardarlo en un archivo, compararlo en CI — es decisión tuya: WINGS solo produce el informe y dispara un evento report con él.",
+    "revised": true
   }
 ]
