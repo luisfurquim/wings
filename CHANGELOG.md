@@ -8,6 +8,25 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
+## [0.15.8] — 2026-06-05
+
+### Changed
+- **`gen_i18n` preserves translations across source edits.** A run now aligns
+  the new source order against the committed deflang catalog: a string that only
+  moved keeps its translation and `revised` flag (position-independent exact
+  match), and an *edited* string is matched to its closest previous version
+  (Levenshtein similarity, scoped between surrounding unchanged anchors) so its
+  old translation is reused but flagged `revised=false` for re-review. Before,
+  any edit — even a typo fix — reset the translation to empty. New strings start
+  empty and removed ones are dropped, as before. Re-running on unchanged sources
+  is a no-op (idempotent).
+
+### Removed
+- **Dead `i18n.db` artifact.** `gen_i18n` no longer writes the gob-encoded trie
+  database (`loadDB`/`saveDB`): it was write-only — nothing ever read it back —
+  and change detection now runs off the committed `i18n/*.json` catalogs. Any
+  stale `i18n.db` on disk is harmless and ignored.
+
 ## [0.15.7] — 2026-06-04
 
 ### Documentation

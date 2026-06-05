@@ -9,9 +9,9 @@ cmd/gen_i18n/dicts/*.db
 # dictbuild auto-fetch state (cloned unitex-core, built tools, cached .bin/.inf)
 cmd/dictbuild/tool/
 cmd/dictbuild/cache/
-# gen_i18n writes <root>/i18n.db each run but never reads it back (loadDB is
-# unused); index stability comes from the committed i18n/*.json catalogs, not
-# this file. It's a regenerable build artifact, not source — don't track it.
+# Legacy gen_i18n write-only artifact. No longer produced (change detection now
+# runs off the committed i18n/*.json catalogs); ignored so any stale file left
+# by an older build is never tracked.
 **/i18n.db
 
 # Compiled binaries (built at repo root or inside their cmd/ directory)

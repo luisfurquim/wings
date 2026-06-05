@@ -42,6 +42,14 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
+### v0.15.8
+
+- **Translations survive source edits** — `gen_i18n` now reuses a string's old
+  translation when its source is merely moved (kept verbatim) or lightly edited
+  (reused and flagged `revised=false` for re-review), instead of resetting it on
+  any change. Runs entirely off the committed `i18n/*.json` catalogs. See
+  [cmd/gen_i18n](#cmdgen_i18n--build-time-extractor).
+
 ### v0.15.6
 
 - **In-web test harness (`<w-test>`)** — wrap any widget to spy on every event it
@@ -1689,7 +1697,7 @@ flexions from a Unitex DELAF source.
                          │   cmd/gen_i18n       placeholder, aria-label) +
                          ▼                      flex blocks {{@g %c ~w ...}}
             ┌────────────────────────────────────────────────┐
-            │ *.i18n.html + i18n.db                          │
+            │ *.i18n.html                                    │
             │ i18n/<deflang>.json                            │  ── text catalog
             │ i18n/<deflang>.inflections.json  (if any flex) │  ── gender×CLDR
             └────────────┬───────────────────────────────────┘
@@ -1936,16 +1944,20 @@ What it does:
   parser emits a wrapping `<html><head></head><body>…</body></html>` — this is
   harmless; the framework sets the template via `<template>.innerHTML`, which
   dissolves those wrappers and keeps the fragment.)
-- Persists the trie to `i18n.db` (gob + 64-bit epoch version header) at
-  the root of `--path`, so the next run reuses indices for unchanged
-  strings.
 - Writes two parallel files per language: `i18n/<lang>.json` (browser
   bundle — `content`, `revised`, optional `source`) and
   `i18n/<lang>.meta.json` (server-only — `context`, `ctxdetail`). The
   deflang `.json` has `content` set to the source string for every entry;
-  other `<lang>.json` files are remapped in place across runs: surviving
-  translations and `revised` flags are carried over; disappeared strings
-  are reset to empty.
+  other `<lang>.json` files are remapped in place across runs by the
+  change-detection pass below.
+- **Preserves translations across source edits.** Each run aligns the new
+  source order against the committed deflang catalog (no side-car database —
+  the JSON *is* the record). A source string still present is matched exactly
+  regardless of where it moved, so its translation and `revised` flag carry
+  over verbatim; a string that was *edited* is matched to its closest previous
+  version (Levenshtein similarity, scoped between the surrounding unchanged
+  anchors) and its old translation is reused but flagged `revised=false` for
+  re-review; genuinely new strings start empty and disappeared ones are dropped.
 - Validates `--deflang` as a BCP 47 tag via `golang.org/x/text/language`
   (falls back to `en-US` on invalid input).
 - If legacy `<lang>.csv` files exist without a corresponding `<lang>.json`,

@@ -4,9 +4,7 @@ import (
 	"bytes"
 	"crypto/ed25519"
 	"crypto/md5"
-	"encoding/binary"
 	"encoding/csv"
-	"encoding/gob"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -14,7 +12,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 	"unicode"
 
 	"golang.org/x/net/html"
@@ -144,9 +141,6 @@ func main() {
 		}
 	}
 
-	// Capture the current epoch once for the entire run.
-	version := time.Now().Unix()
-
 	// Ensure the i18n output directory exists.
 	i18nDir := filepath.Join(rootDir, "i18n")
 	if err := os.MkdirAll(i18nDir, 0755); err != nil {
@@ -197,18 +191,22 @@ func main() {
 	if err != nil {
 		G.Fatalf(1, "error loading old deflang json: %v", err)
 	}
-	oldSourceToIdx := map[string]int{}
+	// Align the new source order against the previous deflang catalog so
+	// translations survive edits, insertions, moves, and deletions (see
+	// alignSources). Exact matches carry over verbatim (Revised preserved);
+	// fuzzy matches reuse the old translation but flag it for re-review.
+	oldSrc := make([]string, len(oldDef))
 	for i, e := range oldDef {
-		if _, seen := oldSourceToIdx[e.Content]; !seen {
-			oldSourceToIdx[e.Content] = i
-		}
+		oldSrc[i] = e.Content
 	}
+	align, alignKind := alignSources(oldSrc, txt)
 
 	// Build and save the new deflang catalog.
 	defEntries := buildEntries(txt, func(i int) (string, bool) {
-		if oldIdx, ok := oldSourceToIdx[txt[i]]; ok && oldIdx < len(oldDef) {
-			return "", oldDef[oldIdx].Revised
+		if alignKind[i] == matchExact {
+			return "", oldDef[align[i]].Revised
 		}
+		// New or edited source: needs human review.
 		return "", false
 	}, func(i int) string {
 		// Default language: Content is the source string itself.
@@ -239,11 +237,15 @@ func main() {
 			G.Fatalf(1, "error loading %s: %v", langFile, err)
 		}
 		langEntries := buildEntries(txt, func(i int) (content string, revised bool) {
-			oldIdx, ok := oldSourceToIdx[txt[i]]
-			if !ok || oldIdx >= len(oldLang) {
+			oi := align[i]
+			if oi < 0 || oi >= len(oldLang) {
 				return "", false
 			}
-			return oldLang[oldIdx].Content, oldLang[oldIdx].Revised
+			if alignKind[i] == matchFuzzy {
+				// Source was edited: reuse the translation but force re-review.
+				return oldLang[oi].Content, false
+			}
+			return oldLang[oi].Content, oldLang[oi].Revised
 		}, nil)
 		applyTextTranslations(langEntries, defEntries, defLang, lang)
 		if err := saveJSON(langFile, langEntries); err != nil {
@@ -260,13 +262,7 @@ func main() {
 		G.Fatalf(1, "error emitting flex catalogs: %v", err)
 	}
 
-	// Save the current tree to i18n.db.
-	dbPath := filepath.Join(rootDir, "i18n.db")
-	if err := saveDB(dbPath, version); err != nil {
-		G.Fatalf(1, "error saving db: %v", err)
-	}
-
-	G.Logf(2, "done: %d entries, version %d", len(dbMap), version)
+	G.Logf(2, "done: %d entries", len(dbMap))
 	G.Logf(2, "Arena: %d nodes", len(arena))
 	G.Logf(2, "Txt: %d entries", len(txt))
 	G.Logf(2, "Flex: %d rules", len(flexBlocks))
@@ -498,50 +494,6 @@ func loadLegacyCSV(path string) ([]string, error) {
 		result[i] = unescapeControl(rec[0])
 	}
 	return result, nil
-}
-
-// loadDB reads the previous version and arena from the db file.
-// Returns zero version and nil arena if the file does not exist.
-func loadDB(path string) (int64, []Node, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return 0, nil, nil
-		}
-		return 0, nil, err
-	}
-	defer f.Close()
-
-	var version int64
-	if err := binary.Read(f, binary.LittleEndian, &version); err != nil {
-		return 0, nil, fmt.Errorf("read version: %w", err)
-	}
-
-	var oldArena []Node
-	if err := gob.NewDecoder(f).Decode(&oldArena); err != nil {
-		return 0, nil, fmt.Errorf("decode arena: %w", err)
-	}
-
-	return version, oldArena, nil
-}
-
-// saveDB writes the current version and arena to the db file.
-func saveDB(path string, version int64) error {
-	f, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	if err := binary.Write(f, binary.LittleEndian, version); err != nil {
-		return fmt.Errorf("write version: %w", err)
-	}
-
-	if err := gob.NewEncoder(f).Encode(arena); err != nil {
-		return fmt.Errorf("encode arena: %w", err)
-	}
-
-	return nil
 }
 
 // posTracker walks an HTML source buffer in forward-only order, returning
@@ -997,6 +949,3 @@ func treeGet(key string) int32 {
 	}
 	return arena[idx].Data
 }
-
-// Ensure loadDB stays referenced so future incremental logic can use it.
-var _ = loadDB
