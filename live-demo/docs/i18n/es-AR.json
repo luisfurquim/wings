@@ -288,6 +288,134 @@
     "revised": false
   },
   {
+    "content": "Modo panel (predeterminado)",
+    "revised": false
+  },
+  {
+    "content": "El autor coloca cada botón junto a su panel, alternando botón y panel como hijos directos de w-tabs; el widget reagrupa todo solo: los botones forman una franja arriba y solo el panel activo aparece abajo.",
+    "revised": false
+  },
+  {
+    "content": "Vista general",
+    "revised": false
+  },
+  {
+    "content": "Hacer clic en un botón activa exactamente una pestaña y desactiva las demás. Cambie la piel arriba — las pestañas se adaptan a cada piel mediante los tokens genéricos --wings-*.",
+    "revised": false
+  },
+  {
+    "content": "Detalles",
+    "revised": false
+  },
+  {
+    "content": "Detalles — conserva el estado del DOM",
+    "revised": false
+  },
+  {
+    "content": "Escriba algo aquí, cambie de pestaña y vuelva: el texto sigue ahí, porque w-tab solo se oculta vía CSS (display:none), dejando el DOM intacto.",
+    "revised": false
+  },
+  {
+    "content": "Escriba y cambie de pestaña...",
+    "revised": false
+  },
+  {
+    "content": "Ajustes",
+    "revised": false
+  },
+  {
+    "content": "No hace falta tid: el emparejamiento botón↔panel es posicional. Use tid solo para activación programática o enlace directo.",
+    "revised": false
+  },
+  {
+    "content": "Modo suelto — botones tipo chip, paneles transparentes",
+    "revised": false
+  },
+  {
+    "content": "La misma autoría, solo cambia el modo. Los botones se ven como chips independientes y el panel pierde su marco, para cuando el diseño alrededor ya enmarca el contenido.",
+    "revised": false
+  },
+  {
+    "content": "Primero",
+    "revised": false
+  },
+  {
+    "content": "La franja de botones se desplaza en horizontal cuando supera el ancho disponible.",
+    "revised": false
+  },
+  {
+    "content": "Segundo",
+    "revised": false
+  },
+  {
+    "content": "Cada panel es un espacio transparente — quien lo usa aporta su propio marco.",
+    "revised": false
+  },
+  {
+    "content": "Tercero",
+    "revised": false
+  },
+  {
+    "content": "Cambiar el modo en tiempo de ejecución reordena exactamente el mismo marcado.",
+    "revised": false
+  },
+  {
+    "content": "Modo menú — botones en vertical, contenido al lado",
+    "revised": false
+  },
+  {
+    "content": "Inicio",
+    "revised": false
+  },
+  {
+    "content": "El modo menú pone los botones en una columna a la izquierda y los paneles a la derecha. El mismo widget, otro modo — ese es el espíritu.",
+    "revised": false
+  },
+  {
+    "content": "Preferencias",
+    "revised": false
+  },
+  {
+    "content": "Los ajustes viven aquí.",
+    "revised": false
+  },
+  {
+    "content": "Acerca de",
+    "revised": false
+  },
+  {
+    "content": "Modo acordeón — <details> nativo por panel",
+    "revised": false
+  },
+  {
+    "content": "En este modo, w-tabs mueve cada botón dentro de su panel, donde se vuelve un <summary> de verdad: accesibilidad, animación y estado nativos, a partir del mismo marcado puesto junto. Varios paneles pueden estar abiertos a la vez.",
+    "revised": false
+  },
+  {
+    "content": "Sección 1",
+    "revised": false
+  },
+  {
+    "content": "Cada sección se abre y cierra de forma independiente — el trabajo lo hace el widget de revelación nativo de la plataforma.",
+    "revised": false
+  },
+  {
+    "content": "Sección 2",
+    "revised": false
+  },
+  {
+    "content": "Haga clic en un encabezado para expandirlo o contraerlo sin afectar a los demás.",
+    "revised": false
+  },
+  {
+    "content": "Sección 3",
+    "revised": false
+  },
+  {
+    "content": "Los mismos botones que forman la franja de pestañas en los otros modos se vuelven resúmenes aquí.",
+    "revised": false
+  },
+  {
     "content": "Probador in-web",
     "revised": true
   },

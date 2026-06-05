@@ -288,6 +288,134 @@
     "ctxdetail": "td@tabs/measures/tempdisplay/tempdisplay.html:6:13"
   },
   {
+    "context": "tabs/tabsdemo/tabsdemo.html:4:9",
+    "ctxdetail": "h3@tabs/tabsdemo/tabsdemo.html:4:9"
+  },
+  {
+    "context": "tabs/tabsdemo/tabsdemo.html:5:21",
+    "ctxdetail": "p@tabs/tabsdemo/tabsdemo.html:5:21"
+  },
+  {
+    "context": "tabs/tabsdemo/tabsdemo.html:9:32",
+    "ctxdetail": "w-tabbutton@tabs/tabsdemo/tabsdemo.html:9:32<br/>h4@tabs/tabsdemo/tabsdemo.html:11:15"
+  },
+  {
+    "context": "tabs/tabsdemo/tabsdemo.html:12:14",
+    "ctxdetail": "p@tabs/tabsdemo/tabsdemo.html:12:14"
+  },
+  {
+    "context": "tabs/tabsdemo/tabsdemo.html:15:22",
+    "ctxdetail": "w-tabbutton@tabs/tabsdemo/tabsdemo.html:15:22"
+  },
+  {
+    "context": "tabs/tabsdemo/tabsdemo.html:17:15",
+    "ctxdetail": "h4@tabs/tabsdemo/tabsdemo.html:17:15"
+  },
+  {
+    "context": "tabs/tabsdemo/tabsdemo.html:18:14",
+    "ctxdetail": "p@tabs/tabsdemo/tabsdemo.html:18:14"
+  },
+  {
+    "context": "tabs/tabsdemo/tabsdemo.html:19:43",
+    "ctxdetail": "input[placeholder]@tabs/tabsdemo/tabsdemo.html:19:43"
+  },
+  {
+    "context": "tabs/tabsdemo/tabsdemo.html:22:22",
+    "ctxdetail": "w-tabbutton@tabs/tabsdemo/tabsdemo.html:22:22<br/>h4@tabs/tabsdemo/tabsdemo.html:24:15"
+  },
+  {
+    "context": "tabs/tabsdemo/tabsdemo.html:25:14",
+    "ctxdetail": "p@tabs/tabsdemo/tabsdemo.html:25:14"
+  },
+  {
+    "context": "tabs/tabsdemo/tabsdemo.html:32:9",
+    "ctxdetail": "h3@tabs/tabsdemo/tabsdemo.html:32:9"
+  },
+  {
+    "context": "tabs/tabsdemo/tabsdemo.html:33:21",
+    "ctxdetail": "p@tabs/tabsdemo/tabsdemo.html:33:21"
+  },
+  {
+    "context": "tabs/tabsdemo/tabsdemo.html:37:32",
+    "ctxdetail": "w-tabbutton@tabs/tabsdemo/tabsdemo.html:37:32<br/>h4@tabs/tabsdemo/tabsdemo.html:38:20"
+  },
+  {
+    "context": "tabs/tabsdemo/tabsdemo.html:38:36",
+    "ctxdetail": "p@tabs/tabsdemo/tabsdemo.html:38:36"
+  },
+  {
+    "context": "tabs/tabsdemo/tabsdemo.html:40:22",
+    "ctxdetail": "w-tabbutton@tabs/tabsdemo/tabsdemo.html:40:22<br/>h4@tabs/tabsdemo/tabsdemo.html:41:20"
+  },
+  {
+    "context": "tabs/tabsdemo/tabsdemo.html:41:35",
+    "ctxdetail": "p@tabs/tabsdemo/tabsdemo.html:41:35"
+  },
+  {
+    "context": "tabs/tabsdemo/tabsdemo.html:43:22",
+    "ctxdetail": "w-tabbutton@tabs/tabsdemo/tabsdemo.html:43:22<br/>h4@tabs/tabsdemo/tabsdemo.html:44:20"
+  },
+  {
+    "context": "tabs/tabsdemo/tabsdemo.html:44:36",
+    "ctxdetail": "p@tabs/tabsdemo/tabsdemo.html:44:36"
+  },
+  {
+    "context": "tabs/tabsdemo/tabsdemo.html:50:9",
+    "ctxdetail": "h3@tabs/tabsdemo/tabsdemo.html:50:9"
+  },
+  {
+    "context": "tabs/tabsdemo/tabsdemo.html:54:32",
+    "ctxdetail": "w-tabbutton@tabs/tabsdemo/tabsdemo.html:54:32<br/>h4@tabs/tabsdemo/tabsdemo.html:55:20"
+  },
+  {
+    "context": "tabs/tabsdemo/tabsdemo.html:55:35",
+    "ctxdetail": "p@tabs/tabsdemo/tabsdemo.html:55:35"
+  },
+  {
+    "context": "tabs/tabsdemo/tabsdemo.html:57:22",
+    "ctxdetail": "w-tabbutton@tabs/tabsdemo/tabsdemo.html:57:22<br/>h4@tabs/tabsdemo/tabsdemo.html:58:20"
+  },
+  {
+    "context": "tabs/tabsdemo/tabsdemo.html:58:41",
+    "ctxdetail": "p@tabs/tabsdemo/tabsdemo.html:58:41"
+  },
+  {
+    "context": "tabs/tabsdemo/tabsdemo.html:60:22",
+    "ctxdetail": "w-tabbutton@tabs/tabsdemo/tabsdemo.html:60:22<br/>h4@tabs/tabsdemo/tabsdemo.html:61:20"
+  },
+  {
+    "context": "tabs/tabsdemo/tabsdemo.html:0:0",
+    "ctxdetail": "h3@tabs/tabsdemo/tabsdemo.html:0:0"
+  },
+  {
+    "context": "tabs/tabsdemo/tabsdemo.html:0:0",
+    "ctxdetail": "p@tabs/tabsdemo/tabsdemo.html:0:0"
+  },
+  {
+    "context": "tabs/tabsdemo/tabsdemo.html:72:22",
+    "ctxdetail": "w-tabbutton@tabs/tabsdemo/tabsdemo.html:72:22"
+  },
+  {
+    "context": "tabs/tabsdemo/tabsdemo.html:73:19",
+    "ctxdetail": "p@tabs/tabsdemo/tabsdemo.html:73:19"
+  },
+  {
+    "context": "tabs/tabsdemo/tabsdemo.html:75:22",
+    "ctxdetail": "w-tabbutton@tabs/tabsdemo/tabsdemo.html:75:22"
+  },
+  {
+    "context": "tabs/tabsdemo/tabsdemo.html:76:19",
+    "ctxdetail": "p@tabs/tabsdemo/tabsdemo.html:76:19"
+  },
+  {
+    "context": "tabs/tabsdemo/tabsdemo.html:78:22",
+    "ctxdetail": "w-tabbutton@tabs/tabsdemo/tabsdemo.html:78:22"
+  },
+  {
+    "context": "tabs/tabsdemo/tabsdemo.html:79:19",
+    "ctxdetail": "p@tabs/tabsdemo/tabsdemo.html:79:19"
+  },
+  {
     "context": "tabs/wtest/wtesttab.html:2:7",
     "ctxdetail": "h2@tabs/wtest/wtesttab.html:2:7"
   },

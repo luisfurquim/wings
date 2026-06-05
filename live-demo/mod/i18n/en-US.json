@@ -288,6 +288,134 @@
     "revised": false
   },
   {
+    "content": "Panel mode (default)",
+    "revised": false
+  },
+  {
+    "content": "The author co-locates each button with its panel, alternating button and panel as direct children of w-tabs; the widget regroups everything on its own: the buttons become a strip on top and only the active panel shows below.",
+    "revised": false
+  },
+  {
+    "content": "Overview",
+    "revised": false
+  },
+  {
+    "content": "Clicking a button activates exactly one tab and deactivates the others. Switch the skin above — the tabs adapt to every skin via the generic --wings-* tokens.",
+    "revised": false
+  },
+  {
+    "content": "Details",
+    "revised": false
+  },
+  {
+    "content": "Details — preserves DOM state",
+    "revised": false
+  },
+  {
+    "content": "Type something here, switch tabs and come back: the text is still there, because w-tab just hides via CSS (display:none), leaving the DOM intact.",
+    "revised": false
+  },
+  {
+    "content": "Type and switch tabs...",
+    "revised": false
+  },
+  {
+    "content": "Settings",
+    "revised": false
+  },
+  {
+    "content": "No tid needed: button↔panel pairing is positional. Use tid only for programmatic or deep-link activation.",
+    "revised": false
+  },
+  {
+    "content": "Detached mode — chip-like buttons, transparent panels",
+    "revised": false
+  },
+  {
+    "content": "Same authoring, only the mode changes. The buttons read as free-standing chips and the panel loses its chrome, for when the surrounding layout already frames the content.",
+    "revised": false
+  },
+  {
+    "content": "First",
+    "revised": false
+  },
+  {
+    "content": "The button strip scrolls horizontally when it overflows the available width.",
+    "revised": false
+  },
+  {
+    "content": "Second",
+    "revised": false
+  },
+  {
+    "content": "Each panel is a transparent slot — the consumer supplies its own chrome.",
+    "revised": false
+  },
+  {
+    "content": "Third",
+    "revised": false
+  },
+  {
+    "content": "Switching the mode at runtime rearranges the very same markup.",
+    "revised": false
+  },
+  {
+    "content": "Menu mode — vertical buttons, content beside",
+    "revised": false
+  },
+  {
+    "content": "Home",
+    "revised": false
+  },
+  {
+    "content": "Menu mode puts the buttons in a left column and the panels on the right. Same widget, different mode — that's the spirit.",
+    "revised": false
+  },
+  {
+    "content": "Preferences",
+    "revised": false
+  },
+  {
+    "content": "Adjustments live here.",
+    "revised": false
+  },
+  {
+    "content": "About",
+    "revised": false
+  },
+  {
+    "content": "Accordion mode — native <details> per panel",
+    "revised": false
+  },
+  {
+    "content": "In this mode w-tabs moves each button into its panel, where it becomes a real <summary>: native accessibility, animation and state, from the same co-located markup. Multiple panels can be open at once.",
+    "revised": false
+  },
+  {
+    "content": "Section 1",
+    "revised": false
+  },
+  {
+    "content": "Each section toggles independently — the platform's native disclosure widget does the work.",
+    "revised": false
+  },
+  {
+    "content": "Section 2",
+    "revised": false
+  },
+  {
+    "content": "Click a header to expand or collapse it without affecting the others.",
+    "revised": false
+  },
+  {
+    "content": "Section 3",
+    "revised": false
+  },
+  {
+    "content": "The same buttons that form the tab strip in the other modes become summaries here.",
+    "revised": false
+  },
+  {
     "content": "In-web tester",
     "revised": true
   },

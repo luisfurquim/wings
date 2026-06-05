@@ -18,6 +18,8 @@ const cssContent = `
 .tabs-demo .bar { display: flex; gap: 2px; padding: 0 4px; border-bottom: var(--wings-border-width, 1px) var(--wings-border-style, solid) var(--wings-border, #ccc); }
 .tabs-demo .content { min-height: 180px; }
 .tabs-demo h4 { margin: 0 0 8px; }
+.tabs-demo .hint { font-size: 0.85rem; color: var(--wings-text-muted, #555); margin: 16px 0 4px; }
+.tabs-demo .hint-code { font-family: monospace; background: var(--wings-surface, #eee); padding: 4px 8px; border-radius: 3px; display: inline-block; margin-top: 0; }
 .tabs-demo code { background: var(--wings-primary-pale, #eef); padding: 1px 4px; border-radius: var(--wings-radius-xs, 2px); }
 .tabs-demo nav { display: flex; flex-direction: column; gap: 2px; }
 `

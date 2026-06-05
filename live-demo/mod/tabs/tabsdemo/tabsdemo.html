@@ -1,78 +1,82 @@
-<div class="tabs-demo" translate="no">
+<div class="tabs-demo">
 
   <section>
-    <h3>Panel mode (default)</h3>
-    <p>Author co-locates each button with its panel — <code>button, panel, button, panel</code> — as direct children of <code>&lt;w-tabs&gt;</code>; the widget regroups them: buttons into a strip on top, the active panel below.</p>
+    <h3>Modo painel (padrão)</h3>
+    <p class="hint">O autor coloca cada botão junto do seu painel, alternando botão e painel como filhos diretos do w-tabs; o widget reagrupa tudo sozinho: os botões viram uma faixa no topo e só o painel ativo aparece embaixo.</p>
+    <p class="hint hint-code" translate="no">&lt;w-tabs mode="panel"&gt; › button, panel, button, panel</p>
     <div class="demo-frame">
       <w-tabs mode="panel">
-        <w-tabbutton active="">Overview</w-tabbutton>
+        <w-tabbutton active="">Visão geral</w-tabbutton>
         <w-tab>
-          <h4>Overview</h4>
-          <p>Clicking a button activates exactly one tab and deactivates the others. Try switching skins above — the tabs adapt to every skin via the generic <code>--wings-*</code> tokens.</p>
+          <h4>Visão geral</h4>
+          <p>Clicar num botão ativa exatamente uma aba e desativa as outras. Troque a pele lá em cima — as abas se adaptam a cada pele pelos tokens genéricos --wings-*.</p>
         </w-tab>
 
-        <w-tabbutton>Details</w-tabbutton>
+        <w-tabbutton>Detalhes</w-tabbutton>
         <w-tab>
-          <h4>Details — preserves DOM state</h4>
-          <p>Type something here, switch tabs and come back: the text is still there because <code>w-tab</code> hides via CSS <code>display:none</code>, leaving the DOM intact.</p>
-          <input type="text" placeholder="Type and switch tabs..." style="width: 100%; padding: 8px;"/>
+          <h4>Detalhes — preserva o estado do DOM</h4>
+          <p>Digite algo aqui, troque de aba e volte: o texto continua lá, porque a w-tab apenas se esconde via CSS (display:none), deixando o DOM intacto.</p>
+          <input type="text" placeholder="Digite algo e troque de aba..." style="width: 100%; padding: 8px;"/>
         </w-tab>
 
-        <w-tabbutton>Settings</w-tabbutton>
+        <w-tabbutton>Ajustes</w-tabbutton>
         <w-tab>
-          <h4>Settings</h4>
-          <p>No <code>tid</code> needed: button↔panel pairing is positional. Add <code>tid</code> only for programmatic or deep-link activation.</p>
+          <h4>Ajustes</h4>
+          <p>Não precisa de tid: o emparelhamento botão↔painel é posicional. Use tid só para ativação programática ou link direto.</p>
         </w-tab>
       </w-tabs>
     </div>
   </section>
 
   <section>
-    <h3>Detached mode — chip-like buttons, transparent panels</h3>
-    <p>Same authoring, <code>mode=&#34;detached&#34;</code>. The buttons read as free-standing chips and the panel chrome is stripped, for when the surrounding layout already frames the content.</p>
+    <h3>Modo solto — botões em forma de chip, painéis transparentes</h3>
+    <p class="hint">Mesma autoria, só muda o modo. Os botões aparecem como chips independentes e o painel perde a moldura, para quando o layout em volta já enquadra o conteúdo.</p>
+    <p class="hint hint-code" translate="no">&lt;w-tabs mode="detached"&gt;</p>
     <div class="demo-frame">
       <w-tabs mode="detached">
-        <w-tabbutton active="">First</w-tabbutton>
-        <w-tab><h4>First</h4><p>The button strip scrolls horizontally when it overflows the available width.</p></w-tab>
+        <w-tabbutton active="">Primeiro</w-tabbutton>
+        <w-tab><h4>Primeiro</h4><p>A faixa de botões rola na horizontal quando passa da largura disponível.</p></w-tab>
 
-        <w-tabbutton>Second</w-tabbutton>
-        <w-tab><h4>Second</h4><p>Each panel is a transparent slot — the consumer supplies its own chrome.</p></w-tab>
+        <w-tabbutton>Segundo</w-tabbutton>
+        <w-tab><h4>Segundo</h4><p>Cada painel é um encaixe transparente — quem usa fornece a própria moldura.</p></w-tab>
 
-        <w-tabbutton>Third</w-tabbutton>
-        <w-tab><h4>Third</h4><p>Switching <code>mode</code> at runtime rearranges the very same markup.</p></w-tab>
+        <w-tabbutton>Terceiro</w-tabbutton>
+        <w-tab><h4>Terceiro</h4><p>Trocar o modo em runtime rearranja exatamente a mesma marcação.</p></w-tab>
       </w-tabs>
     </div>
   </section>
 
   <section>
-    <h3>Menu mode — vertical buttons, content beside</h3>
+    <h3>Modo menu — botões na vertical, conteúdo ao lado</h3>
+    <p class="hint hint-code" translate="no">&lt;w-tabs mode="menu"&gt;</p>
     <div class="demo-frame">
       <w-tabs mode="menu">
-        <w-tabbutton active="">Home</w-tabbutton>
-        <w-tab><h4>Home</h4><p>Menu mode positions the buttons in a left column and the panels on the right. Same widget, different mode — that&#39;s the spirit.</p></w-tab>
+        <w-tabbutton active="">Início</w-tabbutton>
+        <w-tab><h4>Início</h4><p>O modo menu põe os botões numa coluna à esquerda e os painéis à direita. Mesmo widget, modo diferente — é esse o espírito.</p></w-tab>
 
-        <w-tabbutton>Preferences</w-tabbutton>
-        <w-tab><h4>Preferences</h4><p>Adjustments live here.</p></w-tab>
+        <w-tabbutton>Preferências</w-tabbutton>
+        <w-tab><h4>Preferências</h4><p>Os ajustes moram aqui.</p></w-tab>
 
-        <w-tabbutton>About</w-tabbutton>
-        <w-tab><h4>About</h4><p>w-tabs / w-tabbutton / w-tab.</p></w-tab>
+        <w-tabbutton>Sobre</w-tabbutton>
+        <w-tab><h4>Sobre</h4><p translate="no">w-tabs / w-tabbutton / w-tab.</p></w-tab>
       </w-tabs>
     </div>
   </section>
 
   <section>
-    <h3>Accordion mode — native &lt;details&gt; per panel</h3>
-    <p>With <code>mode=&#34;accordion&#34;</code> w-tabs moves each button into its panel so it becomes a real <code>&lt;summary&gt;</code>: native accessibility, animation and state, from the same co-located markup. Multiple panels can be open at once.</p>
+    <h3>Modo sanfona — &lt;details&gt; nativo por painel</h3>
+    <p class="hint">Nesse modo a w-tabs move cada botão para dentro do seu painel, e ele vira um &lt;summary&gt; de verdade: acessibilidade, animação e estado nativos, a partir da mesma marcação colocada junto. Vários painéis podem ficar abertos ao mesmo tempo.</p>
+    <p class="hint hint-code" translate="no">&lt;w-tabs mode="accordion"&gt; › &lt;summary&gt;</p>
     <div class="demo-frame">
       <w-tabs mode="accordion">
-        <w-tabbutton>Section 1</w-tabbutton>
-        <w-tab><p>Each section toggles independently — the platform&#39;s disclosure widget does the work.</p></w-tab>
+        <w-tabbutton>Seção 1</w-tabbutton>
+        <w-tab><p>Cada seção abre e fecha de forma independente — quem faz o trabalho é o widget de divulgação nativo da plataforma.</p></w-tab>
 
-        <w-tabbutton>Section 2</w-tabbutton>
-        <w-tab><p>Click a header to expand or collapse it without affecting the others.</p></w-tab>
+        <w-tabbutton>Seção 2</w-tabbutton>
+        <w-tab><p>Clique num cabeçalho para expandir ou recolher sem afetar os outros.</p></w-tab>
 
-        <w-tabbutton>Section 3</w-tabbutton>
-        <w-tab><p>The same buttons that form a tab strip in the other modes become summaries here.</p></w-tab>
+        <w-tabbutton>Seção 3</w-tabbutton>
+        <w-tab><p>Os mesmos botões que formam a faixa de abas nos outros modos viram resumos aqui.</p></w-tab>
       </w-tabs>
     </div>
   </section>

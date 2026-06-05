@@ -1,78 +1,82 @@
-<html><head></head><body><div class="tabs-demo" translate="no">
+<html><head></head><body><div class="tabs-demo">
 
   <section>
-    <h3>Panel mode (default)</h3>
-    <p>Author co-locates each button with its panel — <code>button, panel, button, panel</code> — as direct children of <code>&lt;w-tabs&gt;</code>; the widget regroups them: buttons into a strip on top, the active panel below.</p>
+    <h3>72</h3>
+    <p class="hint">73</p>
+    <p class="hint hint-code" translate="no">&lt;w-tabs mode=&#34;panel&#34;&gt; › button, panel, button, panel</p>
     <div class="demo-frame">
       <w-tabs mode="panel">
-        <w-tabbutton active="">Overview</w-tabbutton>
+        <w-tabbutton active="">74</w-tabbutton>
         <w-tab>
-          <h4>Overview</h4>
-          <p>Clicking a button activates exactly one tab and deactivates the others. Try switching skins above — the tabs adapt to every skin via the generic <code>--wings-*</code> tokens.</p>
+          <h4>74</h4>
+          <p>75</p>
         </w-tab>
 
-        <w-tabbutton>Details</w-tabbutton>
+        <w-tabbutton>76</w-tabbutton>
         <w-tab>
-          <h4>Details — preserves DOM state</h4>
-          <p>Type something here, switch tabs and come back: the text is still there because <code>w-tab</code> hides via CSS <code>display:none</code>, leaving the DOM intact.</p>
-          <input type="text" placeholder="Type and switch tabs..." style="width: 100%; padding: 8px;"/>
+          <h4>77</h4>
+          <p>78</p>
+          <input type="text" placeholder="79" style="width: 100%; padding: 8px;"/>
         </w-tab>
 
-        <w-tabbutton>Settings</w-tabbutton>
+        <w-tabbutton>80</w-tabbutton>
         <w-tab>
-          <h4>Settings</h4>
-          <p>No <code>tid</code> needed: button↔panel pairing is positional. Add <code>tid</code> only for programmatic or deep-link activation.</p>
+          <h4>80</h4>
+          <p>81</p>
         </w-tab>
       </w-tabs>
     </div>
   </section>
 
   <section>
-    <h3>Detached mode — chip-like buttons, transparent panels</h3>
-    <p>Same authoring, <code>mode=&#34;detached&#34;</code>. The buttons read as free-standing chips and the panel chrome is stripped, for when the surrounding layout already frames the content.</p>
+    <h3>82</h3>
+    <p class="hint">83</p>
+    <p class="hint hint-code" translate="no">&lt;w-tabs mode=&#34;detached&#34;&gt;</p>
     <div class="demo-frame">
       <w-tabs mode="detached">
-        <w-tabbutton active="">First</w-tabbutton>
-        <w-tab><h4>First</h4><p>The button strip scrolls horizontally when it overflows the available width.</p></w-tab>
+        <w-tabbutton active="">84</w-tabbutton>
+        <w-tab><h4>84</h4><p>85</p></w-tab>
 
-        <w-tabbutton>Second</w-tabbutton>
-        <w-tab><h4>Second</h4><p>Each panel is a transparent slot — the consumer supplies its own chrome.</p></w-tab>
+        <w-tabbutton>86</w-tabbutton>
+        <w-tab><h4>86</h4><p>87</p></w-tab>
 
-        <w-tabbutton>Third</w-tabbutton>
-        <w-tab><h4>Third</h4><p>Switching <code>mode</code> at runtime rearranges the very same markup.</p></w-tab>
+        <w-tabbutton>88</w-tabbutton>
+        <w-tab><h4>88</h4><p>89</p></w-tab>
       </w-tabs>
     </div>
   </section>
 
   <section>
-    <h3>Menu mode — vertical buttons, content beside</h3>
+    <h3>90</h3>
+    <p class="hint hint-code" translate="no">&lt;w-tabs mode=&#34;menu&#34;&gt;</p>
     <div class="demo-frame">
       <w-tabs mode="menu">
-        <w-tabbutton active="">Home</w-tabbutton>
-        <w-tab><h4>Home</h4><p>Menu mode positions the buttons in a left column and the panels on the right. Same widget, different mode — that&#39;s the spirit.</p></w-tab>
+        <w-tabbutton active="">91</w-tabbutton>
+        <w-tab><h4>91</h4><p>92</p></w-tab>
 
-        <w-tabbutton>Preferences</w-tabbutton>
-        <w-tab><h4>Preferences</h4><p>Adjustments live here.</p></w-tab>
+        <w-tabbutton>93</w-tabbutton>
+        <w-tab><h4>93</h4><p>94</p></w-tab>
 
-        <w-tabbutton>About</w-tabbutton>
-        <w-tab><h4>About</h4><p>w-tabs / w-tabbutton / w-tab.</p></w-tab>
+        <w-tabbutton>95</w-tabbutton>
+        <w-tab><h4>95</h4><p translate="no">w-tabs / w-tabbutton / w-tab.</p></w-tab>
       </w-tabs>
     </div>
   </section>
 
   <section>
-    <h3>Accordion mode — native &lt;details&gt; per panel</h3>
-    <p>With <code>mode=&#34;accordion&#34;</code> w-tabs moves each button into its panel so it becomes a real <code>&lt;summary&gt;</code>: native accessibility, animation and state, from the same co-located markup. Multiple panels can be open at once.</p>
+    <h3>96</h3>
+    <p class="hint">97</p>
+    <p class="hint hint-code" translate="no">&lt;w-tabs mode=&#34;accordion&#34;&gt; › &lt;summary&gt;</p>
     <div class="demo-frame">
       <w-tabs mode="accordion">
-        <w-tabbutton>Section 1</w-tabbutton>
-        <w-tab><p>Each section toggles independently — the platform&#39;s disclosure widget does the work.</p></w-tab>
+        <w-tabbutton>98</w-tabbutton>
+        <w-tab><p>99</p></w-tab>
 
-        <w-tabbutton>Section 2</w-tabbutton>
-        <w-tab><p>Click a header to expand or collapse it without affecting the others.</p></w-tab>
+        <w-tabbutton>100</w-tabbutton>
+        <w-tab><p>101</p></w-tab>
 
-        <w-tabbutton>Section 3</w-tabbutton>
-        <w-tab><p>The same buttons that form a tab strip in the other modes become summaries here.</p></w-tab>
+        <w-tabbutton>102</w-tabbutton>
+        <w-tab><p>103</p></w-tab>
       </w-tabs>
     </div>
   </section>

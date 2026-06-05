@@ -288,6 +288,134 @@
     "revised": false
   },
   {
+    "content": "Modo painel (padrão)",
+    "revised": false
+  },
+  {
+    "content": "O autor coloca cada botão junto do seu painel, alternando botão e painel como filhos diretos do w-tabs; o widget reagrupa tudo sozinho: os botões viram uma faixa no topo e só o painel ativo aparece embaixo.",
+    "revised": false
+  },
+  {
+    "content": "Visão geral",
+    "revised": false
+  },
+  {
+    "content": "Clicar num botão ativa exatamente uma aba e desativa as outras. Troque a pele lá em cima — as abas se adaptam a cada pele pelos tokens genéricos --wings-*.",
+    "revised": false
+  },
+  {
+    "content": "Detalhes",
+    "revised": false
+  },
+  {
+    "content": "Detalhes — preserva o estado do DOM",
+    "revised": false
+  },
+  {
+    "content": "Digite algo aqui, troque de aba e volte: o texto continua lá, porque a w-tab apenas se esconde via CSS (display:none), deixando o DOM intacto.",
+    "revised": false
+  },
+  {
+    "content": "Digite algo e troque de aba...",
+    "revised": false
+  },
+  {
+    "content": "Ajustes",
+    "revised": false
+  },
+  {
+    "content": "Não precisa de tid: o emparelhamento botão↔painel é posicional. Use tid só para ativação programática ou link direto.",
+    "revised": false
+  },
+  {
+    "content": "Modo solto — botões em forma de chip, painéis transparentes",
+    "revised": false
+  },
+  {
+    "content": "Mesma autoria, só muda o modo. Os botões aparecem como chips independentes e o painel perde a moldura, para quando o layout em volta já enquadra o conteúdo.",
+    "revised": false
+  },
+  {
+    "content": "Primeiro",
+    "revised": false
+  },
+  {
+    "content": "A faixa de botões rola na horizontal quando passa da largura disponível.",
+    "revised": false
+  },
+  {
+    "content": "Segundo",
+    "revised": false
+  },
+  {
+    "content": "Cada painel é um encaixe transparente — quem usa fornece a própria moldura.",
+    "revised": false
+  },
+  {
+    "content": "Terceiro",
+    "revised": false
+  },
+  {
+    "content": "Trocar o modo em runtime rearranja exatamente a mesma marcação.",
+    "revised": false
+  },
+  {
+    "content": "Modo menu — botões na vertical, conteúdo ao lado",
+    "revised": false
+  },
+  {
+    "content": "Início",
+    "revised": false
+  },
+  {
+    "content": "O modo menu põe os botões numa coluna à esquerda e os painéis à direita. Mesmo widget, modo diferente — é esse o espírito.",
+    "revised": false
+  },
+  {
+    "content": "Preferências",
+    "revised": false
+  },
+  {
+    "content": "Os ajustes moram aqui.",
+    "revised": false
+  },
+  {
+    "content": "Sobre",
+    "revised": false
+  },
+  {
+    "content": "Modo sanfona — <details> nativo por painel",
+    "revised": false
+  },
+  {
+    "content": "Nesse modo a w-tabs move cada botão para dentro do seu painel, e ele vira um <summary> de verdade: acessibilidade, animação e estado nativos, a partir da mesma marcação colocada junto. Vários painéis podem ficar abertos ao mesmo tempo.",
+    "revised": false
+  },
+  {
+    "content": "Seção 1",
+    "revised": false
+  },
+  {
+    "content": "Cada seção abre e fecha de forma independente — quem faz o trabalho é o widget de divulgação nativo da plataforma.",
+    "revised": false
+  },
+  {
+    "content": "Seção 2",
+    "revised": false
+  },
+  {
+    "content": "Clique num cabeçalho para expandir ou recolher sem afetar os outros.",
+    "revised": false
+  },
+  {
+    "content": "Seção 3",
+    "revised": false
+  },
+  {
+    "content": "Os mesmos botões que formam a faixa de abas nos outros modos viram resumos aqui.",
+    "revised": false
+  },
+  {
     "content": "Testador in-web",
     "revised": false
   },
