@@ -9,7 +9,7 @@
    <script>
       const go = new Go();
       WebAssembly
-         .instantiateStreaming(fetch("main.wasm"), go.importObject)
+         .instantiateStreaming(fetch("wings.wasm"), go.importObject)
          .then(r => go.run(r.instance))
          .catch(console.error);
    </script>

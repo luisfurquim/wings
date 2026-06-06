@@ -24,15 +24,21 @@ per-commit record see the git log and tags.
   browser lowercases attribute names, so such a binding silently never matches
   its model — previously an invisible render bug.
 
+### Changed
+- **Standardized the wasm binary name on `wings.wasm`.** Every demo and the docs
+  now build and load `wings.wasm` — previously live-demo (`docs/`) and wlate
+  (`dist/`) emitted `main.wasm`, while `example/` shipped a stale `main.wasm` the
+  build no longer produced. The example is now self-contained like the others:
+  the build copies `prana_helper.js` and `wasm_exec.js` into `example/`, so its
+  `index.html` references them locally. Dropped the dead committed binaries
+  `example/main.wasm` and `example/wprana.wasm` (the latter a pre-rename
+  leftover).
+
 ### Fixed
 - **Example app `?showExtra` binding.** `example/mywidget` used a camelCase
   conditional name that the browser lowercased, so the "Extra" block never
   rendered. Renamed to `?show_extra` (matching the model key and the README's
   Full Example). This is exactly the bug the new lint now blocks.
-- **Example app wasm naming.** `example/index.html` loaded a stale `main.wasm`
-  while the build produced `wings.wasm`; it now loads `wings.wasm`. Dropped the
-  dead committed binaries `example/main.wasm` and `example/wprana.wasm` (the
-  latter a pre-rename leftover).
 - **Live-demo build writes straight to the published `docs/`.** The durable
   follow-up to 0.15.5: `live-demo/build.sh` now emits directly into the
   repository-root `docs/` (the directory GitHub Pages serves) and the duplicate

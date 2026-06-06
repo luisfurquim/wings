@@ -26,6 +26,5 @@ helpers/wlate/serve
 cmd/build/build
 # WASM binaries from ad-hoc `go build` (build.sh uses -o, so these are stray)
 example/example
-example/wings.wasm
 helpers/wlate/wlate
 live-demo/live-demo

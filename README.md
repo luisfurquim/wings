@@ -234,7 +234,7 @@ Create `static/index.html`:
    <script>
       const go = new Go();
       WebAssembly
-         .instantiateStreaming(fetch("main.wasm"), go.importObject)
+         .instantiateStreaming(fetch("wings.wasm"), go.importObject)
          .then(r => go.run(r.instance))
          .catch(console.error);
    </script>
@@ -299,7 +299,7 @@ Build and serve:
 
 ```bash
 # 3. Build the WASM binary
-GOOS=js GOARCH=wasm go build -o static/main.wasm .
+GOOS=js GOARCH=wasm go build -o static/wings.wasm .
 
 # 4. Start a minimal dev server (paste into serve.go, then run it)
 cat > serve.go.tmp <<'GOFILE'
@@ -367,7 +367,7 @@ and both must come before the WASM binary:
    <script>
       const go = new Go();
       WebAssembly
-         .instantiateStreaming(fetch("main.wasm"), go.importObject)
+         .instantiateStreaming(fetch("wings.wasm"), go.importObject)
          .then(result => go.run(result.instance))
          .catch(err => console.error(err));
    </script>
@@ -3413,7 +3413,7 @@ async IIFE so `go` never reaches `window`:
 ```js
 (async () => {
     const go = new Go();
-    const r = await WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject);
+    const r = await WebAssembly.instantiateStreaming(fetch("wings.wasm"), go.importObject);
     go.run(r.instance);
 })().catch(console.error);
 ```

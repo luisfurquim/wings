@@ -437,7 +437,7 @@ const llmAvatarSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20
 // requiredAppFiles are the front-end bundle artifacts build.sh produces in the
 // app directory (dist/). Their absence means the server was started before a
 // build, or from the wrong working directory.
-var requiredAppFiles = []string{"index.html", "main.wasm", "prana_helper.js", "wasm_exec.js"}
+var requiredAppFiles = []string{"index.html", "wings.wasm", "prana_helper.js", "wasm_exec.js"}
 
 // validateLayout fails fast when the directories the server depends on are not
 // laid out as expected. appDir holds the front-end bundle served as the web

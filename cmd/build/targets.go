@@ -48,6 +48,9 @@ func buildExample(root string) error {
 	if err := lintTemplates(dir); err != nil {
 		return err
 	}
+	if err := copyHelpers(root, dir); err != nil {
+		return err
+	}
 	return run(dir, []string{"GOOS=js", "GOARCH=wasm"}, "go", "build", "-o", "wings.wasm", ".")
 }
 
@@ -79,7 +82,7 @@ func buildLiveDemo(root string) error {
 	}
 
 	if err := run(dir, []string{"GOOS=js", "GOARCH=wasm"}, "go", "build",
-		"-buildvcs=false", "-tags", "wings_test", "-o", filepath.Join(docs, "main.wasm"), "."); err != nil {
+		"-buildvcs=false", "-tags", "wings_test", "-o", filepath.Join(docs, "wings.wasm"), "."); err != nil {
 		return err
 	}
 	return injectDocsSRI(docs)
@@ -116,7 +119,7 @@ func buildWlate(root string) error {
 	}
 
 	if err := run(dir, []string{"CGO_ENABLED=0", "GOOS=js", "GOARCH=wasm"}, "go", "build",
-		"-buildvcs=false", "-o", filepath.Join(dist, "main.wasm"), "."); err != nil {
+		"-buildvcs=false", "-o", filepath.Join(dist, "wings.wasm"), "."); err != nil {
 		return err
 	}
 	return injectDocsSRI(dist)
