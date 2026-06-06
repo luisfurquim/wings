@@ -1,27 +1,27 @@
 [
   {
     "content": "wings — live demo",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Básico",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Flexión",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Formato",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Traducción",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Medidas",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Pestañas",
@@ -33,99 +33,99 @@
   },
   {
     "content": "Idioma:",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Lista de ítems",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Contadores",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Modo y extras",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Contador rápido (cada 2 s):",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Contador lento (cada 5 s):",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Agregue un ítem:",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Agregar",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Alternar modo",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Modo:",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Alternar extra",
-    "revised": false
+    "revised": true
   },
   {
     "content": "¡Contenido extra revelado!",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Haga clic en \"Alternar extra\" para revelar.",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Modo es exactamente \"edit\"",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Modo es distinto de \"readonly\"",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Modo empieza con \"ed\"",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Modo termina con \"t\"",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Modo contiene \"d\"",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Cantidad:",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Demostración de flexión",
-    "revised": false
+    "revised": true
   },
   {
     "content": "{{@gender %qt #0}}",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Flexión en runtime — motor CustomFlex con backend",
-    "revised": false
+    "revised": true
   },
   {
-    "content": "El motor busca en el backend la forma flexionada del producto según la cantidad y la vuelve a renderizar cuando llega la respuesta; cambiá el idioma para ver la búsqueda en el nuevo idioma.",
-    "revised": false
+    "content": "El motor busca en el backend la forma flexionada del producto según la cantidad y la vuelve a renderizar cuando llega la respuesta; cambie el idioma para ver la búsqueda en el nuevo idioma.",
+    "revised": true
   },
   {
     "content": "{{%qt *flexer #1}}",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Selección contextual arbitraria — motor CustomFlex con tabla embebida",
@@ -161,15 +161,15 @@
   },
   {
     "content": "Género:",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Masculino",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Femenino",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Plataforma:",
@@ -177,243 +177,243 @@
   },
   {
     "content": "Producto:",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Precio:",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Ahora:",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Demostración de formato",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Números",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Monedas",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Carrito",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Fecha y hora",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Entero:",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Decimal:",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Catálogo de traducciones por dentro",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Cada texto traducible recibió un índice numérico durante la compilación. La columna del medio muestra lo que el desarrollador escribió en pt-BR (el idioma fuente); la derecha muestra lo que está renderizado ahora — cambie el idioma arriba para verla cambiar.",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Índice",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Texto fuente (pt-BR)",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Renderizado ahora",
-    "revised": false
+    "revised": true
   },
   {
     "content": "predeterminado (locale):",
-    "revised": false
+    "revised": true
   },
   {
     "content": ":km",
-    "revised": false
+    "revised": true
   },
   {
     "content": ":mi",
-    "revised": false
+    "revised": true
   },
   {
     "content": ":ft",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Demo de medidas físicas",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Longitud",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Temperatura",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Velocidad",
-    "revised": false
+    "revised": true
   },
   {
     "content": ":kmh",
-    "revised": false
+    "revised": true
   },
   {
     "content": ":mph",
-    "revised": false
+    "revised": true
   },
   {
     "content": ":c (Celsius):",
-    "revised": false
+    "revised": true
   },
   {
     "content": ":f (Fahrenheit):",
-    "revised": false
+    "revised": true
   },
   {
     "content": ":k (Kelvin):",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Modo panel (predeterminado)",
-    "revised": false
+    "revised": true
   },
   {
     "content": "El autor coloca cada botón junto a su panel, alternando botón y panel como hijos directos de w-tabs; el widget reagrupa todo solo: los botones forman una franja arriba y solo el panel activo aparece abajo.",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Vista general",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Hacer clic en un botón activa exactamente una pestaña y desactiva las demás. Cambie la piel arriba — las pestañas se adaptan a cada piel mediante los tokens genéricos --wings-*.",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Detalles",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Detalles — conserva el estado del DOM",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Escriba algo aquí, cambie de pestaña y vuelva: el texto sigue ahí, porque w-tab solo se oculta vía CSS (display:none), dejando el DOM intacto.",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Escriba y cambie de pestaña...",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Ajustes",
-    "revised": false
+    "revised": true
   },
   {
     "content": "No hace falta tid: el emparejamiento botón↔panel es posicional. Use tid solo para activación programática o enlace directo.",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Modo suelto — botones tipo chip, paneles transparentes",
-    "revised": false
+    "revised": true
   },
   {
     "content": "La misma autoría, solo cambia el modo. Los botones se ven como chips independientes y el panel pierde su marco, para cuando el diseño alrededor ya enmarca el contenido.",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Primero",
-    "revised": false
+    "revised": true
   },
   {
     "content": "La franja de botones se desplaza en horizontal cuando supera el ancho disponible.",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Segundo",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Cada panel es un espacio transparente — quien lo usa aporta su propio marco.",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Tercero",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Cambiar el modo en tiempo de ejecución reordena exactamente el mismo marcado.",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Modo menú — botones en vertical, contenido al lado",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Inicio",
-    "revised": false
+    "revised": true
   },
   {
     "content": "El modo menú pone los botones en una columna a la izquierda y los paneles a la derecha. El mismo widget, otro modo — ese es el espíritu.",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Preferencias",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Los ajustes viven aquí.",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Acerca de",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Modo acordeón — <details> nativo por panel",
-    "revised": false
+    "revised": true
   },
   {
     "content": "En este modo, w-tabs mueve cada botón dentro de su panel, donde se vuelve un <summary> de verdad: accesibilidad, animación y estado nativos, a partir del mismo marcado puesto junto. Varios paneles pueden estar abiertos a la vez.",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Sección 1",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Cada sección se abre y cierra de forma independiente — el trabajo lo hace el widget de revelación nativo de la plataforma.",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Sección 2",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Haga clic en un encabezado para expandirlo o contraerlo sin afectar a los demás.",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Sección 3",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Los mismos botones que forman la franja de pestañas en los otros modos se vuelven resúmenes aquí.",
-    "revised": false
+    "revised": true
   },
   {
     "content": "Probador in-web",
