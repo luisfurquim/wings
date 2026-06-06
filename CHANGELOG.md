@@ -8,6 +8,16 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
+## [Unreleased]
+
+### Fixed
+- **Live-demo build writes straight to the published `docs/`.** The durable
+  follow-up to 0.15.5: `live-demo/build.sh` now emits directly into the
+  repository-root `docs/` (the directory GitHub Pages serves) and the duplicate
+  `live-demo/docs/` tree is gone. The two copies could no longer drift, so the
+  live site can no longer go stale behind the build. `serve.go` serves the same
+  unified `docs/` for local preview.
+
 ## [0.15.8] — 2026-06-06
 
 ### Added

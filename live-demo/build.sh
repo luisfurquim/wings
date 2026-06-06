@@ -3,14 +3,19 @@ set -e
 
 cd "$(dirname "$0")"
 
+# Output goes straight to the repo-root docs/ (one level up), which is what
+# GitHub Pages serves. There is no live-demo/docs/ anymore — a second copy only
+# ever drifted from this one.
+OUT=../docs
+
 WPRANA=$(go list -m -f '{{.Dir}}' github.com/luisfurquim/wings)
-cp "$WPRANA/prana_helper.js" docs/
+cp "$WPRANA/prana_helper.js" "$OUT/"
 
 GOROOT="$(go env GOROOT)"
 if [ -f "$GOROOT/lib/wasm/wasm_exec.js" ]; then
-   cp "$GOROOT/lib/wasm/wasm_exec.js" docs/
+   cp "$GOROOT/lib/wasm/wasm_exec.js" "$OUT/"
 elif [ -f "$GOROOT/misc/wasm/wasm_exec.js" ]; then
-   cp "$GOROOT/misc/wasm/wasm_exec.js" docs/
+   cp "$GOROOT/misc/wasm/wasm_exec.js" "$OUT/"
 else
    echo "ERROR: wasm_exec.js not found in GOROOT=$GOROOT"
    exit 1
@@ -30,24 +35,24 @@ GEN_I18N_BIN="$(mktemp -d)/gen_i18n"
 "$GEN_I18N_BIN" --path ./mod --deflang pt-BR \
    -sign-key ./gen_i18n.ed25519.key -sign-key-password 'wings-live-demo'
 
-mkdir -p docs/i18n
+mkdir -p "$OUT/i18n"
 # Ship only the browser-side catalogs (data + inflections) plus the .sig
 # sidecars. The .meta.json companions carry server-only source positions
 # (file:line:col) and must not leak to the published site. The .sig signs the
-# mod/i18n bytes, which `cp` reproduces verbatim in docs/i18n.
-cp mod/i18n/*.json docs/i18n/
-cp mod/i18n/*.json.sig docs/i18n/
-rm -f docs/i18n/*.meta.json
+# mod/i18n bytes, which `cp` reproduces verbatim in $OUT/i18n.
+cp mod/i18n/*.json "$OUT/i18n/"
+cp mod/i18n/*.json.sig "$OUT/i18n/"
+rm -f "$OUT"/i18n/*.meta.json
 
 # -tags wings_test compiles modules' Testable() self-tests into the demo so the
 # <w-test-report> card has something to run. A real app omits this tag for
 # production builds (and uses it only for a throwaway test app in dev/CI).
-GOOS=js GOARCH=wasm go build -buildvcs=false -tags wings_test -o docs/main.wasm .
+GOOS=js GOARCH=wasm go build -buildvcs=false -tags wings_test -o "$OUT/main.wasm" .
 
 # ── SRI hash injection ────────────────────────────────────────────────────────
-# Compute SHA-384 integrity hashes for the JS helpers we just copied into docs/
-# and inject them into docs/index.html. Both files live in docs/ here (the repo
-# root has no wasm_exec.js), so this is the only place that can hash them.
+# Compute SHA-384 integrity hashes for the JS helpers we just copied into $OUT
+# and inject them into $OUT/index.html. This is the script that owns the
+# published docs/, so it is the place that hashes the served files.
 # Requires: openssl, sed (GNU or BSD both work).
 sri_hash() {
     printf 'sha384-%s' "$(openssl dgst -sha384 -binary "$1" | openssl base64 -A)"
@@ -65,7 +70,7 @@ inject_sri() {
     rm -f "${html}.bak"
 }
 
-inject_sri docs/index.html docs/prana_helper.js
-inject_sri docs/index.html docs/wasm_exec.js
+inject_sri "$OUT/index.html" "$OUT/prana_helper.js"
+inject_sri "$OUT/index.html" "$OUT/wasm_exec.js"
 
 echo "Build complete. Run: go run serve.go"
