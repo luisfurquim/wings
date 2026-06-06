@@ -54,7 +54,7 @@ func (w *MyWidget) InitData() map[string]any {
 		"title":     "Meu Widget",
 		"count":     0,
 		"items":     []any{},
-		"showExtra": false,
+		"show_extra": false,
 		"extra":     "",
 		"inputVal":  "",
 	}

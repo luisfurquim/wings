@@ -20,7 +20,12 @@ cmd/dictbuild/cache/
 cmd/gen_i18n/gen_i18n
 cmd/dictbuild/dictbuild
 helpers/wlate/serve
+# Stray binary from `go build ./cmd/build` (the build orchestrator; run it with
+# `go run ./cmd/build <target>` instead).
+/build
+cmd/build/build
 # WASM binaries from ad-hoc `go build` (build.sh uses -o, so these are stray)
 example/example
+example/wings.wasm
 helpers/wlate/wlate
 live-demo/live-demo

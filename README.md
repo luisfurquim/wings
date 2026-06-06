@@ -198,12 +198,15 @@ WASM binaries cannot be loaded from `file://` URLs. The snippet below
 builds a hello-world component, copies the required runtime files, and
 starts a tiny Go server so you can open the page in a browser.
 
-> **Windows users:** the snippets below and the project's `build.sh` scripts
-> assume a POSIX shell. Run them under **WSL** (recommended — official
-> Microsoft path, ships with Windows 10/11) or **Git Bash** (bundled with
-> Git for Windows). Native `cmd.exe` / PowerShell will not execute them
-> directly. For the helper scripts under `helpers/wlate/` and `live-demo/`,
-> also ensure `python3` and `openssl` are on `PATH`.
+> **Windows users:** the tutorial snippets below assume a POSIX shell — run
+> them under **WSL** (recommended — official Microsoft path, ships with
+> Windows 10/11) or **Git Bash** (bundled with Git for Windows). Native
+> `cmd.exe` / PowerShell will not execute them directly.
+>
+> The project's *own* build, however, is pure Go and cross-platform: run
+> `go run ./cmd/build <target>` (targets: `lib`, `example`, `live-demo`,
+> `wlate`, `all`) — no `sed`, `openssl`, or `python3` needed. The `build.sh`
+> files in each directory are thin wrappers around it, kept for habit.
 
 ```bash
 # 1. Create the project
@@ -3034,6 +3037,11 @@ since only letters are lowercased:
 Note: variables used only in text content (`{{camelCase}}`) are not affected by
 this restriction, since they are parsed from text nodes, not attributes. However,
 for consistency, snake_case is recommended everywhere.
+
+The build orchestrator catches this for you: `go run ./cmd/build <target>` scans
+every template and **fails the build** if a binding name (`?cond`, `*arr`,
+`**arr`, `&attr`) contains an uppercase letter, with the offending `file:line` —
+so a camelCase binding can never ship as a silent no-op.
 
 ### Template Root Element
 
