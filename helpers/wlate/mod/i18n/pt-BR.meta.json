@@ -48,15 +48,23 @@
     "ctxdetail": "label@wlate/wlate.html:50:105"
   },
   {
-    "context": "wlate/wlate.html:64:56",
-    "ctxdetail": "button[title]@wlate/wlate.html:64:56"
+    "context": "wlate/wlate.html:64:62",
+    "ctxdetail": "button[title]@wlate/wlate.html:64:62"
   },
   {
-    "context": "wlate/wlate.html:64:73",
-    "ctxdetail": "button@wlate/wlate.html:64:73"
+    "context": "wlate/wlate.html:64:103",
+    "ctxdetail": "button@wlate/wlate.html:64:103"
   },
   {
-    "context": "wlate/wlate.html:69:69",
-    "ctxdetail": "w-dialog@wlate/wlate.html:69:69"
+    "context": "wlate/wlate.html:65:56",
+    "ctxdetail": "button[title]@wlate/wlate.html:65:56"
+  },
+  {
+    "context": "wlate/wlate.html:65:73",
+    "ctxdetail": "button@wlate/wlate.html:65:73"
+  },
+  {
+    "context": "wlate/wlate.html:70:69",
+    "ctxdetail": "w-dialog@wlate/wlate.html:70:69"
   }
 ]

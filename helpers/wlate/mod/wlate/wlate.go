@@ -691,6 +691,18 @@ func (wc *wlateCtx) wireEvents() {
 		}, false, false)
 	}
 
+	// Approve button — same action as the editor's border indicator and Alt+R:
+	// flip the current record's revised flag and auto-advance to the next pending.
+	// Separate from Save (which only persists); this is the visible, labelled way
+	// to mark a translation reviewed without editing its text.
+	approveBtns := dom.Query(wc.obj.Dom, "#btn-approve")
+	if len(approveBtns) > 0 {
+		dom.AddEvent(approveBtns[0], "click", func(_ js.Value, _ []js.Value) any {
+			wc.toggleRevised()
+			return nil
+		}, false, false)
+	}
+
 	// Save button
 	saveBtns := dom.Query(wc.obj.Dom, "#btn-save")
 	if len(saveBtns) > 0 {

@@ -205,6 +205,27 @@
    transform: scale(0.97);
 }
 
+/* ── Approve button (mark current record revised + advance) ─────────────────
+   Outlined sibling of Save: distinct action (per-record review state) so it
+   reads as separate from Save (whole-file persist). Uses the primary accent. */
+.wl-approve-btn {
+   padding: 6px 16px;
+   border: 1px solid var(--wl-primary);
+   border-radius: 6px;
+   background: transparent;
+   color: var(--wl-primary);
+   font-size: 0.85em;
+   font-weight: 600;
+   cursor: pointer;
+   transition: all 0.2s;
+}
+.wl-approve-btn:hover {
+   background: color-mix(in srgb, var(--wl-primary) 10%, transparent);
+}
+.wl-approve-btn:active {
+   transform: scale(0.97);
+}
+
 /* ── Filter toggle (styled switch) ──────────────────────────────────────── */
 
 .wl-filter-toggle {

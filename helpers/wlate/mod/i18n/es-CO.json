@@ -48,6 +48,14 @@
     "revised": false
   },
   {
+    "content": "Marcar como revisado y avanzar (Alt+R)",
+    "revised": true
+  },
+  {
+    "content": "✓ Aprobar",
+    "revised": true
+  },
+  {
     "content": "",
     "revised": false
   },

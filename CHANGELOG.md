@@ -8,7 +8,14 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
-## [0.15.8] — 2026-06-05
+## [0.15.8] — 2026-06-06
+
+### Added
+- **wlate "Approve" button.** Marking a translation reviewed without editing it
+  was only reachable through an unlabelled border strip (or `Alt+R`) — easy to
+  miss, and Save does not change review state. A visible **✓ Approve** button now
+  sits beside Save: it flips the current record's `revised` flag and advances to
+  the next pending entry. Save stays persist-only.
 
 ### Changed
 - **`gen_i18n` preserves translations across source edits.** A run now aligns
@@ -26,6 +33,14 @@ per-commit record see the git log and tags.
   database (`loadDB`/`saveDB`): it was write-only — nothing ever read it back —
   and change detection now runs off the committed `i18n/*.json` catalogs. Any
   stale `i18n.db` on disk is harmless and ignored.
+
+### Fixed
+- **Live-demo localization.** The Tabs demo prose was hard-coded in English under
+  a blanket `translate="no"`, so it never localized; it is now authored in the
+  source language (pt-BR) with full en-US/es-AR catalogs, opting out only the
+  inline code snippets. The i18n tab's "catalog by index" table had a stale
+  hand-written source column (indices had drifted across versions); it is
+  re-synced to the current catalog.
 
 ## [0.15.7] — 2026-06-04
 
