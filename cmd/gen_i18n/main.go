@@ -19,6 +19,7 @@ import (
 
 	"github.com/luisfurquim/goose"
 	"github.com/luisfurquim/wings/wi18n"
+	"github.com/luisfurquim/wings/wsign"
 )
 
 // G is this binary's goose alert. Default 2 keeps info-level output visible;
@@ -81,13 +82,13 @@ func main() {
 	// ── Key generation mode (standalone; does not need -path) ────────────────
 	if *genKeyFlag {
 		dir := *genKeyDirFlag
-		keyFile := dir + "/" + defaultKeyFile
-		pubFile := dir + "/" + defaultPubFile
+		keyFile := dir + "/" + wsign.DefaultKeyFile
+		pubFile := dir + "/" + wsign.DefaultPubFile
 		pass := *signKeyPassFlag
 		if pass == "" {
 			G.Fatalf(1, "error: -genkey requires -sign-key-password")
 		}
-		if err := GenerateSigningKey(keyFile, pubFile, pass); err != nil {
+		if err := wsign.GenerateSigningKey(keyFile, pubFile, pass); err != nil {
 			G.Fatalf(1, "error generating keypair: %v", err)
 		}
 		G.Logf(2, "keypair written:")
@@ -112,7 +113,7 @@ func main() {
 			G.Fatalf(1, "error: -sign-key requires -sign-key-password")
 		}
 		var err error
-		signingKey, err = LoadSigningKey(*signKeyFlag, *signKeyPassFlag)
+		signingKey, err = wsign.LoadSigningKey(*signKeyFlag, *signKeyPassFlag)
 		if err != nil {
 			G.Fatalf(1, "error loading signing key: %v", err)
 		}
@@ -277,7 +278,7 @@ func maybeSignJSON(key ed25519.PrivateKey, jsonFile string) error {
 	if err != nil {
 		return fmt.Errorf("reading %s for signing: %w", jsonFile, err)
 	}
-	return SignCatalog(key, content, jsonFile+".sig")
+	return wsign.SignCatalog(key, content, jsonFile+".sig")
 }
 
 // buildEntries assembles the [wi18n.Entry] slice for one language.

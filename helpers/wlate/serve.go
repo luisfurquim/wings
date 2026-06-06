@@ -4,6 +4,7 @@ package main
 
 import (
 	"context"
+	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/tls"
 	"encoding/hex"
@@ -22,18 +23,21 @@ import (
 
 	"github.com/luisfurquim/goose"
 	"github.com/luisfurquim/wings/wi18n"
+	"github.com/luisfurquim/wings/wsign"
 )
 
 // G is this binary's goose alert. wings.json may set the level via SetConfig.
 var G goose.Alert = goose.Alert(2)
 
 type serverConfig struct {
-	cert         string
-	listen       string
-	root         string
-	dictStateDir string
-	oauth2       oauth2Config
-	hasAuth      bool
+	cert            string
+	listen          string
+	root            string
+	dictStateDir    string
+	signKey         string
+	signKeyPassword string
+	oauth2          oauth2Config
+	hasAuth         bool
 }
 
 type oauth2Config struct {
@@ -76,6 +80,10 @@ func loadConfig(path string) (*serverConfig, error) {
 			cfg.root = val
 		case "dict_state_dir":
 			cfg.dictStateDir = val
+		case "sign_key":
+			cfg.signKey = val
+		case "sign_key_password":
+			cfg.signKeyPassword = val
 		case "oauth2_issuer":
 			cfg.oauth2.issuer = val
 			cfg.hasAuth = true
@@ -524,6 +532,22 @@ func main() {
 		dictStateDir = cfg.dictStateDir
 	}
 
+	// Load the signing key if configured. With it set, every /save re-signs the
+	// catalog it just wrote, so a signed project's catalogs stay valid without a
+	// separate build step. Fail fast on a bad password: a server that silently
+	// wrote stale .sig sidecars would break the very app it serves.
+	var signPriv ed25519.PrivateKey
+	if cfg.signKey != "" {
+		if cfg.signKeyPassword == "" {
+			G.Fatalf(1, "server.conf: sign_key requires sign_key_password")
+		}
+		signPriv, err = wsign.LoadSigningKey(cfg.signKey, cfg.signKeyPassword)
+		if err != nil {
+			G.Fatalf(1, "loading sign_key: %v", err)
+		}
+		G.Logf(2, "catalog signing enabled (key=%s)", cfg.signKey)
+	}
+
 	fs := http.FileServer(http.Dir(appDir))
 
 	mux := http.NewServeMux()
@@ -575,6 +599,21 @@ func main() {
 				G.Logf(2, "save: wrote %s (%d bytes; mtime=%s; on-disk size=%d)",
 					abs, len(body), st.ModTime().Format(time.RFC3339Nano), st.Size())
 			}
+
+			// Re-sign the catalog we just wrote so a signed project stays valid
+			// without a separate build step. Only the main <lang>.json is signed
+			// (inflections are unsigned, matching gen_i18n); we sign the exact
+			// bytes just written, which are the bytes this server later serves.
+			if signPriv != nil && !strings.HasSuffix(clean, ".inflections.json") {
+				sigPath := target + ".sig"
+				if err := wsign.SignCatalog(signPriv, body, sigPath); err != nil {
+					G.Logf(1, "save: signing %s failed: %v", abs, err)
+					http.Error(w, "signing failed: "+err.Error(), http.StatusInternalServerError)
+					return
+				}
+				G.Logf(2, "save: signed %s", sigPath)
+			}
+
 			w.WriteHeader(http.StatusOK)
 			fmt.Fprintf(w, "saved %s (%d bytes)\n", clean, len(body))
 			return

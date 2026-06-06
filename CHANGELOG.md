@@ -16,6 +16,13 @@ per-commit record see the git log and tags.
   miss, and Save does not change review state. A visible **✓ Approve** button now
   sits beside Save: it flips the current record's `revised` flag and advances to
   the next pending entry. Save stays persist-only.
+- **wlate signs catalogs on save.** When the dev server is configured with a
+  signing key (`sign_key` / `sign_key_password` in `server.conf`), each save
+  re-signs the `<lang>.json` it just wrote, so a signed project's catalogs verify
+  immediately — no separate build step to refresh the `.sig`. The signing and
+  key-handling code moved out of `cmd/gen_i18n` into a new shared `wsign` package
+  used by both the generator and the server. (Inflection catalogs stay unsigned,
+  matching `gen_i18n`.)
 
 ### Changed
 - **`gen_i18n` preserves translations across source edits.** A run now aligns
