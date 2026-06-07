@@ -17,6 +17,7 @@ type devConfig struct {
 	Port        string          // WINGS_PORT — dev server port
 	WebRoot     string          // WINGS_WEBROOT — abs dir holding index.html; wasm+helpers land here
 	Main        string          // WINGS_MAIN — main package compiled to wasm (relative to AppRoot)
+	I18nPath    string          // WINGS_I18N_PATH — dir gen_i18n traverses (default = Main); its /i18n is the catalog source
 	Httpd       string          // WINGS_HTTPD — custom server command ("" = embedded server)
 	DefLang     string          // WINGS_DEFLANG — if set, run gen_i18n with this default language
 	GenI18nArgs []string        // WINGS_GENI18N_ARGS — extra gen_i18n flags
@@ -70,6 +71,11 @@ func loadDevConfig() (*devConfig, error) {
 		webroot = filepath.Join(appRoot, webroot)
 	}
 	cfg.WebRoot = webroot
+
+	// gen_i18n scans WINGS_I18N_PATH; defaults to the main package dir, which is
+	// right for apps whose templates live under main. The live-demo overrides it
+	// (gen scans ./live-demo/mod while the build target is ./live-demo).
+	cfg.I18nPath = envOr("WINGS_I18N_PATH", cfg.Main)
 
 	debounce := envOr("WINGS_DEBOUNCE_MS", "200")
 	cfg.Debounce, err = strconv.Atoi(debounce)

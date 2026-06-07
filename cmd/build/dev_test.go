@@ -118,6 +118,57 @@ func getStatus(t *testing.T, url string) int {
 	return resp.StatusCode
 }
 
+// TestI18nPathDefault: WINGS_I18N_PATH defaults to WINGS_MAIN, and overrides it
+// when set (the live-demo needs gen to scan ./live-demo/mod while building
+// ./live-demo).
+func TestI18nPathDefault(t *testing.T) {
+	t.Setenv("WINGS_MAIN", "./live-demo")
+	t.Setenv("WINGS_I18N_PATH", "")
+	cfg, err := loadDevConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.I18nPath != "./live-demo" {
+		t.Errorf("I18nPath default = %q, want %q (= Main)", cfg.I18nPath, "./live-demo")
+	}
+	t.Setenv("WINGS_I18N_PATH", "./live-demo/mod")
+	cfg, err = loadDevConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.I18nPath != "./live-demo/mod" {
+		t.Errorf("I18nPath override = %q, want ./live-demo/mod", cfg.I18nPath)
+	}
+}
+
+// TestPublishDevCatalogs copies *.json and *.json.sig into <WebRoot>/i18n while
+// dropping the server-only *.meta.json.
+func TestPublishDevCatalogs(t *testing.T) {
+	app := t.TempDir()
+	web := t.TempDir()
+	src := filepath.Join(app, "mod", "i18n")
+	if err := os.MkdirAll(src, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"pt-BR.json", "pt-BR.json.sig", "pt-BR.meta.json"} {
+		if err := os.WriteFile(filepath.Join(src, name), []byte("{}"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	cfg := &devConfig{AppRoot: app, I18nPath: "mod", WebRoot: web}
+	if err := publishDevCatalogs(cfg); err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"pt-BR.json", "pt-BR.json.sig"} {
+		if _, err := os.Stat(filepath.Join(web, "i18n", want)); err != nil {
+			t.Errorf("expected %s published: %v", want, err)
+		}
+	}
+	if _, err := os.Stat(filepath.Join(web, "i18n", "pt-BR.meta.json")); err == nil {
+		t.Error("pt-BR.meta.json must not reach the webroot")
+	}
+}
+
 // TestEnvBool accepts the documented truthy tokens and rejects everything else.
 func TestEnvBool(t *testing.T) {
 	t.Setenv("WINGS_X", "yes")

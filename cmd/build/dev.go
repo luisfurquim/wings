@@ -47,7 +47,10 @@ func dev() error {
 // targets (lint.go, util.go, targets.go); only the module resolution differs
 // (the app's resolved wings dir instead of the repo root).
 func buildOnce(cfg *devConfig, wingsDir string) error {
-	if err := lintTemplates(cfg.AppRoot); err != nil {
+	// Lint the main package's templates, not the whole app root: when the app
+	// root is a parent dir (e.g. the wings repo, for the live-demo) that would
+	// sweep unrelated trees like work/ scratch or docs/.
+	if err := lintTemplates(filepath.Join(cfg.AppRoot, cfg.Main)); err != nil {
 		return err
 	}
 	if cfg.DefLang != "" {
@@ -87,7 +90,7 @@ func runGenI18n(cfg *devConfig, wingsDir string) error {
 		return err
 	}
 	defer cleanup()
-	args := []string{"--path", cfg.Main, "--deflang", cfg.DefLang}
+	args := []string{"--path", cfg.I18nPath, "--deflang", cfg.DefLang}
 	if cfg.AutoFlex {
 		args = append(args, "-auto-flex")
 		if cfg.DictDir != "" {
@@ -98,7 +101,28 @@ func runGenI18n(cfg *devConfig, wingsDir string) error {
 		args = append(args, "-auto-translate")
 	}
 	args = append(args, cfg.GenI18nArgs...)
-	return run(cfg.AppRoot, nil, gen, args...)
+	if err := run(cfg.AppRoot, nil, gen, args...); err != nil {
+		return err
+	}
+	return publishDevCatalogs(cfg)
+}
+
+// publishDevCatalogs copies the freshly generated catalogs (+ .json.sig
+// signatures) from <I18nPath>/i18n into <WebRoot>/i18n, so the browser fetches
+// the current i18n on each rebuild — mirroring buildLiveDemo's publishCatalogs
+// (which also drops the server-only *.meta.json). Apps that embed their catalogs
+// have no source i18n dir; that case is skipped silently.
+func publishDevCatalogs(cfg *devConfig) error {
+	src := filepath.Join(cfg.AppRoot, cfg.I18nPath, "i18n")
+	if _, err := os.Stat(src); err != nil {
+		return nil //nolint:nilerr // no catalog dir → nothing to publish
+	}
+	dst := filepath.Join(cfg.WebRoot, "i18n")
+	if err := publishCatalogs(src, dst); err != nil {
+		return err
+	}
+	devLogf("published catalogs → %s", dst)
+	return nil
 }
 
 // cmdStderr extracts the captured stderr from a failed exec (runOut uses
