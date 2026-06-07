@@ -8,20 +8,23 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
-## [0.16.1-alpha] — 2026-06-07
+## [0.16.2-alpha] — 2026-06-07
 
-> **Pre-release.** Fixes on top of `0.16.0-alpha`; the Docker dev path is still
+> **Pre-release.** Builds on `0.16.1-alpha`; the Docker dev path is still
 > experimental (see the `0.16.0-alpha` note below).
 
 ### Added
-- **Dev mode serves i18n apps end-to-end.** When `WINGS_DEFLANG` is set, the dev
-  loop now publishes the freshly generated (and signed) catalogs into the
-  webroot's `i18n/` on every rebuild, so a translated app works in the container
-  with no extra steps. A new `WINGS_I18N_PATH` (default `WINGS_MAIN`) lets the
-  directory `gen_i18n` scans differ from the build target — needed by apps like
-  the live-demo (scan `./live-demo/mod`, build `./live-demo`). `dev/docker/`
-  documents a copy-only recipe for running the bundled live-demo in the
-  container with only `.env` flags.
+- **Dev mode serves i18n apps end-to-end, including modules in a sub-directory.**
+  When `WINGS_DEFLANG` is set, the dev loop now publishes the freshly generated
+  (and signed) catalogs into the webroot's `i18n/` on every rebuild, so a
+  translated app works in the container with no extra steps. `WINGS_MAIN` now
+  means the **module directory** (the one with `go.mod`); all `go` commands run
+  there, so an app root that merely holds the module in a sub-dir and the webroot
+  in a sibling — exactly the bundled live-demo (`live-demo/` + `docs/`) — works by
+  copying folders. A new `WINGS_I18N_PATH` (relative to the module, default `.`)
+  lets `gen_i18n`'s scan dir differ from the build target (the live-demo scans
+  `mod` while building the module root). `dev/docker/` documents a copy-only
+  recipe for running the live-demo in the container with only `.env` flags.
 
 ### Changed
 - **Sub-modules use a `go.work` workspace instead of local `replace`s.** The
@@ -33,6 +36,19 @@ per-commit record see the git log and tags.
   v0.15.9`) and builds with no `go.mod` edits, which is what the dev container
   needs. Lint in `dev` mode is now scoped to `WINGS_MAIN` rather than the whole
   app root.
+
+### Fixed
+- **`.env.example` no longer breaks on inline comments.** Comments are now on
+  their own lines: docker compose reads an inline `# …` on an *empty* value as
+  the value itself, so `WINGS_DICT_LANGS=  # comma list, e.g. pt-BR,en-US` was
+  resolved to that comment string — triggering a (failing) dictionary build for
+  an app that set nothing. Also clarified that dictionaries use language tags
+  (`en`, `es`), not region tags (`en-US`, `es-AR`).
+
+## [0.16.1-alpha] — 2026-06-07
+
+> **Pre-release.** Fixes on top of `0.16.0-alpha`; the Docker dev path is still
+> experimental (see the `0.16.0-alpha` note below).
 
 ### Fixed
 - **Dev server no longer exposes the source tree.** The embedded server now

@@ -16,8 +16,9 @@ type devConfig struct {
 	AppRoot     string          // working directory: the webdev's app source root
 	Port        string          // WINGS_PORT — dev server port
 	WebRoot     string          // WINGS_WEBROOT — abs dir holding index.html; wasm+helpers land here
-	Main        string          // WINGS_MAIN — main package compiled to wasm (relative to AppRoot)
-	I18nPath    string          // WINGS_I18N_PATH — dir gen_i18n traverses (default = Main); its /i18n is the catalog source
+	Main        string          // WINGS_MAIN — module dir (holds go.mod + main package), relative to AppRoot
+	ModuleDir   string          // abs AppRoot/Main — cwd for all go commands (the live-demo's module is a subdir)
+	I18nPath    string          // WINGS_I18N_PATH — dir gen_i18n traverses, relative to ModuleDir (default "."); its /i18n is the catalog source
 	Httpd       string          // WINGS_HTTPD — custom server command ("" = embedded server)
 	DefLang     string          // WINGS_DEFLANG — if set, run gen_i18n with this default language
 	GenI18nArgs []string        // WINGS_GENI18N_ARGS — extra gen_i18n flags
@@ -72,10 +73,15 @@ func loadDevConfig() (*devConfig, error) {
 	}
 	cfg.WebRoot = webroot
 
-	// gen_i18n scans WINGS_I18N_PATH; defaults to the main package dir, which is
-	// right for apps whose templates live under main. The live-demo overrides it
-	// (gen scans ./live-demo/mod while the build target is ./live-demo).
-	cfg.I18nPath = envOr("WINGS_I18N_PATH", cfg.Main)
+	// All go commands run from the module directory (AppRoot/Main), not AppRoot:
+	// the app root may just hold the module in a subdir (e.g. live-demo/) and the
+	// webroot in a sibling (docs/), with no go.mod at the root.
+	cfg.ModuleDir = filepath.Join(appRoot, cfg.Main)
+
+	// gen_i18n scans WINGS_I18N_PATH (relative to the module dir); default "." is
+	// the module root. The live-demo overrides it to "mod" (gen scans ./mod while
+	// the build target is the module root ".").
+	cfg.I18nPath = envOr("WINGS_I18N_PATH", ".")
 
 	debounce := envOr("WINGS_DEBOUNCE_MS", "200")
 	cfg.Debounce, err = strconv.Atoi(debounce)

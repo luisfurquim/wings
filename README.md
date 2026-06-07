@@ -42,7 +42,7 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
-### v0.16.1-alpha
+### v0.16.2-alpha
 
 - **Dev container + rebuild-on-save** — develop your own wings app with zero
   toolchain on the host: bind-mount your source, `docker compose up`, and the
@@ -349,7 +349,7 @@ your machine at all — WINGS ships a Docker dev environment under
 docker compose up
 ```
 
-> **⚠️ Experimental (v0.16.1-alpha).** The native loop below works today and the
+> **⚠️ Experimental (v0.16.2-alpha).** The native loop below works today and the
 > image builds; what is **not yet validated end-to-end is serving a full app
 > inside the container** — it depends on the app's webroot, local `replace`
 > targets, and any custom server. It will be promoted to stable in `v0.16.0` once

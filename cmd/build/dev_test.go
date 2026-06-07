@@ -118,26 +118,28 @@ func getStatus(t *testing.T, url string) int {
 	return resp.StatusCode
 }
 
-// TestI18nPathDefault: WINGS_I18N_PATH defaults to WINGS_MAIN, and overrides it
-// when set (the live-demo needs gen to scan ./live-demo/mod while building
-// ./live-demo).
-func TestI18nPathDefault(t *testing.T) {
+// TestModuleDirAndI18nPath: ModuleDir is AppRoot/WINGS_MAIN (go commands run
+// there), and WINGS_I18N_PATH defaults to "." (the module root), relative to it.
+func TestModuleDirAndI18nPath(t *testing.T) {
 	t.Setenv("WINGS_MAIN", "./live-demo")
 	t.Setenv("WINGS_I18N_PATH", "")
 	cfg, err := loadDevConfig()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.I18nPath != "./live-demo" {
-		t.Errorf("I18nPath default = %q, want %q (= Main)", cfg.I18nPath, "./live-demo")
+	if filepath.Base(cfg.ModuleDir) != "live-demo" {
+		t.Errorf("ModuleDir = %q, want it to end in live-demo", cfg.ModuleDir)
 	}
-	t.Setenv("WINGS_I18N_PATH", "./live-demo/mod")
+	if cfg.I18nPath != "." {
+		t.Errorf("I18nPath default = %q, want %q", cfg.I18nPath, ".")
+	}
+	t.Setenv("WINGS_I18N_PATH", "mod")
 	cfg, err = loadDevConfig()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.I18nPath != "./live-demo/mod" {
-		t.Errorf("I18nPath override = %q, want ./live-demo/mod", cfg.I18nPath)
+	if cfg.I18nPath != "mod" {
+		t.Errorf("I18nPath override = %q, want mod", cfg.I18nPath)
 	}
 }
 
@@ -155,7 +157,7 @@ func TestPublishDevCatalogs(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	cfg := &devConfig{AppRoot: app, I18nPath: "mod", WebRoot: web}
+	cfg := &devConfig{ModuleDir: app, I18nPath: "mod", WebRoot: web}
 	if err := publishDevCatalogs(cfg); err != nil {
 		t.Fatal(err)
 	}

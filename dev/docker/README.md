@@ -3,7 +3,7 @@
 A zero-toolchain development loop for your own wings app: edit source on your
 host, and the container recompiles `wings.wasm` and serves it on every save.
 
-> **⚠️ Experimental (v0.16.1-alpha).** The `cmd/build dev` loop is tested and
+> **⚠️ Experimental (v0.16.2-alpha).** The `cmd/build dev` loop is tested and
 > stable run natively (`go run … dev`), and the image builds (the orchestrator is
 > installed from the module proxy via `go install …/cmd/build@${WINGS_VERSION}`,
 > and the Unitex dictionary stage compiles). What is **not yet validated
@@ -34,7 +34,7 @@ source never enters the image — it is bind-mounted at `/app`.
 
 | Variable             | Default                | Purpose                                                        |
 | -------------------- | ---------------------- | -------------------------------------------------------------- |
-| `WINGS_VERSION`      | `v0.16.1-alpha`        | wings version installed for the dev tool; match your `go.mod`. |
+| `WINGS_VERSION`      | `v0.16.2-alpha`        | wings version installed for the dev tool; match your `go.mod`. |
 | `WINGS_PORT`         | `8080`                 | Dev server port (also published by compose).                   |
 | `WINGS_WEBROOT`      | `.`                    | Dir with `index.html`; `wings.wasm` + JS helpers are written here. |
 | `WINGS_MAIN`         | `.`                    | Main package compiled to wasm (relative to the app root).      |
@@ -113,11 +113,14 @@ real, i18n-enabled app. From a fresh, empty folder:
    ```env
    WINGS_WEBROOT=./docs
    WINGS_MAIN=./live-demo
-   WINGS_I18N_PATH=./live-demo/mod
+   WINGS_I18N_PATH=mod
    WINGS_DEFLANG=pt-BR
    WINGS_BUILD_TAGS=wings_test
-   WINGS_GENI18N_ARGS=-sign-key ./live-demo/gen_i18n.ed25519.key -sign-key-password wings-live-demo
+   WINGS_GENI18N_ARGS=-sign-key ./gen_i18n.ed25519.key -sign-key-password wings-live-demo
    ```
+
+   (`WINGS_MAIN` is the module dir — the one with `go.mod`; all `go` commands run
+   there. `WINGS_I18N_PATH` and the `-sign-key` path are relative to it.)
 
 4. `docker compose up`, then open <http://localhost:8080>.
 

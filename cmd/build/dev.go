@@ -20,14 +20,14 @@ func dev() error {
 	if err != nil {
 		return err
 	}
-	wingsDir, err := runOut(cfg.AppRoot, "go", "list", "-m", "-f", "{{.Dir}}", "github.com/luisfurquim/wings")
+	wingsDir, err := runOut(cfg.ModuleDir, "go", "list", "-m", "-f", "{{.Dir}}", "github.com/luisfurquim/wings")
 	if err != nil {
 		return fmt.Errorf("resolving the github.com/luisfurquim/wings module from %s: %w%s\n"+
-			"the app's go.mod must require github.com/luisfurquim/wings (and any local replace "+
-			"targets must be reachable inside the container)", cfg.AppRoot, err, cmdStderr(err))
+			"WINGS_MAIN must point at the module dir (the one with go.mod), and that go.mod must "+
+			"require github.com/luisfurquim/wings (local replace targets must be reachable too)", cfg.ModuleDir, err, cmdStderr(err))
 	}
 
-	devLogf("app root:   %s", cfg.AppRoot)
+	devLogf("module:     %s", cfg.ModuleDir)
 	devLogf("wings:      %s", wingsDir)
 	devLogf("webroot:    %s", cfg.WebRoot)
 
@@ -47,10 +47,9 @@ func dev() error {
 // targets (lint.go, util.go, targets.go); only the module resolution differs
 // (the app's resolved wings dir instead of the repo root).
 func buildOnce(cfg *devConfig, wingsDir string) error {
-	// Lint the main package's templates, not the whole app root: when the app
-	// root is a parent dir (e.g. the wings repo, for the live-demo) that would
-	// sweep unrelated trees like work/ scratch or docs/.
-	if err := lintTemplates(filepath.Join(cfg.AppRoot, cfg.Main)); err != nil {
+	// Lint the module's templates, not the whole app root: the app root may be a
+	// parent dir (e.g. holding live-demo/ + docs/) and sweep unrelated trees.
+	if err := lintTemplates(cfg.ModuleDir); err != nil {
 		return err
 	}
 	if cfg.DefLang != "" {
@@ -61,12 +60,13 @@ func buildOnce(cfg *devConfig, wingsDir string) error {
 	if err := copyHelpers(wingsDir, cfg.WebRoot); err != nil {
 		return err
 	}
+	// Build runs from the module dir, so the target is the module root ".".
 	args := []string{"build", "-buildvcs=false"}
 	if cfg.BuildTags != "" {
 		args = append(args, "-tags", cfg.BuildTags)
 	}
-	args = append(args, "-o", filepath.Join(cfg.WebRoot, "wings.wasm"), cfg.Main)
-	if err := run(cfg.AppRoot, []string{"GOOS=js", "GOARCH=wasm"}, "go", args...); err != nil {
+	args = append(args, "-o", filepath.Join(cfg.WebRoot, "wings.wasm"), ".")
+	if err := run(cfg.ModuleDir, []string{"GOOS=js", "GOARCH=wasm"}, "go", args...); err != nil {
 		return err
 	}
 	devLogf("build ok → %s", filepath.Join(cfg.WebRoot, "wings.wasm"))
@@ -101,7 +101,7 @@ func runGenI18n(cfg *devConfig, wingsDir string) error {
 		args = append(args, "-auto-translate")
 	}
 	args = append(args, cfg.GenI18nArgs...)
-	if err := run(cfg.AppRoot, nil, gen, args...); err != nil {
+	if err := run(cfg.ModuleDir, nil, gen, args...); err != nil {
 		return err
 	}
 	return publishDevCatalogs(cfg)
@@ -113,7 +113,7 @@ func runGenI18n(cfg *devConfig, wingsDir string) error {
 // (which also drops the server-only *.meta.json). Apps that embed their catalogs
 // have no source i18n dir; that case is skipped silently.
 func publishDevCatalogs(cfg *devConfig) error {
-	src := filepath.Join(cfg.AppRoot, cfg.I18nPath, "i18n")
+	src := filepath.Join(cfg.ModuleDir, cfg.I18nPath, "i18n")
 	if _, err := os.Stat(src); err != nil {
 		return nil //nolint:nilerr // no catalog dir → nothing to publish
 	}
