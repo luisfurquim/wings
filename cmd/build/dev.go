@@ -1,9 +1,12 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 // dev runs the generic development loop for a webdev's own wings app: it builds
@@ -19,7 +22,9 @@ func dev() error {
 	}
 	wingsDir, err := runOut(cfg.AppRoot, "go", "list", "-m", "-f", "{{.Dir}}", "github.com/luisfurquim/wings")
 	if err != nil {
-		return fmt.Errorf("resolving the wings module from %s (is this a wings app?): %w", cfg.AppRoot, err)
+		return fmt.Errorf("resolving the github.com/luisfurquim/wings module from %s: %w%s\n"+
+			"the app's go.mod must require github.com/luisfurquim/wings (and any local replace "+
+			"targets must be reachable inside the container)", cfg.AppRoot, err, cmdStderr(err))
 	}
 
 	devLogf("app root:   %s", cfg.AppRoot)
@@ -94,6 +99,20 @@ func runGenI18n(cfg *devConfig, wingsDir string) error {
 	}
 	args = append(args, cfg.GenI18nArgs...)
 	return run(cfg.AppRoot, nil, gen, args...)
+}
+
+// cmdStderr extracts the captured stderr from a failed exec (runOut uses
+// cmd.Output(), which stashes the child's stderr in ExitError.Stderr). It is
+// returned as a "\n  <stderr>" suffix so the underlying `go` diagnostic reaches
+// the user instead of a bare "exit status 1".
+func cmdStderr(err error) string {
+	var ee *exec.ExitError
+	if errors.As(err, &ee) {
+		if msg := strings.TrimSpace(string(ee.Stderr)); msg != "" {
+			return "\n  " + strings.ReplaceAll(msg, "\n", "\n  ")
+		}
+	}
+	return ""
 }
 
 // devLogf writes a timestamp-free, prefixed status line to stderr. The dev loop
