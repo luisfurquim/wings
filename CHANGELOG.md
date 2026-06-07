@@ -13,6 +13,27 @@ per-commit record see the git log and tags.
 > **Pre-release.** Fixes on top of `0.16.0-alpha`; the Docker dev path is still
 > experimental (see the `0.16.0-alpha` note below).
 
+### Added
+- **Dev mode serves i18n apps end-to-end.** When `WINGS_DEFLANG` is set, the dev
+  loop now publishes the freshly generated (and signed) catalogs into the
+  webroot's `i18n/` on every rebuild, so a translated app works in the container
+  with no extra steps. A new `WINGS_I18N_PATH` (default `WINGS_MAIN`) lets the
+  directory `gen_i18n` scans differ from the build target — needed by apps like
+  the live-demo (scan `./live-demo/mod`, build `./live-demo`). `dev/docker/`
+  documents a copy-only recipe for running the bundled live-demo in the
+  container with only `.env` flags.
+
+### Changed
+- **Sub-modules use a `go.work` workspace instead of local `replace`s.** The
+  `live-demo`, `example`, and `wlate` modules dropped their
+  `replace …/wings => ../` directives (and `example` its local `goose` replace)
+  in favour of a repo-root `go.work`. The "use local wings" override now lives in
+  one file that does not travel when a module is copied out — so copying, say,
+  `live-demo/` to a fresh folder resolves wings from the proxy (`require …/wings
+  v0.15.9`) and builds with no `go.mod` edits, which is what the dev container
+  needs. Lint in `dev` mode is now scoped to `WINGS_MAIN` rather than the whole
+  app root.
+
 ### Fixed
 - **Dev server no longer exposes the source tree.** The embedded server now
   disables directory listings: with `WINGS_WEBROOT` at the app root and no

@@ -386,11 +386,16 @@ If your app needs a real backend instead of the built-in static server, set
 `WINGS_HTTPD` to the command that starts it (e.g. `WINGS_HTTPD=go run ./server`);
 build-and-watch keep running alongside it.
 
-When `WINGS_DEFLANG` is set, the loop also runs `gen_i18n` on each build, and two
-optional passes can be enabled: `WINGS_AUTO_FLEX` (fill inflections from baked
-Unitex dictionaries — list locales in `WINGS_DICT_LANGS`) and
-`WINGS_AUTO_TRANSLATE` (machine/LLM pre-fill, configured via `WINGS_TR_*`). See
-[`dev/docker/README.md`](dev/docker/README.md) for the full variable reference.
+When `WINGS_DEFLANG` is set, the loop also runs `gen_i18n` on each build (and
+publishes the signed catalogs into the webroot), and two optional passes can be
+enabled: `WINGS_AUTO_FLEX` (fill inflections from baked Unitex dictionaries —
+list locales in `WINGS_DICT_LANGS`) and `WINGS_AUTO_TRANSLATE` (machine/LLM
+pre-fill, configured via `WINGS_TR_*`).
+
+To see the loop drive a real i18n-enabled app, run the bundled **live-demo** in
+the container with only `.env` flags (copy its `live-demo/` and `docs/` folders,
+no code changes). See [`dev/docker/README.md`](dev/docker/README.md) for that
+recipe and the full variable reference.
 
 ## Project Setup
 

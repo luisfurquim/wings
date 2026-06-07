@@ -98,3 +98,41 @@ WINGS_DEFLANG=pt-BR go run github.com/luisfurquim/wings/cmd/build@latest dev
 ```
 
 (or `go run ./cmd/build dev` from inside the wings repo).
+
+## Try it with the bundled live-demo
+
+The wings **live-demo** is a full app you can run in this container with no code
+changes — only `.env` flags. It is the easiest way to see the dev loop drive a
+real, i18n-enabled app. From a fresh, empty folder:
+
+1. Copy the wings repo's **`live-demo/`** and **`docs/`** folders into it.
+2. Copy this directory's `Dockerfile`, `docker-compose.yml`, and `.env.example`
+   (renamed to `.env`) alongside them.
+3. Set these in `.env`:
+
+   ```env
+   WINGS_WEBROOT=./docs
+   WINGS_MAIN=./live-demo
+   WINGS_I18N_PATH=./live-demo/mod
+   WINGS_DEFLANG=pt-BR
+   WINGS_BUILD_TAGS=wings_test
+   WINGS_GENI18N_ARGS=-sign-key ./live-demo/gen_i18n.ed25519.key -sign-key-password wings-live-demo
+   ```
+
+4. `docker compose up`, then open <http://localhost:8080>.
+
+The folder ends up like:
+
+```
+my-live-demo/
+├── live-demo/   ← wings source (the main package)
+├── docs/        ← webroot: index.html + i18n catalogs
+├── Dockerfile
+├── docker-compose.yml
+└── .env
+```
+
+`docs/` is the webroot — it already ships `index.html`; the loop writes the
+rebuilt `wings.wasm`, the JS helpers, and the freshly signed i18n catalogs into
+it on every save. The live-demo's `go.mod` requires a published wings (no local
+paths), so plain file copies are all it takes.
