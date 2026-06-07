@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"testing"
@@ -68,6 +70,52 @@ func TestParseExt(t *testing.T) {
 	if len(got) != 3 {
 		t.Errorf("parseExt size = %d, want 3 (%v)", len(got), got)
 	}
+}
+
+// TestIsSensitivePath blocks dotfiles and private keys while allowing normal
+// web assets, so the dev server never serves source secrets by direct path.
+func TestIsSensitivePath(t *testing.T) {
+	blocked := []string{"/.env", "/.git/config", "/sub/.env", "/gen_i18n.ed25519.key", "/certs/server.pem"}
+	for _, p := range blocked {
+		if !isSensitivePath(p) {
+			t.Errorf("isSensitivePath(%q) = false, want true", p)
+		}
+	}
+	allowed := []string{"/", "/index.html", "/wings.wasm", "/app.js", "/styles.css", "/i18n/pt-BR.json"}
+	for _, p := range allowed {
+		if isSensitivePath(p) {
+			t.Errorf("isSensitivePath(%q) = true, want false", p)
+		}
+	}
+}
+
+// TestNoListFS_DisablesListing confirms a directory without index.html is a 404
+// (no listing), while a regular file is served — so the dev server never dumps
+// the source tree.
+func TestNoListFS_DisablesListing(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "app.js"), []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	srv := httptest.NewServer(http.FileServer(noListFS{http.Dir(dir)}))
+	defer srv.Close()
+
+	if code := getStatus(t, srv.URL+"/"); code != http.StatusNotFound {
+		t.Errorf("GET / (no index.html) = %d, want 404 (listing must be disabled)", code)
+	}
+	if code := getStatus(t, srv.URL+"/app.js"); code != http.StatusOK {
+		t.Errorf("GET /app.js = %d, want 200", code)
+	}
+}
+
+func getStatus(t *testing.T, url string) int {
+	t.Helper()
+	resp, err := http.Get(url)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	return resp.StatusCode
 }
 
 // TestEnvBool accepts the documented truthy tokens and rejects everything else.

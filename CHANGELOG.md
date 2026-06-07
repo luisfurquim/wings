@@ -44,6 +44,19 @@ per-commit record see the git log and tags.
   dictionaries you list in `WINGS_DICT_LANGS` (compiling Unitex from source), so
   the lean final image carries only the resulting `<lang>.db` files.
 
+### Fixed
+- **Dev server no longer exposes the source tree.** The embedded server disabled
+  directory listings: with `WINGS_WEBROOT` at the app root and no `index.html`,
+  it previously served a browsable index of the source — `.env` files and signing
+  keys included. Directory listings now return 404, dotfiles and `*.key`/`*.pem`
+  are never served by direct path, and the server warns at startup when the
+  webroot has no `index.html`.
+- **Dev dictionary build uses an older GCC.** The throwaway dictionary stage now
+  builds on Debian (GCC 10): recent GCC rejected unitex-core's `int x = NULL;`
+  idiom, breaking the Unitex compile.
+- **Clearer `dev` error when the wings module is unresolved.** Surfaces the
+  underlying `go list` stderr instead of a bare "exit status 1".
+
 ## [0.15.9] — 2026-06-06
 
 ### Added
