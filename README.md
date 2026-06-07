@@ -42,7 +42,7 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
-### v0.16.0-alpha
+### v0.16.1-alpha
 
 - **Dev container + rebuild-on-save** — develop your own wings app with zero
   toolchain on the host: bind-mount your source, `docker compose up`, and the
@@ -349,12 +349,11 @@ your machine at all — WINGS ships a Docker dev environment under
 docker compose up
 ```
 
-> **⚠️ Experimental (v0.16.0-alpha).** The native loop below works today. The
-> **Docker image build is not yet validated end-to-end**: it installs the dev
-> tool via `go install …/cmd/build@${WINGS_VERSION}`, which needs this release
-> published on the module proxy first — so the image only builds once
-> `v0.16.0-alpha` is tagged and pushed (then `WINGS_VERSION=v0.16.0-alpha`). It
-> will be promoted to stable in `v0.16.0` after that round-trip is verified.
+> **⚠️ Experimental (v0.16.1-alpha).** The native loop below works today and the
+> image builds; what is **not yet validated end-to-end is serving a full app
+> inside the container** — it depends on the app's webroot, local `replace`
+> targets, and any custom server. It will be promoted to stable in `v0.16.0` once
+> proven on a real app.
 
 Your source stays on the host (bind-mounted), and on every save the container
 re-lints, recompiles `wings.wasm`, and serves it on

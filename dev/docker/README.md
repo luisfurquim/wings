@@ -3,16 +3,14 @@
 A zero-toolchain development loop for your own wings app: edit source on your
 host, and the container recompiles `wings.wasm` and serves it on every save.
 
-> **⚠️ Experimental (v0.16.0-alpha).** The underlying `cmd/build dev` loop is
-> tested and stable when run natively (`go run … dev`). The **Docker image build
-> itself has not yet been validated end-to-end** — for a chicken-and-egg reason:
-> the image installs the dev tool with
-> `go install …/cmd/build@${WINGS_VERSION}`, which needs that version published
-> on the module proxy. Until `v0.16.0-alpha` is tagged and pushed, the proxy has
-> no wings release that contains `dev` mode, so the image cannot build. Once the
-> tag is published, set `WINGS_VERSION=v0.16.0-alpha` and the build works; the
-> Docker path will be promoted to stable after that round-trip is verified. The
-> native loop (below, "Without Docker") works today.
+> **⚠️ Experimental (v0.16.1-alpha).** The `cmd/build dev` loop is tested and
+> stable run natively (`go run … dev`), and the image builds (the orchestrator is
+> installed from the module proxy via `go install …/cmd/build@${WINGS_VERSION}`,
+> and the Unitex dictionary stage compiles). What is **not yet validated
+> end-to-end is serving a full app inside the container** — that depends on the
+> app's own layout (webroot, local `replace` targets, custom server). The Docker
+> path will be promoted to stable in `v0.16.0` once that round-trip is proven on a
+> real app. The native loop (below, "Without Docker") works today.
 
 ## Use
 
@@ -36,7 +34,7 @@ source never enters the image — it is bind-mounted at `/app`.
 
 | Variable             | Default                | Purpose                                                        |
 | -------------------- | ---------------------- | -------------------------------------------------------------- |
-| `WINGS_VERSION`      | `v0.16.0-alpha`        | wings version installed for the dev tool; match your `go.mod`. |
+| `WINGS_VERSION`      | `v0.16.1-alpha`        | wings version installed for the dev tool; match your `go.mod`. |
 | `WINGS_PORT`         | `8080`                 | Dev server port (also published by compose).                   |
 | `WINGS_WEBROOT`      | `.`                    | Dir with `index.html`; `wings.wasm` + JS helpers are written here. |
 | `WINGS_MAIN`         | `.`                    | Main package compiled to wasm (relative to the app root).      |
