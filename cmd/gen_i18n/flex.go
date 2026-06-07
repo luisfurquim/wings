@@ -774,13 +774,13 @@ func buildFlexEntriesForLang(i18nDir, lang, defLang string) ([]wi18n.FlexEntry, 
 
 	var dict *Dict
 	if autoFlex {
-		dictPath := filepath.Join(dictDir, lang+".db")
-		d, err := loadDict(dictPath)
-		if err != nil {
+		d, dictPath, err := loadDictForLang(dictDir, lang)
+		switch {
+		case err != nil:
 			G.Logf(2, "warn: failed to load %s: %v (auto-flex skipped for %s)", dictPath, err, lang)
-		} else if d == nil {
-			G.Logf(2, "warn: no dict at %s (auto-flex skipped for %s)", dictPath, lang)
-		} else {
+		case d == nil:
+			G.Logf(2, "warn: no dict for %s in %s (auto-flex skipped)", lang, dictDir)
+		default:
 			dict = d
 		}
 	}

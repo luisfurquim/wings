@@ -31,6 +31,7 @@ type devConfig struct {
 	// unless WINGS_DEFLANG is also set.
 	AutoFlex      bool   // WINGS_AUTO_FLEX — pass -auto-flex (fill inflections from dicts)
 	DictDir       string // WINGS_DICT_DIR — dir holding <lang>.db; passed as -dict-dir
+	DictStrict    bool   // WINGS_DICT_STRICT — pass -dict-strict (require exact-locale dict; no region→base fallback)
 	AutoTranslate bool   // WINGS_AUTO_TRANSLATE — pass -auto-translate
 	TRBackend     string // WINGS_TR_BACKEND — "openai" | "libretranslate"
 	TRURL         string // WINGS_TR_URL — backend endpoint
@@ -59,6 +60,7 @@ func loadDevConfig() (*devConfig, error) {
 
 		AutoFlex:      envBool("WINGS_AUTO_FLEX"),
 		DictDir:       os.Getenv("WINGS_DICT_DIR"),
+		DictStrict:    envBool("WINGS_DICT_STRICT"),
 		AutoTranslate: envBool("WINGS_AUTO_TRANSLATE"),
 		TRBackend:     os.Getenv("WINGS_TR_BACKEND"),
 		TRURL:         os.Getenv("WINGS_TR_URL"),

@@ -42,6 +42,14 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
+### v0.16.3-alpha
+
+- **Region locales reuse their base dictionary for `-auto-flex`** — a catalog
+  locale like `en-US` or `es-AR` no longer needs its own Unitex dictionary:
+  `dictbuild` bakes it from `en`/`es` (and `gen_i18n` mirrors the `en-US`→`en`
+  fallback when loading), so `WINGS_DICT_LANGS=pt-BR,en-US,es-AR` works in one
+  shot. `-dict-strict` / `WINGS_DICT_STRICT` opts out and demands an exact match.
+
 ### v0.16.2-alpha
 
 - **Dev container + rebuild-on-save** — develop your own wings app with zero
@@ -349,7 +357,7 @@ your machine at all — WINGS ships a Docker dev environment under
 docker compose up
 ```
 
-> **⚠️ Experimental (v0.16.2-alpha).** The native loop below works today and the
+> **⚠️ Experimental (v0.16.3-alpha).** The native loop below works today and the
 > image builds; what is **not yet validated end-to-end is serving a full app
 > inside the container** — it depends on the app's webroot, local `replace`
 > targets, and any custom server. It will be promoted to stable in `v0.16.0` once

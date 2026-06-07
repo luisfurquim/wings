@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/luisfurquim/wings/expr"
+	"golang.org/x/text/language"
 )
 
 // ── CLI-tied globals ────────────────────────────────────────────────────────
@@ -22,6 +23,14 @@ var autoFlex bool
 // dictDir is where loadDict looks for <lang>.db files. Resolved from
 // -dict-dir, defaulting to the wings module's bundled dict directory.
 var dictDir string
+
+// dictStrict, when true, disables the region→base fallback in loadDictForLang:
+// only the exact "<lang>.db" is accepted, so a locale without its own localised
+// dictionary is left empty instead of borrowing the base language's forms.
+// Resolved from -dict-strict (default false = fallback on, the original
+// behaviour). The strict ("summa pertinacia") mode is for callers who would
+// rather fail to auto-fill than fill from a non-localised dictionary.
+var dictStrict bool
 
 // dictSource is the value stamped into FlexEntryData.Source when a cell is
 // auto-populated. Provenance for translators / the wlate GUI. The "@<sha>"
@@ -93,6 +102,35 @@ func loadDict(path string) (*Dict, error) {
 		return nil, fmt.Errorf("decode dict %s: %w", path, err)
 	}
 	return &d, nil
+}
+
+// loadDictForLang resolves and loads the dictionary for a catalog locale. It
+// prefers the exact locale ("en-US.db"); when that file is absent and strict
+// mode is off, it falls back to the base language ("en.db"), mirroring the
+// region→base fallback dictbuild applies when it writes the file. It returns
+// the loaded Dict (nil when no candidate exists — auto-flex is then skipped),
+// the path actually consulted (for logging), and any decode error.
+func loadDictForLang(dir, lang string) (*Dict, string, error) {
+	exact := filepath.Join(dir, lang+".db")
+	if d, err := loadDict(exact); err != nil {
+		return nil, exact, err
+	} else if d != nil {
+		return d, exact, nil
+	}
+	if dictStrict {
+		return nil, exact, nil
+	}
+	if t, err := language.Parse(lang); err == nil {
+		if base, conf := t.Base(); conf != language.No && base.String() != lang {
+			basePath := filepath.Join(dir, base.String()+".db")
+			if d, err := loadDict(basePath); err != nil {
+				return nil, basePath, err
+			} else if d != nil {
+				return d, basePath, nil
+			}
+		}
+	}
+	return nil, exact, nil
 }
 
 // ── Surface-form reconstruction ─────────────────────────────────────────────

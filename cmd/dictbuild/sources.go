@@ -86,8 +86,16 @@ var providerAvatarURLs = map[string]string{
 
 // resolveLangSource looks up a tag in langSources, accepting both the exact
 // keys above and BCP-47 normalised variants (e.g. "PT-BR" → "pt-BR"). It
-// returns the source, the canonical key used to address files on disk
-// (binPath/infPath/cache subdir), and ok=false when the locale is unknown.
+// returns the source, the key used to address files on disk
+// (binPath/infPath/cache subdir, and ultimately the <key>.db filename), and
+// ok=false when the locale is unknown.
+//
+// When a region/script variant has no dedicated dictionary, it falls back to
+// the base language ("en-US" → "en", "es-AR" → "es"): the returned key is then
+// the base, so the output is honestly named "en.db" (NOT "en-US.db" — that
+// would pretend a localised dictionary exists). The loader side mirrors this
+// region→base fallback when it looks the file up. The caller can detect the
+// fallback by comparing the returned key against the requested tag.
 //
 // The raw-key path is tried first so non-standard codes such as "oge"
 // (Old Georgian, ISO 639-3) work even if golang.org/x/text/language wouldn't
@@ -96,16 +104,28 @@ func resolveLangSource(tag string) (langSource, string, bool) {
 	if src, ok := langSources[tag]; ok {
 		return src, tag, true
 	}
-	// Fall back to BCP-47 canonicalisation so case/format variants
-	// ("PT-BR", "pt-br") resolve to the canonical registry key ("pt-BR").
-	// Tried second, after the raw-key path above, so non-standard ISO 639-3
-	// codes such as "oge" — which language.Parse would canonicalise away —
-	// still resolve via their verbatim key.
-	if t, err := language.Parse(tag); err == nil {
-		if canon := t.String(); canon != tag {
-			if src, ok := langSources[canon]; ok {
-				return src, canon, true
-			}
+	t, err := language.Parse(tag)
+	if err != nil {
+		return langSource{}, "", false
+	}
+	// BCP-47 canonicalisation so case/format variants ("PT-BR", "pt-br")
+	// resolve to the canonical registry key ("pt-BR"). Tried after the
+	// raw-key path so non-standard ISO 639-3 codes such as "oge" — which
+	// language.Parse would canonicalise away — still resolve via their
+	// verbatim key.
+	if canon := t.String(); canon != tag {
+		if src, ok := langSources[canon]; ok {
+			return src, canon, true
+		}
+	}
+	// Region/script fallback: no dedicated dictionary for this exact locale,
+	// so use the base language ("en-US" → "en", "fr-CA" → "fr"). pt-BR/pt-PT
+	// have dedicated entries and matched above, so Portuguese never reaches
+	// here; "sr" (no script) has no base entry and stays unresolved, which is
+	// correct — Serbian requires a script.
+	if base, conf := t.Base(); conf != language.No {
+		if src, ok := langSources[base.String()]; ok {
+			return src, base.String(), true
 		}
 	}
 	return langSource{}, "", false

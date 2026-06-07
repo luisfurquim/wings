@@ -24,10 +24,20 @@ func TestResolveLangSource(t *testing.T) {
 		// Non-standard ISO 639-3 code resolves via the raw-key path, never
 		// canonicalised away.
 		{"iso639-3 oge", "oge", "oge", true, "Georgian (Ancient)_may2009"},
+		// Region variants with no dedicated dictionary fall back to the base
+		// language and report the honest base key (so the output is <base>.db).
+		{"region falls back to base", "de-DE", "de", true, "dela"},
+		{"en-US falls back to en", "en-US", "en", true, "dela-en-public"},
+		{"es-AR falls back to es", "es-AR", "es", true, "delaf"},
+		{"fr-CA falls back to fr", "fr-CA", "fr", true, "Dela_fr"},
+		// pt-BR/pt-PT have dedicated dictionaries: matched exactly, never
+		// folded down to a (non-existent) "pt" base.
+		{"pt-PT stays dedicated", "pt-PT", "pt-PT", true, "Delaf_V2"},
+		// Serbian needs a script, not a region: "sr" alone has no base entry.
+		{"sr without script unresolved", "sr", "", false, ""},
 		// Unknown / unsupported locales.
 		{"unknown", "xx-YY", "", false, ""},
 		{"empty", "", "", false, ""},
-		{"known base, unlisted region", "de-DE", "", false, ""},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

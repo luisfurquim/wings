@@ -3,7 +3,7 @@
 A zero-toolchain development loop for your own wings app: edit source on your
 host, and the container recompiles `wings.wasm` and serves it on every save.
 
-> **⚠️ Experimental (v0.16.2-alpha).** The `cmd/build dev` loop is tested and
+> **⚠️ Experimental (v0.16.3-alpha).** The `cmd/build dev` loop is tested and
 > stable run natively (`go run … dev`), and the image builds (the orchestrator is
 > installed from the module proxy via `go install …/cmd/build@${WINGS_VERSION}`,
 > and the Unitex dictionary stage compiles). What is **not yet validated
@@ -34,7 +34,7 @@ source never enters the image — it is bind-mounted at `/app`.
 
 | Variable             | Default                | Purpose                                                        |
 | -------------------- | ---------------------- | -------------------------------------------------------------- |
-| `WINGS_VERSION`      | `v0.16.2-alpha`        | wings version installed for the dev tool; match your `go.mod`. |
+| `WINGS_VERSION`      | `v0.16.3-alpha`        | wings version installed for the dev tool; match your `go.mod`. |
 | `WINGS_PORT`         | `8080`                 | Dev server port (also published by compose).                   |
 | `WINGS_WEBROOT`      | `.`                    | Dir with `index.html`; `wings.wasm` + JS helpers are written here. |
 | `WINGS_MAIN`         | `.`                    | Main package compiled to wasm (relative to the app root).      |
@@ -52,11 +52,20 @@ They are **baked into the image at build time** — compiling Unitex pulls a C++
 toolchain into a throwaway build stage, so the *first* build is slow, but the
 final image only carries the `.db` files.
 
-| Variable          | Default            | Purpose                                                       |
-| ----------------- | ------------------ | ------------------------------------------------------------- |
-| `WINGS_DICT_LANGS`| *(empty)*          | **Build arg**: comma list of locales to bake, e.g. `pt-BR,en-US`. Empty = none. |
-| `WINGS_AUTO_FLEX` | *(empty)*          | `1` passes `-auto-flex` to `gen_i18n` (needs `WINGS_DEFLANG`). |
-| `WINGS_DICT_DIR`  | `/opt/wings/dicts` | Where the baked `.db` live (passed as `-dict-dir`).           |
+| Variable           | Default            | Purpose                                                       |
+| ------------------ | ------------------ | ------------------------------------------------------------- |
+| `WINGS_DICT_LANGS` | *(empty)*          | **Build arg**: comma list of locales to bake, e.g. `pt-BR,en-US,es-AR`. Empty = none. |
+| `WINGS_AUTO_FLEX`  | *(empty)*          | `1` passes `-auto-flex` to `gen_i18n` (needs `WINGS_DEFLANG`). |
+| `WINGS_DICT_DIR`   | `/opt/wings/dicts` | Where the baked `.db` live (passed as `-dict-dir`).           |
+| `WINGS_DICT_STRICT`| *(empty)*          | `1` requires an exact-locale dictionary (no region→base fallback). |
+
+List the **same locales your catalogs use**. A region tag with no dedicated
+dictionary falls back to its base language: `en-US`/`es-AR` are baked from the
+`en`/`es` dictionaries — written honestly as `en.db`/`es.db`, and the loader
+applies the same `en-US`→`en` fallback when filling cells. Only Portuguese has
+localised dictionaries (`pt-BR` / `pt-PT`), which are **not** interchangeable.
+Set `WINGS_DICT_STRICT=1` to refuse the fallback and leave a locale empty unless
+its exact `.db` exists.
 
 Changing `WINGS_DICT_LANGS` requires a rebuild (`docker compose build`).
 
@@ -99,30 +108,43 @@ WINGS_DEFLANG=pt-BR go run github.com/luisfurquim/wings/cmd/build@latest dev
 
 (or `go run ./cmd/build dev` from inside the wings repo).
 
-## Try it with the bundled live-demo
+## Try it: an i18n app from scratch
 
-The wings **live-demo** is a full app you can run in this container with no code
-changes — only `.env` flags. It is the easiest way to see the dev loop drive a
-real, i18n-enabled app. From a fresh, empty folder:
+This recipe reproduces what a **real wings user** does: bring your own app and
+add i18n with **no pre-computed inflections** — the baked dictionaries generate
+them in the container. We borrow the wings **live-demo** as a stand-in for "your
+app", but strip its pre-computed inflections so the dictionary pass does the
+real work. From a fresh, empty folder:
 
 1. Copy the wings repo's **`live-demo/`** and **`docs/`** folders into it.
 2. Copy this directory's `Dockerfile`, `docker-compose.yml`, and `.env.example`
    (renamed to `.env`) alongside them.
-3. Set these in `.env`:
+3. Delete the pre-computed inflections so auto-flex regenerates them from the
+   dictionaries (this is the bit a real user never has):
+
+   ```sh
+   rm live-demo/mod/i18n/*.inflections.json
+   ```
+
+4. Set these in `.env`:
 
    ```env
    WINGS_WEBROOT=./docs
    WINGS_MAIN=./live-demo
    WINGS_I18N_PATH=mod
    WINGS_DEFLANG=pt-BR
+   WINGS_DICT_LANGS=pt-BR,en-US,es-AR
+   WINGS_AUTO_FLEX=1
    WINGS_BUILD_TAGS=wings_test
    WINGS_GENI18N_ARGS=-sign-key ./gen_i18n.ed25519.key -sign-key-password wings-live-demo
    ```
 
    (`WINGS_MAIN` is the module dir — the one with `go.mod`; all `go` commands run
-   there. `WINGS_I18N_PATH` and the `-sign-key` path are relative to it.)
+   there. `WINGS_I18N_PATH` and the `-sign-key` path are relative to it.
+   `en-US`/`es-AR` bake from the `en`/`es` dictionaries via the region→base
+   fallback.)
 
-4. `docker compose up`, then open <http://localhost:8080>.
+5. `docker compose up`, then open <http://localhost:8080>.
 
 The folder ends up like:
 
@@ -136,6 +158,7 @@ my-live-demo/
 ```
 
 `docs/` is the webroot — it already ships `index.html`; the loop writes the
-rebuilt `wings.wasm`, the JS helpers, and the freshly signed i18n catalogs into
-it on every save. The live-demo's `go.mod` requires a published wings (no local
-paths), so plain file copies are all it takes.
+rebuilt `wings.wasm`, the JS helpers, the regenerated inflections, and the
+freshly signed i18n catalogs into it on every save. The live-demo's `go.mod`
+requires a published wings (no local paths), so plain file copies are all it
+takes.

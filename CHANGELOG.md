@@ -8,6 +8,27 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
+## [0.16.3-alpha] — 2026-06-07
+
+> **Pre-release.** Builds on `0.16.2-alpha`; the Docker dev path is still
+> experimental (see the `0.16.0-alpha` note below).
+
+### Added
+- **Region locales auto-fall-back to their base language for `-auto-flex`.** A
+  catalog locale such as `en-US` or `es-AR` no longer needs its own dictionary:
+  `dictbuild` bakes it from the base `en`/`es` source and writes the honest
+  `en.db`/`es.db` (never a misleading `en-US.db`), and `gen_i18n` mirrors the
+  same `en-US`→`en` fallback when it loads the dictionary. Portuguese keeps its
+  localised `pt-BR`/`pt-PT` dictionaries, which are not interchangeable. The new
+  `gen_i18n -dict-strict` flag (and `WINGS_DICT_STRICT` in the dev container)
+  refuses the fallback, leaving a locale empty unless its exact `.db` exists.
+
+### Fixed
+- **`dictbuild -lang en-US` no longer aborts with "not in the auto-fetch
+  table".** Region/script variants without a dedicated dictionary now resolve to
+  their base language instead of failing, so baking the dictionaries for a
+  region-tagged catalog (`pt-BR,en-US,es-AR`) works in one shot.
+
 ## [0.16.2-alpha] — 2026-06-07
 
 > **Pre-release.** Builds on `0.16.1-alpha`; the Docker dev path is still

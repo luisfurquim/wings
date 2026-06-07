@@ -136,16 +136,6 @@ func defaultStateDir() string {
 func runFetch(langCode, outDir, stateDir, externalTool string) {
 	src, key, ok := resolveLangSource(langCode)
 	if !ok {
-		// Try BCP-47 normalisation as a courtesy: "PT-br" → "pt-BR" hits the
-		// table even though the user's input doesn't match the literal key.
-		// Tags that fail to parse (e.g. "oge", which language.Parse rejects)
-		// are simply reported as unknown — those are already handled above
-		// when their literal form happens to match a key directly.
-		if tag, err := language.Parse(langCode); err == nil {
-			src, key, ok = resolveLangSource(tag.String())
-		}
-	}
-	if !ok {
 		supported := make([]string, 0, len(langSources))
 		for k := range langSources {
 			supported = append(supported, k)
@@ -154,6 +144,13 @@ func runFetch(langCode, outDir, stateDir, externalTool string) {
 		fmt.Fprintf(os.Stderr, "lang %q not in the auto-fetch table; supported: %s\n", langCode, strings.Join(supported, ", "))
 		fmt.Fprintln(os.Stderr, "(add an entry to sources.go after verifying the upstream filename)")
 		os.Exit(1)
+	}
+	if key != langCode {
+		// Region/script variant with no dedicated dictionary fell back to the
+		// base language. Write the honest base name (key.db, e.g. en.db): the
+		// loader applies the same region→base fallback when it can't find the
+		// exact locale.
+		G.Logf(1, "no dedicated dictionary for %q; using base language %q (writes %s.db)", langCode, key, key)
 	}
 	langCode = key
 

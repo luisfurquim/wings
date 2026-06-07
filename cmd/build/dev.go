@@ -96,6 +96,9 @@ func runGenI18n(cfg *devConfig, wingsDir string) error {
 		if cfg.DictDir != "" {
 			args = append(args, "-dict-dir", cfg.DictDir)
 		}
+		if cfg.DictStrict {
+			args = append(args, "-dict-strict")
+		}
 	}
 	if cfg.AutoTranslate {
 		args = append(args, "-auto-translate")
