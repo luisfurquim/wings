@@ -8,6 +8,42 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
+## [0.16.0-alpha] — 2026-06-06
+
+> **Pre-release.** The native `cmd/build dev` loop is tested and stable; the
+> **Docker dev image is experimental and not yet validated end-to-end.** The
+> image installs the dev tool via `go install …/cmd/build@<version>`, which
+> requires this release to be published on the module proxy first — a
+> chicken-and-egg that only clears once `v0.16.0-alpha` is tagged and pushed
+> (then `WINGS_VERSION=v0.16.0-alpha` builds the image). The Docker path will be
+> promoted to stable in `v0.16.0` after that round-trip is verified.
+
+### Added
+- **Dev container + `cmd/build dev` mode.** A zero-toolchain development loop for
+  building your *own* wings app: edit source on the host and the system rebuilds
+  `wings.wasm` and serves it on every save. The new `dev` mode in the build
+  orchestrator (`go run ./cmd/build dev`, or the published binary) is generic —
+  it resolves the wings module your app depends on via `go list -m`, lints your
+  templates, optionally runs `gen_i18n` (when `WINGS_DEFLANG` is set), copies the
+  JS helpers, compiles the wasm, serves the webroot, and watches the tree
+  (debounced) for rebuilds. A failed build never stops the loop. Configuration is
+  entirely through `WINGS_*` environment variables. `WINGS_HTTPD` lets you swap
+  the built-in static server for your own backend command. File watching uses
+  `github.com/fsnotify/fsnotify` (a new, pure-Go dependency).
+- **i18n auto-flex and auto-translate in the dev loop.** When `WINGS_DEFLANG` is
+  set, `WINGS_AUTO_FLEX` adds the dictionary inflection pass (`-auto-flex
+  -dict-dir`) and `WINGS_AUTO_TRANSLATE` adds the machine/LLM pass. Translation
+  backends are configured through `WINGS_TR_*` (`backend`, `url`, `model`, `key`,
+  `timeout`), which synthesize a `gen_i18n.json` — but only when the app does not
+  already ship one (a hand-authored config always wins).
+- **Docker dev templates (`dev/docker/`).** Ready-to-copy `Dockerfile`,
+  `docker-compose.yml`, and `.env.example` (plus a README): drop the three files
+  into your app, `docker compose up`, and develop with your source bind-mounted
+  and the module cache persisted across runs. No Go toolchain required on the
+  host. The image is multi-stage: a throwaway builder bakes the Unitex
+  dictionaries you list in `WINGS_DICT_LANGS` (compiling Unitex from source), so
+  the lean final image carries only the resulting `<lang>.db` files.
+
 ## [0.15.9] — 2026-06-06
 
 ### Added

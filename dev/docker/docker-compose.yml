@@ -1,0 +1,23 @@
+# WINGS dev container. Copy this file, the Dockerfile, and .env.example (as .env)
+# into your wings app, then run `docker compose up`. Edit your source on the host
+# and the container rebuilds wings.wasm on save.
+services:
+  wings-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Match the wings version your app pins in go.mod.
+        WINGS_VERSION: ${WINGS_VERSION:-v0.16.0-alpha}
+        # Comma-separated Unitex locales to bake into the image (empty = none).
+        WINGS_DICT_LANGS: ${WINGS_DICT_LANGS:-}
+    working_dir: /app
+    volumes:
+      - ./:/app                       # your app source (lives on the host)
+      - wings-gomodcache:/go/pkg/mod  # cache modules across `up`s
+    env_file: .env
+    ports:
+      - "${WINGS_PORT:-8080}:${WINGS_PORT:-8080}"
+
+volumes:
+  wings-gomodcache: {}

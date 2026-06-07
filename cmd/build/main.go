@@ -8,6 +8,11 @@
 // Targets: lib, example, live-demo, wlate, all. Every target first lints its
 // HTML templates for camelCase binding names (see lint.go) and fails the build
 // if any are found.
+//
+// The dev target is different: it builds and serves an arbitrary wings app with
+// rebuild-on-save, for a webdev developing their own app (see dev.go). It does
+// not assume it runs inside the wings module, so it is dispatched before the
+// repo-root lookup.
 package main
 
 import (
@@ -20,6 +25,12 @@ func main() {
 		usage()
 		os.Exit(2)
 	}
+	if os.Args[1] == "dev" {
+		if err := dev(); err != nil {
+			fatal(err)
+		}
+		return
+	}
 	root, err := wingsRoot()
 	if err != nil {
 		fatal(err)
@@ -30,7 +41,7 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprintln(os.Stderr, "usage: go run ./cmd/build <lib|example|live-demo|wlate|all>")
+	fmt.Fprintln(os.Stderr, "usage: go run ./cmd/build <lib|example|live-demo|wlate|all|dev>")
 }
 
 func fatal(err error) {

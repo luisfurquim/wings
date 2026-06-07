@@ -42,6 +42,15 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
+### v0.16.0-alpha
+
+- **Dev container + rebuild-on-save** — develop your own wings app with zero
+  toolchain on the host: bind-mount your source, `docker compose up`, and the
+  new `cmd/build dev` mode re-lints, recompiles `wings.wasm`, and serves it on
+  every save. Copy-paste templates live in [`dev/docker/`](dev/docker/). The
+  native loop is stable; the **Docker image is experimental** (see the note under
+  [Dev container](#dev-container-rebuild-on-save)).
+
 ### v0.15.8
 
 - **Translations survive source edits** — `gen_i18n` now reuses a string's old
@@ -328,6 +337,61 @@ go run serve.go.tmp
 ```
 
 Open **http://localhost:8080** and you should see "Hello from Go + WASM!".
+
+### Dev container (rebuild-on-save)
+
+For an iterative loop without rebuilding by hand — or without a Go toolchain on
+your machine at all — WINGS ships a Docker dev environment under
+[`dev/docker/`](dev/docker/). Copy three files into your app's root
+(`Dockerfile`, `docker-compose.yml`, and `.env.example` → `.env`), then:
+
+```bash
+docker compose up
+```
+
+> **⚠️ Experimental (v0.16.0-alpha).** The native loop below works today. The
+> **Docker image build is not yet validated end-to-end**: it installs the dev
+> tool via `go install …/cmd/build@${WINGS_VERSION}`, which needs this release
+> published on the module proxy first — so the image only builds once
+> `v0.16.0-alpha` is tagged and pushed (then `WINGS_VERSION=v0.16.0-alpha`). It
+> will be promoted to stable in `v0.16.0` after that round-trip is verified.
+
+Your source stays on the host (bind-mounted), and on every save the container
+re-lints, recompiles `wings.wasm`, and serves it on
+**http://localhost:8080** — reload the browser to see the change. The module
+cache persists across runs.
+
+Under the hood this is the build orchestrator's **`dev`** mode, which also runs
+natively (Go installed, no Docker):
+
+```bash
+# from your app's root
+go run github.com/luisfurquim/wings/cmd/build@latest dev
+```
+
+It is configured entirely through `WINGS_*` environment variables:
+
+| Variable             | Default              | Purpose                                                            |
+| -------------------- | -------------------- | ------------------------------------------------------------------ |
+| `WINGS_PORT`         | `8080`               | Dev server port.                                                   |
+| `WINGS_WEBROOT`      | `.`                  | Dir with `index.html`; `wings.wasm` + JS helpers are written here. |
+| `WINGS_MAIN`         | `.`                  | Main package compiled to wasm (relative to the app root).          |
+| `WINGS_HTTPD`        | *(empty)*            | Custom server command; empty uses the built-in static server.      |
+| `WINGS_DEFLANG`      | *(empty)*            | If set (e.g. `pt-BR`), runs `gen_i18n` each build.                 |
+| `WINGS_GENI18N_ARGS` | *(empty)*            | Extra `gen_i18n` flags.                                            |
+| `WINGS_BUILD_TAGS`   | *(empty)*            | Extra `-tags` for `go build`.                                      |
+| `WINGS_WATCH_EXT`    | `go,html,css,json`   | File extensions that trigger a rebuild.                            |
+| `WINGS_DEBOUNCE_MS`  | `200`                | Coalesce window (ms) for bursts of saves.                          |
+
+If your app needs a real backend instead of the built-in static server, set
+`WINGS_HTTPD` to the command that starts it (e.g. `WINGS_HTTPD=go run ./server`);
+build-and-watch keep running alongside it.
+
+When `WINGS_DEFLANG` is set, the loop also runs `gen_i18n` on each build, and two
+optional passes can be enabled: `WINGS_AUTO_FLEX` (fill inflections from baked
+Unitex dictionaries — list locales in `WINGS_DICT_LANGS`) and
+`WINGS_AUTO_TRANSLATE` (machine/LLM pre-fill, configured via `WINGS_TR_*`). See
+[`dev/docker/README.md`](dev/docker/README.md) for the full variable reference.
 
 ## Project Setup
 
