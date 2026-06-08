@@ -7,7 +7,14 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"golang.org/x/mod/semver"
 )
+
+// wingsMod is the import path of the framework module the app depends on. The
+// dev loop resolves it (for gen_i18n's source tree and the JS helpers) and, in
+// the container, aligns the app's go.mod to WINGS_VERSION against it.
+const wingsMod = "github.com/luisfurquim/wings"
 
 // dev runs the generic development loop for a webdev's own wings app: it builds
 // the app's wings.wasm once, serves the webroot (embedded server or a custom
@@ -20,11 +27,16 @@ func dev() error {
 	if err != nil {
 		return err
 	}
-	wingsDir, err := runOut(cfg.ModuleDir, "go", "list", "-m", "-f", "{{.Dir}}", "github.com/luisfurquim/wings")
+	// In the container WINGS_VERSION is the version the wings-dev/dictbuild
+	// binaries were installed from; align the app's go.mod to it so gen_i18n
+	// (compiled from the app's resolved wings tree) matches those binaries.
+	// Empty (the native loop) leaves the app's go.mod as the single source.
+	if err := syncWingsPin(cfg.ModuleDir, os.Getenv("WINGS_VERSION")); err != nil {
+		return err
+	}
+	wingsDir, err := resolveWingsDir(cfg.ModuleDir)
 	if err != nil {
-		return fmt.Errorf("resolving the github.com/luisfurquim/wings module from %s: %w%s\n"+
-			"WINGS_MAIN must point at the module dir (the one with go.mod), and that go.mod must "+
-			"require github.com/luisfurquim/wings (local replace targets must be reachable too)", cfg.ModuleDir, err, cmdStderr(err))
+		return err
 	}
 
 	devLogf("module:     %s", cfg.ModuleDir)
@@ -40,6 +52,90 @@ func dev() error {
 		return err
 	}
 	return watch(cfg, wingsDir)
+}
+
+// resolveWingsDir returns the on-disk directory of the wings module the app
+// depends on, so the dev loop can build gen_i18n from it and copy its JS
+// helpers. On a fresh module cache (a clean dev container) the module is listed
+// in go.mod but not yet extracted, so `go list -m -f {{.Dir}}` reports an empty
+// Dir with no error; we then download it and resolve again.
+func resolveWingsDir(moduleDir string) (string, error) {
+	dir, err := runOut(moduleDir, "go", "list", "-m", "-f", "{{.Dir}}", wingsMod)
+	if err != nil {
+		return "", fmt.Errorf("resolving the %s module from %s: %w%s\n"+
+			"WINGS_MAIN must point at the module dir (the one with go.mod), and that go.mod must "+
+			"require %s (local replace targets must be reachable too)", wingsMod, moduleDir, err, cmdStderr(err), wingsMod)
+	}
+	if dir != "" {
+		return dir, nil
+	}
+	if _, err := runOut(moduleDir, "go", "mod", "download", wingsMod); err != nil {
+		return "", fmt.Errorf("downloading %s from %s: %w%s", wingsMod, moduleDir, err, cmdStderr(err))
+	}
+	dir, err = runOut(moduleDir, "go", "list", "-m", "-f", "{{.Dir}}", wingsMod)
+	if err != nil {
+		return "", fmt.Errorf("resolving %s after download: %w%s", wingsMod, err, cmdStderr(err))
+	}
+	if dir == "" {
+		return "", fmt.Errorf("%s resolved to an empty module dir even after download; is it required in %s/go.mod?", wingsMod, moduleDir)
+	}
+	return dir, nil
+}
+
+// syncWingsPin aligns the app's go.mod requirement on wings with want (the
+// container's WINGS_VERSION). It only ever bumps UP: if go.mod already pins a
+// newer wings than the baked binaries, that wins and we just warn about the
+// skew. want == "" (the native loop, where there is no separate binary version)
+// is a no-op — the app's go.mod is the single source of truth. The go get
+// mutates the app's go.mod/go.sum (a bind mount on the host); that is the
+// webdev's own decision, expressed by the version they put in WINGS_VERSION.
+func syncWingsPin(moduleDir, want string) error {
+	if want == "" {
+		return nil
+	}
+	have, err := runOut(moduleDir, "go", "list", "-m", "-f", "{{.Version}}", wingsMod)
+	if err != nil {
+		return fmt.Errorf("reading the %s version from %s/go.mod: %w%s", wingsMod, moduleDir, err, cmdStderr(err))
+	}
+	switch pinDecision(have, want) {
+	case pinUpgrade:
+		devLogf("aligning go.mod: wings %s → %s (WINGS_VERSION)", have, want)
+		if _, err := runOut(moduleDir, "go", "get", wingsMod+"@"+want); err != nil {
+			return fmt.Errorf("go get %s@%s in %s: %w%s", wingsMod, want, moduleDir, err, cmdStderr(err))
+		}
+	case pinWarnNewer:
+		devLogf("note: go.mod pins wings %s, newer than WINGS_VERSION %s — not downgrading "+
+			"(the baked dictbuild/wings-dev are %s; align them if the i18n output looks off)", have, want, want)
+	}
+	return nil
+}
+
+// pinAction is syncWingsPin's decision for a (have, want) version pair.
+type pinAction int
+
+const (
+	pinNone      pinAction = iota // already aligned, or versions not comparable
+	pinUpgrade                    // app older than want → go get want
+	pinWarnNewer                  // app newer than want → warn, do not downgrade
+)
+
+// pinDecision compares the app's pinned wings version (have) with the
+// toolchain's (want). It never proposes a downgrade.
+func pinDecision(have, want string) pinAction {
+	if want == "" || have == want {
+		return pinNone
+	}
+	if !semver.IsValid(have) || !semver.IsValid(want) {
+		return pinNone
+	}
+	switch semver.Compare(have, want) {
+	case -1:
+		return pinUpgrade
+	case 1:
+		return pinWarnNewer
+	default:
+		return pinNone
+	}
 }
 
 // buildOnce runs the full app pipeline a single time: lint → optional gen_i18n

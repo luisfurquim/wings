@@ -182,3 +182,28 @@ func TestEnvBool(t *testing.T) {
 		t.Error(`envBool("0") = true, want false`)
 	}
 }
+
+// TestPinDecision checks the version-alignment policy: bump up to WINGS_VERSION,
+// never downgrade, and stay out of the way when versions match or can't be
+// compared.
+func TestPinDecision(t *testing.T) {
+	cases := []struct {
+		name       string
+		have, want string
+		expect     pinAction
+	}{
+		{"older app upgrades", "v0.15.9", "v0.16.3-alpha", pinUpgrade},
+		{"newer app warns, no downgrade", "v0.17.0", "v0.16.3-alpha", pinWarnNewer},
+		{"equal is a no-op", "v0.16.3-alpha", "v0.16.3-alpha", pinNone},
+		{"empty want (native loop) no-op", "v0.15.9", "", pinNone},
+		{"unparseable have no-op", "devel", "v0.16.3-alpha", pinNone},
+		{"prerelease older than its release", "v0.16.3-alpha", "v0.16.3", pinUpgrade},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := pinDecision(c.have, c.want); got != c.expect {
+				t.Errorf("pinDecision(%q, %q) = %d, want %d", c.have, c.want, got, c.expect)
+			}
+		})
+	}
+}

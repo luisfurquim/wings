@@ -7,6 +7,7 @@ require github.com/luisfurquim/goose v0.1.0
 require (
 	github.com/fsnotify/fsnotify v1.10.1
 	golang.org/x/crypto v0.50.0
+	golang.org/x/mod v0.34.0
 	golang.org/x/net v0.53.0
 	golang.org/x/text v0.36.0
 )

@@ -8,6 +8,26 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
+## [0.16.4-alpha] — 2026-06-08
+
+> **Pre-release.** Builds on `0.16.3-alpha`; the Docker dev path is still
+> experimental (see the `0.16.0-alpha` note below).
+
+### Added
+- **The dev container aligns the app's `go.mod` to `WINGS_VERSION`.** `gen_i18n`
+  is compiled from the wings tree the app pins, so it must match the baked
+  `wings-dev`/`dictbuild` binaries (installed from `WINGS_VERSION`). The loop now
+  bumps the app's `go.mod` up to `WINGS_VERSION` when it is older (a `go get`,
+  logged); a `go.mod` pinning a *newer* wings wins and only warns. Setting
+  `WINGS_VERSION` is the webdev's opt-in — leave it at your `go.mod` version to
+  change nothing.
+
+### Fixed
+- **Dev mode no longer fails on a fresh module cache.** A clean dev container
+  (empty module-cache volume) left `go list -m -f {{.Dir}}` returning an empty
+  wings dir, so the first build ran with no `go.mod` in scope ("go.mod file not
+  found"). The loop now downloads the module before resolving its directory.
+
 ## [0.16.3-alpha] — 2026-06-07
 
 > **Pre-release.** Builds on `0.16.2-alpha`; the Docker dev path is still

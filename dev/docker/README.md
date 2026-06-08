@@ -3,7 +3,7 @@
 A zero-toolchain development loop for your own wings app: edit source on your
 host, and the container recompiles `wings.wasm` and serves it on every save.
 
-> **⚠️ Experimental (v0.16.3-alpha).** The `cmd/build dev` loop is tested and
+> **⚠️ Experimental (v0.16.4-alpha).** The `cmd/build dev` loop is tested and
 > stable run natively (`go run … dev`), and the image builds (the orchestrator is
 > installed from the module proxy via `go install …/cmd/build@${WINGS_VERSION}`,
 > and the Unitex dictionary stage compiles). What is **not yet validated
@@ -34,7 +34,7 @@ source never enters the image — it is bind-mounted at `/app`.
 
 | Variable             | Default                | Purpose                                                        |
 | -------------------- | ---------------------- | -------------------------------------------------------------- |
-| `WINGS_VERSION`      | `v0.16.3-alpha`        | wings version installed for the dev tool; match your `go.mod`. |
+| `WINGS_VERSION`      | `v0.16.4-alpha`        | wings version for the dev tool. The loop bumps your `go.mod` up to it (see below). |
 | `WINGS_PORT`         | `8080`                 | Dev server port (also published by compose).                   |
 | `WINGS_WEBROOT`      | `.`                    | Dir with `index.html`; `wings.wasm` + JS helpers are written here. |
 | `WINGS_MAIN`         | `.`                    | Main package compiled to wasm (relative to the app root).      |
@@ -44,6 +44,17 @@ source never enters the image — it is bind-mounted at `/app`.
 | `WINGS_BUILD_TAGS`   | *(empty)*              | Extra `-tags` for `go build`.                                  |
 | `WINGS_WATCH_EXT`    | `go,html,css,json`     | File extensions that trigger a rebuild.                        |
 | `WINGS_DEBOUNCE_MS`  | `200`                  | Coalesce window (ms) for bursts of saves.                      |
+
+### `WINGS_VERSION` and your `go.mod`
+
+The `wings-dev` and `dictbuild` binaries are installed from `WINGS_VERSION`, but
+`gen_i18n` is compiled from the wings tree your app pins in `go.mod` — so the two
+must match. On startup the loop reconciles them: if your `go.mod` pins an *older*
+wings it runs `go get …/wings@$WINGS_VERSION` (which edits your `go.mod`/`go.sum`
+— a bind mount, so it shows up in your working tree) and logs the bump; if your
+`go.mod` pins a *newer* wings, that wins and the loop only warns. Either way,
+keeping `WINGS_VERSION` equal to your `go.mod` version is a no-op — bumping
+`WINGS_VERSION` is how you opt into an upgrade.
 
 ### Inflection dictionaries (`-auto-flex`)
 

@@ -42,6 +42,14 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
+### v0.16.4-alpha
+
+- **Dev container aligns your `go.mod` to `WINGS_VERSION`** — `gen_i18n` is built
+  from the wings your app pins, so the loop bumps an older `go.mod` up to
+  `WINGS_VERSION` (and warns, never downgrades, when it is newer). Also resolves
+  the wings module on a fresh container cache, fixing a first-build "go.mod file
+  not found".
+
 ### v0.16.3-alpha
 
 - **Region locales reuse their base dictionary for `-auto-flex`** — a catalog
@@ -357,7 +365,7 @@ your machine at all — WINGS ships a Docker dev environment under
 docker compose up
 ```
 
-> **⚠️ Experimental (v0.16.3-alpha).** The native loop below works today and the
+> **⚠️ Experimental (v0.16.4-alpha).** The native loop below works today and the
 > image builds; what is **not yet validated end-to-end is serving a full app
 > inside the container** — it depends on the app's webroot, local `replace`
 > targets, and any custom server. It will be promoted to stable in `v0.16.0` once
