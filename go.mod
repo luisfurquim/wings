@@ -13,3 +13,11 @@ require (
 )
 
 require golang.org/x/sys v0.43.0 // indirect
+
+// These releases wrongly shipped the local-dev go.work in the module zip; its
+// sub-module `use` entries are missing from the zip, so building gen_i18n from
+// the cached wings tree fails. Fixed in v0.16.5-alpha (go.work untracked).
+retract (
+	v0.16.3-alpha
+	v0.16.4-alpha
+)

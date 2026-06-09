@@ -8,6 +8,29 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
+## [0.16.5-alpha] — 2026-06-09
+
+> **Pre-release.** Builds on `0.16.4-alpha`; the Docker dev path is still
+> experimental (see the `0.16.0-alpha` note below).
+
+### Fixed
+- **`go.work` is no longer published in the module zip.** The repo's local-dev
+  workspace file was tracked, so the Go proxy packed it into the wings module
+  zip. A downstream `go get` then landed a `go.work` in the module cache whose
+  `./example`, `./helpers/wlate`, `./live-demo` `use` entries point at
+  sub-modules excluded from the zip — so compiling `gen_i18n` from the cached
+  wings tree failed with "open example/go.mod: no such file or directory". The
+  file is now `.gitignore`d: it stays on disk for local development, only out of
+  what is published.
+- **The dev loop builds `gen_i18n` with `GOWORK=off`.** Belt-and-suspenders for
+  the above: it resolves `gen_i18n`'s deps against wings's own `go.sum` (the
+  reason it builds from the module dir) and stays immune to any `go.work` in
+  scope, including the ones already shipped in `0.16.3-alpha`/`0.16.4-alpha`.
+
+### Retracted
+- **`v0.16.3-alpha` and `v0.16.4-alpha`** — both shipped the stray `go.work` and
+  break a from-cache `gen_i18n` build. `go` will skip them; pin `0.16.5-alpha`.
+
 ## [0.16.4-alpha] — 2026-06-08
 
 > **Pre-release.** Builds on `0.16.3-alpha`; the Docker dev path is still

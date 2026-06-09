@@ -101,7 +101,11 @@ func buildGenI18n(root string) (bin string, cleanup func(), err error) {
 	}
 	cleanup = func() { _ = os.RemoveAll(tmp) }
 	bin = filepath.Join(tmp, "gen_i18n")
-	if err := run(root, nil, "go", "build", "-buildvcs=false", "-o", bin, "./cmd/gen_i18n"); err != nil {
+	// GOWORK=off: resolve gen_i18n's deps against wings's own go.sum (the whole
+	// point of building from `root`), and stay immune to any go.work in scope —
+	// including one wrongly shipped inside a published wings zip, whose
+	// sub-module `use` entries don't exist in the module cache.
+	if err := run(root, []string{"GOWORK=off"}, "go", "build", "-buildvcs=false", "-o", bin, "./cmd/gen_i18n"); err != nil {
 		cleanup()
 		return "", func() {}, err
 	}

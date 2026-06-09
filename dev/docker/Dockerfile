@@ -15,7 +15,7 @@
 # CGO disabled so both binaries are statically linked and portable — dictbuild
 # is copied into the Debian-based dicts stage below.
 FROM golang:1.25-alpine AS tools
-ARG WINGS_VERSION=v0.16.4-alpha
+ARG WINGS_VERSION=v0.16.5-alpha
 ENV CGO_ENABLED=0
 RUN go install "github.com/luisfurquim/wings/cmd/build@${WINGS_VERSION}" \
  && go install "github.com/luisfurquim/wings/cmd/dictbuild@${WINGS_VERSION}"
