@@ -42,6 +42,14 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
+### v0.16.6-alpha
+
+- **The dev watcher no longer loops forever** — `gen_i18n` writes catalogs into
+  the watched i18n tree, so the build's own output kept re-triggering it. The
+  watcher now ignores events during a build and, briefly after, distinguishes the
+  build's own writes from real edits by content hash — so a genuine save still
+  rebuilds, but the echo doesn't.
+
 ### v0.16.5-alpha
 
 - **The dev container no longer ships `go.work` in the published module** — a
@@ -374,7 +382,7 @@ your machine at all — WINGS ships a Docker dev environment under
 docker compose up
 ```
 
-> **⚠️ Experimental (v0.16.5-alpha).** The native loop below works today and the
+> **⚠️ Experimental (v0.16.6-alpha).** The native loop below works today and the
 > image builds; what is **not yet validated end-to-end is serving a full app
 > inside the container** — it depends on the app's webroot, local `replace`
 > targets, and any custom server. It will be promoted to stable in `v0.16.0` once

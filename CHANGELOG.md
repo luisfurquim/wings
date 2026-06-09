@@ -8,6 +8,20 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
+## [0.16.6-alpha] — 2026-06-09
+
+> **Pre-release.** Builds on `0.16.5-alpha`; the Docker dev path is still
+> experimental (see the `0.16.0-alpha` note below).
+
+### Fixed
+- **The dev watcher no longer rebuilds in an endless loop.** `gen_i18n` rewrites
+  catalogs (and auto-flex writes `*.inflections.json`) into the watched i18n
+  source tree, so the build's own output kept re-triggering it. The watcher now
+  ignores events during a build and, for a few seconds after, tells the build's
+  own writes apart from real edits by content hash: an event whose file still
+  matches what the build wrote is the echo and is dropped, while a genuine edit
+  (different content) rebuilds at once — even within that window.
+
 ## [0.16.5-alpha] — 2026-06-09
 
 > **Pre-release.** Builds on `0.16.4-alpha`; the Docker dev path is still
