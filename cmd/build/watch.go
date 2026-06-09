@@ -25,11 +25,12 @@ const buildEchoWindow = 5 * time.Second
 // watches each directory recursively (fsnotify is per-directory on Linux, so new
 // dirs are added as they appear), filters events by WINGS_WATCH_EXT, and
 // debounces bursts of saves into a single rebuild. The build's own output
-// (gen_i18n catalogs written into the watched i18n tree) is told apart from real
-// edits by content: events during a build are ignored, and for a short window
-// after, an event whose file still hashes to what the build wrote is its echo —
-// while a genuine edit (different content) rebuilds immediately. It blocks until
-// the watcher errors out, which only happens on an unrecoverable failure.
+// (gen_i18n catalogs and *.i18n.html template outputs written back into the
+// watched tree) is told apart from real edits by content: events during a build
+// are ignored, and for a short window after, an event whose file still hashes to
+// what the build wrote is its echo — while a genuine edit (different content)
+// rebuilds immediately. It blocks until the watcher errors out, which only
+// happens on an unrecoverable failure.
 func watch(cfg *devConfig, wingsDir string) error {
 	w, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -45,7 +46,7 @@ func watch(cfg *devConfig, wingsDir string) error {
 	// auto-flex writes *.inflections.json) into the watched i18n tree mid-build,
 	// and those events must not arm another build.
 	var building atomic.Bool
-	// built fingerprints the catalogs the last build wrote (path → content hash),
+	// built fingerprints the files the last build wrote (path → content hash),
 	// valid until builtUntil. fsnotify delivers those writes after the build
 	// returns; an event whose file still hashes to what the build wrote is that
 	// echo and is ignored, while a real edit (different content, or a file the
@@ -84,7 +85,7 @@ func watch(cfg *devConfig, wingsDir string) error {
 			}
 			// Fingerprint what the build just wrote, then reopen the gate: the
 			// trailing write events are now told apart from edits by content.
-			snap := snapshotCatalogs(cfg)
+			snap := snapshotWatched(cfg)
 			mu.Lock()
 			built, builtUntil = snap, time.Now().Add(buildEchoWindow)
 			mu.Unlock()
@@ -157,17 +158,24 @@ func isDir(path string) bool {
 	return err == nil && fi.IsDir()
 }
 
-// snapshotCatalogs fingerprints the watched files a build writes — the gen_i18n
-// catalogs under <ModuleDir>/<I18nPath>/i18n (the wasm/helpers/published copies
-// all land in the ignored webroot). It returns path → content hash so a trailing
-// write event can be recognized as the build's own echo. Apps without a source
-// catalog dir yield an empty map (nothing to echo-detect).
-func snapshotCatalogs(cfg *devConfig) map[string]string {
-	dir := filepath.Join(cfg.ModuleDir, cfg.I18nPath, "i18n")
+// snapshotWatched fingerprints every watched-ext file in the same tree the
+// watcher observes (app root minus the ignored dirs — the webroot, where wasm
+// and helpers land, is one of them). A build writes several kinds of file back
+// into that tree: gen_i18n catalogs under <I18nPath>/i18n and the *.i18n.html
+// template outputs scattered next to their sources. Hashing the whole watched
+// set — rather than a single known dir — recognizes all of them (and any future
+// output) as the build's own echo. It returns path → content hash.
+func snapshotWatched(cfg *devConfig) map[string]string {
 	out := map[string]string{}
-	filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
-		if err != nil || d.IsDir() {
+	filepath.WalkDir(cfg.AppRoot, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
 			return nil //nolint:nilerr // unreadable entries are skipped, not fatal
+		}
+		if d.IsDir() {
+			if ignoredDir(path, cfg) {
+				return filepath.SkipDir
+			}
+			return nil
 		}
 		if !cfg.WatchExt[strings.ToLower(filepath.Ext(path))] {
 			return nil

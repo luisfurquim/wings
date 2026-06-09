@@ -8,6 +8,18 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
+## [0.16.7-alpha] — 2026-06-09
+
+> **Pre-release.** Builds on `0.16.6-alpha`; the Docker dev path is still
+> experimental (see the `0.16.0-alpha` note below).
+
+### Fixed
+- **The dev watcher's echo detection now covers all build outputs.** `0.16.6`
+  fingerprinted only the gen_i18n catalogs, but a build also writes `*.i18n.html`
+  template outputs next to their sources — those slipped through as "real edits"
+  and kept the loop alive. The fingerprint now hashes the whole watched tree, so
+  every file the build writes back is recognized as its own echo.
+
 ## [0.16.6-alpha] — 2026-06-09
 
 > **Pre-release.** Builds on `0.16.5-alpha`; the Docker dev path is still

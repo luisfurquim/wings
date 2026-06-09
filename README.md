@@ -42,6 +42,13 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
+### v0.16.7-alpha
+
+- **Dev watcher echo detection covers all build outputs** — `0.16.6` only
+  fingerprinted gen_i18n catalogs, so the `*.i18n.html` template outputs a build
+  writes still re-triggered it. The fingerprint now hashes the whole watched
+  tree, closing the remaining loop.
+
 ### v0.16.6-alpha
 
 - **The dev watcher no longer loops forever** — `gen_i18n` writes catalogs into
@@ -382,7 +389,7 @@ your machine at all — WINGS ships a Docker dev environment under
 docker compose up
 ```
 
-> **⚠️ Experimental (v0.16.6-alpha).** The native loop below works today and the
+> **⚠️ Experimental (v0.16.7-alpha).** The native loop below works today and the
 > image builds; what is **not yet validated end-to-end is serving a full app
 > inside the container** — it depends on the app's webroot, local `replace`
 > targets, and any custom server. It will be promoted to stable in `v0.16.0` once
