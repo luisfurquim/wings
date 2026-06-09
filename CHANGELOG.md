@@ -8,6 +8,19 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
+## [0.16.9] — 2026-06-09
+
+> **First stable dev container.** The Docker rebuild-on-save path — experimental
+> since `0.16.0-alpha` — is promoted to stable: serving a full app inside the
+> container (build, `gen_i18n`, dictionary baking, and rebuild-on-save) is now
+> validated end-to-end on a real app.
+
+### Changed
+- **The Docker dev container is no longer experimental.** The `⚠️ Experimental`
+  notes are dropped and the version sheds its `-alpha` suffix. There is no code
+  change from `0.16.8-alpha` — the watcher fixes from `0.16.6`–`0.16.8` ship here
+  as the first stable cut.
+
 ## [0.16.8-alpha] — 2026-06-09
 
 > **Pre-release.** Builds on `0.16.7-alpha`; the Docker dev path is still

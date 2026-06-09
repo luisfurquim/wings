@@ -42,6 +42,13 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
+### v0.16.9
+
+- **The Docker dev container is now stable** — serving a full app inside the
+  container (build, i18n generation, dictionary baking, and rebuild-on-save) is
+  validated end-to-end on a real app, so the experimental label is dropped. No
+  code change from `v0.16.8-alpha`; the watcher fixes below ship as stable.
+
 ### v0.16.8-alpha
 
 - **A quick second edit is no longer dropped by the dev watcher** — a save made
@@ -95,9 +102,8 @@ Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 - **Dev container + rebuild-on-save** — develop your own wings app with zero
   toolchain on the host: bind-mount your source, `docker compose up`, and the
   new `cmd/build dev` mode re-lints, recompiles `wings.wasm`, and serves it on
-  every save. Copy-paste templates live in [`dev/docker/`](dev/docker/). The
-  native loop is stable; the **Docker image is experimental** (see the note under
-  [Dev container](#dev-container-rebuild-on-save)).
+  every save. Copy-paste templates live in [`dev/docker/`](dev/docker/).
+  (Promoted to stable in `v0.16.9`.)
 
 ### v0.15.8
 
@@ -396,12 +402,6 @@ your machine at all — WINGS ships a Docker dev environment under
 ```bash
 docker compose up
 ```
-
-> **⚠️ Experimental (v0.16.8-alpha).** The native loop below works today and the
-> image builds; what is **not yet validated end-to-end is serving a full app
-> inside the container** — it depends on the app's webroot, local `replace`
-> targets, and any custom server. It will be promoted to stable in `v0.16.0` once
-> proven on a real app.
 
 Your source stays on the host (bind-mounted), and on every save the container
 re-lints, recompiles `wings.wasm`, and serves it on

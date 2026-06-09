@@ -3,15 +3,6 @@
 A zero-toolchain development loop for your own wings app: edit source on your
 host, and the container recompiles `wings.wasm` and serves it on every save.
 
-> **⚠️ Experimental (v0.16.8-alpha).** The `cmd/build dev` loop is tested and
-> stable run natively (`go run … dev`), and the image builds (the orchestrator is
-> installed from the module proxy via `go install …/cmd/build@${WINGS_VERSION}`,
-> and the Unitex dictionary stage compiles). What is **not yet validated
-> end-to-end is serving a full app inside the container** — that depends on the
-> app's own layout (webroot, local `replace` targets, custom server). The Docker
-> path will be promoted to stable in `v0.16.0` once that round-trip is proven on a
-> real app. The native loop (below, "Without Docker") works today.
-
 ## Use
 
 Copy three files into your app's root directory:
@@ -34,7 +25,7 @@ source never enters the image — it is bind-mounted at `/app`.
 
 | Variable             | Default                | Purpose                                                        |
 | -------------------- | ---------------------- | -------------------------------------------------------------- |
-| `WINGS_VERSION`      | `v0.16.8-alpha`        | wings version for the dev tool. The loop bumps your `go.mod` up to it (see below). |
+| `WINGS_VERSION`      | `v0.16.9`              | wings version for the dev tool. The loop bumps your `go.mod` up to it (see below). |
 | `WINGS_PORT`         | `8080`                 | Dev server port (also published by compose).                   |
 | `WINGS_WEBROOT`      | `.`                    | Dir with `index.html`; `wings.wasm` + JS helpers are written here. |
 | `WINGS_MAIN`         | `.`                    | Main package compiled to wasm (relative to the app root).      |
