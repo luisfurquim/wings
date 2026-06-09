@@ -10,27 +10,22 @@ import (
 	"sort"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
 )
 
-// buildEchoWindow is how long after a build its catalog fingerprints stay valid
-// for echo detection: long enough to absorb fsnotify's asynchronous delivery of
-// the build's own writes, short enough that a stale fingerprint never lingers.
-const buildEchoWindow = 5 * time.Second
-
 // watch observes the app source tree and rebuilds on every relevant save. It
 // watches each directory recursively (fsnotify is per-directory on Linux, so new
 // dirs are added as they appear), filters events by WINGS_WATCH_EXT, and
-// debounces bursts of saves into a single rebuild. The build's own output
-// (gen_i18n catalogs and *.i18n.html template outputs written back into the
-// watched tree) is told apart from real edits by content: events during a build
-// are ignored, and for a short window after, an event whose file still hashes to
-// what the build wrote is its echo — while a genuine edit (different content)
-// rebuilds immediately. It blocks until the watcher errors out, which only
-// happens on an unrecoverable failure.
+// debounces bursts of saves into a single rebuild. Every event is decided by
+// content hash: each watched file's hash is recorded when its event is seen
+// (before the rebuild it triggers) and the build's own outputs are recorded
+// after each build, so an event whose file still hashes to a value already
+// accounted for changed nothing real — the build's echo, or a no-op save — and
+// is ignored, while a genuine edit (including one made mid-build) rebuilds. It
+// blocks until the watcher errors out, which only happens on an unrecoverable
+// failure.
 func watch(cfg *devConfig, wingsDir string) error {
 	w, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -42,54 +37,77 @@ func watch(cfg *devConfig, wingsDir string) error {
 
 	var mu sync.Mutex
 	var timer *time.Timer
-	// building is set while a build runs: gen_i18n rewrites catalogs (and
-	// auto-flex writes *.inflections.json) into the watched i18n tree mid-build,
-	// and those events must not arm another build.
-	var building atomic.Bool
-	// built fingerprints the files the last build wrote (path → content hash),
-	// valid until builtUntil. fsnotify delivers those writes after the build
-	// returns; an event whose file still hashes to what the build wrote is that
-	// echo and is ignored, while a real edit (different content, or a file the
-	// build never wrote) rebuilds at once — even inside the window.
-	built := map[string]string{}
-	var builtUntil time.Time
+	// seen[path] is the content hash already accounted for: each source as last
+	// detected (hashed when its event arrives, before the rebuild it triggers)
+	// and the build's own outputs (recorded after each build). An event whose
+	// file still hashes to seen[path] changed nothing real — the build's echo or
+	// a no-op save — so it is ignored. No time window is needed: a stale entry
+	// can only ever match identical content, which would not warrant a rebuild.
+	seen := snapshotOutputs(cfg) // account for the initial build's outputs
+	// building serializes builds; because the tree is in flux while one runs, its
+	// events are buffered into pending and re-examined once it finishes, so an
+	// edit saved mid-build is re-checked rather than lost. Both are guarded by mu
+	// (building is read and cleared in the same critical section that drains
+	// pending, so an event can't slip between the two and be stranded).
+	building := false
+	pending := map[string]struct{}{}
 	debounce := time.Duration(cfg.Debounce) * time.Millisecond
 
-	// isBuildEcho reports whether an event is a lingering write of the last
-	// build's own output rather than a fresh edit.
-	isBuildEcho := func(path string) bool {
+	// changed reports whether path's content differs from what we last accounted
+	// for, recording the new hash when it does. A read error (e.g. a deleted
+	// file) counts as a change.
+	changed := func(path string) bool {
+		h, err := hashFile(path)
+		clean := filepath.Clean(path)
 		mu.Lock()
 		defer mu.Unlock()
-		if time.Now().After(builtUntil) {
+		if err == nil && seen[clean] == h {
 			return false
 		}
-		want, ok := built[filepath.Clean(path)]
-		if !ok {
-			return false
+		if err != nil {
+			delete(seen, clean)
+		} else {
+			seen[clean] = h
 		}
-		got, err := hashFile(path)
-		return err == nil && got == want
+		return true
 	}
 
-	rebuild := func() {
+	// rebuild is recursive: a build may surface edits that landed while it ran
+	// and reschedule itself, so it is declared before assignment.
+	var rebuild func()
+	rebuild = func() {
 		mu.Lock()
 		defer mu.Unlock()
 		if timer != nil {
 			timer.Stop()
 		}
 		timer = time.AfterFunc(debounce, func() {
-			building.Store(true)
+			mu.Lock()
+			building = true
+			mu.Unlock()
 			devLogf("change detected — rebuilding…")
 			if err := buildOnce(cfg, wingsDir); err != nil {
 				devLogf("build failed: %v", err)
 			}
-			// Fingerprint what the build just wrote, then reopen the gate: the
-			// trailing write events are now told apart from edits by content.
-			snap := snapshotWatched(cfg)
+			// Account for what the build wrote (so its echoes are ignored), take
+			// the events buffered while it ran, and reopen the gate — all under
+			// one lock so no event slips through unclassified.
 			mu.Lock()
-			built, builtUntil = snap, time.Now().Add(buildEchoWindow)
+			for g, h := range snapshotOutputs(cfg) {
+				seen[g] = h
+			}
+			drain := pending
+			pending = map[string]struct{}{}
+			building = false
 			mu.Unlock()
-			building.Store(false)
+			// A buffered event whose file no longer matches what we accounted
+			// for is a real edit made mid-build — rebuild once more.
+			for p := range drain {
+				if changed(p) {
+					rebuild()
+					break
+				}
+			}
 		})
 	}
 
@@ -105,13 +123,19 @@ func watch(cfg *devConfig, wingsDir string) error {
 				addDirsRecursive(w, ev.Name, cfg)
 			}
 			if cfg.WatchExt[strings.ToLower(filepath.Ext(ev.Name))] {
-				if building.Load() {
-					continue // mid-build write — ignore
+				mu.Lock()
+				inBuild := building
+				if inBuild {
+					// Tree in flux — classify after the build settles.
+					pending[filepath.Clean(ev.Name)] = struct{}{}
 				}
-				if isBuildEcho(ev.Name) {
-					continue // trailing echo of the build's own output
+				mu.Unlock()
+				if inBuild {
+					continue
 				}
-				rebuild()
+				if changed(ev.Name) {
+					rebuild()
+				}
 			}
 		case err, ok := <-w.Errors:
 			if !ok {
@@ -158,14 +182,15 @@ func isDir(path string) bool {
 	return err == nil && fi.IsDir()
 }
 
-// snapshotWatched fingerprints every watched-ext file in the same tree the
-// watcher observes (app root minus the ignored dirs — the webroot, where wasm
-// and helpers land, is one of them). A build writes several kinds of file back
-// into that tree: gen_i18n catalogs under <I18nPath>/i18n and the *.i18n.html
-// template outputs scattered next to their sources. Hashing the whole watched
-// set — rather than a single known dir — recognizes all of them (and any future
-// output) as the build's own echo. It returns path → content hash.
-func snapshotWatched(cfg *devConfig) map[string]string {
+// snapshotOutputs fingerprints the watched files a build *writes* — the gen_i18n
+// catalogs under <ModuleDir>/<I18nPath>/i18n (where the *.inflections.json also
+// land) and the *.i18n.html template outputs next to their sources. The
+// wasm/helpers/published copies land in the ignored webroot, so they never
+// surface here. Source files are deliberately excluded: recording their hash
+// after a build would absorb an edit made mid-build and silently drop it. It
+// returns path → content hash.
+func snapshotOutputs(cfg *devConfig) map[string]string {
+	catalogs := filepath.Clean(filepath.Join(cfg.ModuleDir, cfg.I18nPath, "i18n"))
 	out := map[string]string{}
 	filepath.WalkDir(cfg.AppRoot, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -180,8 +205,13 @@ func snapshotWatched(cfg *devConfig) map[string]string {
 		if !cfg.WatchExt[strings.ToLower(filepath.Ext(path))] {
 			return nil
 		}
+		clean := filepath.Clean(path)
+		inCatalogs := strings.HasPrefix(clean, catalogs+string(filepath.Separator))
+		if !inCatalogs && !strings.HasSuffix(clean, ".i18n.html") {
+			return nil // a source the build reads, not an output it writes
+		}
 		if h, err := hashFile(path); err == nil {
-			out[filepath.Clean(path)] = h
+			out[clean] = h
 		}
 		return nil
 	})

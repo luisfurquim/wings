@@ -42,6 +42,14 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
+### v0.16.8-alpha
+
+- **A quick second edit is no longer dropped by the dev watcher** — a save made
+  during the wasm compile used to be ignored *and* folded into the post-build
+  fingerprint, so it never compiled. Echo detection now hashes each file when its
+  event arrives and only records the build's real outputs afterward, so any
+  genuine edit (even mid-build) rebuilds while the build's own writes are ignored.
+
 ### v0.16.7-alpha
 
 - **Dev watcher echo detection covers all build outputs** — `0.16.6` only
@@ -389,7 +397,7 @@ your machine at all — WINGS ships a Docker dev environment under
 docker compose up
 ```
 
-> **⚠️ Experimental (v0.16.7-alpha).** The native loop below works today and the
+> **⚠️ Experimental (v0.16.8-alpha).** The native loop below works today and the
 > image builds; what is **not yet validated end-to-end is serving a full app
 > inside the container** — it depends on the app's webroot, local `replace`
 > targets, and any custom server. It will be promoted to stable in `v0.16.0` once

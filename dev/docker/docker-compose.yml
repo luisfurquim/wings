@@ -8,7 +8,7 @@ services:
       dockerfile: Dockerfile
       args:
         # Match the wings version your app pins in go.mod.
-        WINGS_VERSION: ${WINGS_VERSION:-v0.16.7-alpha}
+        WINGS_VERSION: ${WINGS_VERSION:-v0.16.8-alpha}
         # Comma-separated Unitex locales to bake into the image (empty = none).
         WINGS_DICT_LANGS: ${WINGS_DICT_LANGS:-}
     working_dir: /app

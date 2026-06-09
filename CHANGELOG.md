@@ -8,10 +8,22 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
-## [0.16.7-alpha] — 2026-06-09
+## [0.16.8-alpha] — 2026-06-09
 
-> **Pre-release.** Builds on `0.16.6-alpha`; the Docker dev path is still
+> **Pre-release.** Builds on `0.16.7-alpha`; the Docker dev path is still
 > experimental (see the `0.16.0-alpha` note below).
+
+### Fixed
+- **A quick second edit is no longer dropped.** The watcher's loop guard ignored
+  *all* events while a build ran and folded the post-build fingerprint over the
+  whole tree, so a save made during the (seconds-long) wasm compile was both
+  ignored and absorbed into the fingerprint — the edit silently never compiled.
+  Echo detection was reworked: each watched file's content hash is recorded when
+  its event arrives (before the rebuild it triggers) and only the build's actual
+  outputs are recorded afterward, so a real edit — even one made mid-build, now
+  re-examined when the build finishes — always rebuilds, while the build's own
+  writes still hash to a known value and are ignored. The 5-second echo window is
+  gone; the decision is purely by content.
 
 ### Fixed
 - **The dev watcher's echo detection now covers all build outputs.** `0.16.6`
