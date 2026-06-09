@@ -35,6 +35,7 @@ authored in Go and running natively in the browser.
 | **Internationalized** | Build-time text extraction + runtime catalog lookup, with plural/gender flexion and locale-aware number/date/measure formatting. |
 | **Themeable** | Global `--wings-*` design tokens; compose multiple runtime [skins](#skins--theming-with---wings--tokens) (colours, geometry, depth, motion, atmosphere). |
 | **Testable in-web** | Wrap any widget in [`<w-test>`](#wingswidgettest--in-web-test-harness-w-test) to spy its events and seal a pass/fail; modules declare self-tests via `Testable()`, and [`<w-test-report>`](#wingswidgettestreport--module-self-tests-testable--w-test-report) collects the whole page (auto + visual) into one JSON report. |
+| **Zero-toolchain dev** | A Docker [dev container](#dev-container-rebuild-on-save) recompiles your `wings.wasm` and serves it on every save — iterate with no Go toolchain on the host, or run the same loop natively. |
 
 ---
 
@@ -46,40 +47,12 @@ Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
 - **The Docker dev container is now stable** — serving a full app inside the
   container (build, i18n generation, dictionary baking, and rebuild-on-save) is
-  validated end-to-end on a real app, so the experimental label is dropped. No
-  code change from `v0.16.8-alpha`; the watcher fixes below ship as stable.
-
-### v0.16.8-alpha
-
-- **A quick second edit is no longer dropped by the dev watcher** — a save made
-  during the wasm compile used to be ignored *and* folded into the post-build
-  fingerprint, so it never compiled. Echo detection now hashes each file when its
-  event arrives and only records the build's real outputs afterward, so any
-  genuine edit (even mid-build) rebuilds while the build's own writes are ignored.
-
-### v0.16.7-alpha
-
-- **Dev watcher echo detection covers all build outputs** — `0.16.6` only
-  fingerprinted gen_i18n catalogs, so the `*.i18n.html` template outputs a build
-  writes still re-triggered it. The fingerprint now hashes the whole watched
-  tree, closing the remaining loop.
-
-### v0.16.6-alpha
-
-- **The dev watcher no longer loops forever** — `gen_i18n` writes catalogs into
-  the watched i18n tree, so the build's own output kept re-triggering it. The
-  watcher now ignores events during a build and, briefly after, distinguishes the
-  build's own writes from real edits by content hash — so a genuine save still
-  rebuilds, but the echo doesn't.
-
-### v0.16.5-alpha
-
-- **The dev container no longer ships `go.work` in the published module** — a
-  local-dev workspace file was being packed into the wings module zip, so
-  `go get`-ting wings landed a `go.work` in the cache whose sub-module entries
-  don't exist there. Compiling `gen_i18n` from that cache failed. The file is now
-  untracked, and the dev build runs `gen_i18n` with `GOWORK=off` so it is immune
-  even to the already-published `v0.16.4-alpha`.
+  validated end-to-end on a real app, so the experimental label is dropped.
+- **The rebuild-on-save watcher is robust** — folding in the `0.16.5`–`0.16.8`
+  alpha fixes: the published module no longer ships the dev `go.work`, and the
+  watcher tells the build's own writes (catalogs, `*.i18n.html`) apart from real
+  edits by content hash — so there are no rebuild loops, and a quick second edit
+  made during a build is never dropped.
 
 ### v0.16.4-alpha
 
@@ -105,55 +78,6 @@ Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
   every save. Copy-paste templates live in [`dev/docker/`](dev/docker/).
   (Promoted to stable in `v0.16.9`.)
 
-### v0.15.8
-
-- **Translations survive source edits** — `gen_i18n` now reuses a string's old
-  translation when its source is merely moved (kept verbatim) or lightly edited
-  (reused and flagged `revised=false` for re-review), instead of resetting it on
-  any change. Runs entirely off the committed `i18n/*.json` catalogs. See
-  [cmd/gen_i18n](#cmdgen_i18n--build-time-extractor).
-
-### v0.15.6
-
-- **In-web test harness (`<w-test>`)** — wrap any widget to spy on every event it
-  fires, render a live event log, and show a pass/fail seal driven by a Go
-  assertion (`wings.RegisterCheck`) or a human toggle. See [wings/widget/test](#wingswidgettest--in-web-test-harness-w-test).
-- **Catch-all event channels** — `@all` (additive spy, runs last) and `@else`
-  (fires only for events with no named `@handler`). See [Catch-all event channels](#catch-all-event-channels-all--else).
-- **Module self-tests + page report** — a module declares its own integration
-  tests via `Testable()` (gated by the `wings_test` build tag); `<w-test-report>`
-  collects the whole page's result — every `<w-test>` card (including visual ones)
-  plus every `Testable()` check — as JSON. See [Module Self-tests](#wingswidgettestreport--module-self-tests-testable--w-test-report).
-
-### v0.15.4
-
-- **Message reuse** — name a flex message with `=name` and reuse it anywhere with
-  `#name`; the reference inherits the definition's engine/selectors (overridable
-  per slot) and resolves its variables in the context where it appears. Names are
-  global per catalog and resolved at build time. See [Programmable Flex](#programmable-flex--custom-inflection-engines-customflex).
-
-### v0.15.2
-
-- **Arbitrary contextual selection** — a `$var` is now passed to your CustomFlex
-  engine as a selector (and still emitted, like `%count`), so an engine can branch
-  on any key — platform, formality, tenant — and inflect in the same block. WINGS's
-  analog of Fluent's selectors. See [Programmable Flex](#programmable-flex--custom-inflection-engines-customflex).
-
-### v0.15.0
-
-- **Programmable flex (CustomFlex)** — plug in your own inflection engine via the new `*var` / `$var` / `~$var` sigils.
-- **Catalog signing** — opt-in ed25519 verification of i18n catalogs (`-genkey` / `-sign-key` + `SetCatalogPublicKey`).
-- **Idempotent SRI** — `integrity` injection in the build scripts fixed and unified (`wlate` now included).
-
-  → [Internationalization](#internationalization-i18n) · [Security](#security)
-
-### v0.14.x
-
-- **`wprana` → WINGS** — project rename ([migration guide](#migrating-from-wprana)).
-- **i18n suite** — flexion, locale-aware formatting, physical measures, runtime `SetLang`.
-- **Skins** — 18 composable skins across five families, plus user-defined categories (bits 48–63).
-- **Widgets** — the `w-tabs` family and friends ([widgets](#built-in-widgets)), and the **wlate** translation editor.
-
 ---
 
 ## Table of Contents
@@ -161,6 +85,7 @@ Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 - [What's New](#whats-new)
 - [Migrating from `wprana`](#migrating-from-wprana)
 - [Quick Start](#quick-start)
+- [Dev Container (rebuild-on-save)](#dev-container-rebuild-on-save)
 - [Project Setup](#project-setup)
 - [Creating a Module](#creating-a-module)
 - [Template Syntax](#template-syntax)
@@ -392,7 +317,7 @@ go run serve.go.tmp
 
 Open **http://localhost:8080** and you should see "Hello from Go + WASM!".
 
-### Dev container (rebuild-on-save)
+## Dev Container (rebuild-on-save)
 
 For an iterative loop without rebuilding by hand — or without a Go toolchain on
 your machine at all — WINGS ships a Docker dev environment under
