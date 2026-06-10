@@ -12,6 +12,8 @@
 
 > **[Live Demo](https://luisfurquim.github.io/wings/)** — try it in your browser, no install needed.
 > Or run locally: clone the repo, `cd live-demo && bash build.sh && go run serve.go`
+>
+> or jump to the [Quick Start](#quick-start) / [Full Example](#full-example)”
 
 **Build reactive Web Components in pure Go — no JavaScript framework required.**
 
@@ -53,30 +55,6 @@ Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
   watcher tells the build's own writes (catalogs, `*.i18n.html`) apart from real
   edits by content hash — so there are no rebuild loops, and a quick second edit
   made during a build is never dropped.
-
-### v0.16.4-alpha
-
-- **Dev container aligns your `go.mod` to `WINGS_VERSION`** — `gen_i18n` is built
-  from the wings your app pins, so the loop bumps an older `go.mod` up to
-  `WINGS_VERSION` (and warns, never downgrades, when it is newer). Also resolves
-  the wings module on a fresh container cache, fixing a first-build "go.mod file
-  not found".
-
-### v0.16.3-alpha
-
-- **Region locales reuse their base dictionary for `-auto-flex`** — a catalog
-  locale like `en-US` or `es-AR` no longer needs its own Unitex dictionary:
-  `dictbuild` bakes it from `en`/`es` (and `gen_i18n` mirrors the `en-US`→`en`
-  fallback when loading), so `WINGS_DICT_LANGS=pt-BR,en-US,es-AR` works in one
-  shot. `-dict-strict` / `WINGS_DICT_STRICT` opts out and demands an exact match.
-
-### v0.16.2-alpha
-
-- **Dev container + rebuild-on-save** — develop your own wings app with zero
-  toolchain on the host: bind-mount your source, `docker compose up`, and the
-  new `cmd/build dev` mode re-lints, recompiles `wings.wasm`, and serves it on
-  every save. Copy-paste templates live in [`dev/docker/`](dev/docker/).
-  (Promoted to stable in `v0.16.9`.)
 
 ---
 
