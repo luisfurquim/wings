@@ -13,7 +13,7 @@
 > **[Live Demo](https://luisfurquim.github.io/wings/)** — try it in your browser, no install needed.
 > Or run locally: clone the repo, `cd live-demo && bash build.sh && go run serve.go`
 >
-> or jump to the [Quick Start](#quick-start) / [Full Example](#full-example)”
+> or jump to the [Quick Start](#quick-start) / [Full Example](#full-example)
 
 **Build reactive Web Components in pure Go — no JavaScript framework required.**
 
@@ -44,6 +44,11 @@ authored in Go and running natively in the browser.
 ## What's New
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
+
+### v0.16.11
+
+- **`vulncheck` build target** — govulncheck over every module, native and
+  `GOOS=js`; deps and toolchain bumped to clear every finding it reported.
 
 ### v0.16.9
 

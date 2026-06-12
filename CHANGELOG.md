@@ -8,7 +8,7 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
-## [Unreleased]
+## [0.16.11] — 2026-06-12
 
 ### Added
 - **`vulncheck` build target.** `go run ./cmd/build vulncheck` runs govulncheck
@@ -23,6 +23,20 @@ per-commit record see the git log and tags.
 - **`toolchain go1.26.4` pinned in go.mod**, clearing the eight Go standard
   library vulnerabilities the same run reported (fixed in go1.26.2–1.26.4).
   Builds on older local toolchains transparently fetch 1.26.4.
+
+### Changed
+- **Six secure-coding skills versioned** (`.claude/skills/sec-*`): minimal
+  trusted code, hostile input, fail-operational, supply chain, Go-on-WASM, and
+  fuzzing — the practices the codebase follows, written down for AI-assisted
+  sessions.
+- **Local scratch dir renamed `work/` → `_work/`** so Go tooling (`./...`)
+  skips it natively; it was failing `go test ./...` and showing up in scans.
+
+## [0.16.10] — 2026-06-09
+
+### Changed
+- **README: the dev container gets its own section** plus a line under
+  "Why WINGS?"; "What's New" pruned to the 0.16.x line. Docs-only release.
 
 ## [0.16.9] — 2026-06-09
 

@@ -1,4 +1,4 @@
-work/
+_work/
 .gitignore
 # Ignore Claude Code local state, but version the skills (security practices
 # distilled into .claude/skills/*/SKILL.md). Contents-with-negation form
