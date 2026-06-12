@@ -171,8 +171,14 @@ starts a tiny Go server so you can open the page in a browser.
 >
 > The project's *own* build, however, is pure Go and cross-platform: run
 > `go run ./cmd/build <target>` (targets: `lib`, `example`, `live-demo`,
-> `wlate`, `all`) — no `sed`, `openssl`, or `python3` needed. The `build.sh`
-> files in each directory are thin wrappers around it, kept for habit.
+> `wlate`, `all`, `vulncheck`) — no `sed`, `openssl`, or `python3` needed. The
+> `build.sh` files in each directory are thin wrappers around it, kept for habit.
+>
+> `vulncheck` runs [govulncheck](https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck)
+> over every module in the repo, twice each: a native call-graph pass and a
+> `GOOS=js` package-level pass (js-only packages are invisible to the native pass).
+> It needs network access for the vulnerability DB, so it is not part of
+> `all` — run it before each release; any finding fails it.
 
 ```bash
 # 1. Create the project

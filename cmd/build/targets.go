@@ -25,8 +25,10 @@ func build(root, target string) error {
 			}
 		}
 		return nil
+	case "vulncheck":
+		return vulncheck(root)
 	default:
-		return fmt.Errorf("unknown target %q (want lib|example|live-demo|wlate|all)", target)
+		return fmt.Errorf("unknown target %q (want lib|example|live-demo|wlate|all|vulncheck)", target)
 	}
 }
 

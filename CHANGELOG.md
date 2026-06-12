@@ -8,6 +8,22 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
+## [Unreleased]
+
+### Added
+- **`vulncheck` build target.** `go run ./cmd/build vulncheck` runs govulncheck
+  over every module in the repo — a native call-graph pass plus a `GOOS=js`
+  package-level pass, since js-only packages are excluded from the native one
+  by build constraints. Any finding fails the run. Part of the release
+  checklist; not part of `all` (it needs network access for the vulnerability DB).
+
+### Security
+- **`golang.org/x/net` upgraded v0.53.0 → v0.55.0** (with sibling `x/*` bumps),
+  clearing the five x/net vulnerabilities the first `vulncheck` run reported.
+- **`toolchain go1.26.4` pinned in go.mod**, clearing the eight Go standard
+  library vulnerabilities the same run reported (fixed in go1.26.2–1.26.4).
+  Builds on older local toolchains transparently fetch 1.26.4.
+
 ## [0.16.9] — 2026-06-09
 
 > **First stable dev container.** The Docker rebuild-on-save path — experimental
