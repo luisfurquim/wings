@@ -1,6 +1,10 @@
 work/
 .gitignore
-.claude
+# Ignore Claude Code local state, but version the skills (security practices
+# distilled into .claude/skills/*/SKILL.md). Contents-with-negation form
+# (.claude/* + !) because git can't re-include inside a fully excluded dir.
+.claude/*
+!.claude/skills/
 
 # Local-dev workspace file: overrides wings + sub-modules with the on-disk tree
 # (replaces per-module `replace` directives). It must NOT be published — the Go
