@@ -378,8 +378,9 @@ becoming no-ops; WINGS lowercases attribute names, so use snake_case).
   /plugin install wings-authoring@wings
   ```
 
-The plugin currently ships the `wings-component` skill; i18n, skins, build, and
-app-flavored security skills are being added.
+The plugin ships skills for components, i18n, skins, built-in widgets, and the
+build (`wings-component`, `wings-i18n`, `wings-skins`, `wings-widgets`,
+`wings-build`); app-flavored security skills are being added.
 
 ## Project Setup
 

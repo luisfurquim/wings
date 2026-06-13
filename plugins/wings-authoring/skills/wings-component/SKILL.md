@@ -196,6 +196,36 @@ native DOM events (see the section above for those).
   parent's data (see gotcha #2). `@event` attrs are read at trigger time and do
   **not** need to be observed.
 
+## Async work, timers, and the teardown caveat
+
+Do background or periodic work in `Render`: launch a goroutine and write results
+through `obj.This.Set` (safe — WASM is single-threaded and the model re-renders).
+Drive timing with `setTimeout` via the core helpers (or Go's `time`).
+
+```go
+func (m *MyMod) Render(obj *wings.PranaObj) {
+	go func() {
+		for obj.Element.Get("isConnected").Bool() { // stop when removed — see caveat
+			done := make(chan struct{})
+			wings.JSGlobal().Call("setTimeout", wings.JSFuncOnce(func() {
+				n, _ := obj.This.Get("count").(int)
+				obj.This.Set("count", n+1)
+				close(done)
+			}), 1000)
+			<-done
+		}
+	}()
+}
+```
+
+**Teardown caveat:** `PranaMod` has only `InitData` and `Render` — there is **no
+disconnect/teardown hook**, and `Render` gets no cancellation context. A loop
+that never exits keeps running after the element leaves the DOM (a goroutine
+leak). For app-lifetime components that is harmless; for components created and
+destroyed repeatedly, guard the loop with `obj.Element.Get("isConnected").Bool()`
+and return when false. Never write a `for {}` or `for range ticker.C` with no
+exit condition.
+
 ## Before you finish
 
 - Run `go run ./cmd/build <target>` — it lints (catches gotcha #1) and builds.
@@ -205,4 +235,4 @@ native DOM events (see the section above for those).
 
 Deeper reference: README "Template Syntax", "Reactive Data API", "Parent-Child
 Communication", "Full Example". Sibling skills: `wings-i18n`, `wings-skins`,
-`wings-build`.
+`wings-widgets` (tabs/dialog/combobox — don't hand-roll them), `wings-build`.
