@@ -9,6 +9,8 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/luisfurquim/wings.svg)](https://pkg.go.dev/github.com/luisfurquim/wings)
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
 [![Go Report Card](https://www.goreportcard.com/badge/github.com/luisfurquim/wings?ts=1712345678)](https://www.goreportcard.com/report/github.com/luisfurquim/wings?ts=1712345678)
+[![AGENTS.md](https://img.shields.io/badge/AGENTS.md-ready-2088FF)](AGENTS.md)
+[![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-wings--authoring-8A2BE2)](#ai-assisted-development)
 
 > **[Live Demo](https://luisfurquim.github.io/wings/)** — try it in your browser, no install needed.
 > Or run locally: clone the repo, `cd live-demo && bash build.sh && go run serve.go`
