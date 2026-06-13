@@ -47,6 +47,13 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
+### Unreleased
+
+- **AI authoring plugin now covers security** — six app-flavored `sec-*` skills
+  complete the `wings-authoring` kit. Validating them against a generated
+  component caught and fixed a real runtime leak: native listeners wired with
+  `dom.AddEvent` are now auto-released when a component disconnects.
+
 ### v0.16.12
 
 - **Continuous fuzzing of the parsers** — native Go fuzz targets for the
@@ -380,7 +387,10 @@ becoming no-ops; WINGS lowercases attribute names, so use snake_case).
 
 The plugin ships skills for components, i18n, skins, built-in widgets, and the
 build (`wings-component`, `wings-i18n`, `wings-skins`, `wings-widgets`,
-`wings-build`); app-flavored security skills are being added.
+`wings-build`), plus app-flavored security skills that re-aim WINGS's own
+hardening practices at the app you write (`sec-wasm-go`, `sec-hostile-input`,
+`sec-fail-operational`, `sec-supply-chain`, `sec-minimal-trusted-code`,
+`sec-fuzzing`).
 
 ## Project Setup
 

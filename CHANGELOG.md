@@ -8,6 +8,26 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
+## [Unreleased]
+
+### Added
+- **App-flavored security skills in the `wings-authoring` plugin** —
+  `sec-wasm-go`, `sec-hostile-input`, `sec-fail-operational`,
+  `sec-supply-chain`, `sec-minimal-trusted-code`, and `sec-fuzzing`, re-aiming
+  WINGS's own hardening practices at the apps you build with it. The
+  `wings-component` skill also gained worked examples for state-driven views,
+  reading native event values safely, loading data from a backend, and derived
+  (filtered/sorted) lists.
+
+### Fixed
+- **Native listeners are released on disconnect.** A listener registered with
+  `dom.AddEvent` is now freed when its component leaves the DOM (new
+  `dom.RmEventsUnder`, called from the disconnect path); previously it leaked
+  across create/destroy cycles. `RmEvent` is idempotent, so calling it manually
+  as well is still safe. Surfaced by validating the new `sec-wasm-go` skill
+  against a generated component — the kind of bug the security work is meant to
+  catch.
+
 ## [0.16.12] — 2026-06-13
 
 ### Added

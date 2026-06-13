@@ -76,4 +76,9 @@ prefer a single root element for predictable styling.
 - Built-in widgets (tabs, dialog, combobox, navbar, skin picker) → README
   "Built-in Widgets"; skill `wings-widgets` — prefer these over hand-rolling.
 - Build/dev container → README "Quick Start", "Dev Container"; skill `wings-build`.
-- Security when writing wings apps → the `sec-*` skills (app-flavored).
+- Security when writing wings apps → app-flavored `sec-*` skills:
+  `sec-wasm-go` (the js.Value boundary, panic = whole-app death, no secrets in
+  wasm), `sec-hostile-input` (validate your fetch/form/URL input),
+  `sec-fail-operational` (degrade, don't blank the page; bound every loop),
+  `sec-supply-chain` (deps, SRI, catalog signing, `FROM wings`),
+  `sec-minimal-trusted-code`, `sec-fuzzing`.

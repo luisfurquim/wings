@@ -2,7 +2,7 @@
   "name": "wings-authoring",
   "displayName": "WINGS Authoring",
   "version": "0.1.0",
-  "description": "Helps AI assistants write correct WINGS apps (Go-to-WASM web components): component structure, template syntax, i18n, skins, and the build orchestrator.",
+  "description": "Helps AI assistants write correct, secure WINGS apps (Go-to-WASM web components): component structure, template syntax, i18n, skins, built-in widgets, the build orchestrator, and app-flavored security skills.",
   "author": {
     "name": "Luis Otavio de Colla Furquim"
   },

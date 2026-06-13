@@ -8,6 +8,7 @@ import (
 	"syscall/js"
 	"time"
 
+	"github.com/luisfurquim/wings/dom"
 	"github.com/luisfurquim/wings/expr"
 )
 
@@ -395,6 +396,14 @@ func elementAttrChanged(self js.Value, name, oldVal, newVal string) {
 func elementDisconnected(self js.Value) {
 	tag := self.Get("_pranaTag").String()
 	G.Logf(3, "elementDisconnected: %s\n", tag)
+
+	// Free native listeners the component wired via dom.AddEvent under this
+	// element. PranaMod has no teardown method, so without this an author's
+	// manual listener leaks across create/destroy cycles. Idempotent: safe
+	// even if the author also called dom.RmEvent. Surfaced by sec-wasm-go
+	// skill validation, which caught the leak in a wired input handler.
+	dom.RmEventsUnder(self)
+
 	nodeID, ok := getNodeID(self)
 	if !ok {
 		return

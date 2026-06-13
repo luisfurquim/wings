@@ -50,6 +50,8 @@ func AddEvent(dom js.Value, eventName string, handler func(this js.Value, args [
 }
 
 // RmEvent removes the event listener registered with the ID returned by AddEvent.
+// It is idempotent: removing an ID that is already gone is a no-op, so it is
+// safe to call after RmEventsUnder has already released the same listener.
 func RmEvent(id int64) {
 	entry, ok := eventRegistry[id]
 	if !ok {
@@ -58,6 +60,30 @@ func RmEvent(id int64) {
 	entry.target.Call("removeEventListener", entry.eventName, entry.fn)
 	entry.fn.Release()
 	delete(eventRegistry, id)
+}
+
+// RmEventsUnder releases every listener registered with AddEvent whose target
+// is root or sits inside root — in root's light DOM or its shadow root. wings
+// calls this from elementDisconnected so that listeners an author wired with
+// AddEvent are freed when the component leaves the DOM (PranaMod has no
+// teardown method to do it from). It reuses RmEvent, so it inherits its
+// idempotency: an author who also calls RmEvent manually causes no double
+// release.
+func RmEventsUnder(root js.Value) {
+	if root.IsNull() || root.IsUndefined() {
+		return
+	}
+	shadow := root.Get("shadowRoot")
+	var ids []int64
+	for id, e := range eventRegistry {
+		if root.Call("contains", e.target).Bool() ||
+			(shadow.Truthy() && shadow.Call("contains", e.target).Bool()) {
+			ids = append(ids, id)
+		}
+	}
+	for _, id := range ids {
+		RmEvent(id)
+	}
 }
 
 // ── Query helper ─────────────────────────────────────────────────────────────
