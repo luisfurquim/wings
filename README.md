@@ -65,6 +65,7 @@ Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 - [Migrating from `wprana`](#migrating-from-wprana)
 - [Quick Start](#quick-start)
 - [Dev Container (rebuild-on-save)](#dev-container-rebuild-on-save)
+- [AI-Assisted Development](#ai-assisted-development)
 - [Project Setup](#project-setup)
 - [Creating a Module](#creating-a-module)
 - [Template Syntax](#template-syntax)
@@ -355,6 +356,28 @@ To see the loop drive a real i18n-enabled app, run the bundled **live-demo** in
 the container with only `.env` flags (copy its `live-demo/` and `docs/` folders,
 no code changes). See [`dev/docker/README.md`](dev/docker/README.md) for that
 recipe and the full variable reference.
+
+## AI-Assisted Development
+
+If you build WINGS apps with an AI coding assistant, this repo ships a context
+kit so the assistant writes correct WINGS code instead of guessing from a long
+README — including the most common mistake (camelCase binding names silently
+becoming no-ops; WINGS lowercases attribute names, so use snake_case).
+
+- **Any assistant** (Codex, Cursor, Copilot, Gemini CLI, Windsurf, Aider, …):
+  the repo-root [`AGENTS.md`](AGENTS.md) is read automatically by tools that
+  support the open `AGENTS.md` standard. It carries the mental model, the
+  must-know gotchas, and the template-syntax quick reference.
+- **Claude Code**: install the `wings-authoring` plugin for deeper,
+  task-triggered skills. The wings repository is itself the marketplace — no
+  public store:
+  ```
+  /plugin marketplace add luisfurquim/wings
+  /plugin install wings-authoring@wings
+  ```
+
+The plugin currently ships the `wings-component` skill; i18n, skins, build, and
+app-flavored security skills are being added.
 
 ## Project Setup
 

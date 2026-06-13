@@ -1,0 +1,13 @@
+{
+  "name": "wings",
+  "owner": {
+    "name": "Luis Otavio de Colla Furquim"
+  },
+  "plugins": [
+    {
+      "name": "wings-authoring",
+      "source": "./plugins/wings-authoring",
+      "description": "Skills that help AI assistants write correct WINGS apps: component structure, template syntax, i18n, skins, and the build. Pairs with the repo-root AGENTS.md."
+    }
+  ]
+}

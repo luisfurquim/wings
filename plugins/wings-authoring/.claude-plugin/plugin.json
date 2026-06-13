@@ -1,0 +1,12 @@
+{
+  "name": "wings-authoring",
+  "displayName": "WINGS Authoring",
+  "version": "0.1.0",
+  "description": "Helps AI assistants write correct WINGS apps (Go-to-WASM web components): component structure, template syntax, i18n, skins, and the build orchestrator.",
+  "author": {
+    "name": "Luis Otavio de Colla Furquim"
+  },
+  "repository": "https://github.com/luisfurquim/wings",
+  "license": "MPL-2.0",
+  "keywords": ["wings", "go", "wasm", "web-components", "frontend"]
+}
