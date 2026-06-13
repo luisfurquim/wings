@@ -1,0 +1,24 @@
+name: CI
+
+# Runs on every push and PR. `go test ./...` replays the committed fuzz corpus
+# (testdata/fuzz/) as ordinary tests for free — the cheap half of the fuzzing
+# cadence — alongside the unit tests. Active fuzzing lives in fuzz.yml.
+#
+# Only the native (non-js) packages are exercised here; the GOOS=js runtime is
+# excluded by build constraints and is covered separately (run-wasm-tests.sh).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.4'
+      - run: go vet ./...
+      - run: go test ./...

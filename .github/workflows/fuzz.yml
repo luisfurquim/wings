@@ -1,0 +1,27 @@
+name: Fuzz
+
+# Active fuzzing: the expensive half of the cadence. Runs every Fuzz* target
+# for a fixed budget (see cmd/build/fuzz.go) on a weekly schedule and on demand.
+# A crasher fails the run; the saved testdata/fuzz/ entries are uploaded so they
+# can be committed as permanent regression seeds (then replayed for free by CI).
+
+on:
+  schedule:
+    - cron: '0 5 * * 0' # Sundays, 05:00 UTC
+  workflow_dispatch:
+
+jobs:
+  fuzz:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.4'
+      - run: go run ./cmd/build fuzz
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: fuzz-crashers
+          path: '**/testdata/fuzz/**'
+          if-no-files-found: ignore
