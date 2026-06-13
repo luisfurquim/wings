@@ -34,6 +34,7 @@ source never enters the image — it is bind-mounted at `/app`.
 | `WINGS_GENI18N_ARGS` | *(empty)*              | Extra `gen_i18n` flags.                                        |
 | `WINGS_BUILD_TAGS`   | *(empty)*              | Extra `-tags` for `go build`.                                  |
 | `WINGS_WATCH_EXT`    | `go,html,css,json`     | File extensions that trigger a rebuild.                        |
+| `WINGS_WATCH_MODE`   | `auto`                 | `auto` rebuilds on every save; `on-demand` only logs changes and rebuilds when you `touch REBUILD` at the app root. |
 | `WINGS_DEBOUNCE_MS`  | `200`                  | Coalesce window (ms) for bursts of saves.                      |
 
 ### `WINGS_VERSION` and your `go.mod`

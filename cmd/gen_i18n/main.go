@@ -264,11 +264,37 @@ func main() {
 	if err := emitFlexCatalogs(i18nDir, defLang); err != nil {
 		G.Fatalf(1, "error emitting flex catalogs: %v", err)
 	}
+	if err := signSecondaryCatalogs(signingKey, i18nDir); err != nil {
+		G.Fatalf(1, "error signing secondary catalogs: %v", err)
+	}
 
 	G.Logf(2, "done: %d entries", len(dbMap))
 	G.Logf(2, "Arena: %d nodes", len(arena))
 	G.Logf(2, "Txt: %d entries", len(txt))
 	G.Logf(2, "Flex: %d rules", len(flexBlocks))
+}
+
+// signSecondaryCatalogs signs the non-text catalogs the runtime also enforces:
+// every emitted <lang>.inflections.json plus any hand-authored <lang>.fmt.json
+// found in i18nDir. The runtime requires a valid .sig on every catalog that
+// loads while a public key is configured, so leaving these unsigned would make
+// it reject its own build output. No-op without a signing key.
+func signSecondaryCatalogs(key ed25519.PrivateKey, i18nDir string) error {
+	if key == nil {
+		return nil
+	}
+	for _, pattern := range []string{"*.inflections.json", "*.fmt.json"} {
+		files, err := filepath.Glob(filepath.Join(i18nDir, pattern))
+		if err != nil {
+			return err
+		}
+		for _, f := range files {
+			if err := maybeSignJSON(key, f); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // maybeSignJSON signs jsonFile and writes jsonFile+".sig" if signingKey is set.

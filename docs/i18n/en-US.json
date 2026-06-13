@@ -32,6 +32,14 @@
     "revised": true
   },
   {
+    "content": "The language catalog was rejected: signature verification failed.",
+    "revised": true
+  },
+  {
+    "content": "The selected language could not be loaded.",
+    "revised": true
+  },
+  {
     "content": "Language:",
     "revised": true
   },

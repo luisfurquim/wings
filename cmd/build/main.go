@@ -13,6 +13,10 @@
 // (see vulncheck.go). It needs network access for the vulnerability DB, so it
 // is not part of `all`; run it before each release.
 //
+// The fuzz target runs every Fuzz* function in the root module for a fixed
+// budget each (see fuzz.go). Like vulncheck it is not part of `all`; run it
+// periodically. Plain `go test ./...` always replays the committed corpus.
+//
 // The dev target is different: it builds and serves an arbitrary wings app with
 // rebuild-on-save, for a webdev developing their own app (see dev.go). It does
 // not assume it runs inside the wings module, so it is dispatched before the
@@ -45,7 +49,7 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprintln(os.Stderr, "usage: go run ./cmd/build <lib|example|live-demo|wlate|all|vulncheck|dev>")
+	fmt.Fprintln(os.Stderr, "usage: go run ./cmd/build <lib|example|live-demo|wlate|all|vulncheck|fuzz|dev>")
 }
 
 func fatal(err error) {

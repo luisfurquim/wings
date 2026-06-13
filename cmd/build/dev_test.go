@@ -171,6 +171,31 @@ func TestPublishDevCatalogs(t *testing.T) {
 	}
 }
 
+// TestWatchMode: WINGS_WATCH_MODE defaults to auto, accepts on-demand, and
+// rejects anything else.
+func TestWatchMode(t *testing.T) {
+	t.Setenv("WINGS_WATCH_MODE", "")
+	cfg, err := loadDevConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.WatchMode != watchAuto {
+		t.Errorf("WatchMode default = %q, want %q", cfg.WatchMode, watchAuto)
+	}
+	t.Setenv("WINGS_WATCH_MODE", "on-demand")
+	cfg, err = loadDevConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.WatchMode != watchOnDemand {
+		t.Errorf("WatchMode = %q, want %q", cfg.WatchMode, watchOnDemand)
+	}
+	t.Setenv("WINGS_WATCH_MODE", "sometimes")
+	if _, err := loadDevConfig(); err == nil {
+		t.Error("WINGS_WATCH_MODE=sometimes accepted, want error")
+	}
+}
+
 // TestEnvBool accepts the documented truthy tokens and rejects everything else.
 func TestEnvBool(t *testing.T) {
 	t.Setenv("WINGS_X", "yes")

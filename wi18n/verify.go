@@ -1,5 +1,3 @@
-//go:build js && wasm
-
 package wi18n
 
 import (

@@ -2,10 +2,6 @@
 
 package wi18n
 
-import (
-	"strconv"
-)
-
 // Currency is wi18n's locale-aware monetary amount. The amount is stored in
 // the currency's minor unit (centavos, cents, yen-units) as a signed int64,
 // avoiding the rounding pitfalls of float64 for financial data. Code is the
@@ -62,29 +58,6 @@ func (c Currency) amountAsFloat(decimals int) float64 {
 		div *= 10
 	}
 	return float64(c.Amount) / div
-}
-
-// formatDecimal is a locale-agnostic fallback: it places the decimal point
-// at `decimals` positions from the right, with no grouping separator. Used
-// when Intl is unavailable or when the Currency has no Code.
-func formatDecimal(amount int64, decimals int) string {
-	if decimals == 0 {
-		return strconv.FormatInt(amount, 10)
-	}
-	neg := amount < 0
-	if neg {
-		amount = -amount
-	}
-	s := strconv.FormatInt(amount, 10)
-	for len(s) <= decimals {
-		s = "0" + s
-	}
-	cut := len(s) - decimals
-	whole, frac := s[:cut], s[cut:]
-	if neg {
-		return "-" + whole + "." + frac
-	}
-	return whole + "." + frac
 }
 
 // Ensure Currency satisfies Numerical at compile time.

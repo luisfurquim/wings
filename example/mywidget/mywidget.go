@@ -51,12 +51,12 @@ func init() {
 // Equivalent to the "return {...}" in the original JS function main(ready).
 func (w *MyWidget) InitData() map[string]any {
 	return map[string]any{
-		"title":     "Meu Widget",
-		"count":     0,
-		"items":     []any{},
+		"title":      "Meu Widget",
+		"count":      0,
+		"items":      []any{},
 		"show_extra": false,
-		"extra":     "",
-		"inputVal":  "",
+		"extra":      "",
+		"inputVal":   "",
 	}
 }
 

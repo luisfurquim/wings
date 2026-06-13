@@ -725,6 +725,7 @@ func emitFlexCatalogs(i18nDir, defLang string) error {
 		for lang := range langs {
 			p := filepath.Join(i18nDir, lang+".inflections.json")
 			_ = os.Remove(p)
+			_ = os.Remove(p + ".sig")
 			_ = os.Remove(metaPath(p))
 		}
 		return nil

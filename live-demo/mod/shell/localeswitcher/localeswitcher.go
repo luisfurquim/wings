@@ -44,7 +44,11 @@ func (w *LocaleSwitcher) Render(obj *wings.PranaObj) {
 			next := sel.Get("value").String()
 			wi18n.SetLang(next, func(err error) {
 				if err != nil {
+					// The console log always fires; the @error trigger is
+					// optional wiring for the hosting app (dialog, toast, …).
 					wings.G.Logf(1, "locale-switcher: SetLang(%q) error: %v\n", next, err)
+					sel.Set("value", wings.Locale) // the active locale did not change
+					obj.Trigger("error", err)
 				}
 			})
 			return nil

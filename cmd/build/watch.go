@@ -15,6 +15,10 @@ import (
 	"github.com/fsnotify/fsnotify"
 )
 
+// rebuildTriggerName is the file (at the app root) whose touch fires the rebuild
+// in on-demand watch mode. Only the event matters; its content is ignored.
+const rebuildTriggerName = "REBUILD"
+
 // watch observes the app source tree and rebuilds on every relevant save. It
 // watches each directory recursively (fsnotify is per-directory on Linux, so new
 // dirs are added as they appear), filters events by WINGS_WATCH_EXT, and
@@ -26,6 +30,11 @@ import (
 // is ignored, while a genuine edit (including one made mid-build) rebuilds. It
 // blocks until the watcher errors out, which only happens on an unrecoverable
 // failure.
+//
+// In on-demand mode (WINGS_WATCH_MODE=on-demand) a source change is only
+// logged; the rebuild fires when the user touches <app root>/REBUILD. The
+// trigger matches Write, Create and Chmod events because `touch` on an existing
+// file reaches inotify as an attribute update, not a write.
 func watch(cfg *devConfig, wingsDir string) error {
 	w, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -33,7 +42,13 @@ func watch(cfg *devConfig, wingsDir string) error {
 	}
 	defer w.Close()
 	addDirsRecursive(w, cfg.AppRoot, cfg)
-	devLogf("watching for changes (ext: %s) — Ctrl-C to stop", extList(cfg))
+	onDemand := cfg.WatchMode == watchOnDemand
+	trigger := filepath.Join(cfg.AppRoot, rebuildTriggerName)
+	if onDemand {
+		devLogf("watching for changes (ext: %s) — on-demand mode: touch %s to rebuild — Ctrl-C to stop", extList(cfg), rebuildTriggerName)
+	} else {
+		devLogf("watching for changes (ext: %s) — Ctrl-C to stop", extList(cfg))
+	}
 
 	var mu sync.Mutex
 	var timer *time.Timer
@@ -51,7 +66,18 @@ func watch(cfg *devConfig, wingsDir string) error {
 	// pending, so an event can't slip between the two and be stranded).
 	building := false
 	pending := map[string]struct{}{}
+	// pendingTrigger remembers a REBUILD touch that arrived mid-build (on-demand
+	// mode), so the request is honored once the running build settles.
+	pendingTrigger := false
 	debounce := time.Duration(cfg.Debounce) * time.Millisecond
+
+	// logChange announces an edit in on-demand mode, where it does not rebuild.
+	logChange := func(path string) {
+		if rel, err := filepath.Rel(cfg.AppRoot, path); err == nil {
+			path = rel
+		}
+		devLogf("change detected: %s", path)
+	}
 
 	// changed reports whether path's content differs from what we last accounted
 	// for, recording the new hash when it does. A read error (e.g. a deleted
@@ -85,7 +111,11 @@ func watch(cfg *devConfig, wingsDir string) error {
 			mu.Lock()
 			building = true
 			mu.Unlock()
-			devLogf("change detected — rebuilding…")
+			if onDemand {
+				devLogf("rebuild requested — rebuilding…")
+			} else {
+				devLogf("change detected — rebuilding…")
+			}
 			if err := buildOnce(cfg, wingsDir); err != nil {
 				devLogf("build failed: %v", err)
 			}
@@ -98,15 +128,26 @@ func watch(cfg *devConfig, wingsDir string) error {
 			}
 			drain := pending
 			pending = map[string]struct{}{}
+			retrigger := pendingTrigger
+			pendingTrigger = false
 			building = false
 			mu.Unlock()
 			// A buffered event whose file no longer matches what we accounted
-			// for is a real edit made mid-build — rebuild once more.
+			// for is a real edit made mid-build — rebuild once more (or, in
+			// on-demand mode, just announce it and wait for the next trigger).
 			for p := range drain {
-				if changed(p) {
-					rebuild()
-					break
+				if !changed(p) {
+					continue
 				}
+				if onDemand {
+					logChange(p)
+					continue
+				}
+				rebuild()
+				break
+			}
+			if retrigger {
+				rebuild()
 			}
 		})
 	}
@@ -122,6 +163,21 @@ func watch(cfg *devConfig, wingsDir string) error {
 			if ev.Op&fsnotify.Create != 0 && isDir(ev.Name) && !ignoredDir(ev.Name, cfg) {
 				addDirsRecursive(w, ev.Name, cfg)
 			}
+			// On-demand trigger: any touch of <app root>/REBUILD requests a
+			// build, no hash check — the file's content is irrelevant.
+			if onDemand && filepath.Clean(ev.Name) == trigger &&
+				ev.Op&(fsnotify.Write|fsnotify.Create|fsnotify.Chmod) != 0 {
+				mu.Lock()
+				inBuild := building
+				if inBuild {
+					pendingTrigger = true
+				}
+				mu.Unlock()
+				if !inBuild {
+					rebuild()
+				}
+				continue
+			}
 			if cfg.WatchExt[strings.ToLower(filepath.Ext(ev.Name))] {
 				mu.Lock()
 				inBuild := building
@@ -134,7 +190,11 @@ func watch(cfg *devConfig, wingsDir string) error {
 					continue
 				}
 				if changed(ev.Name) {
-					rebuild()
+					if onDemand {
+						logChange(ev.Name)
+					} else {
+						rebuild()
+					}
 				}
 			}
 		case err, ok := <-w.Errors:

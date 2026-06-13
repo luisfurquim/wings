@@ -45,21 +45,17 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
+### v0.16.12
+
+- **Continuous fuzzing of the parsers** — native Go fuzz targets for the
+  template/flex readers, codec, catalog aligner, signature verification, and
+  number/format parsing, run via `go run ./cmd/build fuzz`. The first run
+  already caught and fixed a currency-formatting bug.
+
 ### v0.16.11
 
 - **`vulncheck` build target** — govulncheck over every module, native and
   `GOOS=js`; deps and toolchain bumped to clear every finding it reported.
-
-### v0.16.9
-
-- **The Docker dev container is now stable** — serving a full app inside the
-  container (build, i18n generation, dictionary baking, and rebuild-on-save) is
-  validated end-to-end on a real app, so the experimental label is dropped.
-- **The rebuild-on-save watcher is robust** — folding in the `0.16.5`–`0.16.8`
-  alpha fixes: the published module no longer ships the dev `go.work`, and the
-  watcher tells the build's own writes (catalogs, `*.i18n.html`) apart from real
-  edits by content hash — so there are no rebuild loops, and a quick second edit
-  made during a build is never dropped.
 
 ---
 
@@ -342,6 +338,7 @@ It is configured entirely through `WINGS_*` environment variables:
 | `WINGS_GENI18N_ARGS` | *(empty)*            | Extra `gen_i18n` flags.                                            |
 | `WINGS_BUILD_TAGS`   | *(empty)*            | Extra `-tags` for `go build`.                                      |
 | `WINGS_WATCH_EXT`    | `go,html,css,json`   | File extensions that trigger a rebuild.                            |
+| `WINGS_WATCH_MODE`   | `auto`               | `auto` rebuilds on every save; `on-demand` only logs changes and rebuilds when you `touch REBUILD` at the app root. |
 | `WINGS_DEBOUNCE_MS`  | `200`                | Coalesce window (ms) for bursts of saves.                          |
 
 If your app needs a real backend instead of the built-in static server, set
@@ -3479,7 +3476,9 @@ gen_i18n --path . --deflang en-US \
          -sign-key-password <password>
 ```
 
-A `.json.sig` sidecar is written next to each `.json` file.
+A `.json.sig` sidecar is written next to each published catalog: the main
+`<lang>.json`, every emitted `<lang>.inflections.json`, and any hand-authored
+`<lang>.fmt.json` found in the i18n directory.
 
 **Verify in your WASM app:**
 
@@ -3500,8 +3499,27 @@ verification is skipped and no `.sig` sidecar is even fetched (backward
 compatible). Once a key **is** configured, every catalog the app loads MUST carry
 a valid `.sig`: a missing sidecar is treated as tampering and the catalog is
 rejected — the loader never falls through to an unsigned, possibly forged
-catalog. This currently covers the main `<lang>.json`; `inflections.json` /
-`fmt.json` enforcement is planned.
+catalog. This covers the main `<lang>.json` and the optional
+`<lang>.inflections.json` / `<lang>.fmt.json`: an optional file that does not
+exist is fine (nothing to verify), but one that loads must verify.
+
+A rejection surfaces as `*wi18n.CatalogSignatureError` in the `SetLang` error
+callback, so the app can tell tampering apart from ordinary load failures
+(missing catalog, parse error):
+
+```go
+wi18n.SetLang(next, func(err error) {
+    var sigErr *wi18n.CatalogSignatureError
+    if errors.As(err, &sigErr) {
+        // signature policy failure — warn loudly
+    }
+})
+```
+
+The live-demo's `locale-switcher` shows the recommended wiring: on error it
+logs, reverts its `<select>` to the still-active `wings.Locale`, and fires an
+`@error` trigger so the hosting app can react declaratively
+(`<locale-switcher @error="fnLocaleError">` opening a `<w-dialog>`).
 
 ## Third-party data
 

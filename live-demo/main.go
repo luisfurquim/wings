@@ -38,6 +38,7 @@ import (
 	_ "github.com/luisfurquim/wings/skins/glass"
 
 	_ "github.com/luisfurquim/wings/widget/combobox"
+	_ "github.com/luisfurquim/wings/widget/dialog"
 	_ "github.com/luisfurquim/wings/widget/skinswitcher"
 	_ "github.com/luisfurquim/wings/widget/tab"
 	_ "github.com/luisfurquim/wings/widget/tabbutton"

@@ -32,6 +32,14 @@
     "revised": true
   },
   {
+    "content": "El catálogo del idioma fue rechazado: falló la verificación de firma.",
+    "revised": true
+  },
+  {
+    "content": "No fue posible cargar el idioma seleccionado.",
+    "revised": true
+  },
+  {
     "content": "Idioma:",
     "revised": true
   },

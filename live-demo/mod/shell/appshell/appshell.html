@@ -1,7 +1,7 @@
 <div class="shell">
   <header>
     <h1>wings — live demo</h1>
-    <locale-switcher></locale-switcher>
+    <locale-switcher @error="fnLocaleError"></locale-switcher>
     <skin-switcher></skin-switcher>
   </header>
 
@@ -32,4 +32,11 @@
       <w-tab><wtest-tab></wtest-tab></w-tab>
     </w-tabs>
   </main>
+
+  <!-- Locale load failures surface here: the locale-switcher fires @error and
+       the handler branches on the typed wi18n.CatalogSignatureError. -->
+  <w-dialog ?show_locale_error buttons="cancel" @cancel="fnLocaleErrorClose">
+    <span ?locale_error_sig>O catálogo do idioma foi recusado: a verificação de assinatura falhou.</span>
+    <span ?locale_error_other>Não foi possível carregar o idioma selecionado.</span>
+  </w-dialog>
 </div>

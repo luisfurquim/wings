@@ -8,6 +8,39 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
+## [0.16.12] — 2026-06-13
+
+### Added
+- **Fuzz targets for the parsers** plus a `fuzz` build target.
+  `go run ./cmd/build fuzz` runs every `Fuzz*` for a fixed budget each, covering
+  the `expr` flex/reference readers, `codec`, the `gen_i18n` catalog aligner,
+  catalog signature verification, the `<lang>.fmt.json` parser, and decimal
+  formatting. Like `vulncheck`, it is not part of `all`.
+- **On-demand watch mode in `dev`** (`WINGS_WATCH_MODE=on-demand`): source
+  changes are only logged; the rebuild runs when you `touch REBUILD` at the app
+  root — handy when an edit spans several files. Default `auto` keeps the
+  rebuild-on-every-save behavior.
+- **Typed `wi18n.CatalogSignatureError`** so `SetLang` error callbacks can
+  branch on tampering (via `errors.As`) vs ordinary load failures. The
+  live-demo `locale-switcher` now reverts its `<select>` on failure and fires
+  an `@error` trigger; the demo shell opens a `w-dialog` with a
+  signature-specific message.
+
+### Security
+- **Signature enforcement extended to secondary catalogs**: with a public key
+  configured, `<lang>.inflections.json` and `<lang>.fmt.json` that load must
+  also carry a valid `.sig` (absent optional files remain fine). `gen_i18n
+  -sign-key` now signs them alongside the main catalogs.
+
+### Changed
+- **`verifyCatalog` and the fmt-config / decimal parsers dropped their
+  `js && wasm` build tag** so they compile and fuzz natively; browser-only
+  logic (the root runtime, `Intl` formatting) stays tagged.
+
+### Fixed
+- **`formatDecimal` mis-rendered the minimum `int64` amount** — negating it
+  overflowed and leaked a stray double minus. Found by the new fuzzing.
+
 ## [0.16.11] — 2026-06-12
 
 ### Added

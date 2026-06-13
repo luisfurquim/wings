@@ -8,6 +8,12 @@ import (
 	"strings"
 )
 
+// Watch modes accepted by WINGS_WATCH_MODE.
+const (
+	watchAuto     = "auto"      // rebuild on every relevant save (default)
+	watchOnDemand = "on-demand" // log changes; rebuild only when REBUILD is touched
+)
+
 // devConfig holds the resolved settings for the `dev` mode, read from the
 // WINGS_* environment variables (the docker-compose .env feeds these in). Every
 // field has a sensible default so a bare `go run ./cmd/build dev` works from an
@@ -24,6 +30,7 @@ type devConfig struct {
 	GenI18nArgs []string        // WINGS_GENI18N_ARGS — extra gen_i18n flags
 	BuildTags   string          // WINGS_BUILD_TAGS — extra -tags for go build
 	WatchExt    map[string]bool // WINGS_WATCH_EXT — file extensions that trigger a rebuild
+	WatchMode   string          // WINGS_WATCH_MODE — watchAuto | watchOnDemand
 	Debounce    int             // WINGS_DEBOUNCE_MS — coalesce window for rapid saves
 
 	// i18n inflection (dictionaries) and machine/LLM translation. These drive
@@ -57,6 +64,7 @@ func loadDevConfig() (*devConfig, error) {
 		GenI18nArgs: strings.Fields(os.Getenv("WINGS_GENI18N_ARGS")),
 		BuildTags:   os.Getenv("WINGS_BUILD_TAGS"),
 		WatchExt:    parseExt(envOr("WINGS_WATCH_EXT", "go,html,css,json")),
+		WatchMode:   envOr("WINGS_WATCH_MODE", watchAuto),
 
 		AutoFlex:      envBool("WINGS_AUTO_FLEX"),
 		DictDir:       os.Getenv("WINGS_DICT_DIR"),
@@ -84,6 +92,10 @@ func loadDevConfig() (*devConfig, error) {
 	// the module root. The live-demo overrides it to "mod" (gen scans ./mod while
 	// the build target is the module root ".").
 	cfg.I18nPath = envOr("WINGS_I18N_PATH", ".")
+
+	if cfg.WatchMode != watchAuto && cfg.WatchMode != watchOnDemand {
+		return nil, fmt.Errorf("WINGS_WATCH_MODE must be %q or %q, got %q", watchAuto, watchOnDemand, cfg.WatchMode)
+	}
 
 	debounce := envOr("WINGS_DEBOUNCE_MS", "200")
 	cfg.Debounce, err = strconv.Atoi(debounce)

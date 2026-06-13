@@ -32,6 +32,14 @@
     "ctxdetail": "w-tabbutton@shell/appshell/appshell.html:31:20"
   },
   {
+    "context": "shell/appshell/appshell.html:39:29",
+    "ctxdetail": "span@shell/appshell/appshell.html:39:29"
+  },
+  {
+    "context": "shell/appshell/appshell.html:40:31",
+    "ctxdetail": "span@shell/appshell/appshell.html:40:31"
+  },
+  {
     "context": "shell/localeswitcher/localeswitcher.html:2:24",
     "ctxdetail": "label@shell/localeswitcher/localeswitcher.html:2:24"
   },

@@ -124,19 +124,8 @@ func loadBundle(requested string) (*localeBundle, error) {
 			wings.G.Logf(3, "wi18n: %s not available (%v), trying next\n", url, err)
 			continue
 		}
-		// Signature enforcement is opt-in via SetCatalogPublicKey. When a public
-		// key is configured, every catalog MUST carry a valid .sig: a missing
-		// sidecar (404) or a bad signature is treated as tampering — reject and
-		// stop, never silently fall through to an unsigned (possibly forged)
-		// catalog. Without a configured key the .sig is not fetched at all.
-		if signaturesRequired() {
-			sigBody, sigErr := fetchText(url + ".sig")
-			if sigErr != nil {
-				return nil, fmt.Errorf("wi18n: catalog %s requires a signature but its .sig is unavailable: %w", url, sigErr)
-			}
-			if vErr := verifyCatalog(body, sigBody); vErr != nil {
-				return nil, fmt.Errorf("wi18n: catalog %s rejected: %w", url, vErr)
-			}
+		if sigErr := requireSig(url, body); sigErr != nil {
+			return nil, sigErr
 		}
 		picked = cand
 		break
@@ -168,8 +157,15 @@ func loadBundle(requested string) (*localeBundle, error) {
 		picked:  picked,
 	}
 
-	// Inflections are optional — apps without flex blocks publish no file.
-	if flexBody, err := fetchText(base + picked + ".inflections.json"); err == nil {
+	// Inflections are optional — apps without flex blocks publish no file (a
+	// 404 here is fine). But once the file IS present and a public key is
+	// configured, it must carry a valid .sig like the main catalog: silently
+	// dropping a tampered inflections file would let an attacker degrade flex.
+	flexURL := base + picked + ".inflections.json"
+	if flexBody, err := fetchText(flexURL); err == nil {
+		if sigErr := requireSig(flexURL, flexBody); sigErr != nil {
+			return nil, sigErr
+		}
 		var flexEntries []FlexEntry
 		if err := json.Unmarshal([]byte(flexBody), &flexEntries); err == nil {
 			bundle.flex = flexEntries
@@ -179,11 +175,35 @@ func loadBundle(requested string) (*localeBundle, error) {
 	}
 
 	// Format config is optional — apps without measure types publish no file.
-	if fmtBody, err := fetchText(base + picked + ".fmt.json"); err == nil {
+	// Same policy as inflections: absent is fine, present must verify.
+	fmtURL := base + picked + ".fmt.json"
+	if fmtBody, err := fetchText(fmtURL); err == nil {
+		if sigErr := requireSig(fmtURL, fmtBody); sigErr != nil {
+			return nil, sigErr
+		}
 		if cfg := parseFmtConfig(fmtBody); cfg != nil {
 			bundle.fmtCfg = cfg
 		}
 	}
 
 	return bundle, nil
+}
+
+// requireSig enforces the signature policy on one successfully fetched catalog
+// file: when a public key is configured (SetCatalogPublicKey), the file's .sig
+// sidecar must exist and verify — a missing sidecar or a bad signature is
+// treated as tampering and reported as *CatalogSignatureError. Without a
+// configured key it is a no-op and no .sig is fetched at all.
+func requireSig(url, body string) error {
+	if !signaturesRequired() {
+		return nil
+	}
+	sigBody, err := fetchText(url + ".sig")
+	if err != nil {
+		return &CatalogSignatureError{URL: url, Err: fmt.Errorf("signature required but .sig unavailable: %w", err)}
+	}
+	if err := verifyCatalog(body, sigBody); err != nil {
+		return &CatalogSignatureError{URL: url, Err: err}
+	}
+	return nil
 }
