@@ -47,12 +47,14 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
-### Unreleased
+### v0.16.14
 
 - **AI authoring plugin now covers security** — six app-flavored `sec-*` skills
   complete the `wings-authoring` kit. Validating them against a generated
   component caught and fixed a real runtime leak: native listeners wired with
   `dom.AddEvent` are now auto-released when a component disconnects.
+- **Cross-tool reach** — Cursor, Kiro, and GitHub Copilot rule files now
+  re-point to `AGENTS.md`, so non-Claude assistants get the same guide.
 
 ### v0.16.12
 

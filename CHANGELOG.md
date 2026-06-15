@@ -8,7 +8,7 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
-## [Unreleased]
+## [0.16.14] — 2026-06-15
 
 ### Added
 - **App-flavored security skills in the `wings-authoring` plugin** —
@@ -18,6 +18,10 @@ per-commit record see the git log and tags.
   `wings-component` skill also gained worked examples for state-driven views,
   reading native event values safely, loading data from a backend, and derived
   (filtered/sorted) lists.
+- **Cross-tool wrappers to `AGENTS.md`** — thin Cursor (`.cursor/rules/`), Kiro
+  (`.kiro/steering/`), and GitHub Copilot (`.github/copilot-instructions.md`)
+  config files re-point to the canonical `AGENTS.md`, so non-Claude assistants
+  pick up the guide through their native mechanism (no content is duplicated).
 
 ### Fixed
 - **Native listeners are released on disconnect.** A listener registered with
