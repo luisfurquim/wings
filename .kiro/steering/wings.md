@@ -1,0 +1,24 @@
+---
+inclusion: always
+---
+
+# WINGS authoring
+
+This project builds UI as **Go compiled to WASM** with the WINGS framework. The
+canonical, always-current authoring guide lives in `AGENTS.md` at the repository
+root — read it and follow it. Its full contents:
+
+#[[file:AGENTS.md]]
+
+Two non-negotiable gotchas it covers, repeated here so they're never missed:
+
+1. **Binding names in attributes must be snake_case.** The browser lowercases
+   attribute names, so a camelCase binding name (`?isLoading`, `*myItems`,
+   `&myValue`) becomes a silent no-op — `go run ./cmd/build <target>` fails the
+   build on it.
+2. **Handlers needing `obj` can't be built in `InitData`** (`obj` isn't ready);
+   put `wings.TriggerHandler(nil)` there and set the real handler in `Render`.
+
+For deeper, area-specific guidance (components, i18n, skins, widgets, build,
+and security), this repo also ships the `wings-authoring` Claude Code plugin —
+see the README "AI-Assisted Development" section.

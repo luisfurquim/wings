@@ -377,6 +377,10 @@ becoming no-ops; WINGS lowercases attribute names, so use snake_case).
   the repo-root [`AGENTS.md`](AGENTS.md) is read automatically by tools that
   support the open `AGENTS.md` standard. It carries the mental model, the
   must-know gotchas, and the template-syntax quick reference.
+- **Tools with their own rules format**: thin wrappers re-point Cursor
+  (`.cursor/rules/`), Kiro (`.kiro/steering/`), and GitHub Copilot
+  (`.github/copilot-instructions.md`) back to `AGENTS.md`, so each picks it up
+  through its native always-on mechanism — no content is duplicated.
 - **Claude Code**: install the `wings-authoring` plugin for deeper,
   task-triggered skills. The wings repository is itself the marketplace — no
   public store:
