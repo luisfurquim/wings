@@ -248,6 +248,11 @@ func (in *Input) Render(obj *wings.PranaObj) {
 
 	dom.AddEvent(inp, "input", func(_ js.Value, args []js.Value) any {
 		val := inp.Get("value").String()
+		// &value uses the 'change' event (blur), not 'input'. Writing directly
+		// to the map (without triggering a sync) ensures that when updateDerived
+		// calls obj.This.Set(...) and sync runs, it sees the current value and
+		// does not overwrite the input with the stale reactive value.
+		obj.This.M["value"] = val
 		setValueHostAttrs(obj.Element, val)
 		updateDerived(obj, val)
 		obj.Trigger("change", val)
