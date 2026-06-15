@@ -32,12 +32,16 @@
     "ctxdetail": "w-tabbutton@shell/appshell/appshell.html:31:20"
   },
   {
-    "context": "shell/appshell/appshell.html:39:29",
-    "ctxdetail": "span@shell/appshell/appshell.html:39:29"
+    "context": "shell/appshell/appshell.html:34:20",
+    "ctxdetail": "w-tabbutton@shell/appshell/appshell.html:34:20"
   },
   {
-    "context": "shell/appshell/appshell.html:40:31",
-    "ctxdetail": "span@shell/appshell/appshell.html:40:31"
+    "context": "shell/appshell/appshell.html:42:29",
+    "ctxdetail": "span@shell/appshell/appshell.html:42:29"
+  },
+  {
+    "context": "shell/appshell/appshell.html:43:31",
+    "ctxdetail": "span@shell/appshell/appshell.html:43:31"
   },
   {
     "context": "shell/localeswitcher/localeswitcher.html:2:24",
@@ -422,6 +426,146 @@
   {
     "context": "tabs/tabsdemo/tabsdemo.html:79:19",
     "ctxdetail": "p@tabs/tabsdemo/tabsdemo.html:79:19"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:5:9",
+    "ctxdetail": "h3@tabs/widgets/widgetstab.html:5:9"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:7:17",
+    "ctxdetail": "w-button@tabs/widgets/widgetstab.html:7:17"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:8:35",
+    "ctxdetail": "w-button@tabs/widgets/widgetstab.html:8:35"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:9:33",
+    "ctxdetail": "w-button@tabs/widgets/widgetstab.html:9:33"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:10:34",
+    "ctxdetail": "w-button@tabs/widgets/widgetstab.html:10:34"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:11:35",
+    "ctxdetail": "w-button@tabs/widgets/widgetstab.html:11:35"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:12:26",
+    "ctxdetail": "w-button@tabs/widgets/widgetstab.html:12:26"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:17:9",
+    "ctxdetail": "h3@tabs/widgets/widgetstab.html:17:9"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:19:27",
+    "ctxdetail": "w-button@tabs/widgets/widgetstab.html:19:27"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:20:27",
+    "ctxdetail": "w-button@tabs/widgets/widgetstab.html:20:27"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:21:27",
+    "ctxdetail": "w-button@tabs/widgets/widgetstab.html:21:27"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:26:9",
+    "ctxdetail": "h3@tabs/widgets/widgetstab.html:26:9"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:28:51",
+    "ctxdetail": "w-button@tabs/widgets/widgetstab.html:28:51"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:29:48",
+    "ctxdetail": "w-button@tabs/widgets/widgetstab.html:29:48"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:30:50",
+    "ctxdetail": "w-button@tabs/widgets/widgetstab.html:30:50"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:35:9",
+    "ctxdetail": "h3@tabs/widgets/widgetstab.html:35:9"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:37:50",
+    "ctxdetail": "w-button@tabs/widgets/widgetstab.html:37:50"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:38:32",
+    "ctxdetail": "w-button@tabs/widgets/widgetstab.html:38:32"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:43:9",
+    "ctxdetail": "h3@tabs/widgets/widgetstab.html:43:9"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:50:15",
+    "ctxdetail": "w-button@tabs/widgets/widgetstab.html:50:15"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:53:33",
+    "ctxdetail": "w-button@tabs/widgets/widgetstab.html:53:33"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:65:9",
+    "ctxdetail": "h3@tabs/widgets/widgetstab.html:65:9"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:66:54",
+    "ctxdetail": "w-input[placeholder]@tabs/widgets/widgetstab.html:66:54<br/>w-input[placeholder]@tabs/widgets/widgetstab.html:67:42<br/>w-input[placeholder]@tabs/widgets/widgetstab.html:68:46"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:72:9",
+    "ctxdetail": "h3@tabs/widgets/widgetstab.html:72:9"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:73:54",
+    "ctxdetail": "w-input[placeholder]@tabs/widgets/widgetstab.html:73:54"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:75:54",
+    "ctxdetail": "w-input[placeholder]@tabs/widgets/widgetstab.html:75:54"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:77:44",
+    "ctxdetail": "w-input[placeholder]@tabs/widgets/widgetstab.html:77:44"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:79:48",
+    "ctxdetail": "w-input[placeholder]@tabs/widgets/widgetstab.html:79:48"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:83:9",
+    "ctxdetail": "h3@tabs/widgets/widgetstab.html:83:9"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:84:56",
+    "ctxdetail": "w-input[placeholder]@tabs/widgets/widgetstab.html:84:56"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:86:62",
+    "ctxdetail": "w-input[placeholder]@tabs/widgets/widgetstab.html:86:62"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:91:9",
+    "ctxdetail": "h3@tabs/widgets/widgetstab.html:91:9"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:92:20",
+    "ctxdetail": "w-input[placeholder]@tabs/widgets/widgetstab.html:92:20"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:93:20",
+    "ctxdetail": "w-input[placeholder]@tabs/widgets/widgetstab.html:93:20"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:94:20",
+    "ctxdetail": "w-input[placeholder]@tabs/widgets/widgetstab.html:94:20"
   },
   {
     "context": "tabs/wtest/wtesttab.html:2:7",

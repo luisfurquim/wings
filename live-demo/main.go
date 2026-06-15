@@ -37,8 +37,10 @@ import (
 	// Atmosphere skins (composes with all of the above)
 	_ "github.com/luisfurquim/wings/skins/glass"
 
+	_ "github.com/luisfurquim/wings/widget/button"
 	_ "github.com/luisfurquim/wings/widget/combobox"
 	_ "github.com/luisfurquim/wings/widget/dialog"
+	_ "github.com/luisfurquim/wings/widget/input"
 	_ "github.com/luisfurquim/wings/widget/skinswitcher"
 	_ "github.com/luisfurquim/wings/widget/tab"
 	_ "github.com/luisfurquim/wings/widget/tabbutton"
@@ -74,6 +76,8 @@ import (
 	_ "live-demo/mod/tabs/measures/tempdisplay"
 
 	_ "live-demo/mod/tabs/tabsdemo"
+
+	_ "live-demo/mod/tabs/widgets"
 
 	_ "live-demo/mod/tabs/wtest"
 )

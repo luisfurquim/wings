@@ -1,0 +1,97 @@
+<div class="widgets-tab">
+
+  <!-- ── w-button ────────────────────────────────────────────────────────── -->
+  <section>
+    <h3>w-button — variantes</h3>
+    <div class="widget-row">
+      <w-button>Secondary</w-button>
+      <w-button variant="primary">Primary</w-button>
+      <w-button variant="ghost">Ghost</w-button>
+      <w-button variant="danger">Danger</w-button>
+      <w-button variant="success">Success</w-button>
+      <w-button disabled>Disabled</w-button>
+    </div>
+  </section>
+
+  <section>
+    <h3>w-button — tamanhos</h3>
+    <div class="widget-row">
+      <w-button size="sm">Small</w-button>
+      <w-button size="md">Medium</w-button>
+      <w-button size="lg">Large</w-button>
+    </div>
+  </section>
+
+  <section>
+    <h3>w-button — formas</h3>
+    <div class="widget-row">
+      <w-button variant="primary" shape="default">Default</w-button>
+      <w-button variant="primary" shape="pill">Pill</w-button>
+      <w-button variant="primary" shape="square">Square</w-button>
+    </div>
+  </section>
+
+  <section>
+    <h3>w-button — loading</h3>
+    <div class="widget-row">
+      <w-button variant="primary" loading="true">Salvando…</w-button>
+      <w-button loading="true">Processando…</w-button>
+    </div>
+  </section>
+
+  <section>
+    <h3>w-button — com ícone via slot</h3>
+    <div class="widget-row">
+      <w-button variant="primary">
+        <svg slot="prefix" width="16" height="16" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+          <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+        </svg>
+        Salvar
+      </w-button>
+      <w-button variant="ghost">
+        Configurações
+        <svg slot="suffix" width="14" height="14" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </w-button>
+    </div>
+  </section>
+
+  <!-- ── w-input ─────────────────────────────────────────────────────────── -->
+  <section>
+    <h3>w-input — variantes</h3>
+    <w-input label="Outlined (padrão)" placeholder="Digite aqui…" variant="outlined"></w-input>
+    <w-input label="Filled" placeholder="Digite aqui…" variant="filled"></w-input>
+    <w-input label="Underlined" placeholder="Digite aqui…" variant="underlined"></w-input>
+  </section>
+
+  <section>
+    <h3>w-input — estados</h3>
+    <w-input label="Com texto de ajuda" placeholder="ex: nome@email.com"
+             helper="Usaremos isso para enviar a confirmação." type="email"></w-input>
+    <w-input label="Campo obrigatório" placeholder="Nome completo"
+             required="true"></w-input>
+    <w-input label="Com erro" placeholder="Ex: 2024-01-01"
+             error="Data inválida. Use o formato AAAA-MM-DD."></w-input>
+    <w-input label="Desabilitado" placeholder="Não editável" disabled></w-input>
+  </section>
+
+  <section>
+    <h3>w-input — clearable + contador</h3>
+    <w-input label="Com botão de limpar" placeholder="Escreva algo…"
+             clearable="true"></w-input>
+    <w-input label="Com contador de caracteres" placeholder="Máx. 80 caracteres"
+             maxlength="80" clearable="true"></w-input>
+  </section>
+
+  <section>
+    <h3>w-input — tamanhos</h3>
+    <w-input size="sm" label="Pequeno" placeholder="sm"></w-input>
+    <w-input size="md" label="Médio (padrão)" placeholder="md"></w-input>
+    <w-input size="lg" label="Grande" placeholder="lg"></w-input>
+  </section>
+
+</div>

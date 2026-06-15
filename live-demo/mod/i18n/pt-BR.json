@@ -28,6 +28,10 @@
     "revised": false
   },
   {
+    "content": "Widgets",
+    "revised": false
+  },
+  {
     "content": "Testes",
     "revised": false
   },
@@ -421,6 +425,146 @@
   },
   {
     "content": "Os mesmos botões que formam a faixa de abas nos outros modos viram resumos aqui.",
+    "revised": false
+  },
+  {
+    "content": "w-button — variantes",
+    "revised": false
+  },
+  {
+    "content": "Secondary",
+    "revised": false
+  },
+  {
+    "content": "Primary",
+    "revised": false
+  },
+  {
+    "content": "Ghost",
+    "revised": false
+  },
+  {
+    "content": "Danger",
+    "revised": false
+  },
+  {
+    "content": "Success",
+    "revised": false
+  },
+  {
+    "content": "Disabled",
+    "revised": false
+  },
+  {
+    "content": "w-button — tamanhos",
+    "revised": false
+  },
+  {
+    "content": "Small",
+    "revised": false
+  },
+  {
+    "content": "Medium",
+    "revised": false
+  },
+  {
+    "content": "Large",
+    "revised": false
+  },
+  {
+    "content": "w-button — formas",
+    "revised": false
+  },
+  {
+    "content": "Default",
+    "revised": false
+  },
+  {
+    "content": "Pill",
+    "revised": false
+  },
+  {
+    "content": "Square",
+    "revised": false
+  },
+  {
+    "content": "w-button — loading",
+    "revised": false
+  },
+  {
+    "content": "Salvando…",
+    "revised": false
+  },
+  {
+    "content": "Processando…",
+    "revised": false
+  },
+  {
+    "content": "w-button — com ícone via slot",
+    "revised": false
+  },
+  {
+    "content": "\n        Salvar\n      ",
+    "revised": false
+  },
+  {
+    "content": "\n        Configurações\n        ",
+    "revised": false
+  },
+  {
+    "content": "w-input — variantes",
+    "revised": false
+  },
+  {
+    "content": "Digite aqui…",
+    "revised": false
+  },
+  {
+    "content": "w-input — estados",
+    "revised": false
+  },
+  {
+    "content": "ex: nome@email.com",
+    "revised": false
+  },
+  {
+    "content": "Nome completo",
+    "revised": false
+  },
+  {
+    "content": "Ex: 2024-01-01",
+    "revised": false
+  },
+  {
+    "content": "Não editável",
+    "revised": false
+  },
+  {
+    "content": "w-input — clearable + contador",
+    "revised": false
+  },
+  {
+    "content": "Escreva algo…",
+    "revised": false
+  },
+  {
+    "content": "Máx. 80 caracteres",
+    "revised": false
+  },
+  {
+    "content": "w-input — tamanhos",
+    "revised": false
+  },
+  {
+    "content": "sm",
+    "revised": false
+  },
+  {
+    "content": "md",
+    "revised": false
+  },
+  {
+    "content": "lg",
     "revised": false
   },
   {

@@ -1,6 +1,6 @@
 ---
 name: wings-widgets
-description: Use WINGS's built-in widgets instead of hand-rolling them — tabbed containers (w-tabs/w-tabbutton/w-tab), dialogs (w-dialog), multi-select combobox (w-combobox), record navbar (w-navbar), and the skin picker (skin-switcher). Use when an app needs tabs, a modal/dialog, a filtering select, record navigation, or a theme picker.
+description: Use WINGS's built-in widgets instead of hand-rolling them — button (w-button), text input (w-input), tabbed containers (w-tabs/w-tabbutton/w-tab), dialogs (w-dialog), multi-select combobox (w-combobox), record navbar (w-navbar), and the skin picker (skin-switcher). Use when an app needs any of these controls.
 ---
 
 # Built-in widgets
@@ -14,6 +14,99 @@ the same mechanism in `wings-component` (handler is a `func(args ...any)` set in
 Note on names: `@event` attribute values (handler names) may be camelCase —
 attribute *values* are not lowercased. But any **bound attribute name** you pass
 a widget (e.g. `nav_input`) must be snake_case (gotcha #1).
+
+## Button — `w-button`
+
+```go
+import _ "github.com/luisfurquim/wings/widget/button"
+```
+```html
+<w-button variant="primary" @click="onSave">Save</w-button>
+<w-button variant="danger" size="sm" shape="pill">Delete</w-button>
+<w-button loading="true">Saving…</w-button>
+
+<!-- icon slots -->
+<w-button variant="primary">
+  <svg slot="prefix">…</svg>
+  Submit
+</w-button>
+```
+
+Attributes:
+- `variant` — `secondary` (default) | `primary` | `ghost` | `danger` | `success`
+- `size`    — `sm` | `md` (default) | `lg`
+- `shape`   — `default` | `pill` | `square`
+- `loading` — `"true"` shows a spinner; button is non-interactive while loading
+- `disabled` — standard HTML; reflected to inner `<button>` for a11y + keyboard
+
+**Boolean attributes take the value `"true"`** (not bare presence) because the
+WINGS observed-attribute system uses `coerceToType` against the InitData default:
+`loading="true"` sets the bool to `true`; bare `loading` sets it to `false`.
+Exception: `disabled` is a standard HTML boolean and IS handled by bare presence.
+
+Clicks bubble naturally through open shadow DOM — use `@click` on the host as normal.
+No Go-side `Render` logic needed for clicks.
+
+**CSS hooks**: `::part(root)`, `::part(prefix)`, `::part(label)`, `::part(suffix)`,
+`::part(spinner)`. Host attributes: `[variant]`, `[size]`, `[shape]`, `[disabled]`,
+`[loading]`. All `--wings-button-*` tokens apply (see `wings-skins`).
+
+## Text input — `w-input`
+
+```go
+import _ "github.com/luisfurquim/wings/widget/input"
+```
+```html
+<w-input label="Email" type="email" placeholder="you@example.com"
+         helper="We'll never share this."
+         required="true" clearable="true"
+         @change="onEmailChange" @clear="onEmailClear"></w-input>
+
+<!-- password with icon prefix via slot -->
+<w-input label="Password" type="password">
+  <svg slot="prefix">…</svg>
+</w-input>
+
+<!-- show validation error from parent -->
+<w-input label="Username" error="{{user_error}}"></w-input>
+```
+
+Attributes (all observed — template re-syncs on change):
+- `type`      — `text` (default) | `email` | `password` | `search` | `number` | `tel` | `url`
+- `label`     — label text; activates the label zone. Use `<slot name="label">` for HTML.
+- `placeholder`/`value`/`helper`/`error`/`maxlength` — as expected
+- `variant`   — `outlined` (default) | `filled` | `underlined`
+- `size`      — `sm` | `md` (default) | `lg`
+- `required`  — `"true"` shows the `*` mark (same boolean convention as `w-button`)
+- `clearable` — `"true"` shows × when field has content
+- `disabled`  — standard HTML; reflected to inner `<input>`
+
+Events: `@change` args[0] = current string value (fires on every keystroke).
+`@clear` fires when × is clicked.
+
+**Host state attributes** (set by the widget for external CSS hooks):
+- `[data-focused]`   — present while the `<input>` has focus
+- `[data-has-value]` — present while value ≠ `""`
+- `[data-empty]`     — present while value = `""`
+- `[data-invalid]`   — present when `error` attribute is non-empty
+
+Floating label (pure external CSS, zero Go changes):
+```css
+w-input[data-focused]::part(label),
+w-input[data-has-value]::part(label) {
+  transform: translateY(-1.5em) scale(0.8);
+  color: var(--wings-primary);
+}
+```
+
+**CSS hooks**: `::part(root)`, `::part(label-wrap)`, `::part(label)`,
+`::part(required-mark)`, `::part(field)`, `::part(prefix)`, `::part(input)`,
+`::part(suffix)`, `::part(clear-btn)`, `::part(feedback)`, `::part(helper)`,
+`::part(error)`, `::part(count)`. All `--wings-input-*` tokens apply (see `wings-skins`).
+
+Named slots: `label`, `prefix`, `suffix`, `helper`, `error`.
+
+---
 
 ## Tabs — `w-tabs` / `w-tabbutton` / `w-tab`
 

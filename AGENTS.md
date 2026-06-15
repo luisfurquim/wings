@@ -73,7 +73,7 @@ prefer a single root element for predictable styling.
 - i18n (gen_i18n, flex/plurals/gender, formatting, SetLang) → README
   "Internationalization"; skill `wings-i18n`.
 - Theming (`--wings-*` tokens, skins) → README "Skins"; skill `wings-skins`.
-- Built-in widgets (tabs, dialog, combobox, navbar, skin picker) → README
+- Built-in widgets (button, input, tabs, dialog, combobox, navbar, skin picker) → README
   "Built-in Widgets"; skill `wings-widgets` — prefer these over hand-rolling.
 - Build/dev container → README "Quick Start", "Dev Container"; skill `wings-build`.
 - Security when writing wings apps → app-flavored `sec-*` skills:

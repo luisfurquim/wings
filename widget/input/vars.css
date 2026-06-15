@@ -1,0 +1,6 @@
+/* w-input — colour/shadow tokens.
+   Empty by design: defaults are provided as the fallback argument of
+   var(--wings-X, fallback) inside design.css, referencing the role-based
+   token groups documented in skins/tokens.md (Input, Identity, Geometry,
+   Motion, Interaction).
+   Override per-instance via the Customizable "Vars" key. */

@@ -143,14 +143,46 @@ its own surface only must reach for the role group whose semantics match.
 | `--wings-list-item-hover-color`  | Text on hover                        |
 | `--wings-list-item-active-bg`    | Background on press/active           |
 
-### Button — block button (dialog actions, toolbars)
-| Token                            | Semantics                            |
-|----------------------------------|--------------------------------------|
-| `--wings-button-bg`              | At rest                              |
-| `--wings-button-hover-bg`        | Hover                                |
-| `--wings-button-active-bg`       | Active/pressed                       |
-| `--wings-button-border`          | Border at rest (full shorthand: `1px solid X`) |
-| `--wings-button-border-hover`    | Border on hover (full shorthand)     |
+### Button — block button (w-button, dialog actions, toolbars)
+| Token                              | Semantics                                          |
+|------------------------------------|----------------------------------------------------|
+| `--wings-button-bg`                | At rest                                            |
+| `--wings-button-hover-bg`          | Hover                                              |
+| `--wings-button-active-bg`         | Active/pressed                                     |
+| `--wings-button-border`            | Border at rest (full shorthand: `1px solid X`)     |
+| `--wings-button-border-hover`      | Border on hover (full shorthand)                   |
+| `--wings-button-font-weight`       | Label font weight (default 500)                    |
+| `--wings-button-disabled-opacity`  | Opacity when `[disabled]` (default 0.5)            |
+
+### Semantic state colours — danger / success
+Used by `w-button` variants and any component that needs semantic colouring.
+
+| Token                     | Semantics                                        |
+|---------------------------|--------------------------------------------------|
+| `--wings-danger`          | Danger/destructive action bg (default `#dc3545`) |
+| `--wings-danger-hover`    | Danger hover bg (default `#bd2130`)              |
+| `--wings-success`         | Success action bg (default `#28a745`)            |
+| `--wings-success-hover`   | Success hover bg (default `#218838`)             |
+
+### Input — text input field (w-input)
+| Token                              | Semantics                                          |
+|------------------------------------|----------------------------------------------------|
+| `--wings-input-bg`                 | Field background                                   |
+| `--wings-input-bg-filled`          | Field background in `variant="filled"`             |
+| `--wings-input-color`              | Input text colour                                  |
+| `--wings-input-placeholder-color`  | Placeholder text colour                            |
+| `--wings-input-border`             | Field border shorthand at rest                     |
+| `--wings-input-border-focus`       | Field border on focus                              |
+| `--wings-input-border-error`       | Field border when `[data-invalid]`                 |
+| `--wings-input-label-color`        | Label text colour                                  |
+| `--wings-input-label-color-focus`  | Label colour when field is focused                 |
+| `--wings-input-label-color-error`  | Label colour when field is invalid                 |
+| `--wings-input-helper-color`       | Helper text colour                                 |
+| `--wings-input-error-color`        | Error message colour                               |
+| `--wings-input-count-color`        | Character count colour                             |
+| `--wings-input-prefix-color`       | Prefix / suffix icon colour                        |
+| `--wings-input-clear-color`        | Clear button (×) colour at rest                    |
+| `--wings-input-disabled-opacity`   | Opacity when `[disabled]` (default 0.5)            |
 
 ### Box — modal/panel containers
 | Token                            | Semantics                            |

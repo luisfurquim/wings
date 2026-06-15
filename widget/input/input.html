@@ -1,0 +1,31 @@
+<div part="root" class="inp-root">
+
+  <!-- Label zone: hidden when no label attribute is set. -->
+  <div part="label-wrap" class="inp-label-wrap" ?label>
+    <label part="label" class="inp-label">
+      <slot name="label">{{label}}</slot><span part="required-mark" class="inp-required" ?required>&#42;</span>
+    </label>
+  </div>
+
+  <!-- Field zone: the visible input box. -->
+  <div part="field" class="inp-field">
+    <span part="prefix" class="inp-prefix"><slot name="prefix"></slot></span>
+    <input part="input" class="inp-input"
+           type="{{type}}"
+           placeholder="{{placeholder}}"
+           &value="{{value}}"
+           maxlength="{{maxlength}}"
+           autocomplete="off"
+           spellcheck="false" />
+    <span part="suffix" class="inp-suffix"><slot name="suffix"></slot></span>
+    <button part="clear-btn" class="inp-clear" type="button" ?clearable_show>&#x2715;</button>
+  </div>
+
+  <!-- Feedback zone: helper text, error message, character count. -->
+  <div part="feedback" class="inp-feedback">
+    <span part="helper" class="inp-helper" ?helper><slot name="helper">{{helper}}</slot></span>
+    <span part="error"  class="inp-error"  ?error><slot name="error">{{error}}</slot></span>
+    <span part="count"  class="inp-count"  ?maxlength>{{value_len}}/{{maxlength}}</span>
+  </div>
+
+</div>

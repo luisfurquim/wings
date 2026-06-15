@@ -29,6 +29,9 @@
       <w-tab><tabs-demo></tabs-demo></w-tab>
 
       <w-tabbutton>7</w-tabbutton>
+      <w-tab><widgets-tab></widgets-tab></w-tab>
+
+      <w-tabbutton>8</w-tabbutton>
       <w-tab><wtest-tab></wtest-tab></w-tab>
     </w-tabs>
   </main>
@@ -36,8 +39,8 @@
   <!-- Locale load failures surface here: the locale-switcher fires @error and
        the handler branches on the typed wi18n.CatalogSignatureError. -->
   <w-dialog ?show_locale_error="" buttons="cancel" @cancel="fnLocaleErrorClose">
-    <span ?locale_error_sig="">8</span>
-    <span ?locale_error_other="">9</span>
+    <span ?locale_error_sig="">9</span>
+    <span ?locale_error_other="">10</span>
   </w-dialog>
 </div>
 </body></html>
