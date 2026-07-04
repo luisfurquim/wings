@@ -676,7 +676,39 @@
     "revised": false
   },
   {
+    "content": "Limpar",
+    "revised": false
+  },
+  {
     "content": "Formulário válido — enviado!",
+    "revised": false
+  },
+  {
+    "content": "w-input — dentro de fieldset desabilitado",
+    "revised": false
+  },
+  {
+    "content": "\n      Um ",
+    "revised": false
+  },
+  {
+    "content": "<fieldset disabled>",
+    "revised": false
+  },
+  {
+    "content": " ancestral desabilita o campo sem\n      tocar no atributo — o w-input reflete pelo callback form-associated.\n    ",
+    "revised": false
+  },
+  {
+    "content": "Seção bloqueada",
+    "revised": false
+  },
+  {
+    "content": "Campo em fieldset",
+    "revised": false
+  },
+  {
+    "content": "não editável",
     "revised": false
   },
   {

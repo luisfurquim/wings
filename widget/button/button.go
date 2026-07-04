@@ -29,8 +29,9 @@
 //   - size      — sm | md (default) | lg
 //   - shape     — default | pill | square
 //   - type      — like native <button>: inside a <form>, a click submits it
-//     (via requestSubmit, so constraint validation runs first); type="button"
-//     opts out. Outside a form the attribute is irrelevant.
+//     (via requestSubmit, so constraint validation runs first) or, with
+//     type="reset", resets it; type="button" opts out. Outside a form the
+//     attribute is irrelevant.
 //   - loading   — "true" to show spinner and keep button non-interactive
 //     (also suppresses form submission)
 //   - disabled  — standard HTML (reflected to inner <button>; CSS handles visual)
@@ -177,16 +178,19 @@ func (b *Button) Render(obj *wings.PranaObj) {
 		return nil
 	})
 
-	// Native-like form submission: the inner <button> lives in the shadow DOM,
-	// so its click cannot submit a light-DOM <form> by itself. Mirror the
-	// platform default — a button inside a form submits it unless
-	// type="button" — via the form-associated internals. requestSubmit runs
-	// constraint validation first, so invalid form-associated fields (w-input)
-	// block it and get the native bubble.
+	// Native-like form behavior: the inner <button> lives in the shadow DOM, so
+	// its click cannot drive a light-DOM <form> by itself. Mirror the platform
+	// default — a button inside a form submits it (type="submit"/unset) or
+	// resets it (type="reset"), unless type="button" — via the form-associated
+	// internals. requestSubmit runs constraint validation first, so invalid
+	// form-associated fields (w-input) block it and get the native bubble.
 	dom.AddEvent(btn, "click", func(_ js.Value, _ []js.Value) any {
 		host := obj.Element
-		typ := host.Call("getAttribute", "type")
-		if (typ.Type() == js.TypeString && typ.String() == "button") ||
+		typ := ""
+		if t := host.Call("getAttribute", "type"); t.Type() == js.TypeString {
+			typ = t.String()
+		}
+		if typ == "button" ||
 			host.Call("hasAttribute", "disabled").Bool() ||
 			host.Call("hasAttribute", "loading").Bool() {
 			return nil
@@ -195,7 +199,13 @@ func (b *Button) Render(obj *wings.PranaObj) {
 		if !internals.Truthy() {
 			return nil
 		}
-		if form := internals.Get("form"); form.Truthy() {
+		form := internals.Get("form")
+		if !form.Truthy() {
+			return nil
+		}
+		if typ == "reset" {
+			form.Call("reset")
+		} else {
 			form.Call("requestSubmit")
 		}
 		return nil

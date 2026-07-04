@@ -47,6 +47,12 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
+### v0.16.16
+
+- **`w-input` completes its `<form>` citizenship** — `form.reset()` restores
+  fields to their default and clears validation, `<fieldset disabled>` disables
+  them, and `w-button type="reset"` resets the form.
+
 ### v0.16.15
 
 - **`w-button` and `w-input`** join the widget family — semantic variants,
@@ -1607,7 +1613,7 @@ A button with semantic variants, sizes, shapes, and a loading state.
 | `variant` | `secondary` (default), `primary`, `ghost`, `danger`, `success` |
 | `size` | `sm`, `md` (default), `lg` |
 | `shape` | `default`, `pill`, `square` |
-| `type` | native-like: inside a `<form>`, a click submits it via `requestSubmit` (constraint validation runs first, so invalid `w-input`s block it); `type="button"` opts out |
+| `type` | native-like: inside a `<form>`, a click submits it via `requestSubmit` (constraint validation runs first, so invalid `w-input`s block it) or, with `type="reset"`, resets it; `type="button"` opts out |
 | `loading` | `"true"` shows a spinner and keeps the button non-interactive (and never submits) |
 | `disabled` | standard HTML; reflected to the inner `<button>` for keyboard/a11y correctness |
 
@@ -1671,8 +1677,9 @@ surface form controlled by the active [Material skin](#material-skins--widget-su
 like `required`/`type`/`maxlength` or a bound `wings.Validator` — blocks
 `form.checkValidity()`, `reportValidity()` and submission, with the browser's
 own localized bubble for native constraints. Give the host a `name` attribute
-and the value is included in the submitted form data. (Form reset does not
-clear the field yet.)
+and the value is included in the submitted form data. `form.reset()` (or a
+`w-button type="reset"`) restores each field to its mount-time default and
+clears validation, and an ancestor `<fieldset disabled>` disables the field.
 
 **Typed validation.** Bind `&value` to a
 [`FieldCodec`/`Validator`](#typed-two-way-binding-fieldcodec--validator) map

@@ -676,8 +676,40 @@
     "ctxdetail": "w-button@tabs/widgets/widgetstab.html:121:58"
   },
   {
-    "context": "tabs/widgets/widgetstab.html:122:79",
-    "ctxdetail": "p@tabs/widgets/widgetstab.html:122:79"
+    "context": "tabs/widgets/widgetstab.html:122:46",
+    "ctxdetail": "w-button@tabs/widgets/widgetstab.html:122:46"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:123:79",
+    "ctxdetail": "p@tabs/widgets/widgetstab.html:123:79"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:128:9",
+    "ctxdetail": "h3@tabs/widgets/widgetstab.html:128:9"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:129:76",
+    "ctxdetail": "p@tabs/widgets/widgetstab.html:129:76"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:0:0",
+    "ctxdetail": "code@tabs/widgets/widgetstab.html:0:0"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:130:48",
+    "ctxdetail": "p@tabs/widgets/widgetstab.html:130:48"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:134:40",
+    "ctxdetail": "legend@tabs/widgets/widgetstab.html:134:40"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:135:23",
+    "ctxdetail": "w-input[label]@tabs/widgets/widgetstab.html:135:23"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:135:55",
+    "ctxdetail": "w-input[placeholder]@tabs/widgets/widgetstab.html:135:55"
   },
   {
     "context": "tabs/wtest/wtesttab.html:2:7",

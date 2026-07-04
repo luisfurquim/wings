@@ -5,7 +5,8 @@
  * Deve ser carregado ANTES do wasm_exec.js e do binário .wasm.
  *
  * Define window._pranaDef(tagName, ctor, connected, attrChanged, disconnected, observed,
- * formAssociated) que é chamado pelo Go via DefineAll() / defineCustomElement().
+ * formAssociated, formReset, formDisabled) que é chamado pelo Go via
+ * DefineAll() / defineCustomElement().
  */
 
 (function() {
@@ -25,8 +26,12 @@
     *                   declara `static formAssociated` e o constructor chama
     *                   attachInternals(), exposto ao Go como `_internals`
     *                   (setValidity/setFormValue participam do <form> nativo)
+    * @param {Function} formReset    - callback Go para formResetCallback(self);
+    *                   invocado pelo browser em form.reset() (só p/ form-associated)
+    * @param {Function} formDisabled - callback Go para formDisabledCallback(self,disabled);
+    *                   invocado quando um <fieldset disabled> ancestral alterna
     */
-   window._pranaDef = function(tagName, ctor, connected, attrChanged, disconnected, observed, formAssociated) {
+   window._pranaDef = function(tagName, ctor, connected, attrChanged, disconnected, observed, formAssociated, formReset, formDisabled) {
       customElements.define(
          tagName,
          class extends HTMLElement {
@@ -57,6 +62,16 @@
 
             disconnectedCallback() {
                disconnected(this);
+            }
+
+            // Form lifecycle — only fired by the browser for form-associated
+            // elements, so no formAssociated guard is needed here.
+            formResetCallback() {
+               formReset(this);
+            }
+
+            formDisabledCallback(disabled) {
+               formDisabled(this, disabled);
             }
          }
       );

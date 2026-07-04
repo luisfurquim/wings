@@ -38,7 +38,8 @@ Attributes:
 - `shape`   — `default` | `pill` | `square`
 - `type`    — native-like form behavior: inside a `<form>`, a click submits it
   (`requestSubmit`, so constraint validation runs first — invalid `w-input`s
-  block it); `type="button"` opts out. Irrelevant outside a form.
+  block it) or, with `type="reset"`, resets it; `type="button"` opts out.
+  Irrelevant outside a form.
 - `loading` — `"true"` shows a spinner; button is non-interactive while loading
   (and never submits)
 - `disabled` — standard HTML; reflected to inner `<button>` for a11y + keyboard
@@ -99,7 +100,9 @@ FieldCodec/Validator has already run. `@clear` fires when × is clicked.
 **Form participation**: `w-input` is form-associated. Inside a native `<form>`,
 an invalid field (native constraints or a bound Validator) blocks
 `form.checkValidity()`/submission; give the host a `name` attribute and the
-value is included in the submitted data. Form reset does not clear it yet.
+value is included in the submitted data. `form.reset()` (or a
+`w-button type="reset"`) restores fields to their default and clears
+validation; an ancestor `<fieldset disabled>` disables the field.
 
 ### Typed two-way binding + native validation
 

@@ -8,7 +8,8 @@
   display: contents;
 }
 
-:host([disabled]) {
+:host([disabled]),
+:host([data-form-disabled]) {
   opacity: var(--wings-input-disabled-opacity, 0.5);
   pointer-events: none;
   cursor: not-allowed;

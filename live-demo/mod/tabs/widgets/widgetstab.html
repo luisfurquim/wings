@@ -119,8 +119,21 @@
         <span slot="errors" id="age-bad">A idade deve estar entre 0 e 120</span>
       </w-input>
       <w-button variant="primary" id="validation-submit">Enviar</w-button>
+      <w-button variant="ghost" type="reset">Limpar</w-button>
       <p ?form_sent style="color:var(--wings-success,#2e7d32);margin:4px 0 0">Formulário válido — enviado!</p>
     </form>
+  </section>
+
+  <section>
+    <h3>w-input — dentro de fieldset desabilitado</h3>
+    <p style="font-size:0.8em;color:var(--wings-text-muted,#666);margin:0">
+      Um <code>&lt;fieldset disabled&gt;</code> ancestral desabilita o campo sem
+      tocar no atributo — o w-input reflete pelo callback form-associated.
+    </p>
+    <fieldset disabled style="border:1px solid var(--wings-border,#ccc);border-radius:6px">
+      <legend style="font-size:0.85em">Seção bloqueada</legend>
+      <w-input label="Campo em fieldset" placeholder="não editável"></w-input>
+    </fieldset>
   </section>
 
 </div>

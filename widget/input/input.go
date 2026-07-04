@@ -65,7 +65,9 @@
 // field (native constraints or a bound wings.Validator) blocks
 // form.checkValidity()/reportValidity() and submission; give the host a
 // name attribute and the value is included in the submitted form data.
-// Form reset does not clear the field yet (no formResetCallback wiring).
+// form.reset() restores the field to its default value (the initial `value`
+// attribute) and clears validation, and an ancestor <fieldset disabled>
+// disables the field (via formReset/formDisabled lifecycle callbacks).
 //
 // # CSS Customisation
 //
@@ -191,7 +193,70 @@ func init() {
 		}
 		el.Call("setAttribute", "error", resolveErrorMessage(el, id))
 	})
+	// Native <form> reset: restore the default value (the initial `value`
+	// attribute, like a native input's defaultValue) and re-run the widget's
+	// own input pipeline + a bound &value validation.
+	wings.OnFormReset(elementTag, formReset)
+	// Ancestor <fieldset disabled> toggled: the browser does not touch our
+	// `disabled` attribute, so reflect the state to the inner input ourselves.
+	wings.OnFormDisabled(elementTag, formDisabled)
 	G.Logf(3, "w-input: module registered\n")
+}
+
+// innerInput returns the shadow <input> of a host w-input, or an invalid value.
+func innerInput(host js.Value) js.Value {
+	shadow := host.Get("shadowRoot")
+	if !shadow.Truthy() {
+		return js.Undefined()
+	}
+	inps := dom.Query(shadow, ".inp-input")
+	if len(inps) == 0 {
+		return js.Undefined()
+	}
+	return inps[0]
+}
+
+// formReset restores the field to its default value on form.reset(). It sets the
+// inner input to the initial `value` attribute and replays the widget's own
+// input + change events, so the reactive value, host state, character count and
+// a bound FieldCodec/Validator all reconcile through the existing handlers.
+func formReset(host js.Value) {
+	inp := innerInput(host)
+	if !inp.Truthy() {
+		return
+	}
+	// The reset default is the mount-time snapshot (data-default-value), not the
+	// `value` attribute — the latter is reflected to the live value by the
+	// two-way binding, so it would restore the field to its current text.
+	def := ""
+	if host.Call("hasAttribute", "data-default-value").Bool() {
+		def = host.Call("getAttribute", "data-default-value").String()
+	}
+	inp.Set("value", def)
+	// input event → the Render-time listener updates reactive value/state/count.
+	inp.Call("dispatchEvent",
+		js.Global().Get("Event").New("input", map[string]any{"bubbles": true}))
+	// change on the host → a bound &value re-reads and re-validates the default.
+	host.Set("value", def)
+	host.Call("dispatchEvent", js.Global().Get("Event").New("change"))
+}
+
+// formDisabled reflects an ancestor fieldset's disabled state to the inner
+// input and to a data-form-disabled host hook (for CSS), without clobbering the
+// author's own `disabled` attribute. When the fieldset re-enables, the inner
+// input's disabled state falls back to that author attribute.
+func formDisabled(host js.Value, disabled bool) {
+	inp := innerInput(host)
+	if !inp.Truthy() {
+		return
+	}
+	if disabled || host.Call("hasAttribute", "disabled").Bool() {
+		inp.Call("setAttribute", "disabled", "")
+		host.Call("setAttribute", "data-form-disabled", "")
+	} else {
+		inp.Call("removeAttribute", "disabled")
+		host.Call("removeAttribute", "data-form-disabled")
+	}
 }
 
 // Input implements wings.PranaMod and wings.Customizable
@@ -268,6 +333,12 @@ func (in *Input) Render(obj *wings.PranaObj) {
 	initVal, _ := obj.This.Get("value").(string)
 	obj.Element.Set("value", initVal)
 	setValueHostAttrs(obj.Element, initVal)
+	// Snapshot the mount-time value as the reset default. The `value` attribute
+	// can't serve this: the two-way &value binding reflects the live value back
+	// onto it, so by reset time it holds the current text, not the default.
+	if !obj.Element.Call("hasAttribute", "data-default-value").Bool() {
+		obj.Element.Call("setAttribute", "data-default-value", initVal)
+	}
 
 	// Reconcile initial validity/error state from current host attributes.
 	syncValidity(obj.Element, inp)

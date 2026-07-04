@@ -676,7 +676,39 @@
     "revised": false
   },
   {
+    "content": "Clear",
+    "revised": false
+  },
+  {
     "content": "Form valid — submitted!",
+    "revised": false
+  },
+  {
+    "content": "w-input — inside a disabled fieldset",
+    "revised": false
+  },
+  {
+    "content": "\n      An ancestral ",
+    "revised": false
+  },
+  {
+    "content": "<fieldset disabled>",
+    "revised": false
+  },
+  {
+    "content": " disables the field without\n      touching the attribute — w-input reflects it via the form-associated callback.\n    ",
+    "revised": false
+  },
+  {
+    "content": "Blocked section",
+    "revised": false
+  },
+  {
+    "content": "Field in fieldset",
+    "revised": false
+  },
+  {
+    "content": "not editable",
     "revised": false
   },
   {

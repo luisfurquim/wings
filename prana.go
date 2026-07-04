@@ -121,8 +121,24 @@ func defineCustomElement(tagName string, def *modDef) {
 		return nil
 	})
 
+	formResetFn := js.FuncOf(func(this js.Value, args []js.Value) any {
+		if len(args) == 0 {
+			return nil
+		}
+		elementFormReset(args[0])
+		return nil
+	})
+
+	formDisabledFn := js.FuncOf(func(this js.Value, args []js.Value) any {
+		if len(args) < 2 {
+			return nil
+		}
+		elementFormDisabled(args[0], args[1].Bool())
+		return nil
+	})
+
 	pranaDef.Invoke(tagName, constructorFn, connectedFn, attrChangedFn, disconnectedFn,
-		jsObserved, def.formAssociated)
+		jsObserved, def.formAssociated, formResetFn, formDisabledFn)
 	G.Logf(2, "defineCustomElement: %q defined (formAssociated=%v)\n", tagName, def.formAssociated)
 }
 

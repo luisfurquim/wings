@@ -62,4 +62,10 @@ func (w *WidgetsTab) Render(obj *wings.PranaObj) {
 		obj.This.Set("form_sent", true)
 		return nil
 	}, true, false)
+	// The reset button (type="reset") clears the fields via each w-input's
+	// formResetCallback; also clear the "sent" confirmation here.
+	dom.AddEvent(forms[0], "reset", func(_ js.Value, _ []js.Value) any {
+		obj.This.Set("form_sent", false)
+		return nil
+	}, false, false)
 }

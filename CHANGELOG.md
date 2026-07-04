@@ -8,6 +8,21 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
+## [0.16.16] — 2026-07-04
+
+### Added
+- **`w-input` is a complete form citizen** — it now handles the form-associated
+  lifecycle callbacks. `form.reset()` restores each field to its mount-time
+  default value and clears validation; an ancestor `<fieldset disabled>`
+  disables the field (the browser fires `formDisabledCallback` without touching
+  the `disabled` attribute, so the widget reflects it to the inner input and a
+  `:host([data-form-disabled])` hook).
+- **`w-button type="reset"`** — a reset button inside a `<form>` now calls
+  `form.reset()` (previously it only handled submit).
+- **`wings.OnFormReset` / `wings.OnFormDisabled`** — per-tag hooks for the form
+  lifecycle callbacks (mirroring `OnRetranslate`), wired through
+  `prana_helper.js`. Any form-associated widget can opt in.
+
 ## [0.16.15] — 2026-07-03
 
 ### Added
