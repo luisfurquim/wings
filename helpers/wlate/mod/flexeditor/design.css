@@ -125,27 +125,31 @@
    justify-content: flex-end;
    margin-bottom: 8px;
 }
-.wl-copy-btn {
-   display: inline-flex;
-   align-items: center;
-   justify-content: center;
+w-button.wl-copy-btn {
    width: 32px;
    height: 28px;
+}
+w-button.wl-copy-btn::part(root) {
+   height: 100%;
+   padding: 0;
    font-size: 1.1em;
    line-height: 1;
    color: var(--wl-primary);
    background: var(--wl-primary-pale);
    border: 1px solid var(--wl-grid-cell-border);
    border-radius: var(--wings-radius-sm, 4px);
-   cursor: pointer;
    transition: background var(--wings-transition-fast, 150ms ease),
                border-color var(--wings-transition-fast, 150ms ease);
 }
-.wl-copy-btn:hover {
+w-button.wl-copy-btn:hover::part(root) {
    background: var(--wl-grid-cell-focus);
    border-color: var(--wl-border-focus);
+   color: var(--wl-primary);
+   transform: none;
+   box-shadow: none;
 }
-.wl-copy-btn:active {
+w-button.wl-copy-btn:active::part(root) {
+   background: var(--wl-grid-cell-focus);
    transform: translateY(1px);
 }
 
@@ -224,21 +228,31 @@
    height: 100%;
 }
 
-.wl-cell-input {
+/* Célula do grid: w-input reduzido à essência — sem zona de label/feedback,
+   field transparente até o foco (visual de planilha). As regras externas em
+   ::part vencem as internas do widget e as dos Material skins. */
+w-input.wl-cell-input {
    flex: 1;
    min-width: 0;
-   box-sizing: border-box;
-   padding: 4px 6px;
+}
+w-input.wl-cell-input::part(feedback) {
+   display: none;
+}
+w-input.wl-cell-input::part(field) {
+   padding: 0;
    border: 1px solid transparent;
    border-radius: 3px;
+   background: transparent;
+   box-shadow: none;
+   transition: border-color 0.2s, background 0.2s;
+}
+w-input.wl-cell-input::part(input) {
+   padding: 4px 6px;
    font-family: inherit;
    font-size: 1em;
    color: var(--wl-text);
-   background: transparent;
-   outline: none;
-   transition: border-color 0.2s, background 0.2s;
 }
-.wl-cell-input:focus {
+w-input.wl-cell-input[data-focused]::part(field) {
    border-color: var(--wl-border-focus);
    background: var(--wl-grid-cell-focus);
 }

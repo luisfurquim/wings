@@ -28,7 +28,7 @@
     "revised": true
   },
   {
-    "content": "",
+    "content": "Widgets",
     "revised": false
   },
   {
@@ -428,143 +428,255 @@
     "revised": true
   },
   {
-    "content": "",
+    "content": "w-button — variants",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Secondary",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Primary",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Ghost",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Danger",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Success",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Disabled",
     "revised": false
   },
   {
-    "content": "",
+    "content": "w-button — sizes",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Small",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Medium",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Large",
     "revised": false
   },
   {
-    "content": "",
+    "content": "w-button — shapes",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Default",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Pill",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Square",
     "revised": false
   },
   {
-    "content": "",
+    "content": "w-button — loading",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Saving…",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Processing…",
     "revised": false
   },
   {
-    "content": "",
+    "content": "w-button — with icon via slot",
     "revised": false
   },
   {
-    "content": "",
+    "content": "\n        Save\n      ",
     "revised": false
   },
   {
-    "content": "",
+    "content": "\n        Settings\n        ",
     "revised": false
   },
   {
-    "content": "",
+    "content": "w-input — surface (Material skin)",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Text field",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Type here…",
     "revised": false
   },
   {
-    "content": "",
+    "content": "With prefix",
     "revised": false
   },
   {
-    "content": "",
+    "content": "search…",
     "revised": false
   },
   {
-    "content": "",
+    "content": "\n      The field surface (outlined · filled · underlined) is controlled by the\n      active Material skin in the skin picker above.\n    ",
     "revised": false
   },
   {
-    "content": "",
+    "content": "w-input — states",
     "revised": false
   },
   {
-    "content": "",
+    "content": "With helper text",
     "revised": false
   },
   {
-    "content": "",
+    "content": "e.g. name@email.com",
     "revised": false
   },
   {
-    "content": "",
+    "content": "We'll use this to send the confirmation.",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Required field",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Full name",
     "revised": false
   },
   {
-    "content": "",
+    "content": "With error",
     "revised": false
   },
   {
-    "content": "",
+    "content": "E.g. 2024-01-01",
+    "revised": false
+  },
+  {
+    "content": "Invalid date. Use the format YYYY-MM-DD.",
+    "revised": false
+  },
+  {
+    "content": "Disabled",
+    "revised": false
+  },
+  {
+    "content": "Not editable",
+    "revised": false
+  },
+  {
+    "content": "w-input — clearable + counter",
+    "revised": false
+  },
+  {
+    "content": "With clear button",
+    "revised": false
+  },
+  {
+    "content": "Type something…",
+    "revised": false
+  },
+  {
+    "content": "With character counter",
+    "revised": false
+  },
+  {
+    "content": "Max. 80 characters",
+    "revised": false
+  },
+  {
+    "content": "w-input — sizes",
+    "revised": false
+  },
+  {
+    "content": "Small",
+    "revised": false
+  },
+  {
+    "content": "sm",
+    "revised": false
+  },
+  {
+    "content": "Medium (default)",
+    "revised": false
+  },
+  {
+    "content": "md",
+    "revised": false
+  },
+  {
+    "content": "Large",
+    "revised": false
+  },
+  {
+    "content": "lg",
+    "revised": false
+  },
+  {
+    "content": "w-input — typed validation (in Go)",
+    "revised": false
+  },
+  {
+    "content": "\n      The fields are bound to Go types with ",
+    "revised": false
+  },
+  {
+    "content": "&value",
+    "revised": false
+  },
+  {
+    "content": "; on leaving the field,\n      Go validates and the message (from the HTML, translatable) shows in the native bubble.\n      The form is a native ",
+    "revised": false
+  },
+  {
+    "content": "<form>",
+    "revised": false
+  },
+  {
+    "content": ": while any field is\n      invalid, the browser itself blocks the submit.\n    ",
+    "revised": false
+  },
+  {
+    "content": "Email",
+    "revised": false
+  },
+  {
+    "content": "Invalid email address",
+    "revised": false
+  },
+  {
+    "content": "Age",
+    "revised": false
+  },
+  {
+    "content": "Type a number",
+    "revised": false
+  },
+  {
+    "content": "Age must be between 0 and 120",
+    "revised": false
+  },
+  {
+    "content": "Submit",
+    "revised": false
+  },
+  {
+    "content": "Form valid — submitted!",
     "revised": false
   },
   {

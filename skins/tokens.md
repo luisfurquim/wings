@@ -55,6 +55,7 @@ their bitmasks have no bit in common.
 | `CategorySpacing`       | 6   | Padding/gap density *(reserved — no tokens yet)*            |
 | `CategoryLighting`      | 7   | Gradients, glows, gradient-shadow                           |
 | `CategoryAtmosphere`    | 8   | Glass-opacity, surface-blur, surface-noise                  |
+| `CategoryMaterial`      | 9   | Widget surface form: outlined / filled / underlined         |
 
 Built-in bitmask helpers (in `skin_category.go`):
 
@@ -68,10 +69,11 @@ Built-in bitmask helpers (in `skin_category.go`):
   `floating`.
 - `wings.MotionSkinCategories` = `Motion` — used by `gentle`, `calm`,
   `brisk`.
+- `wings.MaterialSkinCategories` = `Material` — used by `outlined`,
+  `filled`, `underlined`.
 
-Each helper's family is internally mutually exclusive; the four helpers
-are pairwise disjoint, so up to one skin from each family can stack with
-each other (and with `glass` from the Atmosphere axis).
+Each helper's family is internally mutually exclusive; the helpers are
+pairwise disjoint, so up to one skin from each family can stack freely.
 
 ---
 
@@ -316,21 +318,68 @@ Translucency and material effects (glass-morphism, blur, noise).
 
 ---
 
+## Material (`CategoryMaterial`)
+
+Widget surface form — how the field border and background are structurally
+shaped.  Tokens are consumed by widgets that have a field surface (currently
+`w-input`; future widgets should follow the same pattern).
+
+All tokens are optional; when absent the widget default produces the
+`outlined` look (full border, rounded corners, opaque background).
+
+| Token                                    | Semantics                                           |
+|------------------------------------------|-----------------------------------------------------|
+| `--wings-input-material-border-top`      | Top border shorthand (default: `--wings-input-border`) |
+| `--wings-input-material-border-right`    | Right border shorthand                              |
+| `--wings-input-material-border-bottom`   | Bottom border shorthand                             |
+| `--wings-input-material-border-left`     | Left border shorthand                               |
+| `--wings-input-material-radius`          | `border-radius` value (accepts multi-value, e.g. `6px 6px 0 0`) |
+| `--wings-input-material-bg`              | Field background (default: `--wings-input-bg`)      |
+| `--wings-input-material-padding-x`       | Horizontal padding inside the field (default `10px`) |
+| `--wings-input-material-focus-shadow`    | `box-shadow` on focus (set to `none` to suppress ring) |
+| `--wings-input-material-focus-shadow-error` | `box-shadow` on focused+invalid state            |
+
+Built-in Material skins:
+- `outlined` — no token overrides; explicitly locks the default form.
+- `filled` — bottom border only, tinted background, top-rounded corners,
+  focus ring suppressed.
+- `underlined` — bottom border only, transparent background, no
+  horizontal padding, focus ring suppressed.
+
+### Bundles
+
+A **bundle** is a named skin whose CSS is the concatenation of two or
+more component skins' payloads. It declares the union of their category
+bitmasks. Component packages export `CSS` and `Categories` vars so
+bundles can compose without duplicating definitions.
+
+| Bundle          | Components                          | Categories                          |
+|-----------------|-------------------------------------|-------------------------------------|
+| `glassmorphism` | `glass` + `glasslighting`           | `CategoryAtmosphere \| CategoryLighting` |
+
+Power users can apply components individually for finer control (e.g.
+`glasslighting` without `glass` on environments that do not support
+`backdrop-filter`).
+
+---
+
 ## Composing skins
 
 Two registered skins can be active simultaneously when their category
-bitmasks are disjoint. The five orthogonal axes (Identity, Geometry,
-Depth, Motion, Atmosphere) compose freely; pick at most one skin per
-axis. Example stacks:
+bitmasks are disjoint. Six orthogonal axes compose freely; pick at most
+one skin per axis. Example stacks:
 
-| Identity   | Geometry | Depth     | Motion  | Atmosphere | Result                                    |
-|------------|----------|-----------|---------|------------|-------------------------------------------|
-| `light`    | `classic`| `lifted`  | `calm`  | —          | ✅ Default look                           |
-| `mushroom` | `soft`   | `floating`| `gentle`| `glass`    | ✅ Romantic dreamy mushroom               |
-| `dark`     | `sharp`  | `flat`    | `brisk` | —          | ✅ Brutalist dark mode                    |
-| `light`    | `soft`   | `floating`| `gentle`| `glass`    | ✅ Apple-ish frosted-glass UI             |
-| `light` + `dark`             | —    | —    | —    | ❌ Identity collision                       |
-| `sharp` + `soft`             | —    | —    | —    | ❌ Geometry collision                       |
+| Identity   | Geometry  | Depth     | Motion   | Atmosphere      | Material     | Result                             |
+|------------|-----------|-----------|----------|-----------------|--------------|------------------------------------|
+| `light`    | `classic` | `lifted`  | `calm`   | —               | —            | ✅ Default look                    |
+| `mushroom` | `soft`    | `floating`| `gentle` | `glassmorphism` | —            | ✅ Romantic dreamy mushroom        |
+| `dark`     | `sharp`   | `flat`    | `brisk`  | —               | —            | ✅ Brutalist dark mode             |
+| `light`    | `soft`    | `floating`| `gentle` | `glassmorphism` | —            | ✅ Apple-ish frosted-glass UI      |
+| `dark`     | `sharp`   | `flat`    | `brisk`  | —               | `underlined` | ✅ Editorial terminal style        |
+| `light`    | `classic` | `lifted`  | `calm`   | —               | `filled`     | ✅ Material Design–flavoured       |
+| `light` + `dark`    | —   | —         | —        | —               | —            | ❌ Identity collision              |
+| `sharp` + `soft`    | —   | —         | —        | —               | —            | ❌ Geometry collision              |
+| —          | —         | —         | —        | —               | `filled` + `underlined` | ❌ Material collision |
 
 Programmatic activation:
 
@@ -364,7 +413,12 @@ categories are currently covered).
   `soft`.
 - Depth skins (`DepthSkinCategories`): `flat`, `lifted`, `floating`.
 - Motion skins (`MotionSkinCategories`): `gentle`, `calm`, `brisk`.
-- Atmosphere skins (focused): `glass` (`CategoryAtmosphere`).
+- Atmosphere skins: `glass` (`CategoryAtmosphere`); `glasslighting`
+  (`CategoryLighting`) — also the Lighting component of the bundle.
+- Atmosphere+Lighting bundle: `glassmorphism` (composes `glass` +
+  `glasslighting`; component packages export `CSS` and `Categories` vars).
+- Material skins (`MaterialSkinCategories`): `outlined`, `filled`,
+  `underlined`.
 - Widget migration:
   - `w-dialog`, `w-navbar`, `w-combobox`, `w-tabs`, `w-tabbutton`,
     `w-tab` — all consume only documented tokens via
@@ -372,3 +426,5 @@ categories are currently covered).
   - `w-dialog` and `w-combobox` opt into the Atmosphere category by
     using `backdrop-filter: blur(var(--wings-surface-blur, 0))` so
     `glass` produces a visible effect without coupling.
+  - `w-input` consumes `--wings-input-material-*` tokens; the `variant`
+    attribute has been removed in favour of Material skins.

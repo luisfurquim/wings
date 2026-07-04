@@ -163,7 +163,16 @@ func coerceToType(s string, existing any) any {
 		}
 		return f
 	default:
-		return s
+		if _, isStr := existing.(string); isStr {
+			return s
+		}
+		// existing is a non-primitive value (e.g. a struct bound by value, or a
+		// *T whose FromString/String have pointer receivers but was bound by
+		// value). Overwriting it with a raw string would corrupt the type, so
+		// preserve it and surface the misuse instead of failing silently.
+		G.Logf(1, "coerceToType: refusing to overwrite %T with %q; "+
+			"bind a *T implementing wings.FieldCodec for typed fields\n", existing, s)
+		return existing
 	}
 }
 

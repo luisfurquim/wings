@@ -1,0 +1,18 @@
+:root {
+  /* underlined — minimal line-only form.
+     Fields show only a bottom border; no side borders, no background, no
+     horizontal padding.  Focus is signalled by the bottom border colour change
+     only; the box-shadow ring is suppressed to keep the field visually sparse. */
+
+  --wings-input-material-border-top:    none;
+  --wings-input-material-border-right:  none;
+  --wings-input-material-border-left:   none;
+  --wings-input-material-border-bottom: 1px solid var(--wings-border, #cccccc);
+  --wings-input-material-radius:        0;
+  --wings-input-material-bg:            transparent;
+  --wings-input-material-padding-x:     0px;
+
+  /* Focus ring suppressed — bottom border colour change is the indicator. */
+  --wings-input-material-focus-shadow:       none;
+  --wings-input-material-focus-shadow-error: none;
+}

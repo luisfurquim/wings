@@ -8,6 +8,87 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
+## [0.16.15] — 2026-07-03
+
+### Added
+- **`w-button` widget** — semantic variants (`secondary`/`primary`/`ghost`/
+  `danger`/`success`), three sizes and shapes, loading spinner, prefix/suffix
+  slots, full `::part()` surface, and host state attributes for pure-CSS
+  theming.
+- **`w-input` widget** — label/field/feedback anatomy with `::part()` on every
+  sub-element, helper/error zones, clearable mode, character count, sizes, and
+  host state hooks (`data-focused`, `data-invalid`, …) so a floating label or a
+  danger border needs no Go changes.
+- **Typed two-way binding** — `&value` now also works on custom elements, and
+  a bound map entry implementing `wings.FieldCodec` (`fmt.Stringer` +
+  `FromString`) keeps its Go type across the round-trip instead of decaying to
+  a string. Add `wings.Validator` and every write-back validates, returning a
+  message **id** that `w-input` resolves against translated
+  `<span slot="errors" id="…">` nodes (or a document-level message table) and
+  wires to the native constraint-validation API — `form.checkValidity()` and
+  `:invalid` work for free, and messages re-resolve on `SetLang`.
+- **`wings/field` package** — ready-made codecs/validators (`NewText`,
+  `NewEmail`, `NewInt`, `NewPattern`); pure Go, unit-tested with the native
+  toolchain. Empty values are valid by design — use `required` for that.
+- **Material skins (`outlined`, `filled`, `underlined`)** — a new
+  `CategoryMaterial` skin category governs the structural surface form of
+  field widgets globally; `glasslighting` (Lighting) and the `glassmorphism`
+  bundle (= `glass` + `glasslighting`) round out the set at 23 built-in skins.
+- **`wings.OnRetranslate(tag, hook)`** — widgets can register a per-instance
+  hook that runs after a `SetLang` re-render (used by `w-input` to refresh
+  validation messages).
+- **Native form participation (ElementInternals)** —
+  `ComponentOpts.FormAssociated` defines a custom element as form-associated
+  (`prana_helper.js` attaches internals, exposed as `_internals`). `w-input`
+  mirrors the inner input's ValidityState into the internals, so inside a
+  native `<form>` an invalid field (native constraints or a bound `Validator`)
+  blocks `form.checkValidity()`/submission, and a `name` attribute puts the
+  value in the submitted data. `w-button` gained the native-like `type`
+  behavior: inside a form a click submits via `requestSubmit` (validation runs
+  first); `type="button"` opts out.
+- **`@input` event on `w-input`** — fires per keystroke; `@change` now follows
+  native semantics and fires on blur, after the two-way write-back.
+- **`dom.Observe` / `RmObserver` / `RmObserversUnder`** — registered
+  MutationObservers, auto-released on component disconnect (mirrors the
+  `dom.AddEvent` lifecycle). The built-in widgets migrated to it.
+- **a11y in `w-input`** — `aria-invalid` on the inner input, `aria-describedby`
+  wiring to helper/error, `role="alert"` on the error message, and `aria-label`
+  reflected from the host to the real control.
+
+### Changed
+- **`label`, `helper`, `error` are translatable attributes by default** — the
+  human-text attributes of `w-input` join the default `TranslatableAttrs` /
+  `gen_i18n` set (alongside `title`/`placeholder`/`alt`/`aria-label`), so a
+  `<w-input label="…" helper="…">` localizes without per-app wiring. Opt a
+  value out with `translate="no"`, or edit the list via
+  `AddTranslatableAttrs`/`RemoveTranslatableAttrs` and the `gen_i18n`
+  `-attrs`/`-add-attrs`/`-no-attrs` flags.
+- **`field.NewInt(min, max, notIntID, rangeID)`** — distinct message ids for
+  "not a number" and "out of range".
+- **wlate dogfoods the new widgets** — its raw `<button>`/`<input>` elements
+  became `w-button`/`w-input` (tab chips, Approve/Save, copy button, inflection
+  grid cells), styled via `::part()`.
+
+### Fixed
+- **`w-input` typing bug** — typing triggered a sync with the stale reactive
+  value, overwriting the input mid-keystroke; the widget now writes the map
+  value directly before any derived update.
+- **MutationObserver leak** — observers built by hand in `w-input`/`w-button`/
+  `w-tabs` pinned their Go callbacks forever (same class as the 0.16.14
+  `dom.AddEvent` leak); all use `dom.Observe` now, freed on disconnect.
+- **Validation id CSS-escaped** — a `Validator` id containing a quote/bracket
+  made `querySelector` throw, panicking the whole WASM app; ids are now passed
+  through `CSS.escape`.
+- **Two-way binding hardened** — reads of a missing/non-string `value` property
+  on a bound custom element no longer corrupt the map with placeholder strings;
+  the change listener uses `addEventListener` (an author assigning `onchange`
+  can't clobber it) and is detached before release, so a late event cannot hit
+  a released callback.
+
+### Removed
+- **`prana2.js`** — the original JS prototype; the Go implementation in
+  `refs.go` supersedes it entirely.
+
 ## [0.16.14] — 2026-06-15
 
 ### Added

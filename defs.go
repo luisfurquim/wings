@@ -232,11 +232,13 @@ type ReactiveData struct {
 	state *PranaState
 }
 
-// TwoWayBinding holds the state of a bidirectional binding (input/select/textarea).
+// TwoWayBinding holds the state of a bidirectional binding
+// (input/select/textarea or a custom element exposing `value` + `change`).
 type TwoWayBinding struct {
 	Ref     []RefNode
-	CtxPtr  *Ctx    // updated on each sync; handler closure points here
-	Handler js.Func // JS handler; must be Released when the element is removed
+	CtxPtr  *Ctx     // updated on each sync; handler closure points here
+	Target  js.Value // element the change listener is attached to
+	Handler js.Func  // JS handler; must be Released when the element is removed
 }
 
 // NodeState stores the Go-side state for DOM nodes managed by prana.
@@ -333,15 +335,23 @@ type ComponentOpts struct {
 	// from accessing the component's internals via element.shadowRoot.
 	// See README.md §Security — CVE-2019-11730, GHSA-wh77-3x4m-4q9g.
 	Closed bool
+	// FormAssociated defines the custom element with `static formAssociated =
+	// true` and calls attachInternals() in its constructor (exposed to Go as
+	// the `_internals` property). A form-associated element participates in a
+	// wrapping native <form>: internals.setValidity gates form.checkValidity /
+	// submission and internals.setFormValue puts the value in the submitted
+	// data. Used by w-input.
+	FormAssociated bool
 }
 
 // modDef is the internal definition of a registered module.
 type modDef struct {
-	factory  ModFactory
-	html     string
-	css      string
-	observed []string // attributes observed by attributeChangedCallback
-	closed   bool     // true → shadow root mode:"closed"
+	factory        ModFactory
+	html           string
+	css            string
+	observed       []string // attributes observed by attributeChangedCallback
+	closed         bool     // true → shadow root mode:"closed"
+	formAssociated bool     // true → static formAssociated + attachInternals()
 }
 
 // ── Global registries ───────────────────────────────────────────────────────

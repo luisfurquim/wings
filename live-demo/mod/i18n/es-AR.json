@@ -28,7 +28,7 @@
     "revised": true
   },
   {
-    "content": "",
+    "content": "Widgets",
     "revised": false
   },
   {
@@ -428,143 +428,255 @@
     "revised": true
   },
   {
-    "content": "",
+    "content": "w-button — variantes",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Secundario",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Primario",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Fantasma",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Peligro",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Éxito",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Deshabilitado",
     "revised": false
   },
   {
-    "content": "",
+    "content": "w-button — tamaños",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Pequeño",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Mediano",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Grande",
     "revised": false
   },
   {
-    "content": "",
+    "content": "w-button — formas",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Por defecto",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Píldora",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Cuadrado",
     "revised": false
   },
   {
-    "content": "",
+    "content": "w-button — cargando",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Guardando…",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Procesando…",
     "revised": false
   },
   {
-    "content": "",
+    "content": "w-button — con ícono vía slot",
     "revised": false
   },
   {
-    "content": "",
+    "content": "\n        Guardar\n      ",
     "revised": false
   },
   {
-    "content": "",
+    "content": "\n        Configuración\n        ",
     "revised": false
   },
   {
-    "content": "",
+    "content": "w-input — superficie (skin Material)",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Campo de texto",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Escriba aquí…",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Con prefijo",
     "revised": false
   },
   {
-    "content": "",
+    "content": "buscar…",
     "revised": false
   },
   {
-    "content": "",
+    "content": "\n      La forma de los campos (outlined · filled · underlined) la controla el\n      skin Material activo en el selector de skins de arriba.\n    ",
     "revised": false
   },
   {
-    "content": "",
+    "content": "w-input — estados",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Con texto de ayuda",
     "revised": false
   },
   {
-    "content": "",
+    "content": "ej: nombre@email.com",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Usaremos esto para enviar la confirmación.",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Campo obligatorio",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Nombre completo",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Con error",
     "revised": false
   },
   {
-    "content": "",
+    "content": "Ej: 2024-01-01",
+    "revised": false
+  },
+  {
+    "content": "Fecha inválida. Use el formato AAAA-MM-DD.",
+    "revised": false
+  },
+  {
+    "content": "Deshabilitado",
+    "revised": false
+  },
+  {
+    "content": "No editable",
+    "revised": false
+  },
+  {
+    "content": "w-input — clearable + contador",
+    "revised": false
+  },
+  {
+    "content": "Con botón de limpiar",
+    "revised": false
+  },
+  {
+    "content": "Escriba algo…",
+    "revised": false
+  },
+  {
+    "content": "Con contador de caracteres",
+    "revised": false
+  },
+  {
+    "content": "Máx. 80 caracteres",
+    "revised": false
+  },
+  {
+    "content": "w-input — tamaños",
+    "revised": false
+  },
+  {
+    "content": "Pequeño",
+    "revised": false
+  },
+  {
+    "content": "sm",
+    "revised": false
+  },
+  {
+    "content": "Mediano (por defecto)",
+    "revised": false
+  },
+  {
+    "content": "md",
+    "revised": false
+  },
+  {
+    "content": "Grande",
+    "revised": false
+  },
+  {
+    "content": "lg",
+    "revised": false
+  },
+  {
+    "content": "w-input — validación tipada (en Go)",
+    "revised": false
+  },
+  {
+    "content": "\n      Los campos están ligados a tipos Go con ",
+    "revised": false
+  },
+  {
+    "content": "&value",
+    "revised": false
+  },
+  {
+    "content": "; al salir del campo,\n      Go valida y el mensaje (proveniente del HTML, traducible) aparece en el globo nativo.\n      El formulario es un ",
+    "revised": false
+  },
+  {
+    "content": "<form>",
+    "revised": false
+  },
+  {
+    "content": " nativo: mientras haya un campo\n      inválido, el propio navegador bloquea el envío.\n    ",
+    "revised": false
+  },
+  {
+    "content": "Email",
+    "revised": false
+  },
+  {
+    "content": "Dirección de email inválida",
+    "revised": false
+  },
+  {
+    "content": "Edad",
+    "revised": false
+  },
+  {
+    "content": "Escriba un número",
+    "revised": false
+  },
+  {
+    "content": "La edad debe estar entre 0 y 120",
+    "revised": false
+  },
+  {
+    "content": "Enviar",
+    "revised": false
+  },
+  {
+    "content": "¡Formulario válido — enviado!",
     "revised": false
   },
   {

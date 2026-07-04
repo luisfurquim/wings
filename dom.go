@@ -3,6 +3,7 @@
 package wings
 
 import (
+	"strings"
 	"syscall/js"
 )
 
@@ -201,4 +202,13 @@ func tagName(node js.Value) string {
 func isFormInput(node js.Value) bool {
 	tag := tagName(node)
 	return tag == "input" || tag == "select" || tag == "textarea"
+}
+
+// isCustomElement reports whether node is a custom element — its tag name
+// contains a hyphen, as required by the Custom Elements spec. Two-way `value`
+// binding is extended to these so a widget like w-input (which exposes a
+// `value` property and dispatches a native `change` event) can write back to
+// the parent data map.
+func isCustomElement(node js.Value) bool {
+	return strings.Contains(tagName(node), "-")
 }

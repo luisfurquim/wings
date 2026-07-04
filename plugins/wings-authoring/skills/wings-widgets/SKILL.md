@@ -36,7 +36,11 @@ Attributes:
 - `variant` — `secondary` (default) | `primary` | `ghost` | `danger` | `success`
 - `size`    — `sm` | `md` (default) | `lg`
 - `shape`   — `default` | `pill` | `square`
+- `type`    — native-like form behavior: inside a `<form>`, a click submits it
+  (`requestSubmit`, so constraint validation runs first — invalid `w-input`s
+  block it); `type="button"` opts out. Irrelevant outside a form.
 - `loading` — `"true"` shows a spinner; button is non-interactive while loading
+  (and never submits)
 - `disabled` — standard HTML; reflected to inner `<button>` for a11y + keyboard
 
 **Boolean attributes take the value `"true"`** (not bare presence) because the
@@ -75,14 +79,75 @@ Attributes (all observed — template re-syncs on change):
 - `type`      — `text` (default) | `email` | `password` | `search` | `number` | `tel` | `url`
 - `label`     — label text; activates the label zone. Use `<slot name="label">` for HTML.
 - `placeholder`/`value`/`helper`/`error`/`maxlength` — as expected
-- `variant`   — `outlined` (default) | `filled` | `underlined`
+- i18n: `label`, `helper`, `error` (and `placeholder`) are translatable
+  attributes by default — `gen_i18n` indexes them and they switch on `SetLang`.
+  No extra wiring; add `translate="no"` on the element to opt a value out.
 - `size`      — `sm` | `md` (default) | `lg`
 - `required`  — `"true"` shows the `*` mark (same boolean convention as `w-button`)
 - `clearable` — `"true"` shows × when field has content
 - `disabled`  — standard HTML; reflected to inner `<input>`
 
-Events: `@change` args[0] = current string value (fires on every keystroke).
-`@clear` fires when × is clicked.
+**Surface form** (outlined / filled / underlined) is controlled by the active
+**Material skin**, not by a per-instance attribute. Apply `wings.ApplySkin("filled")`
+(or `"underlined"`) globally; all inputs update immediately. See `wings-skins`.
+
+Events (native semantics): `@input` args[0] = current string value, fires on
+every keystroke; `@change` args[0] = current string value, fires when the user
+leaves the field (blur), after the two-way write-back — a bound
+FieldCodec/Validator has already run. `@clear` fires when × is clicked.
+
+**Form participation**: `w-input` is form-associated. Inside a native `<form>`,
+an invalid field (native constraints or a bound Validator) blocks
+`form.checkValidity()`/submission; give the host a `name` attribute and the
+value is included in the submitted data. Form reset does not clear it yet.
+
+### Typed two-way binding + native validation
+
+Bind a **pointer** to a typed field with `&value` and `w-input` validates it on
+blur, natively. The field type owns the string conversion (so its Go type is
+never replaced by a raw string) and returns a message **id** — never literal
+text — so the message stays in HTML and is translated by `gen_i18n`.
+
+Use a ready-made type from `wings/field`:
+
+```go
+import "github.com/luisfurquim/wings/field"
+
+// in the parent component's InitData()
+"email": field.NewEmail("email-bad"),            // POINTER; "email-bad" = message id
+"age":   field.NewInt(0, 120, "age-nan", "age-bad"), // distinct not-a-number / range ids
+```
+```html
+<w-input type="email" required="true" &value="{{email}}">
+  <span slot="errors" id="email-bad">Invalid email address</span>
+</w-input>
+```
+
+`field` provides `NewText()`, `NewEmail(id)`, `NewInt(min,max,notIntID,rangeID)`,
+`NewPattern(re,id)`. Empty is always valid — use `required="true"` for empties.
+
+For custom rules, implement the two small interfaces yourself:
+
+```go
+type Email struct{ raw string }
+func (e *Email) FromString(s string) { e.raw = strings.TrimSpace(s) }   // ingest
+func (e *Email) String() string      { return e.raw }                    // project back
+func (e *Email) Validate() string {                                      // "" = valid
+    if e.raw == "" || strings.Contains(e.raw, "@") { return "" }
+    return "email-bad"   // id of a <span slot="errors"> below the field
+}
+```
+
+Rules:
+- Bind a **`*Type`** (pointer), not a value — pointer-receiver methods must satisfy
+  `wings.FieldCodec`/`wings.Validator`, else the bind logs and keeps the value.
+- `Validate()` returns a **message id**, resolved against `<span slot="errors" id="…">`
+  children (translated in place). Empty string = valid.
+- Native validity participates in `form.checkValidity()` — the host is a
+  form-associated custom element (ElementInternals mirrors the inner input's
+  ValidityState), so a wrapping `<form>` will not submit while any field is
+  invalid. The message also shows below the field.
+- A static `error="…"` attribute still works for manually-driven errors.
 
 **Host state attributes** (set by the widget for external CSS hooks):
 - `[data-focused]`   — present while the `<input>` has focus

@@ -47,6 +47,7 @@ const (
 	CategorySpacing                              // padding/gap density
 	CategoryLighting                             // gradients, glows, gradient-shadow
 	CategoryAtmosphere                           // glass-opacity, surface-blur, surface-noise
+	CategoryMaterial                             // widget surface form: outlined / filled / underlined
 )
 
 // CategoryNone is the empty bitmask (no categories).
@@ -56,7 +57,7 @@ const CategoryNone SkinCategory = 0
 // categories appended above are automatically included.
 const CategoryAll = CategoryIdentity | CategoryGeometry | CategoryDepth |
 	CategoryMotion | CategoryInteraction | CategoryTypography |
-	CategorySpacing | CategoryLighting | CategoryAtmosphere
+	CategorySpacing | CategoryLighting | CategoryAtmosphere | CategoryMaterial
 
 // User-reserved category range. The high 16 bits (48–63) are never used by
 // a built-in category, so applications and component libraries can define
@@ -143,6 +144,11 @@ const DepthSkinCategories = CategoryDepth
 // gentle, calm, brisk.
 const MotionSkinCategories = CategoryMotion
 
+// MaterialSkinCategories is the bitmask for skins controlling widget surface
+// form: how fields, buttons and cards are structurally shaped (outlined,
+// filled, underlined…). Built-in: outlined, filled, underlined.
+const MaterialSkinCategories = CategoryMaterial
+
 // categoryNames maps each single-bit category to its human-readable name.
 // Order matters: it controls the listing order produced by Names()/String().
 var categoryNames = []struct {
@@ -158,6 +164,7 @@ var categoryNames = []struct {
 	{CategorySpacing, "Spacing"},
 	{CategoryLighting, "Lighting"},
 	{CategoryAtmosphere, "Atmosphere"},
+	{CategoryMaterial, "Material"},
 }
 
 // Has reports whether c contains every bit set in other.

@@ -4,11 +4,14 @@ package widgets
 
 import (
 	_ "embed"
+	"syscall/js"
 
 	"github.com/luisfurquim/wings"
+	"github.com/luisfurquim/wings/dom"
+	"github.com/luisfurquim/wings/field"
 )
 
-//go:embed widgetstab.html
+//go:embed widgetstab.i18n.html
 var htmlContent string
 
 const cssContent = `
@@ -38,5 +41,25 @@ func init() {
 	)
 }
 
-func (w *WidgetsTab) InitData() map[string]any   { return map[string]any{} }
-func (w *WidgetsTab) Render(obj *wings.PranaObj) {}
+func (w *WidgetsTab) InitData() map[string]any {
+	return map[string]any{
+		// Typed fields bound with &value: w-input validates them on blur in Go.
+		"demo_email": field.NewEmail("email-bad"),
+		"demo_age":   field.NewInt(0, 120, "age-nan", "age-bad"),
+		"form_sent":  false,
+	}
+}
+
+func (w *WidgetsTab) Render(obj *wings.PranaObj) {
+	// The validation section is a real native <form>: w-input is
+	// form-associated, so an invalid field blocks submission by itself.
+	// preventDefault keeps the demo page from navigating when it IS valid.
+	forms := dom.Query(obj.Dom, "#validation-form")
+	if len(forms) == 0 {
+		return
+	}
+	dom.AddEvent(forms[0], "submit", func(_ js.Value, _ []js.Value) any {
+		obj.This.Set("form_sent", true)
+		return nil
+	}, true, false)
+}

@@ -1,0 +1,18 @@
+:root {
+  /* filled — Material-style filled surface form.
+     Fields have a tinted background and only a bottom border; the top
+     corners are rounded and the bottom two are square, giving a "shelf"
+     appearance.  On focus the bottom border highlights; the full focus
+     ring is suppressed in favour of the border accent alone. */
+
+  --wings-input-material-border-top:   none;
+  --wings-input-material-border-right: none;
+  --wings-input-material-border-left:  none;
+  --wings-input-material-border-bottom: 1px solid var(--wings-border, #cccccc);
+  --wings-input-material-radius: var(--wings-radius-md, 6px) var(--wings-radius-md, 6px) 0 0;
+  --wings-input-material-bg:     var(--wings-input-bg-filled, var(--wings-bg, #f5f5f5));
+
+  /* Focus ring suppressed — bottom border colour change is the indicator. */
+  --wings-input-material-focus-shadow:       none;
+  --wings-input-material-focus-shadow-error: none;
+}

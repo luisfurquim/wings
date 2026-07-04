@@ -277,7 +277,8 @@ func (m *MyMod) Render(obj *wings.PranaObj) {
 **Teardown caveat:** `PranaMod` has only `InitData` and `Render` — there is **no
 disconnect/teardown hook**, and `Render` gets no cancellation context. On
 disconnect WINGS frees what it can see (two-way bindings, the render goroutine,
-and `dom.AddEvent` listeners under the element), but it **cannot interrupt a
+`dom.AddEvent` listeners and `dom.Observe` MutationObservers under the
+element), but it **cannot interrupt a
 goroutine you launched**: a loop that never exits keeps running after the
 element leaves the DOM. For app-lifetime components that is harmless; for
 components created and destroyed repeatedly, guard the loop with

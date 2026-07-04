@@ -1,15 +1,15 @@
 [
   {
     "context": "flexeditor/flexeditor.html:36:41",
-    "ctxdetail": "input[aria-label]@flexeditor/flexeditor.html:36:41"
+    "ctxdetail": "w-input[aria-label]@flexeditor/flexeditor.html:36:41"
   },
   {
     "context": "flexeditor/flexeditor.html:48:25",
-    "ctxdetail": "button[title]@flexeditor/flexeditor.html:48:25"
+    "ctxdetail": "w-button[title]@flexeditor/flexeditor.html:48:25"
   },
   {
     "context": "flexeditor/flexeditor.html:49:30",
-    "ctxdetail": "button[aria-label]@flexeditor/flexeditor.html:49:30"
+    "ctxdetail": "w-button[aria-label]@flexeditor/flexeditor.html:49:30"
   },
   {
     "context": "flexeditor/flexeditor.html:55:21",
@@ -28,43 +28,43 @@
     "ctxdetail": "span@wlate/wlate.html:5:77"
   },
   {
-    "context": "wlate/wlate.html:7:80",
-    "ctxdetail": "button@wlate/wlate.html:7:80"
+    "context": "wlate/wlate.html:9:82",
+    "ctxdetail": "w-button@wlate/wlate.html:9:82"
   },
   {
-    "context": "wlate/wlate.html:8:92",
-    "ctxdetail": "button@wlate/wlate.html:8:92"
+    "context": "wlate/wlate.html:10:94",
+    "ctxdetail": "w-button@wlate/wlate.html:10:94"
   },
   {
-    "context": "wlate/wlate.html:16:111",
-    "ctxdetail": "w-combobox[placeholder]@wlate/wlate.html:16:111"
+    "context": "wlate/wlate.html:18:111",
+    "ctxdetail": "w-combobox[placeholder]@wlate/wlate.html:18:111"
   },
   {
-    "context": "wlate/wlate.html:19:113",
-    "ctxdetail": "w-combobox[placeholder]@wlate/wlate.html:19:113"
+    "context": "wlate/wlate.html:21:113",
+    "ctxdetail": "w-combobox[placeholder]@wlate/wlate.html:21:113"
   },
   {
-    "context": "wlate/wlate.html:50:105",
-    "ctxdetail": "label@wlate/wlate.html:50:105"
+    "context": "wlate/wlate.html:52:105",
+    "ctxdetail": "label@wlate/wlate.html:52:105"
   },
   {
-    "context": "wlate/wlate.html:64:62",
-    "ctxdetail": "button[title]@wlate/wlate.html:64:62"
+    "context": "wlate/wlate.html:66:78",
+    "ctxdetail": "w-button[title]@wlate/wlate.html:66:78"
   },
   {
-    "context": "wlate/wlate.html:64:103",
-    "ctxdetail": "button@wlate/wlate.html:64:103"
+    "context": "wlate/wlate.html:66:119",
+    "ctxdetail": "w-button@wlate/wlate.html:66:119"
   },
   {
-    "context": "wlate/wlate.html:65:56",
-    "ctxdetail": "button[title]@wlate/wlate.html:65:56"
+    "context": "wlate/wlate.html:67:72",
+    "ctxdetail": "w-button[title]@wlate/wlate.html:67:72"
   },
   {
-    "context": "wlate/wlate.html:65:73",
-    "ctxdetail": "button@wlate/wlate.html:65:73"
+    "context": "wlate/wlate.html:67:89",
+    "ctxdetail": "w-button@wlate/wlate.html:67:89"
   },
   {
-    "context": "wlate/wlate.html:70:69",
-    "ctxdetail": "w-dialog@wlate/wlate.html:70:69"
+    "context": "wlate/wlate.html:72:69",
+    "ctxdetail": "w-dialog@wlate/wlate.html:72:69"
   }
 ]

@@ -44,13 +44,15 @@ func RegisterWithOpts(tagName, htmlContent, cssContent string, opts ComponentOpt
 		return
 	}
 	moduleRegistry[tagName] = &modDef{
-		factory:  factory,
-		html:     htmlContent,
-		css:      cssContent,
-		observed: observed,
-		closed:   opts.Closed,
+		factory:        factory,
+		html:           htmlContent,
+		css:            cssContent,
+		observed:       observed,
+		closed:         opts.Closed,
+		formAssociated: opts.FormAssociated,
 	}
-	G.Logf(2, "RegisterWithOpts: module %q registered (closed=%v)\n", tagName, opts.Closed)
+	G.Logf(2, "RegisterWithOpts: module %q registered (closed=%v formAssociated=%v)\n",
+		tagName, opts.Closed, opts.FormAssociated)
 }
 
 // DefineAll defines all custom elements registered via Register().
@@ -119,8 +121,9 @@ func defineCustomElement(tagName string, def *modDef) {
 		return nil
 	})
 
-	pranaDef.Invoke(tagName, constructorFn, connectedFn, attrChangedFn, disconnectedFn, jsObserved)
-	G.Logf(2, "defineCustomElement: %q defined\n", tagName)
+	pranaDef.Invoke(tagName, constructorFn, connectedFn, attrChangedFn, disconnectedFn,
+		jsObserved, def.formAssociated)
+	G.Logf(2, "defineCustomElement: %q defined (formAssociated=%v)\n", tagName, def.formAssociated)
 }
 
 // TranslatableAttrs lists the element attributes whose values should be
@@ -128,7 +131,10 @@ func defineCustomElement(tagName string, def *modDef) {
 // attribute set gen_i18n was run with; the default matches gen_i18n's
 // default. Apps can assign a new slice directly to override, or call
 // AddTranslatableAttrs / RemoveTranslatableAttrs to tweak the list.
-var TranslatableAttrs = []string{"title", "placeholder", "alt", "aria-label", "data-i18n", "expect"}
+//
+// label/helper/error are the human-text attributes of the built-in field
+// widgets (w-input); they are translated by default like placeholder/title.
+var TranslatableAttrs = []string{"title", "placeholder", "alt", "aria-label", "data-i18n", "expect", "label", "helper", "error"}
 
 // AddTranslatableAttrs appends attrs to TranslatableAttrs, skipping those
 // already present. Attribute names are compared case-insensitively.
@@ -403,6 +409,9 @@ func elementDisconnected(self js.Value) {
 	// even if the author also called dom.RmEvent. Surfaced by sec-wasm-go
 	// skill validation, which caught the leak in a wired input handler.
 	dom.RmEventsUnder(self)
+	// Same treatment for MutationObservers wired via dom.Observe: disconnect
+	// them and release their pinned Go callbacks.
+	dom.RmObserversUnder(self)
 
 	nodeID, ok := getNodeID(self)
 	if !ok {

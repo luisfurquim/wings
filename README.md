@@ -32,12 +32,12 @@ authored in Go and running natively in the browser.
 | **Reactive** | Change a value with `Set()` and the DOM updates automatically — no virtual DOM diffing overhead. |
 | **Lightweight** | Direct DOM manipulation via targeted refs. No framework runtime to download beyond your WASM binary. |
 | **Encapsulated** | Each component lives inside a Shadow DOM with scoped CSS — no style leaks, no naming collisions. |
-| **Two-Way Binding** | The `&` prefix syncs `<input>`, `<select>`, and `<textarea>` with your Go data map in both directions. |
+| **Two-Way Binding** | The `&` prefix syncs `<input>`, `<select>`, `<textarea>`, and custom elements with your Go data map in both directions — with optional [typed parsing and validation](#typed-two-way-binding-fieldcodec--validator) in pure Go. |
 | **Hash Routing** | Built-in `{{#}}` binding and `wings.GoTo()` for SPA navigation without a router library. |
 | **Composable** | Nest components freely. Parent-to-child data flows via attributes; child-to-parent events flow via `@` triggers. |
 | **Standard Web** | Uses native Custom Elements v1 and Shadow DOM — works alongside any existing page or framework. |
 | **Internationalized** | Build-time text extraction + runtime catalog lookup, with plural/gender flexion and locale-aware number/date/measure formatting. |
-| **Themeable** | Global `--wings-*` design tokens; compose multiple runtime [skins](#skins--theming-with---wings--tokens) (colours, geometry, depth, motion, atmosphere). |
+| **Themeable** | Global `--wings-*` design tokens; compose multiple runtime [skins](#skins--theming-with---wings--tokens) (colours, geometry, depth, motion, atmosphere, material form). |
 | **Testable in-web** | Wrap any widget in [`<w-test>`](#wingswidgettest--in-web-test-harness-w-test) to spy its events and seal a pass/fail; modules declare self-tests via `Testable()`, and [`<w-test-report>`](#wingswidgettestreport--module-self-tests-testable--w-test-report) collects the whole page (auto + visual) into one JSON report. |
 | **Zero-toolchain dev** | A Docker [dev container](#dev-container-rebuild-on-save) recompiles your `wings.wasm` and serves it on every save — iterate with no Go toolchain on the host, or run the same loop natively. |
 
@@ -46,6 +46,18 @@ authored in Go and running natively in the browser.
 ## What's New
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
+
+### v0.16.15
+
+- **`w-button` and `w-input`** join the widget family — semantic variants,
+  sizes, slots, full `::part()` surface, and state attributes for pure-CSS
+  theming. The field's surface form (outlined / filled / underlined) is picked
+  globally by the new **Material skins**.
+- **Typed two-way binding** — bind `&value` to a `FieldCodec`/`Validator`
+  (ready-mades in `wings/field`) and the value parses and validates in pure Go,
+  with translated error messages wired to the native constraint-validation API.
+  Both widgets are **form-associated**: an invalid `w-input` blocks a native
+  `<form>` from submitting, and `w-button` submits it like a real button.
 
 ### v0.16.14
 
@@ -62,11 +74,6 @@ Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
   template/flex readers, codec, catalog aligner, signature verification, and
   number/format parsing, run via `go run ./cmd/build fuzz`. The first run
   already caught and fixed a currency-formatting bug.
-
-### v0.16.11
-
-- **`vulncheck` build target** — govulncheck over every module, native and
-  `GOOS=js`; deps and toolchain bumped to clear every finding it reported.
 
 ---
 
@@ -92,6 +99,7 @@ Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
     - [Contains](#contains-varvalue)
   - [Array Iteration](#array-iteration)
   - [Two-Way Binding](#two-way-binding)
+    - [Typed Two-Way Binding (FieldCodec / Validator)](#typed-two-way-binding-fieldcodec--validator)
   - [Events (Child to Parent)](#events-child-to-parent)
 - [Reactive Data API](#reactive-data-api)
   - [Navigation — Hash Fragment](#navigation--hash-fragment)
@@ -109,10 +117,14 @@ Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
   - [wings.Update — Dynamic CSS](#wingsupdate--dynamic-css)
 - [Skins — Theming with --wings-* Tokens](#skins--theming-with---wings--tokens)
   - [Multi-skin composition](#multi-skin-composition)
-  - [Built-in skins (18)](#built-in-skins-18)
+  - [Built-in skins (23) and bundles](#built-in-skins-23-and-bundles)
+  - [Material skins — widget surface form](#material-skins--widget-surface-form)
   - [Registering your own skin](#registering-your-own-skin)
+  - [Private categories (your own design dimensions)](#private-categories-your-own-design-dimensions)
   - [Skin API](#skin-api)
 - [Built-in Widgets](#built-in-widgets)
+  - [wings/widget/button — Button](#wingswidgetbutton--button-w-button)
+  - [wings/widget/input — Text Field](#wingswidgetinput--text-field-w-input)
   - [wings/widget/combobox — Multi-select Combobox](#wingswidgetcombobox--multi-select-combobox)
   - [wings/widget/tabs — Tabbed Container](#wingswidgettabs--tabbed-container-w-tabs--w-tabbutton--w-tab)
   - [wings/widget/navbar — Record Navigation Toolbar](#wingswidgetnavbar--record-navigation-toolbar-w-navbar)
@@ -803,13 +815,66 @@ the data update the input.
 <textarea &value="{{bio}}"></textarea>
 ```
 
-Two-way binding only works with:
+Two-way binding works with:
 - `<input>`
 - `<select>`
 - `<textarea>`
+- custom elements (any tag with a hyphen, e.g. `<w-input>`) — the element must
+  expose the bound property (e.g. `.value`) and fire a native `change` event
+  when it should be read back; [`w-input`](#wingswidgetinput--text-field-w-input)
+  does both out of the box
 
 And requires a pure reference (single `{{variable}}`), not mixed text like
 `"prefix {{variable}}"`.
+
+#### Typed Two-Way Binding (FieldCodec / Validator)
+
+By default a two-way bound value round-trips as a string. If the bound map
+entry implements `wings.FieldCodec`, the binding instead parses in place and
+the entry keeps its Go type forever:
+
+```go
+type FieldCodec interface {
+    fmt.Stringer         // render: value → text shown in the field
+    FromString(string)   // parse: text typed by the user → value, in place
+}
+```
+
+If it also implements `wings.Validator`, every write-back validates:
+
+```go
+type Validator interface {
+    Validate() string // "" = valid; otherwise the id of an error message
+}
+```
+
+`Validate` returns a message **id**, not text — the widget resolves the id to a
+translated message (see [w-input](#wingswidgetinput--text-field-w-input)), so
+validation logic stays i18n-clean. The `wings/field` package ships ready-made
+implementations — `field.NewText()`, `field.NewEmail(id)`,
+`field.NewInt(min, max, notIntID, rangeID)` (distinct "not a number" and
+"out of range" messages), `field.NewPattern(re, id)` — all pure Go and
+unit-testable with the native toolchain:
+
+```go
+// component
+func (m *Mod) InitData() map[string]any {
+    return map[string]any{
+        "email": field.NewEmail("email-bad"),
+        "age":   field.NewInt(0, 120, "age-nan", "age-bad"),
+    }
+}
+```
+
+```html
+<w-input type="email" label="Email" required="true" &value="{{email}}">
+  <span slot="errors" id="email-bad">Invalid email address</span>
+</w-input>
+```
+
+Empty values are always considered valid by the shipped types — use the native
+`required` attribute to flag empty fields, and `form.checkValidity()` gates
+submission for free.
 
 ### Events (Child to Parent)
 
@@ -1364,7 +1429,7 @@ dimension (e.g. `glass`, which is Atmosphere-only). Activating a skin whose
 categories overlap an already-active skin returns a `*SkinConflictError`
 instead of silently double-setting a token.
 
-There are nine categories (`SkinCategory`, a `uint64` bitmask):
+There are ten categories (`SkinCategory`, a `uint64` bitmask):
 
 | Category | What it owns |
 |---|---|
@@ -1377,6 +1442,7 @@ There are nine categories (`SkinCategory`, a `uint64` bitmask):
 | `CategorySpacing` | padding / gap density |
 | `CategoryLighting` | gradients, glows, gradient-shadow |
 | `CategoryAtmosphere` | glass opacity, surface blur/saturate |
+| `CategoryMaterial` | widget surface form: outlined / filled / underlined |
 
 The split is principled: a token whose **value is a colour** belongs to a
 chromatic category (Identity / Lighting / Interaction); a token whose value is a
@@ -1387,9 +1453,10 @@ Depth skins compose the final `--wings-shadow-*` that widgets read.
 
 Convenience masks bundle the bits a typical skin of each kind declares:
 `IdentitySkinCategories` (Identity|Lighting|Interaction), `GeometrySkinCategories`
-(Geometry|Spacing), `DepthSkinCategories`, `MotionSkinCategories`.
+(Geometry|Spacing), `DepthSkinCategories`, `MotionSkinCategories`,
+`MaterialSkinCategories`.
 
-### Built-in skins (18)
+### Built-in skins (23) and bundles
 
 | Kind (mask) | Skins | Mutually exclusive? |
 |---|---|---|
@@ -1398,10 +1465,36 @@ Convenience masks bundle the bits a typical skin of each kind declares:
 | Depth | `flat` `lifted` `floating` | yes — pick one |
 | Motion | `gentle` `calm` `brisk` | yes — pick one |
 | Atmosphere | `glass` | composes with anything |
+| Lighting | `glasslighting` | composes with anything |
+| Material | `outlined` `filled` `underlined` | yes — pick one |
+| **Bundle** | `glassmorphism` = `glass` + `glasslighting` | claims Atmosphere\|Lighting |
 
-A complete look is one from each column, e.g. the live-demo default is
-`light + classic + lifted + calm` (optionally `+ glass`). Import each skin you
-intend to use (blank import) so its `init()` registers it.
+A complete look is one from each row, e.g. the live-demo default is
+`light + classic + lifted + calm`. Adding `filled` makes all fields use the
+filled surface form; adding `glassmorphism` adds blur/gradient/halo effects.
+Import each skin you intend to use (blank import) so its `init()` registers it.
+
+**Bundles** are a composition pattern: each component skin exports a `CSS` and
+`Categories` var so a bundle can concatenate them without duplicating definitions.
+Apply the bundle for convenience (`ApplySkin("glassmorphism")`), or apply the
+components individually for finer control.
+
+### Material skins — widget surface form
+
+The `Material` category governs the structural shape of field surfaces (not
+colour). Widgets read `--wings-input-material-*` tokens; when none are set the
+widget default produces the `outlined` look.
+
+```go
+_ = wings.ApplySkin("filled")     // all w-input fields become filled globally
+_ = wings.ApplySkin("underlined") // conflict: only one Material skin at a time
+```
+
+| Skin | Effect on `w-input` |
+|---|---|
+| `outlined` | full border, rounded corners, opaque background (explicit default) |
+| `filled` | bottom border only, tinted background, top corners rounded |
+| `underlined` | bottom border only, transparent background, no horizontal padding |
 
 ### Registering your own skin
 
@@ -1425,7 +1518,7 @@ supply literal fallbacks for everything else.
 ### Private categories (your own design dimensions)
 
 `SkinCategory` is a `uint64`, and its bit space is partitioned like IANA
-address space. The low bits are framework-owned built-ins (9 today) and grow
+address space. The low bits are framework-owned built-ins (10 today) and grow
 upward; the **high 16 bits (48–63) are permanently reserved for you**. A
 built-in will never be assigned a bit in that range, so a private category you
 mint today keeps working across WINGS upgrades. Mint one with `UserCategory`,
@@ -1488,6 +1581,124 @@ The `<skin-switcher>` built-in widget exposes all of this as UI — see
 [Built-in Widgets](#built-in-widgets) below.
 
 ## Built-in Widgets
+
+### wings/widget/button — Button (`w-button`)
+
+`import _ "github.com/luisfurquim/wings/widget/button"`
+
+A button with semantic variants, sizes, shapes, and a loading state.
+
+```html
+<w-button variant="primary" @click="on_save">Save</w-button>
+<w-button variant="danger" size="sm" shape="pill">Delete</w-button>
+<w-button loading="true">Saving…</w-button>
+
+<!-- icon + label via slots -->
+<w-button variant="primary">
+  <svg slot="prefix">…</svg>
+  Submit
+</w-button>
+```
+
+**Attributes:**
+
+| Attribute | Description |
+|-----------|-------------|
+| `variant` | `secondary` (default), `primary`, `ghost`, `danger`, `success` |
+| `size` | `sm`, `md` (default), `lg` |
+| `shape` | `default`, `pill`, `square` |
+| `type` | native-like: inside a `<form>`, a click submits it via `requestSubmit` (constraint validation runs first, so invalid `w-input`s block it); `type="button"` opts out |
+| `loading` | `"true"` shows a spinner and keeps the button non-interactive (and never submits) |
+| `disabled` | standard HTML; reflected to the inner `<button>` for keyboard/a11y correctness |
+
+**Events.** Clicks bubble naturally from the inner `<button>` through the open
+shadow root and retarget to `<w-button>` — use `@click` on the host as normal.
+
+**Theming.** Reads the shared [`--wings-*` skin tokens](#skins--theming-with---wings--tokens)
+(`--wings-button-*`, `--wings-primary*`, `--wings-danger*`, `--wings-success*`,
+radius/motion tokens). Every sub-element is exposed via `::part()`
+(`root`, `prefix`, `label`, `suffix`, `spinner`), and the host reflects
+`[variant]`, `[size]`, `[shape]`, `[disabled]`, `[loading]` for pure-CSS
+theming. Implements `Customizable` with `"Vars"` and `"Design"` parts.
+
+### wings/widget/input — Text Field (`w-input`)
+
+`import _ "github.com/luisfurquim/wings/widget/input"`
+
+A text field with full label/field/feedback anatomy, native validation, and a
+surface form controlled by the active [Material skin](#material-skins--widget-surface-form)
+(outlined by default).
+
+```html
+<w-input label="Email" type="email" placeholder="you@example.com"
+         helper="We'll never share your email."
+         required="true" clearable="true"
+         @change="on_email_change">
+</w-input>
+
+<!-- icon prefix via slot -->
+<w-input label="Search">
+  <svg slot="prefix">…</svg>
+</w-input>
+```
+
+**Attributes:**
+
+| Attribute | Description |
+|-----------|-------------|
+| `type` | `text` (default), `email`, `password`, `search`, `number`, `tel`, `url` |
+| `label` | Label text (activates the label zone); use `slot="label"` for HTML |
+| `placeholder` | Placeholder text |
+| `value` | Initial value; kept in sync via two-way binding |
+| `helper` | Helper text below the field; use `slot="helper"` for HTML |
+| `error` | Error message below the field (also sets native `setCustomValidity`); use `slot="error"` for HTML |
+| `maxlength` | Max characters; enables the character count display |
+| `size` | `sm`, `md` (default), `lg` |
+| `required` | `"true"` shows the required mark (*) and flags empty fields natively |
+| `clearable` | `"true"` shows a × button when the field has a value |
+| `disabled` / `readonly` | standard HTML; reflected to the inner `<input>` |
+
+**Events (via `@`, native semantics):**
+
+| Event | Args | Description |
+|-------|------|-------------|
+| `@input` | current string value | Fires on every keystroke |
+| `@change` | current string value | Fires when the user leaves the field (blur), after the two-way write-back — a bound `FieldCodec`/`Validator` has already run |
+| `@clear` | — | Fires when the × clear button is clicked |
+
+**Native form participation.** `w-input` is a form-associated custom element
+(ElementInternals): inside a `<form>`, an invalid field — native constraints
+like `required`/`type`/`maxlength` or a bound `wings.Validator` — blocks
+`form.checkValidity()`, `reportValidity()` and submission, with the browser's
+own localized bubble for native constraints. Give the host a `name` attribute
+and the value is included in the submitted form data. (Form reset does not
+clear the field yet.)
+
+**Typed validation.** Bind `&value` to a
+[`FieldCodec`/`Validator`](#typed-two-way-binding-fieldcodec--validator) map
+entry and the field validates in Go on blur. The id returned by `Validate` is
+resolved to a translated message — first against a slotted
+`<span slot="errors" id="...">` in the light DOM (translated in place by
+`gen_i18n`), then against a document-level element with that id (a shared
+message table) — and wired to the native constraint-validation API, so
+`form.checkValidity()` and `:invalid` work for free. On a `SetLang` switch the
+visible message re-resolves automatically.
+
+```html
+<w-input type="email" label="Email" required="true" &value="{{email}}">
+  <span slot="errors" id="email-bad">Invalid email address</span>
+</w-input>
+```
+
+**Theming.** Reads `--wings-input-*` plus the core surface/text/radius/motion
+tokens; the structural shape (outlined / filled / underlined) comes from the
+active [Material skin](#material-skins--widget-surface-form). Sub-elements are
+exposed via `::part()` (`root`, `label-wrap`, `label`, `required-mark`,
+`field`, `prefix`, `input`, `suffix`, `clear-btn`, `feedback`, `helper`,
+`error`, `count`), and the host reflects `[data-focused]`, `[data-has-value]`,
+`[data-empty]`, `[data-invalid]`, `[size]` — enough for a floating label or a
+danger border in external CSS without touching Go. Implements `Customizable`
+with `"Vars"` and `"Design"` parts.
 
 ### wings/widget/combobox — Multi-select Combobox
 
@@ -1800,7 +2011,8 @@ decimal number gets replaced by `table[n]` when the catalog is loaded, and
 left untouched otherwise — so dynamic text produced via `{{expression}}`
 passes through unchanged. The same lookup applies to values of the
 attributes listed in `wings.TranslatableAttrs` (default: `title`,
-`placeholder`, `alt`, `aria-label`, `data-i18n`).
+`placeholder`, `alt`, `aria-label`, `data-i18n`, plus `label`, `helper`,
+`error` — the human-text attributes of the `w-input` widget).
 
 For plurals and gender agreement — cases where a single translation string
 cannot reflect the target locale's grammar — WINGS ships a parallel
@@ -2038,11 +2250,12 @@ What it does:
 
 **Translatable-attribute flags.** Attributes like `title`, `placeholder`,
 `alt`, `aria-label`, and `data-i18n` carry user-visible text just like text
-nodes do. `gen_i18n` extracts the values of the following attributes by
+nodes do, and so do the `label`/`helper`/`error` attributes of the built-in
+`w-input`. `gen_i18n` extracts the values of the following attributes by
 default:
 
 ```
-title, placeholder, alt, aria-label, data-i18n
+title, placeholder, alt, aria-label, data-i18n, label, helper, error
 ```
 
 **CSS `content:` via `data-i18n`.** CSS pseudo-elements (`::before` /

@@ -23,7 +23,7 @@
                <div class="wl-grid-row-header" role="rowheader" aria-label="{{category_headers[ci].aria}}">{{category_headers[ci].label}}</div>
                <div class="wl-grid-cell-edit" role="gridcell" *gender_headers:gi="">
                   <div class="wl-cell-wrapper">
-                     <input class="wl-cell-input" type="text" data-ci="{{ci}}" data-gi="{{gi}}" aria-label="0" &value="{{right_cells[ci].cols[gi]}}"/>
+                     <w-input class="wl-cell-input" size="sm" data-ci="{{ci}}" data-gi="{{gi}}" aria-label="0" &value="{{right_cells[ci].cols[gi]}}"></w-input>
                      <img class="wl-cell-badge" &src="{{right_srcs[ci].cols[gi]}}" width="16" height="16" alt="" onerror="this.src=&#39;&#39;"/>
                   </div>
                </div>
@@ -31,7 +31,7 @@
          </div>
       </div>
       <div class="wl-phrase-toolbar wl-content-only">
-         <button type="button" id="wl-copy-to-right" class="wl-copy-btn" title="1" aria-label="2"><span translate="no">→</span></button>
+         <w-button type="button" id="wl-copy-to-right" class="wl-copy-btn" title="1" aria-label="2"><span translate="no">→</span></w-button>
       </div>
       <textarea class="wl-phrase-edit wl-content-only">{{right_content}}</textarea>
       <div id="wl-revised-toggle-inflection" class="wl-revised-indicator"></div>

@@ -1,0 +1,4 @@
+/* outlined — default form: full border on all sides, rounded corners, opaque surface.
+   No material tokens are set; the widget defaults already produce this look.
+   Registering this skin is useful as an explicit intent declaration and to
+   prevent a conflicting Material skin (filled, underlined) from being active. */

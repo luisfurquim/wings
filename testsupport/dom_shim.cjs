@@ -18,3 +18,9 @@
 globalThis.location ??= { hash: "" };
 globalThis.addEventListener ??= function () {};
 globalThis.removeEventListener ??= function () {};
+// Inert MutationObserver so dom.Observe/RmObserver lifecycle tests can run;
+// callbacks never fire (no real DOM to mutate).
+globalThis.MutationObserver ??= class {
+	observe() {}
+	disconnect() {}
+};

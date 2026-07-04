@@ -15,6 +15,7 @@
            placeholder="{{placeholder}}"
            &value="{{value}}"
            maxlength="{{maxlength}}"
+           aria-describedby="inp-helper inp-error"
            autocomplete="off"
            spellcheck="false" />
     <span part="suffix" class="inp-suffix"><slot name="suffix"></slot></span>
@@ -23,9 +24,14 @@
 
   <!-- Feedback zone: helper text, error message, character count. -->
   <div part="feedback" class="inp-feedback">
-    <span part="helper" class="inp-helper" ?helper><slot name="helper">{{helper}}</slot></span>
-    <span part="error"  class="inp-error"  ?error><slot name="error">{{error}}</slot></span>
+    <span part="helper" class="inp-helper" id="inp-helper" ?helper><slot name="helper">{{helper}}</slot></span>
+    <span part="error"  class="inp-error"  id="inp-error" role="alert" ?error><slot name="error">{{error}}</slot></span>
     <span part="count"  class="inp-count"  ?maxlength>{{value_len}}/{{maxlength}}</span>
   </div>
+
+  <!-- Validation message table: webdev-provided <span slot="errors" id="..."> nodes.
+       Kept in light DOM so gen_i18n translates them, but never shown. Validate()
+       returns the id; the widget resolves it to this text for setCustomValidity. -->
+  <div class="inp-errors" aria-hidden="true"><slot name="errors"></slot></div>
 
 </div>

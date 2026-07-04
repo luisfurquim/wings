@@ -385,7 +385,11 @@ func (t *Tabs) Render(obj *wings.PranaObj) {
 
 	// React to runtime changes of the host's own mode/active attributes (the
 	// latter is how a headless consumer drives selection via data binding).
-	mo := js.Global().Get("MutationObserver").New(js.FuncOf(func(_ js.Value, margs []js.Value) any {
+	// dom.Observe registers the observer for auto-release on disconnect.
+	dom.Observe(host, map[string]any{
+		"attributes":      true,
+		"attributeFilter": []any{"mode", "active"},
+	}, func(_ js.Value, margs []js.Value) any {
 		if len(margs) == 0 {
 			return nil
 		}
@@ -400,9 +404,5 @@ func (t *Tabs) Render(obj *wings.PranaObj) {
 			}
 		}
 		return nil
-	}))
-	mo.Call("observe", host, map[string]any{
-		"attributes":      true,
-		"attributeFilter": []any{"mode", "active"},
 	})
 }

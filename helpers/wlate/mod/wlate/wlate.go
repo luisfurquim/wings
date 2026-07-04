@@ -858,7 +858,9 @@ func (wc *wlateCtx) switchTab(tab string) {
 	wc.syncRightContent()
 	wc.activeTab = tab
 	// Setting `tab` flows into <w-tabs active="{{tab}}">, which selects the
-	// matching panel. The buttons are plain <button>s, so we highlight them.
+	// matching panel. The buttons are w-buttons outside the w-tabs pairing
+	// (headless mode, so this dirty-check path stays in control); we highlight
+	// them by class.
 	wc.obj.This.Set("tab", tab)
 	wc.highlightTabButtons(tab)
 

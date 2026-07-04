@@ -36,6 +36,15 @@ import (
 
 	// Atmosphere skins (composes with all of the above)
 	_ "github.com/luisfurquim/wings/skins/glass"
+	_ "github.com/luisfurquim/wings/skins/glasslighting"
+
+	// Lighting+Atmosphere bundle
+	_ "github.com/luisfurquim/wings/skins/glassmorphism"
+
+	// Material skins (widget surface form — mutually exclusive)
+	_ "github.com/luisfurquim/wings/skins/filled"
+	_ "github.com/luisfurquim/wings/skins/outlined"
+	_ "github.com/luisfurquim/wings/skins/underlined"
 
 	_ "github.com/luisfurquim/wings/widget/button"
 	_ "github.com/luisfurquim/wings/widget/combobox"

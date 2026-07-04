@@ -54,22 +54,41 @@
 
 /* ── Field zone ───────────────────────────────────────────────────────────── */
 
+/*
+ * Border sides are split into four longhand properties so that a Material
+ * skin can set individual sides to `none` without affecting the others.
+ * For example, the `filled` skin sets top/left/right to `none` and only
+ * keeps border-bottom; `border-color` on focus then only colours the
+ * visible sides (sides with style `none` are unaffected by border-color).
+ *
+ * Material tokens (all optional — widget defaults produce `outlined`):
+ *   --wings-input-material-border-top/right/bottom/left
+ *   --wings-input-material-radius
+ *   --wings-input-material-bg
+ *   --wings-input-material-padding-x
+ *   --wings-input-material-focus-shadow
+ *   --wings-input-material-focus-shadow-error
+ */
+
 .inp-field {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 10px;
-  border: var(--wings-input-border, 1px solid var(--wings-border, #cccccc));
-  border-radius: var(--wings-radius-md, 6px);
-  background: var(--wings-input-bg, var(--wings-surface, #ffffff));
+  padding: 6px var(--wings-input-material-padding-x, 10px);
+  border-top:    var(--wings-input-material-border-top,    var(--wings-input-border, 1px solid var(--wings-border, #cccccc)));
+  border-right:  var(--wings-input-material-border-right,  var(--wings-input-border, 1px solid var(--wings-border, #cccccc)));
+  border-bottom: var(--wings-input-material-border-bottom, var(--wings-input-border, 1px solid var(--wings-border, #cccccc)));
+  border-left:   var(--wings-input-material-border-left,   var(--wings-input-border, 1px solid var(--wings-border, #cccccc)));
+  border-radius: var(--wings-input-material-radius,        var(--wings-radius-md, 6px));
+  background:    var(--wings-input-material-bg,            var(--wings-input-bg, var(--wings-surface, #ffffff)));
   transition:
-    border-color  var(--wings-transition-fast, 120ms ease),
-    box-shadow    var(--wings-transition-fast, 120ms ease);
+    border-color var(--wings-transition-fast, 120ms ease),
+    box-shadow   var(--wings-transition-fast, 120ms ease);
 }
 
 :host([data-focused]) .inp-field {
   border-color: var(--wings-input-border-focus, var(--wings-border-focus, #007bff));
-  box-shadow: var(--wings-focus-ring, 0 0 0 3px rgba(0, 123, 255, 0.3));
+  box-shadow: var(--wings-input-material-focus-shadow, var(--wings-focus-ring, 0 0 0 3px rgba(0, 123, 255, 0.3)));
   outline: none;
 }
 
@@ -78,43 +97,20 @@
 }
 
 :host([data-invalid][data-focused]) .inp-field {
-  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25);
+  box-shadow: var(--wings-input-material-focus-shadow-error, 0 0 0 3px rgba(220, 53, 69, 0.25));
 }
 
 /* Size variants */
 :host([size="sm"]) .inp-field {
-  padding: 3px 8px;
+  padding: 3px var(--wings-input-material-padding-x, 8px);
   font-size: 0.85em;
   gap: 4px;
 }
 
 :host([size="lg"]) .inp-field {
-  padding: 10px 14px;
+  padding: 10px var(--wings-input-material-padding-x, 14px);
   font-size: 1.05em;
   gap: 8px;
-}
-
-/* Variant: filled */
-:host([variant="filled"]) .inp-field {
-  background: var(--wings-input-bg-filled, var(--wings-bg, #f5f5f5));
-  border-color: transparent;
-  border-bottom-color: var(--wings-input-border, var(--wings-border, #cccccc));
-  border-radius: var(--wings-radius-md, 6px) var(--wings-radius-md, 6px) 0 0;
-}
-
-/* Variant: underlined */
-:host([variant="underlined"]) .inp-field {
-  border: none;
-  border-bottom: var(--wings-input-border, 1px solid var(--wings-border, #cccccc));
-  border-radius: 0;
-  background: transparent;
-  padding-left: 0;
-  padding-right: 0;
-}
-
-:host([variant="underlined"][data-focused]) .inp-field {
-  box-shadow: none;
-  border-bottom-color: var(--wings-input-border-focus, var(--wings-border-focus, #007bff));
 }
 
 /* ── Input element ────────────────────────────────────────────────────────── */
@@ -198,4 +194,9 @@
   flex-shrink: 0;
   color: var(--wings-input-count-color, var(--wings-text-light, #999999));
   margin-left: auto;
+}
+
+/* Hidden validation-message table (slot="errors"); resolved by id at runtime. */
+.inp-errors {
+  display: none;
 }

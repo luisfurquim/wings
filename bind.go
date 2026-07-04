@@ -168,7 +168,7 @@ func setupTwoWayBindingsInTree(dom js.Value, ref *DOMRefNode, state *PranaState)
 
 	if ref.Type == TokAttr {
 		for attrName, ab := range ref.Attrs {
-			if ab.PureRef != nil && attrName == "value" && isFormInput(dom) {
+			if ab.PureRef != nil && attrName == "value" && (isFormInput(dom) || isCustomElement(dom)) {
 				nodeID, _ := getOrCreateState(dom)
 				st := nodeRegistry[nodeID]
 				if st.TwoWay == nil {

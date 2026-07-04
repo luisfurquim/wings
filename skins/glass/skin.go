@@ -26,6 +26,13 @@ import (
 //go:embed skin.css
 var css string
 
+// CSS is the raw payload of this skin, exported for use by bundles.
+var CSS string
+
+// Categories is the bitmask declared by this skin, exported for use by bundles.
+var Categories = wings.CategoryAtmosphere
+
 func init() {
-	wings.RegisterSkin("glass", wings.CategoryAtmosphere, css)
+	CSS = css
+	wings.RegisterSkin("glass", Categories, CSS)
 }

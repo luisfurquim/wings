@@ -4,8 +4,8 @@
  * Helper JS mínimo para interop com o wings Go/WASM.
  * Deve ser carregado ANTES do wasm_exec.js e do binário .wasm.
  *
- * Define window._pranaDef(tagName, ctor, connected, attrChanged, disconnected, observed)
- * que é chamado pelo Go via DefineAll() / defineCustomElement().
+ * Define window._pranaDef(tagName, ctor, connected, attrChanged, disconnected, observed,
+ * formAssociated) que é chamado pelo Go via DefineAll() / defineCustomElement().
  */
 
 (function() {
@@ -21,17 +21,28 @@
     * @param {Function} attrChanged  - callback Go para attributeChangedCallback(self,name,old,new)
     * @param {Function} disconnected - callback Go para disconnectedCallback(self)
     * @param {string[]} observed     - lista de atributos observados
+    * @param {boolean}  formAssociated - true → elemento form-associated: a classe
+    *                   declara `static formAssociated` e o constructor chama
+    *                   attachInternals(), exposto ao Go como `_internals`
+    *                   (setValidity/setFormValue participam do <form> nativo)
     */
-   window._pranaDef = function(tagName, ctor, connected, attrChanged, disconnected, observed) {
+   window._pranaDef = function(tagName, ctor, connected, attrChanged, disconnected, observed, formAssociated) {
       customElements.define(
          tagName,
          class extends HTMLElement {
+            static get formAssociated() {
+               return !!formAssociated;
+            }
+
             static get observedAttributes() {
                return observed || [];
             }
 
             constructor() {
                super();
+               if (formAssociated) {
+                  this._internals = this.attachInternals();
+               }
                // Encaminha para o Go
                ctor(this);
             }

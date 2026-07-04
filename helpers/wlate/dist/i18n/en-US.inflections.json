@@ -2,10 +2,10 @@
   {
     "label": "{n} o aluno aprovado",
     "cells": {
-      "f.one": "the only student who passed",
-      "f.other": "the students who passeda",
-      "m.one": "the only student who passed",
-      "m.other": "the students who passed"
+      "f.one": "",
+      "f.other": "",
+      "m.one": "",
+      "m.other": ""
     },
     "revised": true,
     "sources": {

@@ -57,30 +57,50 @@
   <!-- ── w-input ─────────────────────────────────────────────────────────── -->
   <section>
     <h3>128</h3>
-    <w-input label="Outlined (padrão)" placeholder="129" variant="outlined"></w-input>
-    <w-input label="Filled" placeholder="129" variant="filled"></w-input>
-    <w-input label="Underlined" placeholder="129" variant="underlined"></w-input>
+    <w-input label="129" placeholder="130"></w-input>
+    <w-input label="131" placeholder="132">
+      <svg slot="prefix" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+    </w-input>
+    <p style="font-size:0.8em;color:var(--wings-text-muted,#666);margin:0">133</p>
   </section>
 
   <section>
-    <h3>130</h3>
-    <w-input label="Com texto de ajuda" placeholder="131" helper="Usaremos isso para enviar a confirmação." type="email"></w-input>
-    <w-input label="Campo obrigatório" placeholder="132" required="true"></w-input>
-    <w-input label="Com erro" placeholder="133" error="Data inválida. Use o formato AAAA-MM-DD."></w-input>
-    <w-input label="Desabilitado" placeholder="134" disabled=""></w-input>
+    <h3>134</h3>
+    <w-input label="135" placeholder="136" helper="137" type="email"></w-input>
+    <w-input label="138" placeholder="139" required="true"></w-input>
+    <w-input label="140" placeholder="141" error="142"></w-input>
+    <w-input label="143" placeholder="144" disabled=""></w-input>
   </section>
 
   <section>
-    <h3>135</h3>
-    <w-input label="Com botão de limpar" placeholder="136" clearable="true"></w-input>
-    <w-input label="Com contador de caracteres" placeholder="137" maxlength="80" clearable="true"></w-input>
+    <h3>145</h3>
+    <w-input label="146" placeholder="147" clearable="true"></w-input>
+    <w-input label="148" placeholder="149" maxlength="80" clearable="true"></w-input>
   </section>
 
   <section>
-    <h3>138</h3>
-    <w-input size="sm" label="Pequeno" placeholder="139"></w-input>
-    <w-input size="md" label="Médio (padrão)" placeholder="140"></w-input>
-    <w-input size="lg" label="Grande" placeholder="141"></w-input>
+    <h3>150</h3>
+    <w-input size="sm" label="151" placeholder="152"></w-input>
+    <w-input size="md" label="153" placeholder="154"></w-input>
+    <w-input size="lg" label="155" placeholder="156"></w-input>
+  </section>
+
+  <section>
+    <h3>157</h3>
+    <p style="font-size:0.8em;color:var(--wings-text-muted,#666);margin:0">158<code>159</code>160<code>161</code>162</p>
+    <form id="validation-form">
+      <w-input name="email" label="163" type="email" required="true" &value="{{demo_email}}">
+        <span slot="errors" id="email-bad">164</span>
+      </w-input>
+      <w-input name="age" label="165" required="true" &value="{{demo_age}}">
+        <span slot="errors" id="age-nan">166</span>
+        <span slot="errors" id="age-bad">167</span>
+      </w-input>
+      <w-button variant="primary" id="validation-submit">168</w-button>
+      <p ?form_sent="" style="color:var(--wings-success,#2e7d32);margin:4px 0 0">169</p>
+    </form>
   </section>
 
 </div>

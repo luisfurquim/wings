@@ -1,0 +1,20 @@
+:root {
+  /* glasslighting — Lighting complement for glass-morphism.
+     Provides the subtle surface gradient and diffused drop shadow that
+     characterise glassmorphism panels.  Designed to layer on top of the
+     `glass` Atmosphere skin; both are bundled together as `glassmorphism`.
+
+     Apply standalone only when you want the gradient/glow but not the
+     backdrop-filter blur (e.g. environments that do not support it). */
+
+  /* Soft diagonal shimmer on elevated surfaces. */
+  --wings-gradient: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.35) 0%,
+    rgba(255, 255, 255, 0.08) 100%
+  );
+  --wings-gradient-color: inherit;
+
+  /* Diffused halo instead of a hard drop shadow. */
+  --wings-gradient-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.22);
+}

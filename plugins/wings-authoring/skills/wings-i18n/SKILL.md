@@ -25,7 +25,8 @@ write index numbers by hand.
 
 - **Text nodes**: `<h2>Dashboard</h2>` → extracted.
 - **Translatable attributes** only: `title`, `placeholder`, `alt`, `aria-label`,
-  `data-i18n` (`wings.TranslatableAttrs`). Other attribute text is left alone.
+  `data-i18n`, plus `label`/`helper`/`error` (the `w-input` text attributes)
+  (`wings.TranslatableAttrs`). Other attribute text is left alone.
 - **NOT** dynamic text: `{{expression}}` output passes through untranslated — so
   translate the template literals, not the data. If you need a data value
   localized, format it (see formatting below) or translate it in your data.

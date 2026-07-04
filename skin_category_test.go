@@ -67,9 +67,9 @@ func TestCategoryNames(t *testing.T) {
 	if n := CategoryNone.Names(); len(n) != 0 {
 		t.Errorf("CategoryNone.Names() = %v, want empty", n)
 	}
-	// CategoryAll names every built-in: there are 9 declared categories.
-	if n := CategoryAll.Names(); len(n) != 9 {
-		t.Errorf("CategoryAll.Names() has %d entries, want 9", len(n))
+	// CategoryAll names every built-in: there are 10 declared categories.
+	if n := CategoryAll.Names(); len(n) != 10 {
+		t.Errorf("CategoryAll.Names() has %d entries, want 10", len(n))
 	}
 }
 

@@ -810,7 +810,8 @@ func isPureBindings(s string) bool {
 
 // defaultTranslatableAttrs is the set of HTML attributes whose values are
 // extracted by default. Must stay in sync with wings.TranslatableAttrs.
-var defaultTranslatableAttrs = []string{"title", "placeholder", "alt", "aria-label", "data-i18n", "expect"}
+// label/helper/error are the human-text attributes of the w-input widget.
+var defaultTranslatableAttrs = []string{"title", "placeholder", "alt", "aria-label", "data-i18n", "expect", "label", "helper", "error"}
 
 // buildAttrSet resolves the three flags into a lowercase attribute set.
 // --attrs overrides the default list entirely; --add-attrs appends to

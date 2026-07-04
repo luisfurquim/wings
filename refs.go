@@ -318,26 +318,63 @@ func setupTwoWayBinding(dom js.Value, pureRef []RefNode, state *PranaState, ctxP
 		}
 		ev := args[0]
 		target := ev.Get("target")
-		newVal := target.Get("value").String()
+
+		// The two-way gate accepts any custom element, so `value` may be
+		// absent (undefined) or a non-string. Reading .String() on those
+		// would corrupt the map with "<undefined>"-style placeholders.
+		vv := target.Get("value")
+		var newVal string
+		switch vv.Type() {
+		case js.TypeString:
+			newVal = vv.String()
+		case js.TypeNumber, js.TypeBoolean:
+			newVal = jsGlobal.Get("String").Invoke(vv).String()
+		default:
+			G.Logf(4, "setupTwoWayBinding: no usable value property (%s)\n", vv.Type())
+			return nil
+		}
 
 		ctx := *twb.CtxPtr
 		container, key := refOf(twb.Ref, ctx)
-		if container != nil && key != "" {
-			// Coerce the DOM string value to the type registered in the data map,
-			// ensuring that bool/int/float are not corrupted to string.
-			typedVal := coerceToType(newVal, getField(container, key))
-			if setField(container, key, typedVal) {
-				G.Logf(4, "setupTwoWayBinding: updated %q = %q\n", key, newVal)
-				if state != nil {
-					state.syncLocal(nil)
-				}
-			}
+		if container == nil || key == "" {
+			return nil
 		}
 
+		existing := getField(container, key)
+
+		// Typed-field path: the bound value owns the conversion. Mutate it in
+		// place via FromString so its concrete type is never replaced by a raw
+		// string. If it also validates, publish the message id on the bound
+		// element via data-invalid-ref; the widget resolves it to translated
+		// text and applies native validity (setCustomValidity).
+		if codec, ok := existing.(FieldCodec); ok {
+			codec.FromString(newVal)
+			if v, ok := existing.(Validator); ok {
+				dom.Call("setAttribute", "data-invalid-ref", v.Validate())
+			}
+			G.Logf(4, "setupTwoWayBinding: FromString %q\n", key)
+			if state != nil {
+				state.syncLocal(nil)
+			}
+			return nil
+		}
+
+		// Primitive path: coerce the DOM string to the type registered in the
+		// data map, so bool/int/float are not corrupted to string.
+		typedVal := coerceToType(newVal, existing)
+		if setField(container, key, typedVal) {
+			G.Logf(4, "setupTwoWayBinding: updated %q = %q\n", key, newVal)
+			if state != nil {
+				state.syncLocal(nil)
+			}
+		}
 		return nil
 	})
 
-	dom.Set("onchange", twb.Handler)
+	// addEventListener rather than the onchange property: a webdev assigning
+	// el.onchange via interop would silently clobber the binding otherwise.
+	twb.Target = dom
+	dom.Call("addEventListener", "change", twb.Handler)
 	return twb
 }
 
@@ -349,6 +386,11 @@ func releaseTwoWayBindings(nodeID int64) {
 		return
 	}
 	for _, twb := range st.TwoWay {
+		// Detach before releasing: a change event arriving after Release
+		// would hit a released js.Func and panic the app.
+		if twb.Target.Truthy() {
+			twb.Target.Call("removeEventListener", "change", twb.Handler)
+		}
 		twb.Handler.Release()
 	}
 }

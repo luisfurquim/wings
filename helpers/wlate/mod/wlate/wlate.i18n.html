@@ -4,8 +4,10 @@
    <div class="wl-status">
       <span class="wl-pending">5<strong>{{pending_count}}</strong>6</span>
       <div class="wl-tabs">
-         <button type="button" class="wl-tab" id="wl-tab-text" data-tab="text">7</button>
-         <button type="button" class="wl-tab" id="wl-tab-inflection" data-tab="inflection">8</button>
+         <!-- w-button (não w-tabbutton): o w-tabs daqui é headless de propósito —
+              o clique passa pelo dirty-check do wlate antes de trocar a aba. -->
+         <w-button type="button" class="wl-tab" id="wl-tab-text" data-tab="text">7</w-button>
+         <w-button type="button" class="wl-tab" id="wl-tab-inflection" data-tab="inflection">8</w-button>
       </div>
       <skin-switcher></skin-switcher>
    </div>
@@ -50,8 +52,8 @@
          <span class="wl-toggle-track" id="wl-toggle-track"><span class="wl-toggle-thumb"></span></span>11</label>
       <w-navbar nav_input="{{nav_input}}" total_count="{{total_count}}" @first="navFirst" @prevmany="navPrev10" @prev="navPrev" @next="navNext" @nextmany="navNext10" @last="navLast" @change="navJump">
       </w-navbar>
-      <button id="btn-approve" class="wl-approve-btn" title="12">13</button>
-      <button id="btn-save" class="wl-save-btn" title="14">15</button>
+      <w-button type="button" id="btn-approve" class="wl-approve-btn" title="12">13</w-button>
+      <w-button type="button" id="btn-save" class="wl-save-btn" title="14">15</w-button>
    </div>
 
    <!-- Unsaved changes dialog -->

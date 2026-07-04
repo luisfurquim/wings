@@ -56,22 +56,33 @@
    gap: 4px;
 }
 
-.wl-tab {
+/* Abas headless: w-button estilizado via ::part(root). As regras externas
+   vencem as internas do widget (cascade: árvore externa por último), então
+   hover/active reassertam o visual wlate e neutralizam lift/scale da skin. */
+w-button.wl-tab::part(root) {
    padding: 6px 18px;
    border: 1px solid var(--wl-tab-inactive-border);
    border-radius: 6px;
-   font-family: inherit;
    font-size: 0.85em;
    font-weight: 600;
-   cursor: pointer;
    transition: all 0.2s;
    background: var(--wl-tab-inactive-bg);
    color: var(--wl-tab-inactive-color);
 }
-.wl-tab:hover {
+w-button.wl-tab:hover::part(root) {
    box-shadow: var(--wl-btn-hover-shadow);
+   border: 1px solid var(--wl-tab-inactive-border);
+   background: var(--wl-tab-inactive-bg);
+   color: var(--wl-tab-inactive-color);
+   transform: none;
 }
-.wl-tab-active {
+w-button.wl-tab:active::part(root) {
+   background: var(--wl-tab-inactive-bg);
+   transform: none;
+}
+w-button.wl-tab-active::part(root),
+w-button.wl-tab-active:hover::part(root),
+w-button.wl-tab-active:active::part(root) {
    background: var(--wl-tab-active-bg);
    color: var(--wl-tab-active-color);
    border-color: var(--wl-tab-active-border);
@@ -187,7 +198,7 @@
 
 /* ── Save button ────────────────────────────────────────────────────────── */
 
-.wl-save-btn {
+w-button.wl-save-btn::part(root) {
    padding: 6px 20px;
    border: 1px solid var(--wl-save-border);
    border-radius: 6px;
@@ -195,20 +206,24 @@
    color: var(--wl-save-color);
    font-size: 0.85em;
    font-weight: 600;
-   cursor: pointer;
    transition: all 0.2s;
 }
-.wl-save-btn:hover {
+w-button.wl-save-btn:hover::part(root) {
    box-shadow: var(--wl-save-hover-shadow);
+   border: 1px solid var(--wl-save-border);
+   background: var(--wl-save-bg);
+   color: var(--wl-save-color);
+   transform: none;
 }
-.wl-save-btn:active {
+w-button.wl-save-btn:active::part(root) {
+   background: var(--wl-save-bg);
    transform: scale(0.97);
 }
 
 /* ── Approve button (mark current record revised + advance) ─────────────────
    Outlined sibling of Save: distinct action (per-record review state) so it
    reads as separate from Save (whole-file persist). Uses the primary accent. */
-.wl-approve-btn {
+w-button.wl-approve-btn::part(root) {
    padding: 6px 16px;
    border: 1px solid var(--wl-primary);
    border-radius: 6px;
@@ -216,13 +231,17 @@
    color: var(--wl-primary);
    font-size: 0.85em;
    font-weight: 600;
-   cursor: pointer;
    transition: all 0.2s;
 }
-.wl-approve-btn:hover {
+w-button.wl-approve-btn:hover::part(root) {
    background: color-mix(in srgb, var(--wl-primary) 10%, transparent);
+   border: 1px solid var(--wl-primary);
+   color: var(--wl-primary);
+   transform: none;
+   box-shadow: none;
 }
-.wl-approve-btn:active {
+w-button.wl-approve-btn:active::part(root) {
+   background: color-mix(in srgb, var(--wl-primary) 10%, transparent);
    transform: scale(0.97);
 }
 

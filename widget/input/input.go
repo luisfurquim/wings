@@ -4,7 +4,7 @@
 //
 // Features:
 //   - Full label/field/feedback anatomy with independent ::part() surfaces
-//   - Three layout variants: outlined (default), filled, underlined
+//   - Surface form controlled by the active Material skin (outlined by default)
 //   - Three sizes: sm, md, lg
 //   - Named slots: label (rich label), prefix (left icon/text), suffix (right icon/text),
 //     helper (rich helper text), error (rich error content)
@@ -12,8 +12,13 @@
 //   - Required indicator (*) via required="true"
 //   - Character count via maxlength attribute
 //   - Host state attributes for CSS hooks: [data-focused], [data-has-value],
-//     [data-empty], [data-invalid], [disabled], [variant], [size]
-//   - Fires @change on every input event; @clear when the × button is clicked
+//     [data-empty], [data-invalid], [disabled], [size]
+//   - Fires @input on every keystroke; @change when the field is left (native
+//     semantics); @clear when the × button is clicked
+//   - Form-associated: participates in a wrapping native <form> — validity
+//     (required/type/maxlength + bound Validator) gates form.checkValidity()
+//     and submission, and the value is submitted under the host's name
+//     attribute
 //
 // # Usage in parent template
 //
@@ -41,7 +46,6 @@
 //   - helper      — helper text below field; use slot="helper" for HTML
 //   - error        — error message below field; use slot="error" for HTML
 //   - maxlength   — max characters; enables character count display
-//   - variant     — outlined (default) | filled | underlined
 //   - size        — sm | md (default) | lg
 //   - required    — "true" to show the required mark (*)
 //   - clearable   — "true" to show the × button when field has a value
@@ -49,8 +53,19 @@
 //
 // # Events fired to parent
 //
-//	@change  — fires on every keystroke; args[0] = current string value
+//	@input   — fires on every keystroke; args[0] = current string value
+//	@change  — fires when the user leaves the field (blur), after the two-way
+//	           write-back, so a bound FieldCodec/Validator has already run;
+//	           args[0] = current string value
 //	@clear   — fires when the × clear button is clicked
+//
+// # Native form participation
+//
+// w-input is a form-associated custom element. Inside a <form>, an invalid
+// field (native constraints or a bound wings.Validator) blocks
+// form.checkValidity()/reportValidity() and submission; give the host a
+// name attribute and the value is included in the submitted form data.
+// Form reset does not clear the field yet (no formResetCallback wiring).
 //
 // # CSS Customisation
 //
@@ -58,8 +73,8 @@
 //   - "Vars"   — CSS custom properties (empty by default).
 //   - "Design" — Layout and structure rules.
 //
-// Key tokens consumed: --wings-input-bg, --wings-input-bg-filled,
-// --wings-input-color, --wings-input-placeholder-color,
+// Key tokens consumed: --wings-input-bg, --wings-input-color,
+// --wings-input-placeholder-color,
 // --wings-input-border, --wings-input-border-focus, --wings-input-border-error,
 // --wings-input-label-color, --wings-input-label-color-focus,
 // --wings-input-label-color-error, --wings-input-helper-color,
@@ -69,6 +84,12 @@
 // --wings-remover-hover-color, --wings-radius-md, --wings-border,
 // --wings-border-focus, --wings-surface, --wings-text, --wings-text-muted,
 // --wings-text-light, --wings-focus-ring, --wings-transition-fast.
+//
+// Material tokens (set by the active Material skin):
+// --wings-input-material-border-top/right/bottom/left,
+// --wings-input-material-radius, --wings-input-material-bg,
+// --wings-input-material-padding-x,
+// --wings-input-material-focus-shadow, --wings-input-material-focus-shadow-error.
 //
 // Key parts exposed: ::part(root), ::part(label-wrap), ::part(label),
 // ::part(required-mark), ::part(field), ::part(prefix), ::part(input),
@@ -81,6 +102,7 @@
 //	[data-has-value] — present while value is non-empty
 //	[data-empty]     — present while value is empty
 //	[data-invalid]   — present when the error attribute is non-empty
+//	[size]           — "sm" | "md" | "lg" (default "md")
 //
 // Floating label example (external CSS only, no Go changes needed):
 //
@@ -141,15 +163,34 @@ func init() {
 	G.Set(3)
 	cssParts[0].Content = varsCSS
 	cssParts[1].Content = designCSS
-	wings.Register(
+	wings.RegisterWithOpts(
 		elementTag,
 		htmlContent,
 		buildCSS(),
+		// Form-associated: the host participates in a wrapping native <form>.
+		// syncValidity mirrors the inner <input>'s ValidityState into
+		// ElementInternals, so form.checkValidity()/reportValidity() see the
+		// field, and setFormValue puts the value in the submitted data.
+		wings.ComponentOpts{FormAssociated: true},
 		func() wings.PranaMod { return &Input{} },
 		"type", "label", "placeholder", "value",
 		"helper", "error", "maxlength",
-		"variant", "size", "required", "clearable",
+		"size", "required", "clearable",
 	)
+	// On a SetLang language switch the slotted error messages are re-translated;
+	// refresh the native validity message for any currently-invalid instance by
+	// re-resolving its id and re-setting the error attribute (the host
+	// MutationObserver mirrors it to setCustomValidity).
+	wings.OnRetranslate(elementTag, func(el js.Value) {
+		if !el.Call("hasAttribute", "data-invalid-ref").Bool() {
+			return
+		}
+		id := el.Call("getAttribute", "data-invalid-ref").String()
+		if id == "" {
+			return
+		}
+		el.Call("setAttribute", "error", resolveErrorMessage(el, id))
+	})
 	G.Logf(3, "w-input: module registered\n")
 }
 
@@ -190,7 +231,6 @@ func (in *Input) InitData() map[string]any {
 		"helper":      "",
 		"error":       "",
 		"maxlength":   "",
-		"variant":     "outlined",
 		"size":        "md",
 		// Boolean attrs — use "true" value from HTML: required="true" clearable="true"
 		"required":  false,
@@ -211,25 +251,26 @@ func (in *Input) Render(obj *wings.PranaObj) {
 	// Reflect initial boolean attributes to the inner <input>.
 	reflectInputAttrs(obj.Element, inp)
 
-	// Watch for dynamic disabled/readonly/required changes on the host.
-	onHostMutation := js.FuncOf(func(_ js.Value, _ []js.Value) any {
-		reflectInputAttrs(obj.Element, inp)
-		return nil
-	})
-	mo := js.Global().Get("MutationObserver").New(onHostMutation)
-	mo.Call("observe", obj.Element, map[string]any{
+	// Watch host attribute changes: disabled/readonly/required reflect to the
+	// inner input; data-invalid-ref (set by the two-way binding when the bound
+	// value validates) and error drive native validity and the visible message.
+	// dom.Observe registers the observer for auto-release on disconnect.
+	dom.Observe(obj.Element, map[string]any{
 		"attributes":      true,
-		"attributeFilter": []any{"disabled", "readonly", "required"},
+		"attributeFilter": []any{"disabled", "readonly", "required", "aria-label", "data-invalid-ref", "error"},
+	}, func(_ js.Value, _ []js.Value) any {
+		reflectInputAttrs(obj.Element, inp)
+		syncValidity(obj.Element, inp)
+		return nil
 	})
 
 	// Set initial host state attributes.
 	initVal, _ := obj.This.Get("value").(string)
+	obj.Element.Set("value", initVal)
 	setValueHostAttrs(obj.Element, initVal)
 
-	// Set initial error host attribute.
-	if errVal, _ := obj.This.Get("error").(string); errVal != "" {
-		obj.Element.Call("setAttribute", "data-invalid", "")
-	}
+	// Reconcile initial validity/error state from current host attributes.
+	syncValidity(obj.Element, inp)
 
 	// Recompute derived state from the initial value.
 	updateDerived(obj, initVal)
@@ -243,6 +284,16 @@ func (in *Input) Render(obj *wings.PranaObj) {
 
 	dom.AddEvent(inp, "blur", func(_ js.Value, _ []js.Value) any {
 		obj.Element.Call("removeAttribute", "data-focused")
+		// Expose the current value as a host property and fire a native change
+		// so the parent's two-way `&value` binding (enabled for custom elements)
+		// writes back to the parent data map on blur — the moment a bound
+		// FieldCodec/Validator runs.
+		obj.Element.Set("value", inp.Get("value"))
+		obj.Element.Call("dispatchEvent", js.Global().Get("Event").New("change"))
+		// Native semantics: @change fires when the field is left, not per
+		// keystroke (that is @input). Fired after the two-way write-back, so a
+		// parent handler already sees the parsed/validated value in its map.
+		obj.Trigger("change", inp.Get("value").String())
 		return nil
 	}, false, false)
 
@@ -253,9 +304,15 @@ func (in *Input) Render(obj *wings.PranaObj) {
 		// calls obj.This.Set(...) and sync runs, it sees the current value and
 		// does not overwrite the input with the stale reactive value.
 		obj.This.M["value"] = val
+		// Keep the host's `value` property current so the parent two-way binding
+		// reads the live value when change fires on blur.
+		obj.Element.Set("value", val)
 		setValueHostAttrs(obj.Element, val)
 		updateDerived(obj, val)
-		obj.Trigger("change", val)
+		// Native constraints (required/type/maxlength) change as the user
+		// types; refresh the form-facing validity mirror.
+		syncValidity(obj.Element, inp)
+		obj.Trigger("input", val)
 		return nil
 	}, false, false)
 
@@ -267,6 +324,7 @@ func (in *Input) Render(obj *wings.PranaObj) {
 			obj.This.Set("clearable_show", false)
 			obj.This.Set("value_len", 0)
 			setValueHostAttrs(obj.Element, "")
+			syncValidity(obj.Element, inp)
 			obj.Trigger("clear")
 			inp.Call("focus")
 			return nil
@@ -278,7 +336,115 @@ func (in *Input) Render(obj *wings.PranaObj) {
 	setupSlotWrapper(obj.Dom, "slot[name='suffix']", ".inp-suffix")
 }
 
-// reflectInputAttrs copies disabled, readonly, required from the host to the inner <input>.
+// syncValidity reconciles the host's validation state with the inner input.
+//
+// When data-invalid-ref is present (set by the two-way binding for a
+// Validator-bound value), it resolves the message id to translated text and
+// writes it to the error attribute — an empty id means valid, so the error is
+// cleared. It then mirrors the error attribute to the data-invalid host hook and
+// to the inner input's native setCustomValidity (empty message = valid).
+//
+// A manual error attribute (set by the webdev, no data-invalid-ref) is honoured
+// too: it gets the same native validity and data-invalid treatment.
+func syncValidity(host, inp js.Value) {
+	if host.Call("hasAttribute", "data-invalid-ref").Bool() {
+		id := host.Call("getAttribute", "data-invalid-ref").String()
+		text := ""
+		if id != "" {
+			text = resolveErrorMessage(host, id)
+		}
+		switch {
+		case text == "" && host.Call("hasAttribute", "error").Bool():
+			host.Call("removeAttribute", "error") // re-enters the observer; resolves below
+		case text != "" && attrOrEmpty(host, "error") != text:
+			host.Call("setAttribute", "error", text)
+		}
+	}
+
+	errMsg := attrOrEmpty(host, "error")
+	invalid := host.Call("hasAttribute", "data-invalid").Bool()
+	if errMsg != "" && !invalid {
+		host.Call("setAttribute", "data-invalid", "")
+	} else if errMsg == "" && invalid {
+		host.Call("removeAttribute", "data-invalid")
+	}
+	inp.Call("setCustomValidity", errMsg)
+	// Mirror validity to ARIA so assistive tech announces the state; the
+	// visible message is wired via aria-describedby + role="alert" in the
+	// template.
+	if errMsg != "" {
+		inp.Call("setAttribute", "aria-invalid", "true")
+	} else {
+		inp.Call("removeAttribute", "aria-invalid")
+	}
+	mirrorValidity(host, inp)
+}
+
+// validityFlags are the ValidityState members mirrored from the inner <input>
+// into the host's ElementInternals.
+var validityFlags = []string{
+	"valueMissing", "typeMismatch", "patternMismatch", "tooLong", "tooShort",
+	"rangeUnderflow", "rangeOverflow", "stepMismatch", "badInput", "customError",
+}
+
+// mirrorValidity relays the inner <input>'s ValidityState — native constraints
+// (required/type/maxlength, already reflected onto it) plus the customError
+// set from a bound Validator — into the host's ElementInternals, so a wrapping
+// native <form> sees the field: checkValidity() gates submission and
+// reportValidity() anchors the browser bubble on the inner input, with the
+// browser's own localized message for native constraints. No-op when the page
+// runs an old prana_helper.js without form-associated support.
+func mirrorValidity(host, inp js.Value) {
+	internals := host.Get("_internals")
+	if !internals.Truthy() {
+		return
+	}
+	validity := inp.Get("validity")
+	if validity.Get("valid").Bool() {
+		internals.Call("setValidity", map[string]any{})
+		return
+	}
+	flags := map[string]any{}
+	for _, f := range validityFlags {
+		if validity.Get(f).Bool() {
+			flags[f] = true
+		}
+	}
+	internals.Call("setValidity", flags, inp.Get("validationMessage"), inp)
+}
+
+// resolveErrorMessage maps a validation message id to its translated text.
+// Lookup order: a slotted `<span slot="errors" id="...">` in the host's light
+// DOM (translated in place by gen_i18n), then a document-level element with
+// that id (a shared message table), then the id itself as a last resort.
+//
+// The id comes from a Validator implementation — app data, not wings data — so
+// it is CSS-escaped before entering the selector: an unescaped quote or
+// bracket would make querySelector throw, and a thrown JS exception panics the
+// whole WASM app.
+func resolveErrorMessage(host js.Value, id string) string {
+	esc := js.Global().Get("CSS").Call("escape", id).String()
+	sel := "[slot=\"errors\"][id=\"" + esc + "\"]"
+	if el := host.Call("querySelector", sel); el.Truthy() {
+		return strings.TrimSpace(el.Get("textContent").String())
+	}
+	if el := js.Global().Get("document").Call("getElementById", id); el.Truthy() {
+		return strings.TrimSpace(el.Get("textContent").String())
+	}
+	return id
+}
+
+// attrOrEmpty returns the value of attribute name, or "" if absent.
+func attrOrEmpty(el js.Value, name string) string {
+	if el.Call("hasAttribute", name).Bool() {
+		return el.Call("getAttribute", name).String()
+	}
+	return ""
+}
+
+// reflectInputAttrs copies disabled, readonly, required (presence) and
+// aria-label (value — a label-less host, e.g. a grid cell, names the real
+// control this way) from the host to the inner <input>.
 func reflectInputAttrs(host, inp js.Value) {
 	for _, attr := range []string{"disabled", "readonly", "required"} {
 		if host.Call("hasAttribute", attr).Bool() {
@@ -287,9 +453,15 @@ func reflectInputAttrs(host, inp js.Value) {
 			inp.Call("removeAttribute", attr)
 		}
 	}
+	if host.Call("hasAttribute", "aria-label").Bool() {
+		inp.Call("setAttribute", "aria-label", host.Call("getAttribute", "aria-label").String())
+	} else {
+		inp.Call("removeAttribute", "aria-label")
+	}
 }
 
-// setValueHostAttrs sets data-has-value / data-empty on the host element.
+// setValueHostAttrs sets data-has-value / data-empty on the host element and
+// keeps the form submission value (ElementInternals.setFormValue) current.
 func setValueHostAttrs(host js.Value, val string) {
 	if val != "" {
 		host.Call("setAttribute", "data-has-value", "")
@@ -297,6 +469,9 @@ func setValueHostAttrs(host js.Value, val string) {
 	} else {
 		host.Call("removeAttribute", "data-has-value")
 		host.Call("setAttribute", "data-empty", "")
+	}
+	if internals := host.Get("_internals"); internals.Truthy() {
+		internals.Call("setFormValue", val)
 	}
 }
 

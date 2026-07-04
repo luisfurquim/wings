@@ -28,7 +28,11 @@
 //   - variant   — secondary (default) | primary | ghost | danger | success
 //   - size      — sm | md (default) | lg
 //   - shape     — default | pill | square
+//   - type      — like native <button>: inside a <form>, a click submits it
+//     (via requestSubmit, so constraint validation runs first); type="button"
+//     opts out. Outside a form the attribute is irrelevant.
 //   - loading   — "true" to show spinner and keep button non-interactive
+//     (also suppresses form submission)
 //   - disabled  — standard HTML (reflected to inner <button>; CSS handles visual)
 //
 // # Events fired to parent
@@ -104,10 +108,13 @@ func init() {
 	G.Set(3)
 	cssParts[0].Content = varsCSS
 	cssParts[1].Content = designCSS
-	wings.Register(
+	wings.RegisterWithOpts(
 		elementTag,
 		htmlContent,
 		buildCSS(),
+		// Form-associated so internals.form resolves the owning <form>: like a
+		// native <button>, w-button submits it on click (type="button" opts out).
+		wings.ComponentOpts{FormAssociated: true},
 		func() wings.PranaMod { return &Button{} },
 		"variant", "size", "shape", "loading",
 	)
@@ -161,15 +168,38 @@ func (b *Button) Render(obj *wings.PranaObj) {
 	reflectDisabled(obj.Element, btn)
 
 	// Watch for dynamic disabled changes on the host element.
-	onMutation := js.FuncOf(func(_ js.Value, _ []js.Value) any {
+	// dom.Observe registers the observer for auto-release on disconnect.
+	dom.Observe(obj.Element, map[string]any{
+		"attributes":      true,
+		"attributeFilter": []any{"disabled"},
+	}, func(_ js.Value, _ []js.Value) any {
 		reflectDisabled(obj.Element, btn)
 		return nil
 	})
-	mo := js.Global().Get("MutationObserver").New(onMutation)
-	mo.Call("observe", obj.Element, map[string]any{
-		"attributes":      true,
-		"attributeFilter": []any{"disabled"},
-	})
+
+	// Native-like form submission: the inner <button> lives in the shadow DOM,
+	// so its click cannot submit a light-DOM <form> by itself. Mirror the
+	// platform default — a button inside a form submits it unless
+	// type="button" — via the form-associated internals. requestSubmit runs
+	// constraint validation first, so invalid form-associated fields (w-input)
+	// block it and get the native bubble.
+	dom.AddEvent(btn, "click", func(_ js.Value, _ []js.Value) any {
+		host := obj.Element
+		typ := host.Call("getAttribute", "type")
+		if (typ.Type() == js.TypeString && typ.String() == "button") ||
+			host.Call("hasAttribute", "disabled").Bool() ||
+			host.Call("hasAttribute", "loading").Bool() {
+			return nil
+		}
+		internals := host.Get("_internals")
+		if !internals.Truthy() {
+			return nil
+		}
+		if form := internals.Get("form"); form.Truthy() {
+			form.Call("requestSubmit")
+		}
+		return nil
+	}, false, false)
 
 	// Show prefix/suffix slot wrappers only when slot content is assigned.
 	setupSlotWrapper(obj.Dom, "slot[name='prefix']", ".btn-prefix")

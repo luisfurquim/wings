@@ -21,6 +21,34 @@ func RetranslateAll() {
 			retranslateInstance(el)
 		}
 	}
+	// Hooks run only after EVERY instance re-rendered: a hook may read text
+	// owned by another instance — w-input resolves its validity message from a
+	// slotted span that belongs to the parent's template — and Go's random map
+	// iteration order would otherwise make that read stale nondeterministically.
+	for tag, instances := range instanceRegistry {
+		hook := retranslateHooks[tag]
+		if hook == nil {
+			continue
+		}
+		for _, el := range instances {
+			hook(el)
+		}
+	}
+}
+
+// retranslateHooks maps a custom-element tag to a callback invoked for each of
+// its live instances right after RetranslateAll re-renders them. Widgets that
+// hold translated state outside template binding (e.g. a native validation
+// message applied via setCustomValidity) register here to refresh it on a
+// SetLang-driven language switch.
+var retranslateHooks = map[string]func(js.Value){}
+
+// OnRetranslate registers fn to run for every live instance of tag after a
+// SetLang re-translation. A later call for the same tag overwrites the previous
+// hook. Used by w-input to refresh its native validity message when the locale
+// changes while a field is invalid.
+func OnRetranslate(tag string, fn func(js.Value)) {
+	retranslateHooks[tag] = fn
 }
 
 // retranslateInstance walks one custom element's shadow tree in lockstep

@@ -62,10 +62,18 @@
 
   <!-- ── w-input ─────────────────────────────────────────────────────────── -->
   <section>
-    <h3>w-input — variantes</h3>
-    <w-input label="Outlined (padrão)" placeholder="Digite aqui…" variant="outlined"></w-input>
-    <w-input label="Filled" placeholder="Digite aqui…" variant="filled"></w-input>
-    <w-input label="Underlined" placeholder="Digite aqui…" variant="underlined"></w-input>
+    <h3>w-input — forma (Material skin)</h3>
+    <w-input label="Campo de texto" placeholder="Digite aqui…"></w-input>
+    <w-input label="Com prefixo" placeholder="buscar…">
+      <svg slot="prefix" width="14" height="14" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+    </w-input>
+    <p style="font-size:0.8em;color:var(--wings-text-muted,#666);margin:0">
+      A forma dos campos (outlined · filled · underlined) é controlada pelo
+      skin Material ativo no seletor de skins acima.
+    </p>
   </section>
 
   <section>
@@ -92,6 +100,27 @@
     <w-input size="sm" label="Pequeno" placeholder="sm"></w-input>
     <w-input size="md" label="Médio (padrão)" placeholder="md"></w-input>
     <w-input size="lg" label="Grande" placeholder="lg"></w-input>
+  </section>
+
+  <section>
+    <h3>w-input — validação tipada (em Go)</h3>
+    <p style="font-size:0.8em;color:var(--wings-text-muted,#666);margin:0">
+      Os campos estão ligados a tipos Go com <code>&amp;value</code>; ao sair do campo,
+      o Go valida e a mensagem (vinda do HTML, traduzível) aparece no balão nativo.
+      O formulário é um <code>&lt;form&gt;</code> nativo: enquanto houver campo
+      inválido, o submit é bloqueado pelo próprio browser.
+    </p>
+    <form id="validation-form">
+      <w-input name="email" label="Email" type="email" required="true" &value="{{demo_email}}">
+        <span slot="errors" id="email-bad">Endereço de email inválido</span>
+      </w-input>
+      <w-input name="age" label="Idade" required="true" &value="{{demo_age}}">
+        <span slot="errors" id="age-nan">Digite um número</span>
+        <span slot="errors" id="age-bad">A idade deve estar entre 0 e 120</span>
+      </w-input>
+      <w-button variant="primary" id="validation-submit">Enviar</w-button>
+      <p ?form_sent style="color:var(--wings-success,#2e7d32);margin:4px 0 0">Formulário válido — enviado!</p>
+    </form>
   </section>
 
 </div>

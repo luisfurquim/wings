@@ -34,8 +34,10 @@ import (
 	// Atmosphere
 	_ "github.com/luisfurquim/wings/skins/glass"
 
+	_ "github.com/luisfurquim/wings/widget/button"
 	_ "github.com/luisfurquim/wings/widget/combobox"
 	_ "github.com/luisfurquim/wings/widget/dialog"
+	_ "github.com/luisfurquim/wings/widget/input"
 	_ "github.com/luisfurquim/wings/widget/navbar"
 	_ "github.com/luisfurquim/wings/widget/skinswitcher"
 

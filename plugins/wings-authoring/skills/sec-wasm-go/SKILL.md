@@ -50,9 +50,12 @@ this is what *you* still own.
   `innerHTML` / `outerHTML` / `insertAdjacentHTML` before shipping.
 - `js.FuncOf` callbacks pin JS objects and keep the DOM alive. WINGS frees these
   for you on disconnect — its own (two-way `&attr` bindings, the render
-  goroutine) *and* the listeners you register with `dom.AddEvent` under the
-  element. What it cannot reach into is a goroutine loop you launched — see the
-  teardown caveat below.
+  goroutine) *and* the listeners you register with `dom.AddEvent` and the
+  MutationObservers you register with `dom.Observe` under the element. Never
+  build a `MutationObserver` by hand (`js.Global().Get("MutationObserver")`) —
+  its `js.FuncOf` pins the Go closure forever; use `dom.Observe`. What WINGS
+  cannot reach into is a goroutine loop you launched — see the teardown caveat
+  below.
 - Add an **origin check** to any `postMessage`/cross-window listener you
   register before trusting `event.data`.
 
@@ -75,9 +78,10 @@ this is what *you* still own.
     WINGS can't reach into your goroutine. Guard them with
     `obj.Element.Get("isConnected").Bool()` and exit when false (see
     `wings-component`) — that poll is the only disconnect signal you get.
-  - **Native `dom.AddEvent` listeners** are freed for you on disconnect, so a
-    component created and destroyed repeatedly won't leak them. You may still
-    `dom.RmEvent` early if you like — it's idempotent.
+  - **Native `dom.AddEvent` listeners and `dom.Observe` observers** are freed
+    for you on disconnect, so a component created and destroyed repeatedly
+    won't leak them. You may still `dom.RmEvent` / `dom.RmObserver` early if
+    you like — both are idempotent.
 - **Tooling gaps.** `golint`/`go vet` and Go Report Card skip `//go:build js`
   files; govulncheck's native pass misses js-only imports. Compensate: run
   `GOOS=js GOARCH=wasm go vet ./...`, scan with the js imports mode too (see
@@ -94,8 +98,9 @@ this is what *you* still own.
 - [ ] No panic on any external input path — every `js.Value` type-checked first
 - [ ] No untrusted string into `innerHTML`/`outerHTML`/`insertAdjacentHTML`
 - [ ] No secret material embedded in wasm/JS or logged to the console
-- [ ] Repeating goroutine loops bounded by `isConnected` (bindings and
-      `dom.AddEvent` listeners are freed for you on disconnect)
+- [ ] Repeating goroutine loops bounded by `isConnected` (bindings,
+      `dom.AddEvent` listeners and `dom.Observe` observers are freed for you
+      on disconnect)
 - [ ] Pure logic lives in a portable package (lintable, fuzzable)
 - [ ] `<script>` tags carry SRI; runtime-fetched JSON is signed
 

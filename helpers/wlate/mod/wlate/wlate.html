@@ -4,8 +4,10 @@
    <div class="wl-status">
       <span class="wl-pending">Pendentes: <strong>{{pending_count}}</strong> de {{total_count}}</span>
       <div class="wl-tabs">
-         <button type="button" class="wl-tab" id="wl-tab-text" data-tab="text">Texto</button>
-         <button type="button" class="wl-tab" id="wl-tab-inflection" data-tab="inflection">Inflexões</button>
+         <!-- w-button (não w-tabbutton): o w-tabs daqui é headless de propósito —
+              o clique passa pelo dirty-check do wlate antes de trocar a aba. -->
+         <w-button type="button" class="wl-tab" id="wl-tab-text" data-tab="text">Texto</w-button>
+         <w-button type="button" class="wl-tab" id="wl-tab-inflection" data-tab="inflection">Inflexões</w-button>
       </div>
       <skin-switcher></skin-switcher>
    </div>
@@ -61,8 +63,8 @@
           @last="navLast"
           @change="navJump">
       </w-navbar>
-      <button id="btn-approve" class="wl-approve-btn" title="Marcar como revisado e avançar (Alt+R)">✓ Aprovar</button>
-      <button id="btn-save" class="wl-save-btn" title="Salvar (Ctrl+S)">Salvar</button>
+      <w-button type="button" id="btn-approve" class="wl-approve-btn" title="Marcar como revisado e avançar (Alt+R)">✓ Aprovar</w-button>
+      <w-button type="button" id="btn-save" class="wl-save-btn" title="Salvar (Ctrl+S)">Salvar</w-button>
    </div>
 
    <!-- Unsaved changes dialog -->

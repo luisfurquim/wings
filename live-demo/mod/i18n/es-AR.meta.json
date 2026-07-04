@@ -516,56 +516,168 @@
     "ctxdetail": "h3@tabs/widgets/widgetstab.html:65:9"
   },
   {
-    "context": "tabs/widgets/widgetstab.html:66:54",
-    "ctxdetail": "w-input[placeholder]@tabs/widgets/widgetstab.html:66:54<br/>w-input[placeholder]@tabs/widgets/widgetstab.html:67:42<br/>w-input[placeholder]@tabs/widgets/widgetstab.html:68:46"
+    "context": "tabs/widgets/widgetstab.html:66:21",
+    "ctxdetail": "w-input[label]@tabs/widgets/widgetstab.html:66:21"
   },
   {
-    "context": "tabs/widgets/widgetstab.html:72:9",
-    "ctxdetail": "h3@tabs/widgets/widgetstab.html:72:9"
+    "context": "tabs/widgets/widgetstab.html:66:50",
+    "ctxdetail": "w-input[placeholder]@tabs/widgets/widgetstab.html:66:50"
   },
   {
-    "context": "tabs/widgets/widgetstab.html:73:54",
-    "ctxdetail": "w-input[placeholder]@tabs/widgets/widgetstab.html:73:54"
+    "context": "tabs/widgets/widgetstab.html:67:21",
+    "ctxdetail": "w-input[label]@tabs/widgets/widgetstab.html:67:21"
   },
   {
-    "context": "tabs/widgets/widgetstab.html:75:54",
-    "ctxdetail": "w-input[placeholder]@tabs/widgets/widgetstab.html:75:54"
+    "context": "tabs/widgets/widgetstab.html:67:47",
+    "ctxdetail": "w-input[placeholder]@tabs/widgets/widgetstab.html:67:47"
   },
   {
-    "context": "tabs/widgets/widgetstab.html:77:44",
-    "ctxdetail": "w-input[placeholder]@tabs/widgets/widgetstab.html:77:44"
+    "context": "tabs/widgets/widgetstab.html:73:76",
+    "ctxdetail": "p@tabs/widgets/widgetstab.html:73:76"
   },
   {
-    "context": "tabs/widgets/widgetstab.html:79:48",
-    "ctxdetail": "w-input[placeholder]@tabs/widgets/widgetstab.html:79:48"
+    "context": "tabs/widgets/widgetstab.html:80:9",
+    "ctxdetail": "h3@tabs/widgets/widgetstab.html:80:9"
   },
   {
-    "context": "tabs/widgets/widgetstab.html:83:9",
-    "ctxdetail": "h3@tabs/widgets/widgetstab.html:83:9"
+    "context": "tabs/widgets/widgetstab.html:81:21",
+    "ctxdetail": "w-input[label]@tabs/widgets/widgetstab.html:81:21"
   },
   {
-    "context": "tabs/widgets/widgetstab.html:84:56",
-    "ctxdetail": "w-input[placeholder]@tabs/widgets/widgetstab.html:84:56"
+    "context": "tabs/widgets/widgetstab.html:81:54",
+    "ctxdetail": "w-input[placeholder]@tabs/widgets/widgetstab.html:81:54"
   },
   {
-    "context": "tabs/widgets/widgetstab.html:86:62",
-    "ctxdetail": "w-input[placeholder]@tabs/widgets/widgetstab.html:86:62"
+    "context": "tabs/widgets/widgetstab.html:82:22",
+    "ctxdetail": "w-input[helper]@tabs/widgets/widgetstab.html:82:22"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:83:21",
+    "ctxdetail": "w-input[label]@tabs/widgets/widgetstab.html:83:21"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:83:54",
+    "ctxdetail": "w-input[placeholder]@tabs/widgets/widgetstab.html:83:54"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:85:21",
+    "ctxdetail": "w-input[label]@tabs/widgets/widgetstab.html:85:21"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:85:44",
+    "ctxdetail": "w-input[placeholder]@tabs/widgets/widgetstab.html:85:44"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:86:21",
+    "ctxdetail": "w-input[error]@tabs/widgets/widgetstab.html:86:21"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:87:21",
+    "ctxdetail": "w-input[label]@tabs/widgets/widgetstab.html:87:21"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:87:48",
+    "ctxdetail": "w-input[placeholder]@tabs/widgets/widgetstab.html:87:48"
   },
   {
     "context": "tabs/widgets/widgetstab.html:91:9",
     "ctxdetail": "h3@tabs/widgets/widgetstab.html:91:9"
   },
   {
-    "context": "tabs/widgets/widgetstab.html:92:20",
-    "ctxdetail": "w-input[placeholder]@tabs/widgets/widgetstab.html:92:20"
+    "context": "tabs/widgets/widgetstab.html:92:21",
+    "ctxdetail": "w-input[label]@tabs/widgets/widgetstab.html:92:21"
   },
   {
-    "context": "tabs/widgets/widgetstab.html:93:20",
-    "ctxdetail": "w-input[placeholder]@tabs/widgets/widgetstab.html:93:20"
+    "context": "tabs/widgets/widgetstab.html:92:56",
+    "ctxdetail": "w-input[placeholder]@tabs/widgets/widgetstab.html:92:56"
   },
   {
-    "context": "tabs/widgets/widgetstab.html:94:20",
-    "ctxdetail": "w-input[placeholder]@tabs/widgets/widgetstab.html:94:20"
+    "context": "tabs/widgets/widgetstab.html:94:21",
+    "ctxdetail": "w-input[label]@tabs/widgets/widgetstab.html:94:21"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:94:62",
+    "ctxdetail": "w-input[placeholder]@tabs/widgets/widgetstab.html:94:62"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:99:9",
+    "ctxdetail": "h3@tabs/widgets/widgetstab.html:99:9"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:100:31",
+    "ctxdetail": "w-input[label]@tabs/widgets/widgetstab.html:100:31"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:100:53",
+    "ctxdetail": "w-input[placeholder]@tabs/widgets/widgetstab.html:100:53"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:101:31",
+    "ctxdetail": "w-input[label]@tabs/widgets/widgetstab.html:101:31"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:101:62",
+    "ctxdetail": "w-input[placeholder]@tabs/widgets/widgetstab.html:101:62"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:102:31",
+    "ctxdetail": "w-input[label]@tabs/widgets/widgetstab.html:102:31"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:102:52",
+    "ctxdetail": "w-input[placeholder]@tabs/widgets/widgetstab.html:102:52"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:106:9",
+    "ctxdetail": "h3@tabs/widgets/widgetstab.html:106:9"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:107:76",
+    "ctxdetail": "p@tabs/widgets/widgetstab.html:107:76"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:114:72",
+    "ctxdetail": "code@tabs/widgets/widgetstab.html:114:72"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:0:0",
+    "ctxdetail": "p@tabs/widgets/widgetstab.html:0:0"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:0:0",
+    "ctxdetail": "code@tabs/widgets/widgetstab.html:0:0"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:0:0",
+    "ctxdetail": "p@tabs/widgets/widgetstab.html:0:0"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:0:0",
+    "ctxdetail": "w-input[label]@tabs/widgets/widgetstab.html:0:0"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:115:44",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:115:44"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:117:34",
+    "ctxdetail": "w-input[label]@tabs/widgets/widgetstab.html:117:34"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:118:42",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:118:42"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:119:42",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:119:42"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:121:58",
+    "ctxdetail": "w-button@tabs/widgets/widgetstab.html:121:58"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:122:79",
+    "ctxdetail": "p@tabs/widgets/widgetstab.html:122:79"
   },
   {
     "context": "tabs/wtest/wtesttab.html:2:7",
