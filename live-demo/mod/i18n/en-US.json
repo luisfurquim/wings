@@ -712,6 +712,94 @@
     "revised": false
   },
   {
+    "content": "w-text — rich-text editor",
+    "revised": true
+  },
+  {
+    "content": "\n      A ",
+    "revised": true
+  },
+  {
+    "content": "contenteditable",
+    "revised": true
+  },
+  {
+    "content": " editor with a toolbar. Everything typed,\n      pasted or loaded goes through a security filter:\n      scripts, event handlers and ",
+    "revised": true
+  },
+  {
+    "content": "javascript:",
+    "revised": true
+  },
+  {
+    "content": " links cannot exist in the document. The toolbar labels\n      are translatable — switch the language at the top and the toolbar follows.\n    ",
+    "revised": true
+  },
+  {
+    "content": "Biography",
+    "revised": true
+  },
+  {
+    "content": "Tell us a bit about yourself…",
+    "revised": true
+  },
+  {
+    "content": "Basic formatting is supported.",
+    "revised": true
+  },
+  {
+    "content": "Bold",
+    "revised": true
+  },
+  {
+    "content": "Italic",
+    "revised": true
+  },
+  {
+    "content": "Code",
+    "revised": true
+  },
+  {
+    "content": "Style",
+    "revised": true
+  },
+  {
+    "content": "Paragraph",
+    "revised": true
+  },
+  {
+    "content": "Heading 1",
+    "revised": true
+  },
+  {
+    "content": "Heading 2",
+    "revised": true
+  },
+  {
+    "content": "Heading 3",
+    "revised": true
+  },
+  {
+    "content": "Heading 4",
+    "revised": true
+  },
+  {
+    "content": "Heading 5",
+    "revised": true
+  },
+  {
+    "content": "Heading 6",
+    "revised": true
+  },
+  {
+    "content": "Quote",
+    "revised": true
+  },
+  {
+    "content": "Code block",
+    "revised": true
+  },
+  {
     "content": "In-web tester",
     "revised": true
   },

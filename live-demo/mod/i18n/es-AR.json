@@ -712,6 +712,94 @@
     "revised": false
   },
   {
+    "content": "w-text — editor de texto enriquecido",
+    "revised": true
+  },
+  {
+    "content": "\n      Un editor ",
+    "revised": true
+  },
+  {
+    "content": "contenteditable",
+    "revised": true
+  },
+  {
+    "content": " con barra de herramientas. Todo\n      lo que se escribe, pega o carga pasa por un filtro de seguridad:\n      los scripts, manejadores de eventos y enlaces ",
+    "revised": true
+  },
+  {
+    "content": "javascript:",
+    "revised": true
+  },
+  {
+    "content": " no\n      pueden existir en el documento. Las etiquetas de la barra son traducibles: cambiá\n      el idioma arriba y la barra acompaña.\n    ",
+    "revised": true
+  },
+  {
+    "content": "Biografía",
+    "revised": true
+  },
+  {
+    "content": "Contá algo sobre vos…",
+    "revised": true
+  },
+  {
+    "content": "Se admite formato básico.",
+    "revised": true
+  },
+  {
+    "content": "Negrita",
+    "revised": true
+  },
+  {
+    "content": "Cursiva",
+    "revised": true
+  },
+  {
+    "content": "Código",
+    "revised": true
+  },
+  {
+    "content": "Estilo",
+    "revised": true
+  },
+  {
+    "content": "Párrafo",
+    "revised": true
+  },
+  {
+    "content": "Título 1",
+    "revised": true
+  },
+  {
+    "content": "Título 2",
+    "revised": true
+  },
+  {
+    "content": "Título 3",
+    "revised": true
+  },
+  {
+    "content": "Título 4",
+    "revised": true
+  },
+  {
+    "content": "Título 5",
+    "revised": true
+  },
+  {
+    "content": "Título 6",
+    "revised": true
+  },
+  {
+    "content": "Cita",
+    "revised": true
+  },
+  {
+    "content": "Bloque de código",
+    "revised": true
+  },
+  {
     "content": "Probador in-web",
     "revised": true
   },

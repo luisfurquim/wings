@@ -47,6 +47,8 @@ func (w *WidgetsTab) InitData() map[string]any {
 		"demo_email": field.NewEmail("email-bad"),
 		"demo_age":   field.NewInt(0, 120, "age-nan", "age-bad"),
 		"form_sent":  false,
+		// Rich-text editor content, stored/read as EPUB-flavored HTML.
+		"demo_bio": field.NewText(),
 	}
 }
 

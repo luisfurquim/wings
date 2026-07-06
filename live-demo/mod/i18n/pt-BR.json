@@ -712,6 +712,94 @@
     "revised": false
   },
   {
+    "content": "w-text — editor de texto rico",
+    "revised": false
+  },
+  {
+    "content": "\n      Um editor ",
+    "revised": false
+  },
+  {
+    "content": "contenteditable",
+    "revised": false
+  },
+  {
+    "content": " com barra de ferramentas. Todo\n      conteúdo digitado, colado ou carregado passa por um filtro de segurança:\n      scripts, manipuladores de eventos e links ",
+    "revised": false
+  },
+  {
+    "content": "javascript:",
+    "revised": false
+  },
+  {
+    "content": " não\n      conseguem existir no documento. Os rótulos da barra são traduzíveis — troque\n      o idioma no topo e a barra acompanha.\n    ",
+    "revised": false
+  },
+  {
+    "content": "Biografia",
+    "revised": false
+  },
+  {
+    "content": "Conte um pouco sobre você…",
+    "revised": false
+  },
+  {
+    "content": "Formatação básica é suportada.",
+    "revised": false
+  },
+  {
+    "content": "Negrito",
+    "revised": false
+  },
+  {
+    "content": "Itálico",
+    "revised": false
+  },
+  {
+    "content": "Código",
+    "revised": false
+  },
+  {
+    "content": "Estilo",
+    "revised": false
+  },
+  {
+    "content": "Parágrafo",
+    "revised": false
+  },
+  {
+    "content": "Título 1",
+    "revised": false
+  },
+  {
+    "content": "Título 2",
+    "revised": false
+  },
+  {
+    "content": "Título 3",
+    "revised": false
+  },
+  {
+    "content": "Título 4",
+    "revised": false
+  },
+  {
+    "content": "Título 5",
+    "revised": false
+  },
+  {
+    "content": "Título 6",
+    "revised": false
+  },
+  {
+    "content": "Citação",
+    "revised": false
+  },
+  {
+    "content": "Bloco de código",
+    "revised": false
+  },
+  {
     "content": "Testador in-web",
     "revised": false
   },

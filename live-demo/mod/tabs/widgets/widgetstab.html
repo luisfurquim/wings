@@ -136,4 +136,34 @@
     </fieldset>
   </section>
 
+  <!-- ── w-text ──────────────────────────────────────────────────────────── -->
+  <section>
+    <h3>w-text — editor de texto rico</h3>
+    <p style="font-size:0.8em;color:var(--wings-text-muted,#666);margin:0">
+      Um editor <code>contenteditable</code> com barra de ferramentas. Todo
+      conteúdo digitado, colado ou carregado passa por um filtro de segurança:
+      scripts, manipuladores de eventos e links <code>javascript:</code> não
+      conseguem existir no documento. Os rótulos da barra são traduzíveis — troque
+      o idioma no topo e a barra acompanha.
+    </p>
+    <w-text label="Biografia" profile="basic"
+            placeholder="Conte um pouco sobre você…"
+            helper="Formatação básica é suportada."
+            &value="{{demo_bio}}">
+      <span slot="labels" id="wtext-bold">Negrito</span>
+      <span slot="labels" id="wtext-italic">Itálico</span>
+      <span slot="labels" id="wtext-code">Código</span>
+      <span slot="labels" id="wtext-block">Estilo</span>
+      <span slot="labels" id="wtext-block-p">Parágrafo</span>
+      <span slot="labels" id="wtext-block-h1">Título 1</span>
+      <span slot="labels" id="wtext-block-h2">Título 2</span>
+      <span slot="labels" id="wtext-block-h3">Título 3</span>
+      <span slot="labels" id="wtext-block-h4">Título 4</span>
+      <span slot="labels" id="wtext-block-h5">Título 5</span>
+      <span slot="labels" id="wtext-block-h6">Título 6</span>
+      <span slot="labels" id="wtext-block-quote">Citação</span>
+      <span slot="labels" id="wtext-block-pre">Bloco de código</span>
+    </w-text>
+  </section>
+
 </div>
