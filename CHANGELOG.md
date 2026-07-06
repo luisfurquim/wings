@@ -8,6 +8,49 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
+## [0.17.0] — 2026-07-06
+
+### Added
+- **`w-text` rich-text editor widget** — a pluggable `contenteditable` editor
+  in the `w-input` family (label/field/feedback anatomy, sizes, form
+  participation). It ships a **`basic` profile**: a bold/italic/code toggle
+  toolbar plus a block-style picker (`p`, `h1`–`h6`, `blockquote`, `pre`),
+  rendered with WINGS's own `w-button`/`w-combobox` (so an app must also
+  import those). Content is stored and submitted as EPUB-flavored HTML; bind
+  `&value` to a `wings.FieldCodec` (e.g. `field.NewText()`) and it seeds the
+  editor and reads back on blur. Native form lifecycle: `form.reset()` restores
+  the mount-time content **and** clears the undo history, `<fieldset disabled>`
+  makes the surface read-only.
+- **`wtext` package — the editor engine and plugin API.** Split portable /
+  js-wasm like the rest of WINGS: the plugin surface (`EditorCore`,
+  `EditionPlugin`/`ClipboardPlugin`/`ToolbarPlugin`, the safe-by-construction
+  `Fragment` builder, the sealed `Mark` constructors, exported toolbar helpers)
+  compiles and unit-tests under the native toolchain, so a plugin author can
+  test against a fake core without a browser; the js side is the mechanism
+  (filtering walker, event spine, undo). Selections address the DOM through
+  **opaque per-turn handles** (never a live node), so a plugin can neither hold
+  nor leak a reference outside the editable root. Undo/redo is the core's own,
+  DOM-level and bounded (100 steps / ~2 MB); `Txn` groups writes into one step.
+  `RegisterProfile(name, Profile{…})` makes a profile selectable from a template
+  via `profile="…"`.
+- **`epubhtml` package — the portable content-security policy** (the "EPUB
+  Content Document, no-script" profile). Pure Go (no `syscall/js`), so it is
+  unit-tested and **fuzzed** natively: element/attribute allowlists,
+  URL canonicalization (`http`/`https`/`mailto`/`#frag` only, userinfo
+  rejected, IDN→punycode so homograph spoofs become visible, mailto rebuilt
+  from validated parts to kill header injection, optional app `LinkPolicy`),
+  invisible/bidi-control stripping (Trojan-Source aware; keeps ZWJ/ZWNJ), and a
+  CSS declaration sanitizer for named classes. The editor sanitizes by
+  **allowlist-copy through the browser's own `DOMParser`** — never a second Go
+  HTML parse — so there is no parser differential for mutation-XSS to exploit,
+  and pasted/loaded/dropped markup all take that one road. Fuzzing found three
+  real IDN encode/decode asymmetries before ship.
+- **`wings.OnDisconnect(tag, hook)`** — a per-instance teardown hook (mirroring
+  `OnRetranslate`/`OnFormReset`), run when an instance leaves the DOM, for
+  resources that reach outside the element's subtree and so escape the built-in
+  `dom.AddEvent`/`dom.Observe` auto-release (a document-level listener, a
+  hand-built `MutationObserver`). `w-text` uses it to detach its editor.
+
 ## [0.16.16] — 2026-07-04
 
 ### Added

@@ -1,6 +1,6 @@
 ---
 name: wings-widgets
-description: Use WINGS's built-in widgets instead of hand-rolling them — button (w-button), text input (w-input), tabbed containers (w-tabs/w-tabbutton/w-tab), dialogs (w-dialog), multi-select combobox (w-combobox), record navbar (w-navbar), and the skin picker (skin-switcher). Use when an app needs any of these controls.
+description: Use WINGS's built-in widgets instead of hand-rolling them — button (w-button), text input (w-input), rich-text editor (w-text), tabbed containers (w-tabs/w-tabbutton/w-tab), dialogs (w-dialog), multi-select combobox (w-combobox), record navbar (w-navbar), and the skin picker (skin-switcher). Use when an app needs any of these controls.
 ---
 
 # Built-in widgets
@@ -227,6 +227,58 @@ import _ "github.com/luisfurquim/wings/widget/dialog"
 - `buttons` is the authoritative, ordered set; valid ids: `save`, `discard`,
   `overwrite`, `cancel`. Each fires the matching event (`@save`, …).
 - `title` optional; body goes in the default slot.
+
+## Rich-text editor — `w-text`
+
+```go
+import (
+	_ "github.com/luisfurquim/wings/widget/text"
+	_ "github.com/luisfurquim/wings/widget/button"   // toolbar is built from these
+	_ "github.com/luisfurquim/wings/widget/combobox"
+)
+```
+```html
+<w-text label="Biography" profile="basic" placeholder="Tell readers…"
+        &value="{{bio}}"></w-text>
+```
+A pluggable `contenteditable` editor in the `w-input` family. Bind `&value` to a
+`FieldCodec` (e.g. `field.NewText()`): it seeds the editor and reads back on
+blur, as EPUB-flavored HTML. Attributes: `label`, `profile` (default `"basic"`),
+`placeholder`, `helper`, `error`, `required`, `disabled`. Events: `@input`
+(coalesced, args[0] = HTML) and `@change` (on blur after write-back). Form
+lifecycle like `w-input` (`form.reset()` restores mount-time content **and**
+clears undo; `<fieldset disabled>` → read-only). `::part()` surfaces include
+`toolbar` and `editor`; host reflects `[data-focused]`/`[data-empty]`/…
+
+**Don't hand-roll a `contenteditable`** — the security model is the whole point
+and it is not something to reproduce ad hoc. Everything entering the document
+(typing, paste, drop, and the initial `&value`, which may be stored/untrusted)
+is sanitized by allowlist-copy through the browser's own `DOMParser`, so
+scripts, `on*` handlers, `style`, `<img>`/`<iframe>`, and `javascript:`/`data:`
+links can't exist in content. Native formatting (Ctrl+B, mobile callouts) is
+intercepted — formatting happens only via the toolbar; `<b>`/`<i>` canonicalize
+to `<strong>`/`<em>`. Undo/redo is the editor's own, DOM-level and bounded.
+
+The stock `basic` profile gives a bold/italic/code toolbar + a block picker
+(`p`, `h1`–`h6`, `blockquote`, `pre`). To customize, register your own
+`wtext.Profile` (toolbar/edition/clipboard plugins) and select it by name:
+
+```go
+wtext.RegisterProfile("post", wtext.Profile{
+    Toolbar:   []wtext.ToolbarPlugin{MyToolbar{}},
+    LinkPolicy: func(u *url.URL) error { /* restrict link hosts */ return nil },
+})
+```
+```html
+<w-text profile="post" &value="{{body}}"></w-text>
+```
+Build a toolbar by composing the exported helpers (`ToggleMark`, `MarkActive`,
+`BlockCurrent`, `BlockPick`) over the `wtext.EditorCore` API. The portable half
+of `wtext` (the `EditorCore` interface, the `Fragment` builder, the sealed
+`Mark` constructors) unit-tests against a fake core with the native toolchain —
+no browser needed. When you DO touch the js side, mind `sec-wasm-go`: a
+`js.Value.Call`/`Get` on a number/string primitive panics, and a panic is
+whole-app death.
 
 ## Combobox — `w-combobox`
 

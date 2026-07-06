@@ -47,6 +47,15 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
+### v0.17.0
+
+- **`w-text` rich-text editor** joins the widget family — a pluggable
+  `contenteditable` editor with a stock formatting toolbar, undo/redo, and
+  content stored as EPUB-flavored HTML. Every edit, paste and load is
+  sanitized by allowlist-copy through the browser's own parser (new portable,
+  fuzzed `epubhtml` policy package), so untrusted markup can't smuggle scripts,
+  event handlers, or homograph/`javascript:` links into the document.
+
 ### v0.16.16
 
 - **`w-input` completes its `<form>` citizenship** — `form.reset()` restores
@@ -73,13 +82,6 @@ Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
   `dom.AddEvent` are now auto-released when a component disconnects.
 - **Cross-tool reach** — Cursor, Kiro, and GitHub Copilot rule files now
   re-point to `AGENTS.md`, so non-Claude assistants get the same guide.
-
-### v0.16.12
-
-- **Continuous fuzzing of the parsers** — native Go fuzz targets for the
-  template/flex readers, codec, catalog aligner, signature verification, and
-  number/format parsing, run via `go run ./cmd/build fuzz`. The first run
-  already caught and fixed a currency-formatting bug.
 
 ---
 
@@ -131,6 +133,7 @@ Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 - [Built-in Widgets](#built-in-widgets)
   - [wings/widget/button — Button](#wingswidgetbutton--button-w-button)
   - [wings/widget/input — Text Field](#wingswidgetinput--text-field-w-input)
+  - [wings/widget/text — Rich-Text Editor](#wingswidgettext--rich-text-editor-w-text)
   - [wings/widget/combobox — Multi-select Combobox](#wingswidgetcombobox--multi-select-combobox)
   - [wings/widget/tabs — Tabbed Container](#wingswidgettabs--tabbed-container-w-tabs--w-tabbutton--w-tab)
   - [wings/widget/navbar — Record Navigation Toolbar](#wingswidgetnavbar--record-navigation-toolbar-w-navbar)
@@ -1706,6 +1709,89 @@ exposed via `::part()` (`root`, `label-wrap`, `label`, `required-mark`,
 `[data-empty]`, `[data-invalid]`, `[size]` — enough for a floating label or a
 danger border in external CSS without touching Go. Implements `Customizable`
 with `"Vars"` and `"Design"` parts.
+
+### wings/widget/text — Rich-Text Editor (`w-text`)
+
+`import _ "github.com/luisfurquim/wings/widget/text"`
+
+A pluggable `contenteditable` rich-text editor in the `w-input` family. It
+renders its toolbar with WINGS's own `w-button` and `w-combobox`, so import
+those too:
+
+```go
+import (
+    _ "github.com/luisfurquim/wings/widget/text"
+    _ "github.com/luisfurquim/wings/widget/button"
+    _ "github.com/luisfurquim/wings/widget/combobox"
+)
+```
+
+```html
+<w-text label="Biography" profile="basic"
+        placeholder="Tell readers about yourself…"
+        helper="Basic formatting is supported."
+        &value="{{bio}}">
+</w-text>
+```
+
+Bind `&value` to a [`FieldCodec`](#typed-two-way-binding-fieldcodec--validator)
+(e.g. `field.NewText()`): its `String()` seeds the editor and the content is
+read back on blur, as EPUB-flavored HTML. A plain string binding also works.
+
+**Attributes:**
+
+| Attribute | Description |
+|-----------|-------------|
+| `label` | Label text (activates the label zone); use `slot="label"` for HTML |
+| `profile` | Registered editor profile name (default `"basic"`) — see below |
+| `placeholder` | Shown while the editor is empty |
+| `helper` | Helper text below the field; use `slot="helper"` for HTML |
+| `error` | Error message below the field; use `slot="error"` for HTML |
+| `required` | `"true"` shows the required mark (*) |
+| `disabled` | standard HTML; makes the surface non-editable |
+
+**Events (via `@`):**
+
+| Event | Args | Description |
+|-------|------|-------------|
+| `@input` | current HTML string | Fires (coalesced) as the content changes |
+| `@change` | current HTML string | Fires on blur, after the two-way write-back — a bound `FieldCodec`/`Validator` has already run |
+
+**Security by construction.** Everything that enters the document — typing,
+paste, drag-and-drop, and the initial `&value` (which may be stored, untrusted
+data) — is sanitized by **allowlist-copy through the browser's own
+`DOMParser`**: a clean tree is built by copying only what the
+`epubhtml` policy admits, so scripts, event handlers, `style` attributes,
+`<img>`/`<iframe>`, and `javascript:`/`data:` links can't exist in editor
+content. Sanitizing with the same parser the browser will later use leaves no
+parser differential for mutation-XSS. Native formatting shortcuts (Ctrl+B,
+mobile callouts) are intercepted so formatting only ever happens through the
+toolbar; legacy `<b>`/`<i>` are canonicalized to `<strong>`/`<em>`. Links are
+canonicalized (IDN→punycode exposes homograph spoofs; `mailto` is rebuilt from
+validated parts to kill header injection), and a plain-`http` link is flagged
+with a `data-wings-insecure` badge. An app can further restrict link targets
+with a `Profile.LinkPolicy`.
+
+**Undo/redo** is the editor's own — DOM-level, bounded, and grouping each
+toolbar action into a single step. `Ctrl+Z`/`Ctrl+Y` are handled internally
+(the browser's own history would be incoherent with the filtered mutations).
+`form.reset()` restores the mount-time content and clears the undo history.
+
+**Profiles and plugins.** Behaviour is a `wtext.Profile` — collections of
+toolbar, edition, and clipboard plugins — registered by name and selected with
+`profile="…"`. The stock `basic` profile is a `BasicToolbar` (bold/italic/code
+toggles + a block-style picker for `p`, `h1`–`h6`, `blockquote`, `pre`). Write
+your own toolbar by composing the exported helpers (`ToggleMark`, `MarkActive`,
+`BlockCurrent`, …) over the `wtext.EditorCore` API; the portable half of the
+`wtext` package unit-tests against a fake core without a browser.
+
+**Theming.** Reads `--wings-text-*` plus the shared surface/text/radius/motion
+tokens, and follows the active [Material skin](#material-skins--widget-surface-form)
+like the other field widgets. Sub-elements are exposed via `::part()` (`root`,
+`label-wrap`, `label`, `required-mark`, `field`, `toolbar`, `editor`,
+`feedback`, `helper`, `error`), and the host reflects `[data-focused]`,
+`[data-has-value]`, `[data-empty]`, `[data-invalid]`, `[data-form-disabled]`.
+Implements `Customizable` with `"Vars"` and `"Design"` parts.
 
 ### wings/widget/combobox — Multi-select Combobox
 
