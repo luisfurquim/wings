@@ -114,6 +114,9 @@ func init() {
 	)
 	wings.OnFormReset(elementTag, formReset)
 	wings.OnFormDisabled(elementTag, formDisabled)
+	// On a SetLang switch the slotted toolbar labels are re-translated in
+	// place; re-render the toolbar so the buttons pick up the new language.
+	wings.OnRetranslate(elementTag, retranslate)
 	// Release the editor's document-level listener and own MutationObserver
 	// when the instance leaves the DOM (dom auto-release cannot reach them).
 	wings.OnDisconnect(elementTag, disconnect)
@@ -162,11 +165,12 @@ func (t *Text) InitData() map[string]any {
 // Keyed by the host's _pranaNodeID string.
 var editors = map[string]*binding{}
 
-// binding ties a host element to its Editor and initial content.
+// binding ties a host element to its Editor, toolbar and initial content.
 type binding struct {
 	host    js.Value
 	editor  *wtext.Editor
-	initial string // mount-time content, the form-reset default
+	tb      *toolbar // nil when the profile renders no toolbar
+	initial string   // mount-time content, the form-reset default
 }
 
 func (t *Text) Render(obj *wings.PranaObj) {
@@ -222,6 +226,7 @@ func (t *Text) Render(obj *wings.PranaObj) {
 	// Render the toolbar and keep its state fresh on selection changes.
 	if len(toolbarES) > 0 {
 		tb := newToolbar(obj, toolbarES[0], editor, prof)
+		b.tb = tb
 		editor.OnSelectionChange(tb.refresh)
 		tb.render()
 	}

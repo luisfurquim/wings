@@ -43,14 +43,20 @@ func newToolbar(obj *wings.PranaObj, container js.Value, editor *wtext.Editor, p
 	return &toolbar{obj: obj, host: obj.Element, container: container, editor: editor, profile: p}
 }
 
-// render draws every item of every toolbar plugin into the container.
+// render draws every item of every toolbar plugin into the container. It is
+// also the re-translation path: an OnRetranslate re-render rebuilds the
+// controls with freshly resolved labels, so the tracked slices are reset
+// first to avoid accumulating stale element references.
 func (t *toolbar) render() {
+	t.toggles = nil
+	t.selects = nil
 	t.container.Set("innerHTML", "") // static container; safe empty string
 	for _, plug := range t.profile.Toolbar {
 		for _, item := range plug.Items() {
 			t.renderItem(item)
 		}
 	}
+	t.refresh()
 }
 
 // renderItem draws one item by kind. The sealed ToolbarItem set means

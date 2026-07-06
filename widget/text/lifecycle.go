@@ -51,6 +51,16 @@ func applyDisabled(host, edit js.Value, on bool) {
 	}
 }
 
+// retranslate re-renders the toolbar after a SetLang switch so its buttons
+// re-resolve their labels against the now-translated slotted <span
+// slot="labels"> nodes. RetranslateAll runs this only after every instance
+// re-rendered, so those spans already carry the new language.
+func retranslate(host js.Value) {
+	if b, ok := bindingFor(host); ok && b.tb != nil {
+		b.tb.render()
+	}
+}
+
 // disconnect tears down the editor when the instance leaves the DOM: its
 // document-level selectionchange listener and hand-built MutationObserver
 // are not reachable by the runtime's subtree auto-release.

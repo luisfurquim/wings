@@ -1785,6 +1785,14 @@ your own toolbar by composing the exported helpers (`ToggleMark`, `MarkActive`,
 `BlockCurrent`, …) over the `wtext.EditorCore` API; the portable half of the
 `wtext` package unit-tests against a fake core without a browser.
 
+**Localized toolbar.** Toolbar labels are message ids resolved at render, so
+they translate like the rest of your UI. The editor ships built-in English
+fallbacks; to localize, provide `<span slot="labels" id="wtext-…">` nodes in
+the light DOM (translated in place by `gen_i18n`, exactly like `w-input`'s
+error slots) — ids are `wtext-bold`/`wtext-italic`/`wtext-code`/`wtext-block`
+and `wtext-block-p`/`-h1`…`-h6`/`-quote`/`-pre`. On a `SetLang` switch the
+toolbar re-resolves and updates in place.
+
 **Theming.** Reads `--wings-text-*` plus the shared surface/text/radius/motion
 tokens, and follows the active [Material skin](#material-skins--widget-surface-form)
 like the other field widgets. Sub-elements are exposed via `::part()` (`root`,

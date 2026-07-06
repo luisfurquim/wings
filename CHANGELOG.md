@@ -20,7 +20,9 @@ per-commit record see the git log and tags.
   `&value` to a `wings.FieldCodec` (e.g. `field.NewText()`) and it seeds the
   editor and reads back on blur. Native form lifecycle: `form.reset()` restores
   the mount-time content **and** clears the undo history, `<fieldset disabled>`
-  makes the surface read-only.
+  makes the surface read-only. Toolbar labels are translatable
+  (`<span slot="labels">` + built-in English fallback) and re-translate live
+  on `SetLang`.
 - **`wtext` package — the editor engine and plugin API.** Split portable /
   js-wasm like the rest of WINGS: the plugin surface (`EditorCore`,
   `EditionPlugin`/`ClipboardPlugin`/`ToolbarPlugin`, the safe-by-construction
