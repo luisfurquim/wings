@@ -112,7 +112,7 @@ func (e *Editor) textSlices(rng js.Value) []textSlice {
 		if !rng.Call("intersectsNode", node).Bool() {
 			continue
 		}
-		s := textSlice{node: node, end: node.Get("data").Get("length").Int()}
+		s := textSlice{node: node, end: node.Get("length").Int()}
 		if node.Equal(rng.Get("startContainer")) {
 			s.start = rng.Get("startOffset").Int()
 		}
@@ -130,7 +130,7 @@ func (e *Editor) textSlices(rng js.Value) []textSlice {
 // returning the exact node to act on.
 func carve(s textSlice) js.Value {
 	node := s.node
-	length := node.Get("data").Get("length").Int()
+	length := node.Get("length").Int()
 	if s.end < length {
 		node.Call("splitText", s.end)
 	}

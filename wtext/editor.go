@@ -159,7 +159,10 @@ func (e *Editor) contains(node js.Value) bool {
 // nodes, child count for elements — the DOM's own boundary-point rule.
 func nodeLength(node js.Value) int {
 	if node.Get("nodeType").Int() == 3 {
-		return node.Get("data").Get("length").Int()
+		// CharacterData.length: UTF-16 code units. Read it off the node,
+		// not off .data — .data is a JS string and Value.Get on a string
+		// panics (a panic is total loss here).
+		return node.Get("length").Int()
 	}
 	return node.Get("childNodes").Get("length").Int()
 }
@@ -233,6 +236,12 @@ func (e *Editor) SetContent(html string) error {
 	e.discardRecords()
 	e.undo.Clear()
 	return nil
+}
+
+// IsEmpty reports whether the document holds no user text — the pristine
+// single empty paragraph, whatever exact filler markup it carries.
+func (e *Editor) IsEmpty() bool {
+	return strings.TrimSpace(e.root.Get("textContent").String()) == ""
 }
 
 // clearContent resets the tree to the empty document: one empty paragraph

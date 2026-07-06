@@ -82,8 +82,10 @@ func (o *opChild) redo() {
 // bytes charges a rough per-node cost plus the retained text length.
 func (o *opChild) bytes() int {
 	n := 128
+	// textContent is a JS string; Value.Get on it would panic. len of its
+	// UTF-8 form is a fine approximation for a byte-budget heuristic.
 	if txt := o.node.Get("textContent"); txt.Truthy() {
-		n += txt.Get("length").Int() * 2
+		n += len(txt.String())
 	}
 	return n
 }

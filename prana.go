@@ -419,6 +419,11 @@ func elementDisconnected(self js.Value) {
 	tag := self.Get("_pranaTag").String()
 	G.Logf(3, "elementDisconnected: %s\n", tag)
 
+	// Per-instance teardown for resources reaching outside the subtree
+	// (document-level listeners, hand-built observers) that the auto-release
+	// below cannot see. Runs first, while the element is still intact.
+	elementDisconnectHook(self)
+
 	// Free native listeners the component wired via dom.AddEvent under this
 	// element. PranaMod has no teardown method, so without this an author's
 	// manual listener leaks across create/destroy cycles. Idempotent: safe
