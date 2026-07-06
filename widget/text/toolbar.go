@@ -139,11 +139,16 @@ func (t *toolbar) selectControl(it wtext.SelectItem) {
 		if err := it.Pick(t.editor, val); err != nil {
 			G.Logf(1, "w-text: block pick %q failed: %v\n", val, err)
 		}
+		// Focus-taking control: hand focus and the selection back to the
+		// editor now that the pick landed.
+		t.editor.RestoreSel()
 		t.afterAction()
 	})
 	cb.Call("setAttribute", "@change", key)
 
-	dom.AddEvent(cb, "mousedown", func(_ js.Value, _ []js.Value) any { return nil }, true, false)
+	// Unlike the buttons, the combobox MUST take focus — its dropdown opens
+	// on the inner input's focus and the user may type to filter. The
+	// editor's remembered selection keeps the pick anchored meanwhile.
 	t.container.Call("appendChild", cb)
 	if it.Current != nil {
 		t.selects = append(t.selects, trackedSelect{el: cb, current: it.Current})

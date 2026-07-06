@@ -22,7 +22,9 @@ per-commit record see the git log and tags.
   the mount-time content **and** clears the undo history, `<fieldset disabled>`
   makes the surface read-only. Toolbar labels are translatable
   (`<span slot="labels">` + built-in English fallback) and re-translate live
-  on `SetLang`.
+  on `SetLang`. Toggling a mark at a collapsed caret arms it as **pending**
+  (Word behaviour): the next typing comes out marked — or escapes the mark
+  when toggling off inside one — and moving the caret first disarms it.
 - **`wtext` package — the editor engine and plugin API.** Split portable /
   js-wasm like the rest of WINGS: the plugin surface (`EditorCore`,
   `EditionPlugin`/`ClipboardPlugin`/`ToolbarPlugin`, the safe-by-construction

@@ -7,8 +7,10 @@ import "syscall/js"
 // The undo machine has ONE capture pipeline: every mutation — native
 // typing, canonicalization, core methods, even Range.deleteContents —
 // is recorded by the MutationObserver and converted to invertible ops by
-// drainRecords. Core code therefore mutates the DOM freely and calls
-// commitWrite; it never bookkeeps ops by hand.
+// recordsToOps, reached via two roads that never overlap: callback
+// delivery (onMutations) and synchronous drains (takeOps). Core code
+// therefore mutates the DOM freely and calls commitWrite; it never
+// bookkeeps ops by hand.
 
 // jsOp is one invertible primitive mutation.
 type jsOp interface {
@@ -111,13 +113,23 @@ func removeIfChild(parent, node js.Value) {
 
 // ── Capture ─────────────────────────────────────────────────────────────
 
-// drainRecords converts the observer's pending MutationRecords into ops.
-// characterData and attribute records are coalesced (first oldValue →
+// takeOps returns every op captured since the last take: the composition
+// buffer (ops whose records were already delivered to the observer
+// callback) followed by a synchronous drain of the observer queue.
+// takeRecords preempts callback delivery, so each mutation is seen
+// exactly once — either here or in onMutations, never both.
+func (e *Editor) takeOps() []jsOp {
+	ops := e.bufOps
+	e.bufOps = nil
+	return append(ops, e.recordsToOps(e.observer.Call("takeRecords"))...)
+}
+
+// recordsToOps converts a MutationRecord list into ops. characterData and
+// attribute records are coalesced within the batch (first oldValue →
 // live value); childList records stay ordered — their sibling references
 // describe the DOM at mutation time, which is exactly the state undo
 // recreates by inverting later ops first.
-func (e *Editor) drainRecords() []jsOp {
-	records := e.observer.Call("takeRecords")
+func (e *Editor) recordsToOps(records js.Value) []jsOp {
 	n := records.Get("length").Int()
 	if n == 0 {
 		return nil
@@ -203,10 +215,12 @@ func (e *Editor) drainRecords() []jsOp {
 	return ops
 }
 
-// discardRecords drops pending records (used right after undo/redo apply
-// and content loads: those mutations must not capture themselves).
+// discardRecords drops pending records and the composition buffer (used
+// right after undo/redo apply and content loads: those mutations must not
+// capture themselves).
 func (e *Editor) discardRecords() {
 	e.observer.Call("takeRecords")
+	e.bufOps = nil
 }
 
 // ── Write bracketing ────────────────────────────────────────────────────
@@ -215,7 +229,7 @@ func (e *Editor) discardRecords() {
 // so the user's own typing and the plugin's mutation stay separate undo
 // steps.
 func (e *Editor) beginWrite() {
-	if ops := e.drainRecords(); len(ops) > 0 {
+	if ops := e.takeOps(); len(ops) > 0 {
 		e.pushNative(ops)
 	}
 }
@@ -223,7 +237,7 @@ func (e *Editor) beginWrite() {
 // commitWrite collects everything the core write just mutated into one
 // step — or into the open transaction.
 func (e *Editor) commitWrite() {
-	ops := e.drainRecords()
+	ops := e.takeOps()
 	if len(ops) == 0 {
 		return
 	}
@@ -239,7 +253,7 @@ func (e *Editor) commitWrite() {
 // Ctrl+Z undoes the canonicalized edit as one thing.
 func (e *Editor) pushNative(ops []jsOp) {
 	e.canonicalize()
-	ops = append(ops, e.drainRecords()...)
+	ops = append(ops, e.takeOps()...)
 	e.undo.Push(ops)
 }
 

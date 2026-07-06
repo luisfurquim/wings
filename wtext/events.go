@@ -50,7 +50,14 @@ var allowedInputTypes = map[string]bool{
 // explicitly.
 func (e *Editor) wire() {
 	e.observerFn = js.FuncOf(func(_ js.Value, args []js.Value) any {
-		e.guard("observer", func() { e.onMutations() })
+		// Delivery EMPTIES the observer queue: the records exist only in
+		// args[0] now, so they must be converted here, not re-queried via
+		// takeRecords (which would come back empty).
+		e.guard("observer", func() {
+			if len(args) > 0 {
+				e.onMutations(args[0])
+			}
+		})
 		return nil
 	})
 	e.observer = js.Global().Get("MutationObserver").New(e.observerFn)
@@ -99,12 +106,15 @@ func (e *Editor) wire() {
 
 	e.selListener = dom.AddEvent(e.doc, "selectionchange",
 		func(_ js.Value, _ []js.Value) any {
-			if e.onSelChange != nil {
-				if _, ok := e.Sel(); ok {
-					e.guard("selectionchange", e.onSelChange)
+			e.guard("selectionchange", func() {
+				e.checkPendingAnchor()
+				if e.onSelChange != nil {
+					if _, ok := e.Sel(); ok {
+						e.onSelChange()
+					}
 				}
-				e.endTurn()
-			}
+			})
+			e.endTurn()
 			return nil
 		}, false, false)
 }
@@ -135,6 +145,14 @@ func (e *Editor) guard(where string, fn func()) {
 // onBeforeInput enforces the inputType allowlist.
 func (e *Editor) onBeforeInput(ev js.Value) {
 	it := ev.Get("inputType").String()
+	// Armed pending marks intercept the first typing at the anchor and
+	// re-do it with the marks applied (pending.go). IME composition is
+	// not cancelable, so it falls through to the native path.
+	if it == "insertText" && len(e.pending) > 0 && !e.composing {
+		if e.insertPending(ev) {
+			return
+		}
+	}
 	if allowedInputTypes[it] {
 		return
 	}
@@ -243,12 +261,15 @@ func (e *Editor) onPasteLike(ev js.Value, dt js.Value) {
 
 // ── MutationObserver flush ──────────────────────────────────────────────
 
-// onMutations turns a batch of native edits into an undo step and
-// schedules the OnChanged broadcast.
-func (e *Editor) onMutations() {
+// onMutations turns a delivered batch of native edits into an undo step
+// and schedules the OnChanged broadcast. The converted ops ride through
+// bufOps: during IME composition they wait there for compositionend, and
+// takeOps folds them in front of any later synchronous drain.
+func (e *Editor) onMutations(records js.Value) {
 	if e.applying {
-		return // undo/redo application drains its own records
+		return // undo/redo application discards its own mutations
 	}
+	e.bufOps = append(e.bufOps, e.recordsToOps(records)...)
 	if e.composing {
 		return // settle once, on compositionend
 	}
@@ -258,7 +279,7 @@ func (e *Editor) onMutations() {
 // flushNative captures pending native mutations (canonicalizing inside
 // the same step) and schedules OnChanged.
 func (e *Editor) flushNative() {
-	ops := e.drainRecords()
+	ops := e.takeOps()
 	if len(ops) == 0 {
 		return
 	}
@@ -304,7 +325,7 @@ func (e *Editor) dispatchChanged() {
 		for _, p := range e.profile.Edition {
 			p.OnChanged(e, sel)
 		}
-		ops := e.drainRecords()
+		ops := e.takeOps()
 		if len(ops) == 0 {
 			return
 		}

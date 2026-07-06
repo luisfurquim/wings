@@ -25,7 +25,10 @@ func (e *Editor) Text(s Selection) (string, error) {
 	return rng.Call("toString").String(), nil
 }
 
-// InMark reports whether both ends of s sit inside a tag mark element.
+// InMark reports whether both ends of s sit inside a tag mark element. At
+// a collapsed caret a pending mark overrides the tree: an armed toggle
+// reads as already applied, so the toolbar reflects what the next typing
+// will produce.
 func (e *Editor) InMark(s Selection, tag string) (bool, error) {
 	from, err := e.resolve(s.From)
 	if err != nil {
@@ -34,6 +37,11 @@ func (e *Editor) InMark(s Selection, tag string) (bool, error) {
 	to, err := e.resolve(s.To)
 	if err != nil {
 		return false, err
+	}
+	if s.Collapsed() {
+		if p, ok := e.pending[strings.ToLower(tag)]; ok {
+			return p.on, nil
+		}
 	}
 	return e.markAncestor(from, tag).Truthy() &&
 		e.markAncestor(to, tag).Truthy(), nil
@@ -142,7 +150,9 @@ func carve(s textSlice) js.Value {
 
 // ── Writes ──────────────────────────────────────────────────────────────
 
-// Wrap applies a semantic mark to the text covered by s.
+// Wrap applies a semantic mark to the text covered by s. A collapsed s
+// arms the mark as pending instead: it applies to the next text typed at
+// the caret (see pending.go).
 func (e *Editor) Wrap(s Selection, m Mark) error {
 	if m.tag == "" {
 		return ErrBadMark
@@ -154,6 +164,10 @@ func (e *Editor) Wrap(s Selection, m Mark) error {
 			return err
 		}
 		href = canon
+	}
+	if s.Collapsed() {
+		m.href = href
+		return e.armPendingOn(s, m)
 	}
 	rng, err := e.rangeFor(s)
 	if err != nil {
@@ -181,10 +195,14 @@ func (e *Editor) Wrap(s Selection, m Mark) error {
 
 // Unwrap removes the mark tag from the text covered by s. Partially
 // covered mark elements are split so only the covered portion loses the
-// mark.
+// mark. A collapsed s arms a pending removal instead: the next text typed
+// at the caret escapes the mark (see pending.go).
 func (e *Editor) Unwrap(s Selection, tag string) error {
 	if !epubhtml.IsMark(tag) {
 		return ErrBadMark
+	}
+	if s.Collapsed() {
+		return e.armPendingOff(s, tag)
 	}
 	rng, err := e.rangeFor(s)
 	if err != nil {

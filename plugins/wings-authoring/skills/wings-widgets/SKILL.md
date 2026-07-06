@@ -258,6 +258,11 @@ scripts, `on*` handlers, `style`, `<img>`/`<iframe>`, and `javascript:`/`data:`
 links can't exist in content. Native formatting (Ctrl+B, mobile callouts) is
 intercepted — formatting happens only via the toolbar; `<b>`/`<i>` canonicalize
 to `<strong>`/`<em>`. Undo/redo is the editor's own, DOM-level and bounded.
+Toggling a mark with a collapsed caret arms it as **pending** (Word behaviour:
+the next typing comes out marked, or escapes the mark when toggling off inside
+one; moving the caret first disarms) — in plugin terms, `Wrap`/`Unwrap` on a
+collapsed selection arm instead of no-op, and `InMark` reads the armed state
+back so toolbar toggles light up correctly.
 
 The stock `basic` profile gives a bold/italic/code toolbar + a block picker
 (`p`, `h1`–`h6`, `blockquote`, `pre`). To customize, register your own

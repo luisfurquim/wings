@@ -135,3 +135,8 @@
   opacity: var(--wings-text-disabled-opacity, 0.55);
   pointer-events: none;
 }
+
+/* Hidden toolbar-label catalog (slot="labels"); resolved by id at runtime. */
+.wt-labels {
+  display: none;
+}

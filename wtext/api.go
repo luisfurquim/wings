@@ -64,6 +64,8 @@ type EditorCore interface {
 	// Text returns the plain text covered by s.
 	Text(s Selection) (string, error)
 	// InMark reports whether both ends of s sit inside a mark element tag.
+	// At a collapsed s an armed pending mark overrides the tree, so a
+	// toggle reads back what the next typing will produce.
 	InMark(s Selection, tag string) (bool, error)
 	// BlockType returns the tag of the block containing the start of s.
 	BlockType(s Selection) (string, error)
@@ -71,9 +73,13 @@ type EditorCore interface {
 	// carries the named class.
 	HasClass(s Selection, name string) (bool, error)
 
-	// Wrap applies a semantic mark to the text covered by s.
+	// Wrap applies a semantic mark to the text covered by s. A collapsed
+	// s arms the mark as pending: it applies to the next text typed at
+	// the caret and disarms if the caret moves first.
 	Wrap(s Selection, m Mark) error
-	// Unwrap removes the mark tag from the text covered by s.
+	// Unwrap removes the mark tag from the text covered by s. A collapsed
+	// s arms a pending removal: the next text typed at the caret escapes
+	// the mark.
 	Unwrap(s Selection, tag string) error
 	// SetBlock converts every block touched by s to tag. Attributes are
 	// re-filtered against the target tag's policy.
