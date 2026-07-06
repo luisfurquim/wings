@@ -1,0 +1,137 @@
+:host {
+  display: block;
+  font-family: inherit;
+}
+
+.wt-root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wings-text-gap, 0.35rem);
+}
+
+/* ── Label ─────────────────────────────────────────────────────────────── */
+
+.wt-label-wrap {
+  display: none;
+}
+:host([data-has-label]) .wt-label-wrap {
+  display: block;
+}
+.wt-label {
+  font-size: var(--wings-text-label-size, 0.85rem);
+  color: var(--wings-text-label-color, var(--wings-text-muted, #666));
+  font-weight: 500;
+}
+.wt-required {
+  color: var(--wings-text-error-color, var(--wings-danger, #d32f2f));
+  margin-inline-start: 0.15em;
+}
+
+/* ── Field: toolbar + editor share one bordered box ────────────────────── */
+
+.wt-field {
+  border: var(--wings-text-border, 1px solid var(--wings-border, #ccc));
+  border-radius: var(--wings-text-radius, var(--wings-radius-md, 6px));
+  background: var(--wings-text-bg, var(--wings-surface, #fff));
+  overflow: hidden;
+  transition: border-color var(--wings-transition-fast, 0.15s);
+}
+:host([data-focused]) .wt-field {
+  border-color: var(--wings-text-border-focus, var(--wings-border-focus, var(--wings-primary, #1976d2)));
+  box-shadow: var(--wings-text-focus-shadow, 0 0 0 3px var(--wings-focus-ring, rgba(25, 118, 210, 0.15)));
+}
+:host([data-invalid]) .wt-field {
+  border-color: var(--wings-text-border-error, var(--wings-danger, #d32f2f));
+}
+
+.wt-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.25rem 0.35rem;
+  border-bottom: var(--wings-text-border, 1px solid var(--wings-border, #ccc));
+  background: var(--wings-text-toolbar-bg, var(--wings-surface-muted, #f7f7f7));
+}
+.wt-toolbar:empty {
+  display: none;
+}
+
+.wt-sep {
+  width: 1px;
+  align-self: stretch;
+  margin: 0.1rem 0.25rem;
+  background: var(--wings-border, #ccc);
+}
+
+/* ── Editing surface ───────────────────────────────────────────────────── */
+
+.wt-editor {
+  min-height: var(--wings-text-min-height, 8rem);
+  max-height: var(--wings-text-max-height, none);
+  overflow-y: auto;
+  padding: var(--wings-text-padding, 0.6rem 0.75rem);
+  color: var(--wings-text-color, var(--wings-text, #1a1a1a));
+  line-height: 1.5;
+  outline: none;
+}
+.wt-editor:empty::before {
+  content: attr(data-placeholder);
+  color: var(--wings-text-placeholder-color, var(--wings-text-light, #999));
+  pointer-events: none;
+}
+
+/* Semantic marks render as themselves; presentation is class-driven. */
+.wt-editor a {
+  color: var(--wings-text-link-color, var(--wings-primary, #1976d2));
+}
+.wt-editor code {
+  font-family: var(--wings-text-mono, ui-monospace, monospace);
+  background: var(--wings-text-code-bg, rgba(0, 0, 0, 0.05));
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+}
+.wt-editor blockquote {
+  margin-inline: 0;
+  padding-inline-start: 1rem;
+  border-inline-start: 3px solid var(--wings-border, #ccc);
+  color: var(--wings-text-muted, #666);
+}
+.wt-editor pre {
+  font-family: var(--wings-text-mono, ui-monospace, monospace);
+  background: var(--wings-text-code-bg, rgba(0, 0, 0, 0.05));
+  padding: 0.6rem 0.75rem;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+/* Insecure-link badge: a plain-http link the core flagged. Visible warning
+   in bulk-imported content, no per-link popup. */
+.wt-editor a[data-wings-insecure]::after {
+  content: "\26A0"; /* ⚠ */
+  font-size: 0.8em;
+  margin-inline-start: 0.2em;
+  color: var(--wings-text-warn-color, var(--wings-warning, #ed6c02));
+  cursor: help;
+}
+
+/* ── Feedback ──────────────────────────────────────────────────────────── */
+
+.wt-feedback {
+  display: flex;
+  flex-direction: column;
+  font-size: var(--wings-text-feedback-size, 0.8rem);
+}
+.wt-helper {
+  color: var(--wings-text-helper-color, var(--wings-text-muted, #666));
+}
+.wt-helper[hidden], .wt-error[hidden] { display: none; }
+.wt-error {
+  color: var(--wings-text-error-color, var(--wings-danger, #d32f2f));
+}
+
+:host([disabled]) .wt-field,
+:host([data-form-disabled]) .wt-field {
+  opacity: var(--wings-text-disabled-opacity, 0.55);
+  pointer-events: none;
+}

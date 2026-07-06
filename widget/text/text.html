@@ -1,0 +1,28 @@
+<div part="root" class="wt-root">
+
+  <!-- Label zone: hidden when no label attribute is set. -->
+  <div part="label-wrap" class="wt-label-wrap" ?label>
+    <label part="label" class="wt-label" id="wt-label">
+      <slot name="label">{{label}}</slot><span part="required-mark" class="wt-required" ?required>&#42;</span>
+    </label>
+  </div>
+
+  <!-- Field zone: toolbar + the contenteditable surface. -->
+  <div part="field" class="wt-field">
+    <div part="toolbar" class="wt-toolbar" role="toolbar" aria-label="wt-toolbar-label"></div>
+    <div part="editor" class="wt-editor" role="textbox" aria-multiline="true"
+         aria-labelledby="wt-label" aria-describedby="wt-helper wt-error"></div>
+  </div>
+
+  <!-- Feedback zone: helper text and error message. -->
+  <div part="feedback" class="wt-feedback">
+    <span part="helper" class="wt-helper" id="wt-helper" ?helper><slot name="helper">{{helper}}</slot></span>
+    <span part="error"  class="wt-error"  id="wt-error" role="alert" ?error><slot name="error">{{error}}</slot></span>
+  </div>
+
+  <!-- Toolbar label catalog: gen_i18n translates these slotted spans in place;
+       the widget resolves each item's label id against them, falling back to a
+       built-in default. Never shown. Same pattern as w-input's error table. -->
+  <div class="wt-labels" aria-hidden="true"><slot name="labels"></slot></div>
+
+</div>

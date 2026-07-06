@@ -1,0 +1,5 @@
+:host {
+  /* Defaults live in design.css as var(--wings-*, fallback); this part is
+     the customization surface — replace it to reskin without touching
+     layout. Kept empty so the Material/skin tokens win by default. */
+}
