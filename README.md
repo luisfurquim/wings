@@ -1760,7 +1760,11 @@ data) — is sanitized by **allowlist-copy through the browser's own
 content. Sanitizing with the same parser the browser will later use leaves no
 parser differential for mutation-XSS. Native formatting shortcuts (Ctrl+B,
 mobile callouts) are intercepted so formatting only ever happens through the
-toolbar; legacy `<b>`/`<i>` are canonicalized to `<strong>`/`<em>`. Links are
+toolbar; a stray `<b>`/`<i>` from a native path the intercept doesn't cover
+(mobile selection callouts) still canonicalizes to `<strong>`/`<em>`, and
+pasted or loaded content that already carries those tags round-trips as
+written — but `BasicToolbar`'s own Bold/Italic buttons don't produce them (see
+below). Links are
 canonicalized (IDN→punycode exposes homograph spoofs; `mailto` is rebuilt from
 validated parts to kill header injection), and a plain-`http` link is flagged
 with a `data-wings-insecure` badge. An app can further restrict link targets
@@ -1774,8 +1778,15 @@ toolbar action into a single step. `Ctrl+Z`/`Ctrl+Y` are handled internally
 **Profiles and plugins.** Behaviour is a `wtext.Profile` — collections of
 toolbar, edition, and clipboard plugins — registered by name and selected with
 `profile="…"`. The stock `basic` profile is a `BasicToolbar` (bold/italic/code
-toggles + a block-style picker for `p`, `h1`–`h6`, `blockquote`, `pre`). Two
-more stock toolbars compose with it:
+toggles + a block-style picker for `p`, `h1`–`h6`, `blockquote`, `pre`). Bold
+and Italic are utility classes (`wt-b`/`wt-i`, `font-weight`/`font-style`),
+not `<strong>`/`<em>`: a toolbar click is a visual toggle for nearly every
+user, not an assertion of semantic importance, and treating it as one meant a
+named style captured from bold text silently dropped the bold on reapplication
+(`StyleToolbar.CreateStyle` only ever captured CSS classes). `<strong>`/`<em>`
+remain fully valid content — they just aren't what the stock buttons produce
+anymore. `code` is unchanged, a genuine semantic mark (a code span is
+structural, not a font weight). Two more stock toolbars compose with it:
 
 ```go
 wtext.RegisterProfile("full", wtext.Profile{
@@ -1811,8 +1822,14 @@ registered class; classless spans are dissolved by the canonicalizer.
 
 Write your own toolbar by composing the exported helpers (`ToggleMark`,
 `MarkActive`, `BlockCurrent`, `SwapClass`, `ClassPick`, `ClassToggle`,
-`ClassCurrent`, `ClassActive`, …) over the `wtext.EditorCore` API — which now
-also exposes the class registry (`Classes`, `ClassCSS`, `ClassesAt`). A
+`ClassCurrent`, `ClassActive`, `ClassMarkToggle`, `ClassMarkActive`, …) over
+the `wtext.EditorCore` API — which now also exposes the class registry
+(`Classes`, `ClassCSS`, `ClassesAt`, `ClassSpanned`). `ClassMarkToggle`/
+`ClassMarkActive` are `ToggleMark`/`MarkActive`'s counterpart for a plain
+on/off character class instead of a semantic mark (`ClassSpanned` checks both
+ends of the selection, the same Word nuance `InMark` gives marks — a
+partially-covered range spans fully before it ever toggles off) — what
+`BasicToolbar` itself builds Bold/Italic from. A
 toolbar item that needs a typed value (a style name, a link URL) declares an
 `InputItem`: the widget renders a button that opens a small popover with a
 `w-input` (import `widget/input` when your profile uses one). A plugin that

@@ -19,7 +19,12 @@ type fakeCore struct {
 	block   string
 	classes map[string]string // DefineClass registry
 	at      []string          // classes in effect at the selection
-	calls   []string
+	// blockOnly names classes present in `at` only through block-level
+	// inheritance (the paragraph carries them, but no span at the
+	// selection does) — models the "shared paragraph" bleed-through
+	// ClassSpanned exists to see past.
+	blockOnly map[string]bool
+	calls     []string
 }
 
 func (f *fakeCore) Sel() (Selection, bool) { return f.sel, f.hasSel }
@@ -32,6 +37,9 @@ func (f *fakeCore) InMark(_ Selection, tag string) (bool, error) {
 func (f *fakeCore) BlockType(Selection) (string, error) { return f.block, nil }
 func (f *fakeCore) HasClass(Selection, string) (bool, error) {
 	return false, nil
+}
+func (f *fakeCore) ClassSpanned(_ Selection, name string) (bool, error) {
+	return containsString(f.at, name) && !f.blockOnly[name], nil
 }
 func (f *fakeCore) Wrap(_ Selection, m Mark) error {
 	f.calls = append(f.calls, "wrap:"+m.Tag())
@@ -126,6 +134,47 @@ func TestMarkActive(t *testing.T) {
 	}
 }
 
+func TestToggleClassWordBehaviour(t *testing.T) {
+	// Not spanned: toggling applies — the same Word nuance ToggleMark
+	// gives semantic marks, now over ClassSpanned instead of InMark.
+	core := &fakeCore{hasSel: true}
+	if err := ToggleClass(core, "wt-b"); err != nil {
+		t.Fatal(err)
+	}
+	// Spanned: toggling removes.
+	core.at = []string{"wt-b"}
+	if err := ToggleClass(core, "wt-b"); err != nil {
+		t.Fatal(err)
+	}
+	if len(core.calls) != 2 || core.calls[0] != "apply:wt-b" || core.calls[1] != "remove:wt-b" {
+		t.Errorf("calls = %v, want [apply:wt-b remove:wt-b]", core.calls)
+	}
+}
+
+func TestToggleClassNoSelection(t *testing.T) {
+	core := &fakeCore{hasSel: false}
+	if err := ToggleClass(core, "wt-b"); err != nil {
+		t.Fatal(err)
+	}
+	if len(core.calls) != 0 {
+		t.Errorf("acted without a selection: %v", core.calls)
+	}
+}
+
+func TestClassMarkActive(t *testing.T) {
+	core := &fakeCore{hasSel: true, at: []string{"wt-i"}}
+	if !ClassMarkActive("wt-i")(core) {
+		t.Error("active class reported inactive")
+	}
+	if ClassMarkActive("wt-b")(core) {
+		t.Error("inactive class reported active")
+	}
+	core.hasSel = false
+	if ClassMarkActive("wt-i")(core) {
+		t.Error("active without selection")
+	}
+}
+
 func TestBlockHelpers(t *testing.T) {
 	core := &fakeCore{hasSel: true, block: "h2"}
 	if got := BlockCurrent()(core); got != "h2" {
@@ -136,6 +185,45 @@ func TestBlockHelpers(t *testing.T) {
 	}
 	if len(core.calls) != 1 || core.calls[0] != "setblock:blockquote" {
 		t.Errorf("calls = %v", core.calls)
+	}
+}
+
+func TestBasicToolbarInit(t *testing.T) {
+	core := &fakeCore{}
+	if err := (BasicToolbar{}).Init(core); err != nil {
+		t.Fatal(err)
+	}
+	for name, wantProp := range map[string]string{
+		"wt-b": "font-weight",
+		"wt-i": "font-style",
+	} {
+		css, ok := core.ClassCSS(name)
+		if !ok || !strings.HasPrefix(css, wantProp+":") {
+			t.Errorf("class %q = %q, %v; want %s declaration", name, css, ok, wantProp)
+		}
+	}
+}
+
+// TestCreateStyleCapturesBoldClass guards the bug found via manual
+// browser testing: a style created from a selection that combined a font
+// pick with Bold used to silently drop the bold, because Bold was the
+// semantic <strong> mark and CreateStyle only ever looked at CSS
+// classes. Bold is now a class (wt-b) like any other, so it flows
+// through the same capture-and-merge path as font/size/alignment.
+func TestCreateStyleCapturesBoldClass(t *testing.T) {
+	core := &fakeCore{hasSel: true, at: []string{"wt-ff-serif", "wt-b"}}
+	if err := (BasicToolbar{}).Init(core); err != nil {
+		t.Fatal(err)
+	}
+	if err := core.DefineClass("wt-ff-serif", "font-family: serif"); err != nil {
+		t.Fatal(err)
+	}
+	if err := CreateStyle(core, "destaque"); err != nil {
+		t.Fatal(err)
+	}
+	css, ok := core.ClassCSS("destaque")
+	if !ok || !strings.Contains(css, "font-weight: bold") {
+		t.Errorf("destaque = %q, %v; want it to include the bold declaration", css, ok)
 	}
 }
 
@@ -357,6 +445,39 @@ func TestStylePicker(t *testing.T) {
 	}
 	if strings.Join(core.calls, ",") != "remove:nota,remove:titulo" {
 		t.Errorf("clear calls = %v", core.calls)
+	}
+}
+
+// TestStyleCurrentIgnoresBlockBleed guards the bug found via browser
+// testing: a mixed style (character + paragraph declarations, as
+// CreateStyle produces) applies its paragraph half to the whole block: any
+// OTHER, unspanned text sharing that block then sees the style name in
+// ClassesAt too. Reporting it as "current" there is a false positive that
+// combos into a real failure — the toolbar writes it into the combobox's
+// value attribute, and w-combobox treats "pick the value it already shows"
+// as a no-op (no @change fires), so applying the style to that second
+// range silently does nothing at all.
+func TestStyleCurrentIgnoresBlockBleed(t *testing.T) {
+	core := &fakeCore{hasSel: true, at: []string{"realce"}, blockOnly: map[string]bool{"realce": true}}
+	if err := core.DefineClass("realce", "font-family: serif; text-align: center"); err != nil {
+		t.Fatal(err)
+	}
+	if got := StyleCurrent(core); got != "" {
+		t.Errorf("current = %q, want \"\" (block-only bleed must not count as current)", got)
+	}
+	// Once the character half is genuinely spanned here too, it counts.
+	core.blockOnly["realce"] = false
+	if got := StyleCurrent(core); got != "realce" {
+		t.Errorf("current = %q, want realce once actually spanned", got)
+	}
+	// A pure paragraph-only style (no character declarations) needs no
+	// span at all — block presence alone is the whole story.
+	core2 := &fakeCore{hasSel: true, at: []string{"centrado"}, blockOnly: map[string]bool{"centrado": true}}
+	if err := core2.DefineClass("centrado", "text-align: center"); err != nil {
+		t.Fatal(err)
+	}
+	if got := StyleCurrent(core2); got != "centrado" {
+		t.Errorf("current = %q, want centrado (paragraph-only style needs no span)", got)
 	}
 }
 

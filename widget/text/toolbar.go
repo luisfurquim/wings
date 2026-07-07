@@ -127,14 +127,18 @@ func (t *toolbar) selectControl(it wtext.SelectItem) {
 	cb := t.doc().Call("createElement", "w-combobox")
 	cb.Call("setAttribute", "mode", "single")
 	cb.Call("setAttribute", "data-item", it.ID)
-	cb.Call("setAttribute", "aria-label", t.resolveLabel(it.Label))
+	label := t.resolveLabel(it.Label)
+	cb.Call("setAttribute", "aria-label", label)
+	// A filterable dropdown's generic "Type to filter..." placeholder gives
+	// no clue what the control is for; the item's own label doubles as one.
+	cb.Call("setAttribute", "placeholder", label)
 	optsJSON := t.optionsJSON(it.Options(t.editor))
 	cb.Call("setAttribute", "options", optsJSON)
 
 	key := "wt_sel_" + it.ID
 	t.obj.This.Set(key, func(args ...any) {
-		val := firstSelectedValue(args)
-		if val == "" {
+		val, ok := firstSelectedValue(args)
+		if !ok {
 			return
 		}
 		if err := it.Pick(t.editor, val); err != nil {
@@ -346,9 +350,13 @@ func (t *toolbar) refresh() {
 			}
 		}
 		if sl.current != nil {
-			if cur := sl.current(t.editor); cur != "" {
-				sl.el.Set("value", cur)
-			}
+			// The "value" ATTRIBUTE (not a bare JS property) is what the
+			// combobox's own reactive state actually observes; setting the
+			// property here would land on an inert ad hoc field nothing
+			// reads. Written unconditionally — including "" — so moving the
+			// caret into unformatted text resyncs the display back to the
+			// picker's "Default"/"None" option instead of going stale.
+			sl.el.Call("setAttribute", "value", sl.current(t.editor))
 		}
 	}
 }
@@ -464,19 +472,22 @@ func iconGlyph(name, label string) string {
 
 // firstSelectedValue pulls the value out of a w-combobox @change payload
 // delivered through the wings trigger (args[0] = []any of
-// map[string]any{"label","value"}; single mode carries 0 or 1).
-func firstSelectedValue(args []any) string {
+// map[string]any{"label","value"}; single mode carries 0 or 1). ok is false
+// only when nothing was picked — a legitimate pick of the empty-valued
+// "None"/"Default" option (v == "", ok == true) must reach the caller, so
+// FontToolbar/StyleToolbar's clear options are actually reachable by click.
+func firstSelectedValue(args []any) (v string, ok bool) {
 	if len(args) == 0 {
-		return ""
+		return "", false
 	}
-	arr, ok := args[0].([]any)
-	if !ok || len(arr) == 0 {
-		return ""
+	arr, isArr := args[0].([]any)
+	if !isArr || len(arr) == 0 {
+		return "", false
 	}
-	m, ok := arr[0].(map[string]any)
-	if !ok {
-		return ""
+	m, isMap := arr[0].(map[string]any)
+	if !isMap {
+		return "", false
 	}
-	v, _ := m["value"].(string)
-	return v
+	v, _ = m["value"].(string)
+	return v, true
 }

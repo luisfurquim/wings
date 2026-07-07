@@ -192,8 +192,19 @@ func parseOptions(raw string) []any {
 			if l, ok := o["label"].(string); ok {
 				label = l
 			}
-			if v, ok := o["value"].(string); ok && v != "" {
-				value = v
+			// A present "value" key wins even when its string is empty — a
+			// single-mode picker may declare a real, selectable "None"/
+			// "Default" option with value "". Only an ABSENT key derives
+			// value from the label (the plain-string-array convenience).
+			// `v != ""` here would silently coerce an explicit empty value
+			// into the label text, making that option unreachable by its
+			// real identity.
+			if raw, present := o["value"]; present {
+				if v, ok := raw.(string); ok {
+					value = v
+				} else {
+					value = label
+				}
 			} else {
 				value = label
 			}
@@ -269,8 +280,13 @@ func (cb *cbCtx) applyFilter(query string) {
 //
 // In single mode the external `value` attribute is authoritative: if it
 // disagrees with the current internal selection (e.g., the parent reverted
-// after the user cancelled a pending switch in a confirmation dialog) the
-// selection is silently re-synced to match. This path does not fire @change.
+// after the user cancelled a pending switch in a confirmation dialog, or a
+// continuously-driven picker reflects a live cursor position) the selection
+// is silently re-synced to match. This path does not fire @change. An empty
+// val participates too — a parent may register an option with value ""
+// (a "None"/"Default" choice) and drive the display back to it; when no
+// such option exists resyncSingleValue simply finds no match and is a no-op,
+// so plain pickers without an empty-valued option are unaffected.
 func (cb *cbCtx) loadOptions() {
 	var raw string
 	if v, ok := cb.obj.This.Get("options").(string); ok {
@@ -280,7 +296,7 @@ func (cb *cbCtx) loadOptions() {
 
 	rawChanged := raw != cb.lastRaw
 	valChanged := val != cb.lastValue
-	singleDrift := cb.isSingle() && val != "" && !cb.selectedVals[val]
+	singleDrift := cb.isSingle() && !cb.selectedVals[val]
 
 	if !rawChanged && !valChanged && !singleDrift {
 		return

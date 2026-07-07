@@ -50,8 +50,34 @@ per-commit record see the git log and tags.
   split), `MergeCSS` (order-preserving, later wins), `BlockList`,
   `IsInline`/`RequiresClass`, and a new fuzz target guaranteeing the split
   loses no declaration and both halves survive re-sanitization.
+- **`EditorCore.ClassSpanned(s, name)`** — reports whether a class rides an
+  actual `<span class>` covering the *whole* selection (both ends, the
+  Word nuance `InMark` gives semantic marks), as opposed to merely being
+  inherited from the enclosing block's own class — the read a mixed
+  (character + paragraph) named style needs to avoid a false "already
+  applied here" for untouched text sharing a paragraph with styled text.
+  Plus `ToggleClass`/`ClassMarkToggle`/`ClassMarkActive`, the exported
+  helpers built on it for a plain on/off character class (no picker
+  family) like Bold or Italic.
 
 ### Changed
+- **Bold and Italic are CSS now, not `<strong>`/`<em>`.** `BasicToolbar`'s
+  Bold/Italic buttons apply utility classes (`wt-b` `font-weight: bold`,
+  `wt-i` `font-style: italic`) through the same span mechanism as
+  `FontToolbar`, instead of wrapping semantic mark elements. A toolbar's
+  Bold/Italic click is a *visual* toggle for nearly every user — not an
+  assertion that the text carries strong importance or emphasis — and
+  treating it as one had a real cost: `StyleToolbar.CreateStyle` only ever
+  captured CSS classes, so a style built from a selection that included
+  bold silently dropped the bold on reapplication elsewhere. As a class,
+  bold/italic flow through the exact same capture-and-merge path as
+  font/size/alignment, so a named style now carries everything it visibly
+  had. `<strong>`/`<em>` stay fully valid in the content profile — pasted
+  or loaded content that already carries them (a document authored
+  elsewhere, semantic markup a custom toolbar still wants to produce)
+  keeps working; only the stock toolbar's own buttons stop minting new
+  ones. `code` is unchanged — a code span is structural, not a font
+  weight, and stays the semantic `<code>` mark.
 - **`w-text` value format: a complete EPUB-style content document.** `Get`,
   `@input`/`@change` and form submission now carry
   `<!DOCTYPE html><html><head><style>…</style></head><body>…</body></html>`,

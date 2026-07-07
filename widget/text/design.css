@@ -64,6 +64,32 @@
   background: var(--wings-border, #ccc);
 }
 
+/* w-combobox's own shadow DOM sizes its input to 100% of the host, and the
+   host is an unconstrained block-level flex item — with no width of its own
+   to anchor to, it stretches to fill the row regardless of how short its
+   content ("100%", "Serif"...) actually is. Pin toolbar pickers to a size
+   that fits a label, not the leftover row space; the size picker's options
+   are shorter still, so it gets a narrower ceiling. */
+.wt-toolbar w-combobox {
+  flex: 0 1 auto;
+  width: var(--wings-text-toolbar-picker-width, 9rem);
+}
+.wt-toolbar w-combobox[data-item="fontsize"] {
+  width: var(--wings-text-toolbar-size-picker-width, 6rem);
+}
+
+/* Toggle/alignment buttons reflect the formatting at the caret via
+   [data-active] (set by the toolbar's refresh loop) — but that is plain
+   state on the w-button HOST; w-button itself has no notion of "active"
+   and renders its own shadow DOM regardless, so without this rule the
+   attribute is invisible. ::part(root) reaches the actual <button> exposed
+   by w-button's template, one shadow boundary down. */
+.wt-toolbar w-button[data-active]::part(root) {
+  background: var(--wings-text-toolbar-active-bg, var(--wings-focus-ring, rgba(25, 118, 210, 0.15)));
+  border-color: var(--wings-text-toolbar-active-border, var(--wings-primary, #1976d2));
+  color: var(--wings-text-toolbar-active-color, var(--wings-primary, #1976d2));
+}
+
 /* ── Toolbar input popover (InputItem: style name, link URL...) ────────── */
 
 .wt-inputitem {

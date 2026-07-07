@@ -74,6 +74,32 @@ func (e *Editor) HasClass(s Selection, name string) (bool, error) {
 	return block.Get("classList").Call("contains", name).Bool(), nil
 }
 
+// ClassSpanned reports whether name rides an actual <span class> ancestor
+// covering the WHOLE of s — both ends, mirroring InMark's Word nuance —
+// rather than merely being inherited from the enclosing block's own
+// class. A partially-spanned range reports false, so a toggle built on
+// this (ClassMarkToggle) spans the whole selection before it ever
+// removes. At a collapsed s an armed pending intent for name overlays
+// the tree, like InMark, so a toggle reads back what the next typing
+// will produce.
+func (e *Editor) ClassSpanned(s Selection, name string) (bool, error) {
+	from, err := e.resolve(s.From)
+	if err != nil {
+		return false, err
+	}
+	if s.Collapsed() {
+		if p, ok := e.pending["."+name]; ok {
+			return p.on, nil
+		}
+		return e.spanWithClass(from, name).Truthy(), nil
+	}
+	to, err := e.resolve(s.To)
+	if err != nil {
+		return false, err
+	}
+	return e.spanWithClass(from, name).Truthy() && e.spanWithClass(to, name).Truthy(), nil
+}
+
 // markAncestor returns the nearest tag mark element containing node
 // (undefined when none exists inside the editor root).
 func (e *Editor) markAncestor(node js.Value, tag string) js.Value {

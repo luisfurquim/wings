@@ -259,17 +259,29 @@ and it is not something to reproduce ad hoc. Everything entering the document
 is sanitized by allowlist-copy through the browser's own `DOMParser`, so
 scripts, `on*` handlers, `style`, `<img>`/`<iframe>`, and `javascript:`/`data:`
 links can't exist in content. Native formatting (Ctrl+B, mobile callouts) is
-intercepted — formatting happens only via the toolbar; `<b>`/`<i>` canonicalize
-to `<strong>`/`<em>`. Undo/redo is the editor's own, DOM-level and bounded.
-Toggling a mark with a collapsed caret arms it as **pending** (Word behaviour:
-the next typing comes out marked, or escapes the mark when toggling off inside
-one; moving the caret first disarms) — in plugin terms, `Wrap`/`Unwrap` on a
-collapsed selection arm instead of no-op, and `InMark` reads the armed state
-back so toolbar toggles light up correctly.
+intercepted — formatting happens only via the toolbar; a stray `<b>`/`<i>`
+from a native path the intercept misses still canonicalizes to
+`<strong>`/`<em>`, and content that already carries those tags (pasted,
+loaded) round-trips as written. Undo/redo is the editor's own, DOM-level and
+bounded. Toggling a mark with a collapsed caret arms it as **pending** (Word
+behaviour: the next typing comes out marked, or escapes the mark when
+toggling off inside one; moving the caret first disarms) — in plugin terms,
+`Wrap`/`Unwrap` on a collapsed selection arm instead of no-op, and `InMark`
+reads the armed state back so toolbar toggles light up correctly.
 
 The stock `basic` profile gives a bold/italic/code toolbar + a block picker
-(`p`, `h1`–`h6`, `blockquote`, `pre`). Two more stock toolbars compose with
-it — don't rebuild what they already do:
+(`p`, `h1`–`h6`, `blockquote`, `pre`). **Bold and Italic are CSS
+(`wt-b`/`wt-i`, `font-weight`/`font-style`), not `<strong>`/`<em>`** — a
+toolbar click is a visual toggle for nearly every user, not an assertion of
+semantic importance, and `StyleToolbar.CreateStyle` only ever captures CSS
+classes: a mark-based bold would silently vanish when a style built from bold
+text got reapplied elsewhere. `code` stays a real mark (structural, not a
+font weight); `<strong>`/`<em>` remain valid content, just not what the stock
+buttons produce. **Don't build a custom Bold/Italic on `Wrap(Strong())` for
+this same reason** — use `ClassMarkToggle("wt-b")`/`ClassMarkActive("wt-b")`
+(and register the class via `InitPlugin`) so it composes with named styles.
+Two more stock toolbars compose with `basic` — don't rebuild what they
+already do:
 
 - **`wtext.FontToolbar{}`** — font face/size pickers + the four alignment
   toggles. Configurable `Faces`/`Sizes`; defaults are the CSS generic
@@ -303,9 +315,10 @@ wtext.RegisterProfile("post", wtext.Profile{
 ```
 Build a toolbar by composing the exported helpers (`ToggleMark`, `MarkActive`,
 `BlockCurrent`, `BlockPick`, `SwapClass`, `ClassPick`, `ClassToggle`,
-`ClassCurrent`, `ClassActive`) over the `wtext.EditorCore` API — which also
-exposes the class registry (`Classes`, `ClassCSS`, `ClassesAt`,
-`DefineClass`). A toolbar item needing a typed value (style name, URL)
+`ClassCurrent`, `ClassActive`, `ClassMarkToggle`, `ClassMarkActive`) over the
+`wtext.EditorCore` API — which also exposes the class registry (`Classes`,
+`ClassCSS`, `ClassesAt`, `ClassSpanned`, `DefineClass`). A toolbar item
+needing a typed value (style name, URL)
 declares an `InputItem`; a plugin needing setup at attach time (defining its
 utility classes, say) implements `wtext.InitPlugin`. The portable half of
 `wtext` (the `EditorCore` interface, the `Fragment` builder, the sealed

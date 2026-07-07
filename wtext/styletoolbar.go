@@ -104,9 +104,24 @@ func StyleCurrent(core EditorCore) string {
 		return ""
 	}
 	for _, cls := range classes {
-		if !strings.HasPrefix(cls, "wt-") {
-			return cls
+		if strings.HasPrefix(cls, "wt-") {
+			continue
 		}
+		// A style with a character component only counts as current when
+		// that half is actually spanned here — otherwise unstyled text
+		// sharing a paragraph with styled text (the style's block half
+		// bleeds through ClassesAt for the whole block) would falsely
+		// report as "already this style", and picking it again would look
+		// like a no-op re-select to the combobox (no @change, no apply).
+		css, _ := core.ClassCSS(cls)
+		charCSS, _ := epubhtml.SplitCSS(css)
+		if charCSS != "" {
+			spanned, err := core.ClassSpanned(sel, cls)
+			if err != nil || !spanned {
+				continue
+			}
+		}
+		return cls
 	}
 	return ""
 }

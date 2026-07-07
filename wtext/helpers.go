@@ -44,6 +44,47 @@ func MarkActive(tag string) func(EditorCore) bool {
 	}
 }
 
+// ToggleClass applies name to the current selection unless it already
+// spans the WHOLE selection, in which case it removes it — the same Word
+// nuance ToggleMark gives semantic marks (a partially-covered selection
+// spans fully first; toggling again removes it), built on ClassSpanned
+// instead of InMark. Meant for a plain on/off character class with no
+// block half (Bold, Italic) — a single name, not a picker family; the
+// class must already be registered (DefineClass, typically from an
+// InitPlugin) before any toggle fires.
+func ToggleClass(core EditorCore, name string) error {
+	sel, ok := core.Sel()
+	if !ok {
+		return nil
+	}
+	on, err := core.ClassSpanned(sel, name)
+	if err != nil {
+		return err
+	}
+	if on {
+		return core.RemoveClass(sel, name)
+	}
+	return core.ApplyClass(sel, name)
+}
+
+// ClassMarkToggle adapts ToggleClass to a ToggleItem.Do closure.
+func ClassMarkToggle(name string) func(EditorCore) error {
+	return func(core EditorCore) error { return ToggleClass(core, name) }
+}
+
+// ClassMarkActive returns a ToggleItem.Active closure reporting whether
+// name spans the whole current selection.
+func ClassMarkActive(name string) func(EditorCore) bool {
+	return func(core EditorCore) bool {
+		sel, ok := core.Sel()
+		if !ok {
+			return false
+		}
+		on, err := core.ClassSpanned(sel, name)
+		return err == nil && on
+	}
+}
+
 // BlockCurrent returns a SelectItem.Current closure reporting the block
 // tag at the selection start ("" when there is no selection).
 func BlockCurrent() func(EditorCore) string {

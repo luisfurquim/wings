@@ -81,6 +81,17 @@ type EditorCore interface {
 	// HasClass reports whether the block containing the start of s
 	// carries the named class.
 	HasClass(s Selection, name string) (bool, error)
+	// ClassSpanned reports whether name is applied at s via an actual
+	// <span class> — the character half of the Word split — as opposed to
+	// merely inherited from the enclosing block's own class list. A mixed
+	// style (character + paragraph declarations, e.g. one captured by
+	// CreateStyle) shows up in ClassesAt for the whole block once its
+	// paragraph half is applied anywhere in it; this method is how a
+	// caller distinguishes "the block has it" from "this exact range has
+	// its character formatting too", so "is this style fully current
+	// here" doesn't report a false positive for untouched text sharing
+	// the block with styled text.
+	ClassSpanned(s Selection, name string) (bool, error)
 	// Classes returns every class name registered via DefineClass, sorted.
 	Classes() []string
 	// ClassCSS returns the sanitized CSS registered for name.
