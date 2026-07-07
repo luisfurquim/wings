@@ -47,6 +47,16 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
+### v0.18.0
+
+- **`w-text` learns fonts, alignment and named styles** — the new
+  `FontToolbar` (font face/size pickers + paragraph alignment) and
+  `StyleToolbar` (capture the selection's formatting as a reusable named
+  style, Word-style) plugins. No inline styles ever: every choice is a CSS
+  class, split automatically between the exact text range and the touched
+  paragraphs, and the classes travel inside the value — now a complete
+  EPUB-style document — so styles survive save/reload.
+
 ### v0.17.0
 
 - **`w-text` rich-text editor** joins the widget family — a pluggable
@@ -61,27 +71,6 @@ Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 - **`w-input` completes its `<form>` citizenship** — `form.reset()` restores
   fields to their default and clears validation, `<fieldset disabled>` disables
   them, and `w-button type="reset"` resets the form.
-
-### v0.16.15
-
-- **`w-button` and `w-input`** join the widget family — semantic variants,
-  sizes, slots, full `::part()` surface, and state attributes for pure-CSS
-  theming. The field's surface form (outlined / filled / underlined) is picked
-  globally by the new **Material skins**.
-- **Typed two-way binding** — bind `&value` to a `FieldCodec`/`Validator`
-  (ready-mades in `wings/field`) and the value parses and validates in pure Go,
-  with translated error messages wired to the native constraint-validation API.
-  Both widgets are **form-associated**: an invalid `w-input` blocks a native
-  `<form>` from submitting, and `w-button` submits it like a real button.
-
-### v0.16.14
-
-- **AI authoring plugin now covers security** — six app-flavored `sec-*` skills
-  complete the `wings-authoring` kit. Validating them against a generated
-  component caught and fixed a real runtime leak: native listeners wired with
-  `dom.AddEvent` are now auto-released when a component disconnects.
-- **Cross-tool reach** — Cursor, Kiro, and GitHub Copilot rule files now
-  re-point to `AGENTS.md`, so non-Claude assistants get the same guide.
 
 ---
 
@@ -1736,7 +1725,12 @@ import (
 
 Bind `&value` to a [`FieldCodec`](#typed-two-way-binding-fieldcodec--validator)
 (e.g. `field.NewText()`): its `String()` seeds the editor and the content is
-read back on blur, as EPUB-flavored HTML. A plain string binding also works.
+read back on blur. The value is a **complete EPUB-style document** — the body
+holds the (policy-filtered) content and a head `<style>` carries the CSS of
+the named classes the document uses, so styles round-trip through your
+database. Loading accepts both this form and a bare HTML fragment; each class
+rule found in the head is re-validated (name and CSS) before being adopted.
+A plain string binding also works.
 
 **Attributes:**
 
@@ -1780,17 +1774,62 @@ toolbar action into a single step. `Ctrl+Z`/`Ctrl+Y` are handled internally
 **Profiles and plugins.** Behaviour is a `wtext.Profile` — collections of
 toolbar, edition, and clipboard plugins — registered by name and selected with
 `profile="…"`. The stock `basic` profile is a `BasicToolbar` (bold/italic/code
-toggles + a block-style picker for `p`, `h1`–`h6`, `blockquote`, `pre`). Write
-your own toolbar by composing the exported helpers (`ToggleMark`, `MarkActive`,
-`BlockCurrent`, …) over the `wtext.EditorCore` API; the portable half of the
-`wtext` package unit-tests against a fake core without a browser.
+toggles + a block-style picker for `p`, `h1`–`h6`, `blockquote`, `pre`). Two
+more stock toolbars compose with it:
+
+```go
+wtext.RegisterProfile("full", wtext.Profile{
+    Toolbar: []wtext.ToolbarPlugin{
+        wtext.BasicToolbar{},
+        wtext.FontToolbar{},  // or FontToolbar{Faces: …, Sizes: …}
+        wtext.StyleToolbar{},
+    },
+})
+```
+
+- **`FontToolbar`** — font face and font size pickers plus the four paragraph
+  alignment toggles. Faces/sizes are configurable; the defaults are the CSS
+  generic families and an em-based ladder (EPUB-friendly). Nothing becomes an
+  inline style: each choice is a utility class (`wt-ff-*`, `wt-fs-*`,
+  `wt-al-*`) defined at attach time, one per axis — picking another face
+  replaces the previous. With a collapsed caret the pick arms as **pending**,
+  like bold: the next typing comes out in the new font.
+- **`StyleToolbar`** — Word's style gallery: the ✎ button prompts for a name
+  and captures the formatting classes covering the selection into one named,
+  reusable class (replacing them on the source selection, which then follows
+  the style); the picker applies a registered style to any selection, with a
+  "(none)" option to clear. User style names can't take the reserved `wt-`
+  prefix, and `wt-*` direct formatting stays on the range, overriding the
+  style — exactly Word's direct-formatting rule.
+
+Classes apply with a **Word split**: character declarations (fonts, colors,
+decorations) ride `<span class>` over the exact range, paragraph declarations
+(alignment, indent, margins, page breaks) mark the touched blocks — one class
+name, two scoped rules, so a mid-paragraph range with an alignment-carrying
+style never silently loses it. A `<span>` may exist **only** while carrying a
+registered class; classless spans are dissolved by the canonicalizer.
+
+Write your own toolbar by composing the exported helpers (`ToggleMark`,
+`MarkActive`, `BlockCurrent`, `SwapClass`, `ClassPick`, `ClassToggle`,
+`ClassCurrent`, `ClassActive`, …) over the `wtext.EditorCore` API — which now
+also exposes the class registry (`Classes`, `ClassCSS`, `ClassesAt`). A
+toolbar item that needs a typed value (a style name, a link URL) declares an
+`InputItem`: the widget renders a button that opens a small popover with a
+`w-input` (import `widget/input` when your profile uses one). A plugin that
+must set the editor up at attach time — defining its utility classes, say —
+implements `wtext.InitPlugin`. The portable half of the `wtext` package
+unit-tests against a fake core without a browser.
 
 **Localized toolbar.** Toolbar labels are message ids resolved at render, so
 they translate like the rest of your UI. The editor ships built-in English
 fallbacks; to localize, provide `<span slot="labels" id="wtext-…">` nodes in
 the light DOM (translated in place by `gen_i18n`, exactly like `w-input`'s
 error slots) — ids are `wtext-bold`/`wtext-italic`/`wtext-code`/`wtext-block`
-and `wtext-block-p`/`-h1`…`-h6`/`-quote`/`-pre`. On a `SetLang` switch the
+and `wtext-block-p`/`-h1`…`-h6`/`-quote`/`-pre`; `FontToolbar` adds
+`wtext-font`(+`-default`/`-serif`/`-sans`/`-mono`/`-cursive`), `wtext-size`
+(+`-default`) and `wtext-align-left`/`-center`/`-right`/`-justify`;
+`StyleToolbar` adds `wtext-style`, `wtext-style-new`, `wtext-style-name`,
+`wtext-style-none`, `wtext-ok`, `wtext-cancel`. On a `SetLang` switch the
 toolbar re-resolves and updates in place.
 
 **Theming.** Reads `--wings-text-*` plus the shared surface/text/radius/motion

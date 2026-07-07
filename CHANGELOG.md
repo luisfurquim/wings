@@ -8,6 +8,71 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
+## [0.18.0] — 2026-07-07
+
+### Added
+- **`wtext.FontToolbar`** — font face and font size pickers plus the four
+  paragraph alignment toggles for `w-text`. Faces and sizes are configurable
+  (defaults: the CSS generic families and an em-based size ladder). No choice
+  ever becomes an inline style: each is a deterministic utility class
+  (`wt-ff-<id>`, `wt-fs-<id>`, `wt-al-<dir>`) defined at attach time, one per
+  axis — picking another face replaces the previous one on the range. A pick
+  at a collapsed caret arms as **pending**, like bold: the next typing comes
+  out in the new font, moving the caret first disarms.
+- **`wtext.StyleToolbar`** — Word's style gallery: a "create style from
+  selection" prompt captures the formatting classes covering the selection
+  into one named, reusable class (merging their CSS, innermost wins, and
+  replacing them on the source selection, which then follows the style), and
+  a picker applies registered styles with a "(none)" option. User style names
+  can't take the reserved `wt-` prefix; `wt-*` direct formatting stays on the
+  range and overrides the style, as direct formatting does in Word.
+- **Inline classes with the Word split.** `EditorCore.ApplyClass`/`RemoveClass`
+  now split a class's CSS by property: character declarations (fonts, colors,
+  decorations) ride `<span class>` over the exact range, paragraph
+  declarations (alignment, indent, margins, page/breaks) mark the touched
+  blocks. One class name, two scoped rules (`span.name` / block-only `.name`),
+  so a block never inherits character formatting it should not carry. `<span>`
+  joins the content profile as a **class carrier**: it may exist only while
+  carrying a registered class — classless spans are dissolved by the filter
+  and the canonicalizer, including the ones browsers generate on their own.
+- **`EditorCore` class registry reads** — `Classes()`, `ClassCSS(name)` and
+  `ClassesAt(sel)` (outside-in, pending-aware) — plus exported toolbar
+  helpers `SwapClass`, `ClassPick`, `ClassToggle`, `ClassCurrent`,
+  `ClassActive`.
+- **`wtext.InputItem`** — new sealed toolbar item kind for values a click
+  cannot express (a style name, a link URL): the widget renders a button that
+  opens a popover with a `w-input` and confirm/cancel; Enter confirms, Esc
+  dismisses. Profiles using one need `widget/input` imported.
+- **`wtext.InitPlugin`** — optional plugin hook run once per editor at attach
+  time, before content loads (where `FontToolbar` defines its utility
+  classes, so persisted documents survive the class filter).
+- **`epubhtml`**: `SplitCSS`/`PropIsBlock` (character vs paragraph property
+  split), `MergeCSS` (order-preserving, later wins), `BlockList`,
+  `IsInline`/`RequiresClass`, and a new fuzz target guaranteeing the split
+  loses no declaration and both halves survive re-sanitization.
+
+### Changed
+- **`w-text` value format: a complete EPUB-style content document.** `Get`,
+  `@input`/`@change` and form submission now carry
+  `<!DOCTYPE html><html><head><style>…</style></head><body>…</body></html>`,
+  where the head `<style>` holds one `.name { css }` rule per named class the
+  content actually uses — styles round-trip through storage. Loading accepts
+  both this form and the old bare fragment; every class rule found in the
+  head is re-validated (class-name grammar + CSS sanitizer, bounded count)
+  before adoption, and a document can never redefine a `wt-*` utility class
+  owned by the attached plugins.
+- The stock block picker's built-in English label changed from "Style" to
+  "Block" — "Style" now names the `StyleToolbar` picker.
+- Toolbar `SelectItem.Options` is re-queried on refresh and the combobox
+  options attribute is rewritten when it changes (the style picker grows as
+  styles are created). The JSON is byte-stable so unchanged lists never cause
+  a spurious dropdown reload.
+
+### Fixed
+- A `w-text` created programmatically (`document.createElement` + `.value` +
+  append) now seeds its content from the host `value` property; the empty
+  template binding no longer shadows it.
+
 ## [0.17.0] — 2026-07-06
 
 ### Added

@@ -243,7 +243,10 @@ import (
 ```
 A pluggable `contenteditable` editor in the `w-input` family. Bind `&value` to a
 `FieldCodec` (e.g. `field.NewText()`): it seeds the editor and reads back on
-blur, as EPUB-flavored HTML. Attributes: `label`, `profile` (default `"basic"`),
+blur, as a **complete EPUB-style document** — the head `<style>` carries the
+CSS of the named classes the content uses, so styles round-trip through
+storage (loading also accepts a bare fragment; head rules are re-validated
+before adoption). Attributes: `label`, `profile` (default `"basic"`),
 `placeholder`, `helper`, `error`, `required`, `disabled`. Events: `@input`
 (coalesced, args[0] = HTML) and `@change` (on blur after write-back). Form
 lifecycle like `w-input` (`form.reset()` restores mount-time content **and**
@@ -265,12 +268,33 @@ collapsed selection arm instead of no-op, and `InMark` reads the armed state
 back so toolbar toggles light up correctly.
 
 The stock `basic` profile gives a bold/italic/code toolbar + a block picker
-(`p`, `h1`–`h6`, `blockquote`, `pre`). To customize, register your own
-`wtext.Profile` (toolbar/edition/clipboard plugins) and select it by name:
+(`p`, `h1`–`h6`, `blockquote`, `pre`). Two more stock toolbars compose with
+it — don't rebuild what they already do:
+
+- **`wtext.FontToolbar{}`** — font face/size pickers + the four alignment
+  toggles. Configurable `Faces`/`Sizes`; defaults are the CSS generic
+  families and an em ladder. Never inline styles: each pick is a utility
+  class (`wt-ff-*`, `wt-fs-*`, `wt-al-*`), one per axis, pending-at-caret
+  like bold.
+- **`wtext.StyleToolbar{}`** — "create style from selection" (✎ prompts for
+  a name, captures the covering classes into one named class, swaps them on
+  the source range) + a picker applying registered styles ("(none)" clears).
+  The `wt-` prefix is reserved; direct formatting stays on the range and
+  overrides the style, as in Word. Requires `widget/input` (the prompt
+  popover renders a `w-input`).
+
+Classes apply with the **Word split**: character declarations become
+`<span class>` on the exact range, paragraph declarations mark the touched
+blocks. A `span` may exist only while carrying a registered class.
+
+To customize, register your own `wtext.Profile` (toolbar/edition/clipboard
+plugins) and select it by name:
 
 ```go
 wtext.RegisterProfile("post", wtext.Profile{
-    Toolbar:   []wtext.ToolbarPlugin{MyToolbar{}},
+    Toolbar: []wtext.ToolbarPlugin{
+        wtext.BasicToolbar{}, wtext.FontToolbar{}, wtext.StyleToolbar{},
+    },
     LinkPolicy: func(u *url.URL) error { /* restrict link hosts */ return nil },
 })
 ```
@@ -278,12 +302,17 @@ wtext.RegisterProfile("post", wtext.Profile{
 <w-text profile="post" &value="{{body}}"></w-text>
 ```
 Build a toolbar by composing the exported helpers (`ToggleMark`, `MarkActive`,
-`BlockCurrent`, `BlockPick`) over the `wtext.EditorCore` API. The portable half
-of `wtext` (the `EditorCore` interface, the `Fragment` builder, the sealed
-`Mark` constructors) unit-tests against a fake core with the native toolchain —
-no browser needed. When you DO touch the js side, mind `sec-wasm-go`: a
-`js.Value.Call`/`Get` on a number/string primitive panics, and a panic is
-whole-app death.
+`BlockCurrent`, `BlockPick`, `SwapClass`, `ClassPick`, `ClassToggle`,
+`ClassCurrent`, `ClassActive`) over the `wtext.EditorCore` API — which also
+exposes the class registry (`Classes`, `ClassCSS`, `ClassesAt`,
+`DefineClass`). A toolbar item needing a typed value (style name, URL)
+declares an `InputItem`; a plugin needing setup at attach time (defining its
+utility classes, say) implements `wtext.InitPlugin`. The portable half of
+`wtext` (the `EditorCore` interface, the `Fragment` builder, the sealed
+`Mark` constructors, the stock toolbars) unit-tests against a fake core with
+the native toolchain — no browser needed. When you DO touch the js side, mind
+`sec-wasm-go`: a `js.Value.Call`/`Get` on a number/string primitive panics,
+and a panic is whole-app death.
 
 ## Combobox — `w-combobox`
 
