@@ -94,13 +94,18 @@ func (e *Editor) copyElement(el js.Value, inline bool) []fnode {
 		return []fnode{{tag: "br"}}
 	}
 	if epubhtml.IsBlock(canon) && inline {
-		// A block inside a mark cannot exist in the profile: dissolve it.
+		// A block inside inline content cannot exist in the profile:
+		// dissolve it.
 		return e.copyChildren(el, inline)
 	}
 	node := fnode{tag: canon, attrs: e.copyAttrs(el, canon)}
-	node.kids = e.copyChildren(el, inline || epubhtml.IsMark(canon))
-	if epubhtml.IsMark(canon) && len(node.kids) == 0 {
-		return nil // empty mark: nothing to mark
+	if epubhtml.RequiresClass(canon) && node.attrs["class"] == "" {
+		// A classless carrier says nothing: dissolve it.
+		return e.copyChildren(el, inline)
+	}
+	node.kids = e.copyChildren(el, inline || epubhtml.IsInline(canon))
+	if epubhtml.IsInline(canon) && len(node.kids) == 0 {
+		return nil // empty inline element marks nothing
 	}
 	return []fnode{node}
 }

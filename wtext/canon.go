@@ -77,10 +77,15 @@ func (e *Editor) canonElement(el js.Value, inline bool) {
 		el = e.renameElement(el, canon)
 	}
 	e.canonAttrs(el, canon)
-	isMark := epubhtml.IsMark(canon)
-	e.canonChildren(el, inline || isMark)
-	if isMark && !el.Call("hasChildNodes").Bool() {
-		el.Call("remove") // an empty mark marks nothing
+	isInline := epubhtml.IsInline(canon)
+	e.canonChildren(el, inline || isInline)
+	switch {
+	case isInline && !el.Call("hasChildNodes").Bool():
+		el.Call("remove") // an empty inline element marks nothing
+	case epubhtml.RequiresClass(canon) && !el.Call("hasAttribute", "class").Bool():
+		// canonAttrs cut its class list down to nothing: a classless
+		// carrier says nothing — dissolve it, children stay.
+		unwrapElement(el)
 	}
 }
 

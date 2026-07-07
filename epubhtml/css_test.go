@@ -48,6 +48,57 @@ func TestSanitizeCSSAccepts(t *testing.T) {
 	}
 }
 
+func TestSplitCSS(t *testing.T) {
+	cases := []struct{ in, char, block string }{
+		// pure character formatting
+		{"color: red; font-size: 1.2em", "color: red; font-size: 1.2em", ""},
+		// pure paragraph formatting
+		{"text-align: center; margin-top: 1em", "", "text-align: center; margin-top: 1em"},
+		// mixed style splits into its two application points
+		{"color: red; text-align: justify; font-family: serif; text-indent: 2em",
+			"color: red; font-family: serif",
+			"text-align: justify; text-indent: 2em"},
+		{"", "", ""},
+	}
+	for _, c := range cases {
+		ch, bl := SplitCSS(c.in)
+		if ch != c.char || bl != c.block {
+			t.Errorf("SplitCSS(%q) = (%q, %q), want (%q, %q)", c.in, ch, bl, c.char, c.block)
+		}
+	}
+	// Every allowlisted property lands in exactly one half.
+	for prop := range cssProps {
+		ch, bl := SplitCSS(prop + ": x")
+		if (ch == "") == (bl == "") {
+			t.Errorf("SplitCSS(%q: x) = (%q, %q): property must land in exactly one half", prop, ch, bl)
+		}
+	}
+	// Every block property is allowlisted (no orphan classification).
+	for prop := range blockProps {
+		if !cssProps[prop] {
+			t.Errorf("blockProps[%q] is not in cssProps", prop)
+		}
+	}
+}
+
+func TestMergeCSS(t *testing.T) {
+	cases := []struct {
+		layers []string
+		want   string
+	}{
+		{[]string{"color: red", "color: blue"}, "color: blue"},
+		{[]string{"color: red; font-size: 1em", "font-size: 2em; text-align: center"},
+			"color: red; font-size: 2em; text-align: center"},
+		{[]string{"", "color: red", ""}, "color: red"},
+		{nil, ""},
+	}
+	for _, c := range cases {
+		if got := MergeCSS(c.layers...); got != c.want {
+			t.Errorf("MergeCSS(%q) = %q, want %q", c.layers, got, c.want)
+		}
+	}
+}
+
 func TestSanitizeCSSRejects(t *testing.T) {
 	cases := []struct {
 		name, in string

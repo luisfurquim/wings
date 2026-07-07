@@ -4,6 +4,7 @@ package wtext
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"syscall/js"
 
@@ -356,21 +357,70 @@ func (e *Editor) rangeFor(s Selection) (js.Value, error) {
 
 // ── Content I/O ─────────────────────────────────────────────────────────
 
-// Content serializes the document as epub-html. By construction the tree
-// only holds what the policy let in, so innerHTML here is already the
-// canonical serialization.
+// maxDocClasses bounds how many class rules a stored document may define
+// on load — bounded everything.
+const maxDocClasses = 256
+
+// Content serializes the document as a complete EPUB-style content
+// document: the body is the editor tree (which by construction only
+// holds what the policy let in), and the registered classes the tree
+// actually uses travel as ".name { css }" rules in a head <style> — so a
+// stored value round-trips with its styles.
 func (e *Editor) Content() string {
-	return e.root.Get("innerHTML").String()
+	var sb strings.Builder
+	sb.WriteString("<!DOCTYPE html>\n<html><head><meta charset=\"utf-8\"/>")
+	if rules := e.usedClassRules(); rules != "" {
+		sb.WriteString("<style>\n")
+		sb.WriteString(rules)
+		sb.WriteString("</style>")
+	}
+	sb.WriteString("</head><body>")
+	sb.WriteString(e.root.Get("innerHTML").String())
+	sb.WriteString("</body></html>")
+	return sb.String()
+}
+
+// usedClassRules renders the registered classes the tree references, in
+// the persistable logical form (one unsplit rule per class), sorted.
+func (e *Editor) usedClassRules() string {
+	els := e.root.Call("querySelectorAll", "[class]")
+	used := map[string]bool{}
+	for i := 0; i < els.Get("length").Int(); i++ {
+		for _, cls := range strings.Fields(els.Index(i).Call("getAttribute", "class").String()) {
+			if e.classDefined(cls) {
+				used[cls] = true
+			}
+		}
+	}
+	names := make([]string, 0, len(used))
+	for n := range used {
+		names = append(names, n)
+	}
+	sort.Strings(names)
+	var sb strings.Builder
+	for _, n := range names {
+		sb.WriteString(".")
+		sb.WriteString(n)
+		sb.WriteString(" { ")
+		sb.WriteString(e.classes[n])
+		sb.WriteString(" }\n")
+	}
+	return sb.String()
 }
 
 // SetContent replaces the document with html — hostile input like any
 // other (a value loaded from a database can carry stored XSS): it goes
-// through the same DOMParser + policy walker as a paste. The undo stack
-// is cleared: history cannot reach across content loads.
+// through the same DOMParser + policy walker as a paste. Class rules the
+// document carries in its head are adopted first (each re-validated), so
+// the body's class attributes survive the registry filter. The undo
+// stack is cleared: history cannot reach across content loads.
 func (e *Editor) SetContent(html string) error {
-	f, err := e.sanitizeHTML(html)
-	if err != nil {
-		return err
+	parsed := js.Global().Get("DOMParser").New().
+		Call("parseFromString", html, "text/html")
+	e.adoptDocClasses(parsed)
+	var f Fragment
+	if body := parsed.Get("body"); body.Truthy() {
+		f.nodes = e.copyChildren(body, false)
 	}
 	e.beginWrite()
 	e.clearContent()
@@ -383,6 +433,51 @@ func (e *Editor) SetContent(html string) error {
 	e.clearPending()
 	e.undo.Clear()
 	return nil
+}
+
+// adoptDocClasses registers the class rules a stored document carries in
+// its head <style> elements. The rules are hostile input: each must be
+// exactly ".name { declarations }", name and CSS pass the same validators
+// as DefineClass, and a rule that fails is skipped (fail toward text),
+// never trusted. Utility classes (wt-*) already defined by the attached
+// plugins are theirs — a document cannot redefine what the toolbar will
+// apply. The DOMParser tree is inert, so nothing here ever executes.
+func (e *Editor) adoptDocClasses(parsed js.Value) {
+	head := parsed.Get("head")
+	if !head.Truthy() {
+		return
+	}
+	styles := head.Call("querySelectorAll", "style")
+	adopted := 0
+	for i := 0; i < styles.Get("length").Int(); i++ {
+		for _, rule := range strings.Split(styles.Index(i).Get("textContent").String(), "}") {
+			rule = strings.TrimSpace(rule)
+			if rule == "" {
+				continue
+			}
+			sel, decls, found := strings.Cut(rule, "{")
+			if !found {
+				continue
+			}
+			sel = strings.TrimSpace(sel)
+			if !strings.HasPrefix(sel, ".") {
+				continue
+			}
+			name := sel[1:]
+			if strings.HasPrefix(name, "wt-") && e.classDefined(name) {
+				continue
+			}
+			if adopted >= maxDocClasses {
+				G.Logf(1, "wtext: document sheet beyond %d classes; rest ignored\n", maxDocClasses)
+				return
+			}
+			if err := e.DefineClass(name, strings.TrimSpace(decls)); err != nil {
+				G.Logf(1, "wtext: document style %q rejected: %v\n", name, err)
+				continue
+			}
+			adopted++
+		}
+	}
 }
 
 // IsEmpty reports whether the document holds no user text — the pristine
@@ -423,16 +518,63 @@ func (e *Editor) classDefined(name string) bool {
 	return ok
 }
 
-// renderClasses rebuilds the editor's <style> from the registry. Set via
-// textContent — never innerHTML — although every part was sanitized.
+// Classes returns every registered class name, sorted.
+func (e *Editor) Classes() []string {
+	names := make([]string, 0, len(e.classes))
+	for name := range e.classes {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
+}
+
+// ClassCSS returns the sanitized CSS registered for name.
+func (e *Editor) ClassCSS(name string) (string, bool) {
+	css, ok := e.classes[name]
+	return css, ok
+}
+
+// renderClasses rebuilds the editor's <style> from the registry. Each
+// class renders as its Word split: the character half on span.name, the
+// paragraph half on the profile blocks — one name, two scoped rules, so
+// a block never inherits character declarations it should not carry.
+// Named styles render first and wt-* utilities last: later rules win
+// specificity ties, so direct formatting overrides a named style, as it
+// does in Word. Set via textContent — never innerHTML — although every
+// part was sanitized.
 func (e *Editor) renderClasses() {
+	names := e.Classes()
+	ordered := make([]string, 0, len(names))
+	for _, n := range names {
+		if !strings.HasPrefix(n, "wt-") {
+			ordered = append(ordered, n)
+		}
+	}
+	for _, n := range names {
+		if strings.HasPrefix(n, "wt-") {
+			ordered = append(ordered, n)
+		}
+	}
+	blockSel := ":is(" + strings.Join(epubhtml.BlockList(), ",") + ")"
 	var sb strings.Builder
-	for name, css := range e.classes {
-		sb.WriteString("[contenteditable] .")
-		sb.WriteString(name)
-		sb.WriteString(" { ")
-		sb.WriteString(css)
-		sb.WriteString(" }\n")
+	for _, name := range ordered {
+		char, block := epubhtml.SplitCSS(e.classes[name])
+		if char != "" {
+			sb.WriteString("[contenteditable] span.")
+			sb.WriteString(name)
+			sb.WriteString(" { ")
+			sb.WriteString(char)
+			sb.WriteString(" }\n")
+		}
+		if block != "" {
+			sb.WriteString("[contenteditable] ")
+			sb.WriteString(blockSel)
+			sb.WriteString(".")
+			sb.WriteString(name)
+			sb.WriteString(" { ")
+			sb.WriteString(block)
+			sb.WriteString(" }\n")
+		}
 	}
 	e.styleEl.Set("textContent", sb.String())
 }

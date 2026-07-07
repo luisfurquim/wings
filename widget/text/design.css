@@ -64,6 +64,35 @@
   background: var(--wings-border, #ccc);
 }
 
+/* ── Toolbar input popover (InputItem: style name, link URL...) ────────── */
+
+.wt-inputitem {
+  position: relative;
+  display: inline-flex;
+}
+.wt-popover {
+  position: absolute;
+  top: 100%;
+  inset-inline-start: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.25rem;
+  padding: 0.5rem;
+  min-width: 16rem;
+  border: var(--wings-text-border, 1px solid var(--wings-border, #ccc));
+  border-radius: var(--wings-text-radius, var(--wings-radius-md, 6px));
+  background: var(--wings-text-popover-bg, var(--wings-surface, #fff));
+  box-shadow: var(--wings-text-popover-shadow, 0 4px 12px rgba(0, 0, 0, 0.15));
+}
+.wt-popover[hidden] {
+  display: none;
+}
+.wt-popover w-input {
+  flex: 1;
+}
+
 /* ── Editing surface ───────────────────────────────────────────────────── */
 
 .wt-editor {

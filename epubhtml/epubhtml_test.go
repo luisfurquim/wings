@@ -34,9 +34,11 @@ func TestElementFor(t *testing.T) {
 		{"form", Drop, ""},
 		{"input", Drop, ""},
 		{"template", Drop, ""},
+		// class carrier: kept, but the walkers unwrap it when classless
+		{"span", Keep, "span"},
+		{"SPAN", Keep, "span"},
 		// presentational and unknown markup fails toward text
 		{"u", Unwrap, ""},
-		{"span", Unwrap, ""},
 		{"font", Unwrap, ""},
 		{"marquee", Unwrap, ""},
 		{"x-custom-thing", Unwrap, ""},
@@ -50,6 +52,38 @@ func TestElementFor(t *testing.T) {
 		if got.Disposition != c.want || (c.want == Keep && got.Canonical != c.canon) {
 			t.Errorf("ElementFor(%q) = %+v, want disposition %v canonical %q",
 				c.tag, got, c.want, c.canon)
+		}
+	}
+}
+
+func TestInlineAndRequiresClass(t *testing.T) {
+	for tag, wantInline := range map[string]bool{
+		"strong": true, "em": true, "a": true, "code": true,
+		"sup": true, "sub": true, "span": true, "SPAN": true,
+		"p": false, "h1": false, "blockquote": false, "br": false,
+	} {
+		if got := IsInline(tag); got != wantInline {
+			t.Errorf("IsInline(%q) = %v, want %v", tag, got, wantInline)
+		}
+	}
+	for tag, want := range map[string]bool{
+		"span": true, "SPAN": true,
+		"strong": false, "em": false, "p": false,
+	} {
+		if got := RequiresClass(tag); got != want {
+			t.Errorf("RequiresClass(%q) = %v, want %v", tag, got, want)
+		}
+	}
+}
+
+func TestBlockListMatchesProfile(t *testing.T) {
+	list := BlockList()
+	if len(list) != len(blocks) {
+		t.Fatalf("BlockList has %d tags, profile has %d", len(list), len(blocks))
+	}
+	for _, tag := range list {
+		if !IsBlock(tag) {
+			t.Errorf("BlockList tag %q is not a profile block", tag)
 		}
 	}
 }

@@ -68,6 +68,13 @@ var blocks = map[string]bool{
 	"pre":        true,
 }
 
+// classCarriers are inline containers that exist only to carry named
+// classes (the inline half of a split style). One with no registered
+// class says nothing and is unwrapped by the walkers — see RequiresClass.
+var classCarriers = map[string]bool{
+	"span": true,
+}
+
 // renames maps legacy presentational tags to their canonical semantic
 // form. Browsers still generate these on their own (native Ctrl+B/Ctrl+I,
 // the iOS selection callout), so the canonicalizer must know them even
@@ -111,7 +118,7 @@ func ElementFor(tag string) ElementPolicy {
 	switch {
 	case dropped[tag]:
 		return ElementPolicy{Disposition: Drop}
-	case marks[tag] || blocks[tag] || tag == "br":
+	case marks[tag] || blocks[tag] || classCarriers[tag] || tag == "br":
 		return ElementPolicy{Disposition: Keep, Canonical: tag}
 	}
 	if canon, ok := renames[tag]; ok {
@@ -127,6 +134,25 @@ func IsMark(tag string) bool { return marks[strings.ToLower(tag)] }
 
 // IsBlock reports whether canonical tag is a block element of the profile.
 func IsBlock(tag string) bool { return blocks[strings.ToLower(tag)] }
+
+// BlockList returns the block tags of the profile in stable order — the
+// selector vocabulary for block-half class rules.
+func BlockList() []string {
+	return []string{"p", "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "pre"}
+}
+
+// RequiresClass reports whether canonical tag may only exist while
+// carrying at least one registered class. The walkers unwrap it the
+// moment its class list filters down to nothing.
+func RequiresClass(tag string) bool { return classCarriers[strings.ToLower(tag)] }
+
+// IsInline reports whether canonical tag is inline content — a semantic
+// mark or a class carrier. Structure rule: inline nests in blocks, never
+// the other way around.
+func IsInline(tag string) bool {
+	tag = strings.ToLower(tag)
+	return marks[tag] || classCarriers[tag]
+}
 
 // AttrKind classifies an allowed attribute so the walker knows which
 // validator must run on the value before copying it.

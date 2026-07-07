@@ -1,5 +1,7 @@
 package wtext
 
+import "strings"
+
 // Exported toolbar building blocks. They are what BasicToolbar itself is
 // made of, and they are public on purpose: a MyToolbar in another package
 // composes the same behaviours instead of reimplementing them. Names avoid
@@ -68,4 +70,109 @@ func BlockPick() func(EditorCore, string) error {
 		}
 		return core.SetBlock(sel, tag)
 	}
+}
+
+// SwapClass makes name the only class of its prefix family on the current
+// selection: every other registered class sharing prefix is removed from
+// the range, then name (when non-empty) is applied — one undo step. It is
+// the exclusivity rule behind single-axis pickers (font face, font size,
+// alignment): a range has one font, picking another replaces it.
+func SwapClass(core EditorCore, prefix, name string) error {
+	sel, ok := core.Sel()
+	if !ok {
+		return nil
+	}
+	return core.Txn(func(c EditorCore) error {
+		for _, cls := range c.Classes() {
+			if !strings.HasPrefix(cls, prefix) || cls == name {
+				continue
+			}
+			if err := c.RemoveClass(sel, cls); err != nil {
+				return err
+			}
+		}
+		if name == "" {
+			return nil
+		}
+		return c.ApplyClass(sel, name)
+	})
+}
+
+// ClassPick adapts SwapClass to a SelectItem.Pick closure: the picked
+// option value is the class id within the family (prefix + value), the
+// empty value clears the family from the selection.
+func ClassPick(prefix string) func(EditorCore, string) error {
+	return func(core EditorCore, value string) error {
+		name := ""
+		if value != "" {
+			name = prefix + value
+		}
+		return SwapClass(core, prefix, name)
+	}
+}
+
+// ClassToggle adapts SwapClass to a ToggleItem.Do: it applies name when
+// inactive and removes it (back to the family's bare default) when the
+// selection already carries it.
+func ClassToggle(prefix, name string) func(EditorCore) error {
+	return func(core EditorCore) error {
+		sel, ok := core.Sel()
+		if !ok {
+			return nil
+		}
+		classes, err := core.ClassesAt(sel)
+		if err != nil {
+			return err
+		}
+		target := name
+		if containsString(classes, name) {
+			target = ""
+		}
+		return SwapClass(core, prefix, target)
+	}
+}
+
+// ClassCurrent returns a SelectItem.Current closure reporting the first
+// class of the prefix family in effect at the selection, without the
+// prefix ("" when none — the family's default option).
+func ClassCurrent(prefix string) func(EditorCore) string {
+	return func(core EditorCore) string {
+		sel, ok := core.Sel()
+		if !ok {
+			return ""
+		}
+		classes, err := core.ClassesAt(sel)
+		if err != nil {
+			return ""
+		}
+		for _, cls := range classes {
+			if strings.HasPrefix(cls, prefix) {
+				return strings.TrimPrefix(cls, prefix)
+			}
+		}
+		return ""
+	}
+}
+
+// ClassActive returns a ToggleItem.Active closure reporting whether name
+// is in effect at the selection.
+func ClassActive(name string) func(EditorCore) bool {
+	return func(core EditorCore) bool {
+		sel, ok := core.Sel()
+		if !ok {
+			return false
+		}
+		classes, err := core.ClassesAt(sel)
+		return err == nil && containsString(classes, name)
+	}
+}
+
+// containsString reports whether list holds s.
+func containsString(list []string, s string) bool {
+	for _, v := range list {
+		if v == s {
+			return true
+		}
+	}
+	return false
 }

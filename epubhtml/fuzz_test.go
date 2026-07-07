@@ -113,6 +113,47 @@ func FuzzSanitizeCSS(f *testing.F) {
 	})
 }
 
+// FuzzSplitCSS: for any input SanitizeCSS accepts, splitting loses no
+// declaration, sends each to exactly one half, and both halves survive
+// re-sanitization (they reach DefineClass-installed rules verbatim).
+func FuzzSplitCSS(f *testing.F) {
+	for _, s := range []string{
+		"color: red", "text-align: center",
+		"color:red;text-align:justify;font-family:serif",
+		"margin: 0 1em; font-size: 2em", "", "color: var(--x)",
+	} {
+		f.Add(s)
+	}
+	f.Fuzz(func(t *testing.T, s string) {
+		clean, err := SanitizeCSS(s)
+		if err != nil {
+			return
+		}
+		ch, bl := SplitCSS(clean)
+		count := func(decls string) int {
+			if decls == "" {
+				return 0
+			}
+			return strings.Count(decls, ";") + 1
+		}
+		if count(ch)+count(bl) != count(clean) {
+			t.Fatalf("declarations lost or duplicated: %q -> (%q, %q)", clean, ch, bl)
+		}
+		for _, half := range []string{ch, bl} {
+			if half == "" {
+				continue
+			}
+			again, err := SanitizeCSS(half)
+			if err != nil {
+				t.Fatalf("split half rejected on re-entry: %q -> %q: %v", clean, half, err)
+			}
+			if again != half {
+				t.Fatalf("split half not canonical: %q -> %q -> %q", clean, half, again)
+			}
+		}
+	})
+}
+
 // FuzzValidClassName: never panics; an accepted name is ASCII and bounded.
 func FuzzValidClassName(f *testing.F) {
 	for _, s := range []string{"titulo", "a-b_c1", "", "1x", "a b", "tí"} {

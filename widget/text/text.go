@@ -14,6 +14,8 @@
 //
 // The toolbar renders w-button and w-combobox elements, so an app using
 // w-text must also register those widgets (widget/button, widget/combobox).
+// A profile with InputItem controls (StyleToolbar, for one) also renders
+// w-input (widget/input) inside the item's popover.
 //
 // # Usage in parent template
 //
@@ -204,6 +206,11 @@ func (t *Text) Render(obj *wings.PranaObj) {
 		return
 	}
 
+	// Plugin setup runs before content loads: the utility classes a
+	// toolbar defines (wtext.InitPlugin) must exist when a stored document
+	// meets the class filter, or its class attributes would be stripped.
+	runPluginInits(prof, editor)
+
 	// Seed content from the bound value (a FieldCodec's String or a plain
 	// string). Hostile input like any other: SetContent runs it through the
 	// filter, so a stored-XSS value cannot execute.
@@ -232,6 +239,28 @@ func (t *Text) Render(obj *wings.PranaObj) {
 	}
 
 	wireEditorEvents(obj, editEl, editor)
+}
+
+// runPluginInits runs the wtext.InitPlugin hook of every plugin in the
+// profile, whatever its category. A failed init is logged and the plugin
+// runs degraded (its classes missing), never killing the widget.
+func runPluginInits(prof wtext.Profile, editor *wtext.Editor) {
+	initOne := func(p any) {
+		if ip, ok := p.(wtext.InitPlugin); ok {
+			if err := ip.Init(editor); err != nil {
+				G.Logf(1, "w-text: plugin init failed: %v\n", err)
+			}
+		}
+	}
+	for _, p := range prof.Toolbar {
+		initOne(p)
+	}
+	for _, p := range prof.Edition {
+		initOne(p)
+	}
+	for _, p := range prof.Clipboard {
+		initOne(p)
+	}
 }
 
 // wireEditorEvents connects focus/blur/input to host state, form value and
@@ -268,16 +297,18 @@ func wireEditorEvents(obj *wings.PranaObj, editEl js.Value, editor *wtext.Editor
 }
 
 // valueString extracts the initial content string from the bound value: a
-// fmt.Stringer (FieldCodec) or a plain string.
+// fmt.Stringer (FieldCodec) or a plain string. An empty binding falls
+// through to the host `value` property, which carries the content when
+// the element is created programmatically (or on re-render).
 func valueString(obj *wings.PranaObj) string {
-	v := obj.This.Get("value")
-	switch s := v.(type) {
-	case string:
-		return s
+	switch s := obj.This.Get("value").(type) {
 	case interface{ String() string }:
 		return s.String()
+	case string:
+		if s != "" {
+			return s
+		}
 	}
-	// The host `value` property may carry it as a JS string on re-render.
 	if p := obj.Element.Get("value"); p.Type() == js.TypeString {
 		return p.String()
 	}

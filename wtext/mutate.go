@@ -334,24 +334,191 @@ func (e *Editor) blocksIn(s Selection) ([]js.Value, error) {
 	return blocks, nil
 }
 
-// ApplyClass adds a registered class to every block touched by s.
-func (e *Editor) ApplyClass(s Selection, name string) error {
-	return e.eachBlockClass(s, name, "add")
-}
-
-// RemoveClass removes the class from every block touched by s.
-func (e *Editor) RemoveClass(s Selection, name string) error {
-	return e.eachBlockClass(s, name, "remove")
-}
-
-// eachBlockClass applies a classList verb on the selection's blocks.
-func (e *Editor) eachBlockClass(s Selection, name, verb string) error {
+// checkClass validates a class argument: well-formed and registered.
+func (e *Editor) checkClass(name string) error {
 	if err := epubhtml.ValidClassName(name); err != nil {
 		return err
 	}
 	if !e.classDefined(name) {
 		return fmt.Errorf("%w: %q", ErrUnknownClass, name)
 	}
+	return nil
+}
+
+// spanWithClass returns the nearest span ancestor of node carrying the
+// class (undefined when none exists inside the editor root).
+func (e *Editor) spanWithClass(node js.Value, name string) js.Value {
+	for cur := node; cur.Truthy() && !cur.Equal(e.root); cur = cur.Get("parentNode") {
+		if cur.Get("nodeType").Int() == 1 &&
+			strings.ToLower(cur.Get("tagName").String()) == "span" &&
+			cur.Get("classList").Call("contains", name).Bool() {
+			return cur
+		}
+	}
+	return js.Undefined()
+}
+
+// ClassesAt returns the classes in effect at the start of s, ordered
+// outside-in: the containing block's first, then each enclosing span's,
+// outermost first. At a collapsed s armed pending class intents overlay
+// the tree, like InMark, so the toolbar reads what typing will produce.
+func (e *Editor) ClassesAt(s Selection) ([]string, error) {
+	from, err := e.resolve(s.From)
+	if err != nil {
+		return nil, err
+	}
+	var chain []js.Value
+	for cur := from; cur.Truthy() && !cur.Equal(e.root); cur = cur.Get("parentNode") {
+		if cur.Get("nodeType").Int() == 1 && cur.Call("hasAttribute", "class").Bool() {
+			chain = append(chain, cur)
+		}
+	}
+	var out []string
+	seen := map[string]bool{}
+	for i := len(chain) - 1; i >= 0; i-- {
+		for _, cls := range strings.Fields(chain[i].Call("getAttribute", "class").String()) {
+			if !seen[cls] {
+				seen[cls] = true
+				out = append(out, cls)
+			}
+		}
+	}
+	if s.Collapsed() {
+		for _, p := range e.pending {
+			if p.class == "" {
+				continue
+			}
+			switch {
+			case p.on && !seen[p.class]:
+				seen[p.class] = true
+				out = append(out, p.class)
+			case !p.on && seen[p.class]:
+				kept := out[:0]
+				for _, cls := range out {
+					if cls != p.class {
+						kept = append(kept, cls)
+					}
+				}
+				out = kept
+			}
+		}
+	}
+	return out, nil
+}
+
+// ApplyClass applies a registered class to s with the Word split: its
+// character declarations ride spans over the exact range, its paragraph
+// declarations mark every block touched by s — one write, one undo step.
+// A collapsed s arms the character half as pending, like Wrap.
+func (e *Editor) ApplyClass(s Selection, name string) error {
+	if err := e.checkClass(name); err != nil {
+		return err
+	}
+	charCSS, blockCSS := epubhtml.SplitCSS(e.classes[name])
+	if s.Collapsed() {
+		if blockCSS != "" {
+			if err := e.classOnBlocks(s, name, "add"); err != nil {
+				return err
+			}
+		}
+		if charCSS != "" {
+			return e.armPendingClass(s, name, true)
+		}
+		return nil
+	}
+	rng, err := e.rangeFor(s)
+	if err != nil {
+		return err
+	}
+	blocks, err := e.blocksIn(s)
+	if err != nil {
+		return err
+	}
+	e.beginWrite()
+	defer e.commitWrite()
+	if blockCSS != "" {
+		for _, block := range blocks {
+			block.Get("classList").Call("add", name)
+		}
+	}
+	if charCSS != "" {
+		for _, slice := range e.textSlices(rng) {
+			if e.spanWithClass(slice.node, name).Truthy() {
+				continue // already carried
+			}
+			node := carve(slice)
+			span := e.doc.Call("createElement", "span")
+			span.Call("setAttribute", "class", name)
+			node.Get("parentNode").Call("insertBefore", span, node)
+			span.Call("appendChild", node)
+		}
+	}
+	return nil
+}
+
+// RemoveClass removes the class from the blocks and spans touched by s.
+// A partially covered span is split so only the covered portion loses the
+// class; a span carrying other classes keeps them on a fresh wrapper. A
+// collapsed s arms a pending removal for the character half, like Unwrap.
+func (e *Editor) RemoveClass(s Selection, name string) error {
+	if err := e.checkClass(name); err != nil {
+		return err
+	}
+	if s.Collapsed() {
+		if _, blockCSS := epubhtml.SplitCSS(e.classes[name]); blockCSS != "" {
+			if err := e.classOnBlocks(s, name, "remove"); err != nil {
+				return err
+			}
+		}
+		return e.armPendingClass(s, name, false)
+	}
+	rng, err := e.rangeFor(s)
+	if err != nil {
+		return err
+	}
+	blocks, err := e.blocksIn(s)
+	if err != nil {
+		return err
+	}
+	e.beginWrite()
+	defer e.commitWrite()
+	// Blocks lose the class unconditionally: whatever half put it there,
+	// removal must leave no trace on the touched range.
+	for _, block := range blocks {
+		block.Get("classList").Call("remove", name)
+	}
+	for _, slice := range e.textSlices(rng) {
+		span := e.spanWithClass(slice.node, name)
+		if !span.Truthy() {
+			continue
+		}
+		rest := otherClasses(span, name)
+		node := carve(slice)
+		e.liftOutOf(node, span)
+		if rest != "" {
+			wrapper := e.doc.Call("createElement", "span")
+			wrapper.Call("setAttribute", "class", rest)
+			node.Get("parentNode").Call("insertBefore", wrapper, node)
+			wrapper.Call("appendChild", node)
+		}
+	}
+	return nil
+}
+
+// otherClasses returns el's class list minus name.
+func otherClasses(el js.Value, name string) string {
+	var rest []string
+	for _, cls := range strings.Fields(el.Call("getAttribute", "class").String()) {
+		if cls != name {
+			rest = append(rest, cls)
+		}
+	}
+	return strings.Join(rest, " ")
+}
+
+// classOnBlocks applies a classList verb on the selection's blocks as
+// one bracketed write (the collapsed-selection path).
+func (e *Editor) classOnBlocks(s Selection, name, verb string) error {
 	blocks, err := e.blocksIn(s)
 	if err != nil {
 		return err

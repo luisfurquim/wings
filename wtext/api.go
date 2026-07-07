@@ -51,6 +51,15 @@ var (
 	ErrUnknownClass = errors.New("wtext: class not defined via DefineClass")
 	// ErrBadFragment reports a Fragment whose Builder recorded errors.
 	ErrBadFragment = errors.New("wtext: invalid fragment")
+	// ErrReservedClass reports a user style name in the wt- namespace,
+	// which belongs to wings' own utility classes.
+	ErrReservedClass = errors.New("wtext: the wt- class prefix is reserved")
+	// ErrNoFormatting reports a create-style call over a selection that
+	// carries no classes to capture.
+	ErrNoFormatting = errors.New("wtext: selection carries no formatting to capture")
+	// ErrNoSelection reports an action that needs a selection inside the
+	// editor when there is none.
+	ErrNoSelection = errors.New("wtext: no selection inside the editor")
 )
 
 // EditorCore is a plugin's only gate to the document. Reads return plain
@@ -72,6 +81,16 @@ type EditorCore interface {
 	// HasClass reports whether the block containing the start of s
 	// carries the named class.
 	HasClass(s Selection, name string) (bool, error)
+	// Classes returns every class name registered via DefineClass, sorted.
+	Classes() []string
+	// ClassCSS returns the sanitized CSS registered for name.
+	ClassCSS(name string) (css string, ok bool)
+	// ClassesAt returns the classes in effect at the start of s, ordered
+	// outside-in: the containing block's classes first, then each
+	// enclosing span's, outermost first — so merging their CSS in order
+	// makes the innermost formatting win. At a collapsed s armed pending
+	// classes overlay the tree, like InMark.
+	ClassesAt(s Selection) ([]string, error)
 
 	// Wrap applies a semantic mark to the text covered by s. A collapsed
 	// s arms the mark as pending: it applies to the next text typed at
@@ -84,9 +103,13 @@ type EditorCore interface {
 	// SetBlock converts every block touched by s to tag. Attributes are
 	// re-filtered against the target tag's policy.
 	SetBlock(s Selection, tag string) error
-	// ApplyClass adds a registered class to every block touched by s.
+	// ApplyClass applies a registered class to s with the Word split: the
+	// class's character declarations ride spans over the exact range, its
+	// paragraph declarations mark every block touched by s. A collapsed s
+	// arms the character half as pending, like Wrap.
 	ApplyClass(s Selection, name string) error
-	// RemoveClass removes the class from every block touched by s.
+	// RemoveClass removes the class from the spans and blocks touched by
+	// s. A collapsed s arms a pending removal, like Unwrap.
 	RemoveClass(s Selection, name string) error
 	// DefineClass registers a named style: the name becomes usable in
 	// class attributes and the CSS (sanitized) is installed with the
@@ -181,10 +204,31 @@ type SelectItem struct {
 
 func (SelectItem) isToolbarItem() {}
 
+// InputItem is a button that opens a small text prompt — a w-input in a
+// popover; confirming calls Do with the typed value. Label and
+// Placeholder are message ids resolved through the i18n catalog. It is
+// the affordance for values a click cannot express: a style name, a
+// link's URL.
+type InputItem struct {
+	ID, Label, Icon, Placeholder string
+	Do                           func(EditorCore, string) error
+}
+
+func (InputItem) isToolbarItem() {}
+
 // Separator draws a divider between item groups.
 type Separator struct{}
 
 func (Separator) isToolbarItem() {}
+
+// InitPlugin is an optional interface any plugin may implement to run
+// setup against the editor at attach time — defining the utility classes
+// a toolbar will apply, for instance. It runs once per editor instance,
+// before content loads, so persisted documents using those classes
+// survive the class filter.
+type InitPlugin interface {
+	Init(core EditorCore) error
+}
 
 // Profile is the pluggable behaviour of one editor instance. Templates
 // select a registered profile by name: <w-text profile="basic">.

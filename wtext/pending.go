@@ -22,11 +22,15 @@ import (
 //	          intent. A trip to a toolbar control (selection leaves the
 //	          editor and comes back to the anchor) keeps it.
 
-// pendingMark is one armed intent: on=true wraps the next typing in mark;
-// on=false lifts it out of the enclosing mark element.
+// pendingMark is one armed intent: on=true wraps the next typing in the
+// mark (or in a span carrying class); on=false lifts it out of the
+// enclosing mark element (or span with the class). Exactly one of
+// mark/class describes the intent; the map key is the tag for marks and
+// "."+name for classes, so the two namespaces never collide.
 type pendingMark struct {
-	mark Mark // set when on (carries the tag and a Link's canonical href)
-	on   bool
+	mark  Mark   // set for mark intents (tag and a Link's canonical href)
+	class string // set for class intents
+	on    bool
 }
 
 // armPendingOn records "next typing gets m" at the collapsed s. When the
@@ -61,19 +65,38 @@ func (e *Editor) armPendingOff(s Selection, tag string) error {
 	return nil
 }
 
-// setPending stores one intent, resetting the set when the anchor moved
-// (intents armed at another caret position are stale by definition).
-func (e *Editor) setPending(node js.Value, off int, tag string, p pendingMark) {
+// armPendingClass records a class intent at the collapsed s: on=true,
+// "the next typing lands in a span carrying name"; on=false, "the next
+// typing escapes the span carrying name". Arming toward the state the
+// caret is already in just cancels the opposite intent.
+func (e *Editor) armPendingClass(s Selection, name string, on bool) error {
+	from, err := e.resolve(s.From)
+	if err != nil {
+		return err
+	}
+	if e.spanWithClass(from, name).Truthy() == on {
+		e.dropPending("." + name)
+		return nil
+	}
+	e.setPending(from, s.From.Offset, "."+name, pendingMark{class: name, on: on})
+	return nil
+}
+
+// setPending stores one intent under key, resetting the set when the
+// anchor moved (intents armed at another caret position are stale by
+// definition). Mark callers pass the lowercase tag, class callers
+// "."+name — class names are case-sensitive, so no folding here.
+func (e *Editor) setPending(node js.Value, off int, key string, p pendingMark) {
 	if len(e.pending) == 0 || !node.Equal(e.pendingNode) || off != e.pendingOff {
 		e.pending = map[string]pendingMark{}
 		e.pendingNode, e.pendingOff = node, off
 	}
-	e.pending[strings.ToLower(tag)] = p
+	e.pending[key] = p
 }
 
-// dropPending removes one tag's intent.
-func (e *Editor) dropPending(tag string) {
-	delete(e.pending, strings.ToLower(tag))
+// dropPending removes one intent by key.
+func (e *Editor) dropPending(key string) {
+	delete(e.pending, key)
 	if len(e.pending) == 0 {
 		e.clearPending()
 	}
@@ -134,6 +157,9 @@ func (e *Editor) insertPending(ev js.Value) bool {
 		return false
 	}
 
+	offClasses := e.pendingClasses(false)
+	onClasses := e.pendingClasses(true)
+
 	ev.Call("preventDefault")
 	e.beginWrite()
 	// Plain spaces become NBSP, as the browser's own editor does here: at a
@@ -153,10 +179,38 @@ func (e *Editor) insertPending(ev js.Value) bool {
 	e.dropCaretFiller(txt)
 	// Offs before ons: liftOutOf climbs from txt splitting every level, so
 	// wrappers added first would be split right back apart.
+	for _, name := range offClasses {
+		span := e.spanWithClass(txt, name)
+		if !span.Truthy() {
+			continue
+		}
+		rest := otherClasses(span, name)
+		e.liftOutOf(txt, span)
+		if rest != "" {
+			wrapper := e.doc.Call("createElement", "span")
+			wrapper.Call("setAttribute", "class", rest)
+			txt.Get("parentNode").Call("insertBefore", wrapper, txt)
+			wrapper.Call("appendChild", txt)
+		}
+	}
 	for _, tag := range e.pendingTags(false) {
 		if mark := e.markAncestor(txt, tag); mark.Truthy() {
 			e.liftOutOf(txt, mark)
 		}
+	}
+	// Ons nest inward as they wrap: the class span goes first (outermost),
+	// the marks land inside it.
+	var newClasses []string
+	for _, name := range onClasses {
+		if !e.spanWithClass(txt, name).Truthy() {
+			newClasses = append(newClasses, name)
+		}
+	}
+	if len(newClasses) > 0 {
+		wrapper := e.doc.Call("createElement", "span")
+		wrapper.Call("setAttribute", "class", strings.Join(newClasses, " "))
+		txt.Get("parentNode").Call("insertBefore", wrapper, txt)
+		wrapper.Call("appendChild", txt)
 	}
 	for _, tag := range e.pendingTags(true) {
 		if e.markAncestor(txt, tag).Truthy() {
@@ -190,17 +244,30 @@ func (e *Editor) insertPending(ev js.Value) bool {
 	return true
 }
 
-// pendingTags returns the armed tags with the given direction, sorted for
-// deterministic nesting.
+// pendingTags returns the armed mark tags with the given direction,
+// sorted for deterministic nesting.
 func (e *Editor) pendingTags(on bool) []string {
 	var tags []string
 	for tag, p := range e.pending {
-		if p.on == on {
+		if p.class == "" && p.on == on {
 			tags = append(tags, tag)
 		}
 	}
 	sort.Strings(tags)
 	return tags
+}
+
+// pendingClasses returns the armed class names with the given direction,
+// sorted for a deterministic class attribute.
+func (e *Editor) pendingClasses(on bool) []string {
+	var names []string
+	for _, p := range e.pending {
+		if p.class != "" && p.on == on {
+			names = append(names, p.class)
+		}
+	}
+	sort.Strings(names)
+	return names
 }
 
 // pruneEmptyTextSibling removes zero-length text nodes flanking txt (the
