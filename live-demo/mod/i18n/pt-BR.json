@@ -732,7 +732,7 @@
     "revised": false
   },
   {
-    "content": " não\n      conseguem existir no documento. Os rótulos da barra são traduzíveis — troque\n      o idioma no topo e a barra acompanha.\n    ",
+    "content": " não\n      conseguem existir no documento. Além das marcas básicas, a barra traz\n      fonte, tamanho e alinhamento — e o botão ✎ captura a formatação da\n      seleção como um estilo nomeado reutilizável, aplicável pela caixa\n      \"Estilo\". Os rótulos da barra são traduzíveis — troque o idioma no topo\n      e a barra acompanha.\n    ",
     "revised": false
   },
   {
@@ -744,7 +744,7 @@
     "revised": false
   },
   {
-    "content": "Formatação básica é suportada.",
+    "content": "Selecione um trecho, formate e crie estilos nomeados.",
     "revised": false
   },
   {
@@ -760,7 +760,7 @@
     "revised": false
   },
   {
-    "content": "Estilo",
+    "content": "Bloco",
     "revised": false
   },
   {
@@ -797,6 +797,78 @@
   },
   {
     "content": "Bloco de código",
+    "revised": false
+  },
+  {
+    "content": "Fonte",
+    "revised": false
+  },
+  {
+    "content": "Fonte padrão",
+    "revised": false
+  },
+  {
+    "content": "Serifada",
+    "revised": false
+  },
+  {
+    "content": "Sem serifa",
+    "revised": false
+  },
+  {
+    "content": "Monoespaçada",
+    "revised": false
+  },
+  {
+    "content": "Cursiva",
+    "revised": false
+  },
+  {
+    "content": "Tamanho da fonte",
+    "revised": false
+  },
+  {
+    "content": "Tamanho padrão",
+    "revised": false
+  },
+  {
+    "content": "Alinhar à esquerda",
+    "revised": false
+  },
+  {
+    "content": "Centralizar",
+    "revised": false
+  },
+  {
+    "content": "Alinhar à direita",
+    "revised": false
+  },
+  {
+    "content": "Justificar",
+    "revised": false
+  },
+  {
+    "content": "Estilo",
+    "revised": false
+  },
+  {
+    "content": "Criar estilo da seleção",
+    "revised": false
+  },
+  {
+    "content": "Nome do estilo",
+    "revised": false
+  },
+  {
+    "content": "(sem estilo)",
+    "revised": false
+  },
+  {
+    "content": "Aplicar",
+    "revised": false
+  },
+  {
+    "content": "Cancelar",
     "revised": false
   },
   {

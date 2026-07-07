@@ -732,8 +732,8 @@
     "revised": true
   },
   {
-    "content": " no\n      pueden existir en el documento. Las etiquetas de la barra son traducibles: cambiá\n      el idioma arriba y la barra acompaña.\n    ",
-    "revised": true
+    "content": " no\n      pueden existir en el documento. Además de las marcas básicas, la barra\n      trae fuente, tamaño y alineación — y el botón ✎ captura el formato de\n      la selección como un estilo con nombre reutilizable, aplicable desde la\n      caja \"Estilo\". Los rótulos de la barra son traducibles — cambiá el\n      idioma arriba y la barra acompaña.\n    ",
+    "revised": false
   },
   {
     "content": "Biografía",
@@ -744,8 +744,8 @@
     "revised": true
   },
   {
-    "content": "Se admite formato básico.",
-    "revised": true
+    "content": "Seleccioná un fragmento, dale formato y creá estilos con nombre.",
+    "revised": false
   },
   {
     "content": "Negrita",
@@ -760,8 +760,8 @@
     "revised": true
   },
   {
-    "content": "Estilo",
-    "revised": true
+    "content": "Bloque",
+    "revised": false
   },
   {
     "content": "Párrafo",
@@ -798,6 +798,78 @@
   {
     "content": "Bloque de código",
     "revised": true
+  },
+  {
+    "content": "Fuente",
+    "revised": false
+  },
+  {
+    "content": "Fuente predeterminada",
+    "revised": false
+  },
+  {
+    "content": "Con serifa",
+    "revised": false
+  },
+  {
+    "content": "Sin serifa",
+    "revised": false
+  },
+  {
+    "content": "Monoespaciada",
+    "revised": false
+  },
+  {
+    "content": "Cursiva",
+    "revised": false
+  },
+  {
+    "content": "Tamaño de fuente",
+    "revised": false
+  },
+  {
+    "content": "Tamaño predeterminado",
+    "revised": false
+  },
+  {
+    "content": "Alinear a la izquierda",
+    "revised": false
+  },
+  {
+    "content": "Centrar",
+    "revised": false
+  },
+  {
+    "content": "Alinear a la derecha",
+    "revised": false
+  },
+  {
+    "content": "Justificar",
+    "revised": false
+  },
+  {
+    "content": "Estilo",
+    "revised": true
+  },
+  {
+    "content": "Crear estilo de la selección",
+    "revised": false
+  },
+  {
+    "content": "Nombre del estilo",
+    "revised": false
+  },
+  {
+    "content": "(sin estilo)",
+    "revised": false
+  },
+  {
+    "content": "Aplicar",
+    "revised": false
+  },
+  {
+    "content": "Cancelar",
+    "revised": false
   },
   {
     "content": "Probador in-web",

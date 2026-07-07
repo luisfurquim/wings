@@ -736,48 +736,36 @@
     "ctxdetail": "p@tabs/widgets/widgetstab.html:145:73"
   },
   {
-    "context": "tabs/widgets/widgetstab.html:149:20",
-    "ctxdetail": "w-text[label]@tabs/widgets/widgetstab.html:149:20"
+    "context": "tabs/widgets/widgetstab.html:152:20",
+    "ctxdetail": "w-text[label]@tabs/widgets/widgetstab.html:152:20"
   },
   {
-    "context": "tabs/widgets/widgetstab.html:150:26",
-    "ctxdetail": "w-text[placeholder]@tabs/widgets/widgetstab.html:150:26"
+    "context": "tabs/widgets/widgetstab.html:153:26",
+    "ctxdetail": "w-text[placeholder]@tabs/widgets/widgetstab.html:153:26"
   },
   {
-    "context": "tabs/widgets/widgetstab.html:151:21",
-    "ctxdetail": "w-text[helper]@tabs/widgets/widgetstab.html:151:21"
+    "context": "tabs/widgets/widgetstab.html:154:21",
+    "ctxdetail": "w-text[helper]@tabs/widgets/widgetstab.html:154:21"
   },
   {
-    "context": "tabs/widgets/widgetstab.html:153:43",
-    "ctxdetail": "span@tabs/widgets/widgetstab.html:153:43"
+    "context": "tabs/widgets/widgetstab.html:156:43",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:156:43"
   },
   {
-    "context": "tabs/widgets/widgetstab.html:154:45",
-    "ctxdetail": "span@tabs/widgets/widgetstab.html:154:45"
+    "context": "tabs/widgets/widgetstab.html:157:45",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:157:45"
   },
   {
-    "context": "tabs/widgets/widgetstab.html:155:43",
-    "ctxdetail": "span@tabs/widgets/widgetstab.html:155:43"
+    "context": "tabs/widgets/widgetstab.html:158:43",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:158:43"
   },
   {
-    "context": "tabs/widgets/widgetstab.html:156:44",
-    "ctxdetail": "span@tabs/widgets/widgetstab.html:156:44"
+    "context": "tabs/widgets/widgetstab.html:159:44",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:159:44"
   },
   {
-    "context": "tabs/widgets/widgetstab.html:157:46",
-    "ctxdetail": "span@tabs/widgets/widgetstab.html:157:46"
-  },
-  {
-    "context": "tabs/widgets/widgetstab.html:158:47",
-    "ctxdetail": "span@tabs/widgets/widgetstab.html:158:47"
-  },
-  {
-    "context": "tabs/widgets/widgetstab.html:159:47",
-    "ctxdetail": "span@tabs/widgets/widgetstab.html:159:47"
-  },
-  {
-    "context": "tabs/widgets/widgetstab.html:160:47",
-    "ctxdetail": "span@tabs/widgets/widgetstab.html:160:47"
+    "context": "tabs/widgets/widgetstab.html:160:46",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:160:46"
   },
   {
     "context": "tabs/widgets/widgetstab.html:161:47",
@@ -792,12 +780,96 @@
     "ctxdetail": "span@tabs/widgets/widgetstab.html:163:47"
   },
   {
-    "context": "tabs/widgets/widgetstab.html:164:50",
-    "ctxdetail": "span@tabs/widgets/widgetstab.html:164:50"
+    "context": "tabs/widgets/widgetstab.html:164:47",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:164:47"
   },
   {
-    "context": "tabs/widgets/widgetstab.html:165:48",
-    "ctxdetail": "span@tabs/widgets/widgetstab.html:165:48"
+    "context": "tabs/widgets/widgetstab.html:165:47",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:165:47"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:166:47",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:166:47"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:167:50",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:167:50"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:168:48",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:168:48"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:169:43",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:169:43"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:170:51",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:170:51"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:171:49",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:171:49"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:172:48",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:172:48"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:173:48",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:173:48"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:174:51",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:174:51"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:175:43",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:175:43"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:176:51",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:176:51"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:177:49",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:177:49"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:178:51",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:178:51"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:179:50",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:179:50"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:180:52",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:180:52"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:181:44",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:181:44"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:182:48",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:182:48"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:183:49",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:183:49"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:184:49",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:184:49"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:185:41",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:185:41"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:186:45",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:186:45"
   },
   {
     "context": "tabs/wtest/wtesttab.html:2:7",

@@ -9,6 +9,7 @@ import (
 	"github.com/luisfurquim/wings"
 	"github.com/luisfurquim/wings/dom"
 	"github.com/luisfurquim/wings/field"
+	"github.com/luisfurquim/wings/wtext"
 )
 
 //go:embed widgetstab.i18n.html
@@ -33,6 +34,15 @@ const cssContent = `
 type WidgetsTab struct{}
 
 func init() {
+	// The demo editor uses the full toolbar: basic marks + font/alignment
+	// (FontToolbar) + named styles (StyleToolbar).
+	wtext.RegisterProfile("full", wtext.Profile{
+		Toolbar: []wtext.ToolbarPlugin{
+			wtext.BasicToolbar{},
+			wtext.FontToolbar{},
+			wtext.StyleToolbar{},
+		},
+	})
 	wings.Register(
 		"widgets-tab",
 		htmlContent,

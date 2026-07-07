@@ -732,8 +732,8 @@
     "revised": true
   },
   {
-    "content": " links cannot exist in the document. The toolbar labels\n      are translatable — switch the language at the top and the toolbar follows.\n    ",
-    "revised": true
+    "content": " cannot\n      exist in the document. Beyond the basic marks, the toolbar brings\n      font, size and alignment — and the ✎ button captures the selection's\n      formatting as a reusable named style, applied through the \"Style\"\n      box. The toolbar labels are translatable — switch the language at the\n      top and the toolbar follows.\n    ",
+    "revised": false
   },
   {
     "content": "Biography",
@@ -744,8 +744,8 @@
     "revised": true
   },
   {
-    "content": "Basic formatting is supported.",
-    "revised": true
+    "content": "Select a passage, format it and create named styles.",
+    "revised": false
   },
   {
     "content": "Bold",
@@ -760,8 +760,8 @@
     "revised": true
   },
   {
-    "content": "Style",
-    "revised": true
+    "content": "Block",
+    "revised": false
   },
   {
     "content": "Paragraph",
@@ -798,6 +798,78 @@
   {
     "content": "Code block",
     "revised": true
+  },
+  {
+    "content": "Font",
+    "revised": false
+  },
+  {
+    "content": "Default font",
+    "revised": false
+  },
+  {
+    "content": "Serif",
+    "revised": false
+  },
+  {
+    "content": "Sans-serif",
+    "revised": false
+  },
+  {
+    "content": "Monospace",
+    "revised": false
+  },
+  {
+    "content": "Cursive",
+    "revised": false
+  },
+  {
+    "content": "Font size",
+    "revised": false
+  },
+  {
+    "content": "Default size",
+    "revised": false
+  },
+  {
+    "content": "Align left",
+    "revised": false
+  },
+  {
+    "content": "Center",
+    "revised": false
+  },
+  {
+    "content": "Align right",
+    "revised": false
+  },
+  {
+    "content": "Justify",
+    "revised": false
+  },
+  {
+    "content": "Style",
+    "revised": true
+  },
+  {
+    "content": "Create style from selection",
+    "revised": false
+  },
+  {
+    "content": "Style name",
+    "revised": false
+  },
+  {
+    "content": "(no style)",
+    "revised": false
+  },
+  {
+    "content": "Apply",
+    "revised": false
+  },
+  {
+    "content": "Cancel",
+    "revised": false
   },
   {
     "content": "In-web tester",
