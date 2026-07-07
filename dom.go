@@ -152,26 +152,6 @@ func attrVal(node js.Value, name string) string {
 	return v.String()
 }
 
-// hasAttr checks if the node has a given attribute.
-func hasAttr(node js.Value, name string) bool {
-	return node.Call("hasAttribute", name).Bool()
-}
-
-// attrsOf returns a slice of (name, value) for all attributes of the node.
-func attrsOf(node js.Value) [][2]string {
-	attrs := node.Get("attributes")
-	if attrs.IsNull() || attrs.IsUndefined() {
-		return nil
-	}
-	n := attrs.Get("length").Int()
-	result := make([][2]string, 0, n)
-	for i := 0; i < n; i++ {
-		a := attrs.Index(i)
-		result = append(result, [2]string{a.Get("name").String(), a.Get("value").String()})
-	}
-	return result
-}
-
 // attrLen returns the number of attributes of the node.
 func attrLen(node js.Value) int {
 	attrs := node.Get("attributes")

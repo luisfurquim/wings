@@ -41,9 +41,9 @@ func TestInt(t *testing.T) {
 		{"120", ""},
 		{"-1", "range"},
 		{"121", "range"},
-		{"abc", "nan"},   // not a number ≠ out of range
-		{"1.5", "nan"},   // float is not an int
-		{"1e2", "nan"},   // scientific notation rejected by Atoi
+		{"abc", "nan"}, // not a number ≠ out of range
+		{"1.5", "nan"}, // float is not an int
+		{"1e2", "nan"}, // scientific notation rejected by Atoi
 	}
 	for _, c := range cases {
 		i.FromString(c.in)

@@ -116,15 +116,15 @@ func downloadFile(url, dst string) error {
 	tmpPath := tmp.Name()
 	if _, err := io.Copy(tmp, resp.Body); err != nil {
 		tmp.Close()
-		os.Remove(tmpPath)
+		_ = os.Remove(tmpPath)
 		return fmt.Errorf("download %s: %w", url, err)
 	}
 	if err := tmp.Close(); err != nil {
-		os.Remove(tmpPath)
+		_ = os.Remove(tmpPath)
 		return fmt.Errorf("close temp: %w", err)
 	}
 	if err := os.Rename(tmpPath, dst); err != nil {
-		os.Remove(tmpPath)
+		_ = os.Remove(tmpPath)
 		return fmt.Errorf("rename temp: %w", err)
 	}
 	fmt.Fprintf(os.Stderr, "fetched %s\n", filepath.Base(dst))

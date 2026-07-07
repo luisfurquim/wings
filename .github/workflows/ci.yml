@@ -4,8 +4,10 @@ name: CI
 # (testdata/fuzz/) as ordinary tests for free — the cheap half of the fuzzing
 # cadence — alongside the unit tests. Active fuzzing lives in fuzz.yml.
 #
-# Only the native (non-js) packages are exercised here; the GOOS=js runtime is
-# excluded by build constraints and is covered separately (run-wasm-tests.sh).
+# go vet/go test/the native golangci-lint pass only see the native (non-js)
+# packages; the GOOS=js runtime is excluded by build constraints. It gets its
+# own golangci-lint pass below (config: .golangci.yml) and its own test run
+# separately (run-wasm-tests.sh, not wired into this workflow).
 
 on:
   push:
@@ -22,3 +24,9 @@ jobs:
           go-version: '1.26.4'
       - run: go vet ./...
       - run: go test ./...
+      - uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.12.2
+          install-only: true
+      - run: golangci-lint run ./...
+      - run: GOOS=js GOARCH=wasm golangci-lint run ./...

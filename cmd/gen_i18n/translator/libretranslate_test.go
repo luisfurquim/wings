@@ -91,13 +91,13 @@ func TestLibreTranslate_SourceTag(t *testing.T) {
 func TestLibreTranslate_SimpleText_Success(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req ltRequest
-		json.NewDecoder(r.Body).Decode(&req)
+		_ = json.NewDecoder(r.Body).Decode(&req)
 		// echo each text uppercased to simulate translation
 		out := make([]string, len(req.Q))
 		for i, q := range req.Q {
 			out[i] = "TRANSLATED:" + q
 		}
-		json.NewEncoder(w).Encode(ltResponse{TranslatedText: out})
+		_ = json.NewEncoder(w).Encode(ltResponse{TranslatedText: out})
 	}))
 	defer srv.Close()
 
@@ -120,14 +120,14 @@ func TestLibreTranslate_SimpleText_Success(t *testing.T) {
 func TestLibreTranslate_TokensRestored(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req ltRequest
-		json.NewDecoder(r.Body).Decode(&req)
+		_ = json.NewDecoder(r.Body).Decode(&req)
 		// simulate: MT translated text but left WPTK markers intact
 		out := make([]string, len(req.Q))
 		for i, q := range req.Q {
 			out[i] = "Você tem WPTK_0 itens"
 			_ = q
 		}
-		json.NewEncoder(w).Encode(ltResponse{TranslatedText: out})
+		_ = json.NewEncoder(w).Encode(ltResponse{TranslatedText: out})
 	}))
 	defer srv.Close()
 
@@ -147,13 +147,13 @@ func TestLibreTranslate_TokensRestored(t *testing.T) {
 func TestLibreTranslate_TokenDropped_RecordedInFailed(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req ltRequest
-		json.NewDecoder(r.Body).Decode(&req)
+		_ = json.NewDecoder(r.Body).Decode(&req)
 		// MT dropped the WPTK marker entirely
 		out := make([]string, len(req.Q))
 		for i := range req.Q {
 			out[i] = "Você tem itens"
 		}
-		json.NewEncoder(w).Encode(ltResponse{TranslatedText: out})
+		_ = json.NewEncoder(w).Encode(ltResponse{TranslatedText: out})
 	}))
 	defer srv.Close()
 
@@ -186,7 +186,7 @@ func TestLibreTranslate_HTTPError(t *testing.T) {
 
 func TestLibreTranslate_APIError(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		json.NewEncoder(w).Encode(ltResponse{Error: "language not supported"})
+		_ = json.NewEncoder(w).Encode(ltResponse{Error: "language not supported"})
 	}))
 	defer srv.Close()
 
@@ -213,14 +213,14 @@ func TestLibreTranslate_APIKeyForwarded(t *testing.T) {
 	var gotKey string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req ltRequest
-		json.NewDecoder(r.Body).Decode(&req)
+		_ = json.NewDecoder(r.Body).Decode(&req)
 		gotKey = req.APIKey
-		json.NewEncoder(w).Encode(ltResponse{TranslatedText: []string{"hola"}})
+		_ = json.NewEncoder(w).Encode(ltResponse{TranslatedText: []string{"hola"}})
 	}))
 	defer srv.Close()
 
 	lt := NewLibreTranslate(srv.URL, "secret123", 5*time.Second)
-	lt.Translate(context.Background(), "en", "es", []Entry{{Label: "x", Cells: map[string]string{"": "hello"}}})
+	_, _ = lt.Translate(context.Background(), "en", "es", []Entry{{Label: "x", Cells: map[string]string{"": "hello"}}})
 	if gotKey != "secret123" {
 		t.Fatalf("api_key not forwarded, got %q", gotKey)
 	}

@@ -98,7 +98,7 @@ func scanFlexNames(text string) {
 	for i < n {
 		if i+1 < n && text[i] == '{' && text[i+1] == '{' {
 			j := i + 2
-			for j+1 < n && !(text[j] == '}' && text[j+1] == '}') {
+			for j+1 < n && (text[j] != '}' || text[j+1] != '}') {
 				j++
 			}
 			if j+1 >= n {
@@ -190,7 +190,7 @@ func rewriteFlexBlocks(text string, recordOccurrence func(idx int32)) (string, b
 		if i+1 < n && text[i] == '{' && text[i+1] == '{' {
 			// Locate the matching `}}`.
 			j := i + 2
-			for j+1 < n && !(text[j] == '}' && text[j+1] == '}') {
+			for j+1 < n && (text[j] != '}' || text[j+1] != '}') {
 				j++
 			}
 			if j+1 >= n {

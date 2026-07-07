@@ -210,7 +210,7 @@ func watch(cfg *devConfig, wingsDir string) error {
 // the ignored ones (the webroot — where the build writes — plus VCS/vendor dirs)
 // so the build's own output never triggers a rebuild loop.
 func addDirsRecursive(w *fsnotify.Watcher, root string, cfg *devConfig) {
-	filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+	_ = filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil || !d.IsDir() {
 			return nil //nolint:nilerr // unreadable dirs are skipped, not fatal
 		}
@@ -252,7 +252,7 @@ func isDir(path string) bool {
 func snapshotOutputs(cfg *devConfig) map[string]string {
 	catalogs := filepath.Clean(filepath.Join(cfg.ModuleDir, cfg.I18nPath, "i18n"))
 	out := map[string]string{}
-	filepath.WalkDir(cfg.AppRoot, func(path string, d fs.DirEntry, err error) error {
+	_ = filepath.WalkDir(cfg.AppRoot, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return nil //nolint:nilerr // unreadable entries are skipped, not fatal
 		}

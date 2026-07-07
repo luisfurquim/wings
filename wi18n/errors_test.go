@@ -12,7 +12,7 @@ import (
 // names the offending catalog in its message.
 func TestCatalogSignatureError(t *testing.T) {
 	cause := errors.New("signature verification failed")
-	var err error = fmt.Errorf("loading bundle: %w",
+	err := fmt.Errorf("loading bundle: %w",
 		&CatalogSignatureError{URL: "i18n/pt-BR.inflections.json", Err: cause})
 
 	var sigErr *CatalogSignatureError

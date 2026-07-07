@@ -84,7 +84,8 @@ func applyStashSweep(node js.Value) {
 		return
 	}
 	nt := node.Get("nodeType").Int()
-	if nt == 1 { // ELEMENT_NODE
+	switch nt {
+	case 1: // ELEMENT_NODE
 		for _, a := range TranslatableAttrs {
 			srcVal := node.Get("_wi18nAttr_" + a)
 			if srcVal.Type() == js.TypeString {
@@ -94,7 +95,7 @@ func applyStashSweep(node js.Value) {
 				}
 			}
 		}
-	} else if nt == 3 { // TEXT_NODE
+	case 3: // TEXT_NODE
 		srcVal := node.Get("_wi18nSrc")
 		if srcVal.Type() == js.TypeString {
 			node.Set("nodeValue", Printer(srcVal.String()))

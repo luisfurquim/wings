@@ -574,9 +574,6 @@ func (e *Editor) Delete(s Selection) error {
 // fragments flow in place; a fragment carrying blocks splits the target
 // block and lays its blocks between the halves.
 func (e *Editor) Replace(s Selection, f Fragment) error {
-	if len(f.errs) > 0 {
-		return fmt.Errorf("%w: %v", ErrBadFragment, f.errs)
-	}
 	rng, err := e.rangeFor(s)
 	if err != nil {
 		return err

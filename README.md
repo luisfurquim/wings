@@ -8,7 +8,7 @@
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/luisfurquim/wings.svg)](https://pkg.go.dev/github.com/luisfurquim/wings)
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
-[![Go Report Card](https://www.goreportcard.com/badge/github.com/luisfurquim/wings?ts=1712345678)](https://www.goreportcard.com/report/github.com/luisfurquim/wings?ts=1712345678)
+[![CI](https://github.com/luisfurquim/wings/actions/workflows/ci.yml/badge.svg)](https://github.com/luisfurquim/wings/actions/workflows/ci.yml)
 [![AGENTS.md](https://img.shields.io/badge/AGENTS.md-ready-2088FF)](AGENTS.md)
 [![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-wings--authoring-8A2BE2)](#ai-assisted-development)
 

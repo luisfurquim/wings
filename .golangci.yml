@@ -1,0 +1,48 @@
+version: "2"
+
+# golangci-lint replaces the old goreportcard.com toolchain (site retired) as
+# this project's static-analysis check. Run it against BOTH build targets —
+# `golangci-lint run ./...` (native) and `GOOS=js GOARCH=wasm golangci-lint
+# run ./...` (the WASM runtime and widgets) — a single run only sees whichever
+# target matches the host GOOS, same limitation the old per-tool setup had.
+# `unused` in particular must be checked on both: a function used only from a
+# `//go:build js` file reads as dead in the native-only pass.
+
+linters:
+  default: standard
+  exclusions:
+    rules:
+      # Attack-string test fixtures for the epubhtml/wtext hostile-input
+      # defenses (Trojan Source bidi overrides, ZWJ/ZWNJ, invisible
+      # separators) are deliberately made of the very Unicode format/control
+      # characters staticcheck's ST1018 flags in literals. The point of the
+      # test IS the raw character, not an escape sequence.
+      - path: '(epubhtml|wtext)/.*_test\.go'
+        linters:
+          - staticcheck
+        text: "ST1018"
+  settings:
+    errcheck:
+      # Deferred Close() on the common Closer types: checking its error
+      # would race a function's real return value/error for attention, for
+      # no actionable recovery (the write/read side already surfaced any
+      # failure that matters). Everything else errcheck finds stays a real,
+      # fixable finding. errcheck matches the STATIC declared type at the
+      # call site, not an interface a type happens to satisfy — an
+      # `io.ReadCloser`-typed field (net/http.Response.Body) needs its own
+      # entry distinct from a concrete `*os.File`.
+      exclude-functions:
+        - (*os.File).Close
+        - (io.Closer).Close
+        - (io.ReadCloser).Close
+        - (*github.com/fsnotify/fsnotify.Watcher).Close
+
+# gofmt is a formatter in v2 (a `golangci-lint fmt` concern), not a linter —
+# `run` never checks it unless it's enabled here too. This is the one GRC
+# check golangci-lint doesn't fold into `linters` by default.
+formatters:
+  enable:
+    - gofmt
+  exclusions:
+    paths:
+      - _work

@@ -176,7 +176,7 @@ func parseOptions(raw string) []any {
 	// Try a plain string array first.
 	var strs []string
 	if json.Unmarshal([]byte(raw), &strs) == nil {
-		var result []any = make([]any, len(strs))
+		result := make([]any, len(strs))
 		for i, s := range strs {
 			result[i] = map[string]any{"label": s, "value": s}
 		}
@@ -186,7 +186,7 @@ func parseOptions(raw string) []any {
 	// Try an object array.
 	var objs []map[string]any
 	if json.Unmarshal([]byte(raw), &objs) == nil {
-		var result []any = make([]any, len(objs))
+		result := make([]any, len(objs))
 		for i, o := range objs {
 			var label, value string
 			if l, ok := o["label"].(string); ok {

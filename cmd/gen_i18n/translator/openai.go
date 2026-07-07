@@ -154,7 +154,7 @@ type oaiBatchEntry struct {
 func entriesToBatch(entries []Entry) []oaiBatchEntry {
 	out := make([]oaiBatchEntry, len(entries))
 	for i, e := range entries {
-		out[i] = oaiBatchEntry{Label: e.Label, Context: e.Context, Cells: e.Cells}
+		out[i] = oaiBatchEntry(e)
 	}
 	return out
 }

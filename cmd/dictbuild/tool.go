@@ -81,7 +81,7 @@ func uncompressDela(toolPath, binPath string) (string, error) {
 		return "", fmt.Errorf("UnitexToolLogger Uncompress: %w", err)
 	}
 	if _, err := os.Stat(dicPath); err != nil {
-		return "", fmt.Errorf("Uncompress did not produce %s: %w", dicPath, err)
+		return "", fmt.Errorf("uncompress did not produce %s: %w", dicPath, err)
 	}
 	fmt.Fprintf(os.Stderr, "uncompressed %s\n", filepath.Base(dicPath))
 	return dicPath, nil

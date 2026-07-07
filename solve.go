@@ -24,7 +24,7 @@ func getField(obj any, key string) any {
 		return v[key]
 	default:
 		rv := reflect.ValueOf(obj)
-		if rv.Kind() == reflect.Ptr {
+		if rv.Kind() == reflect.Pointer {
 			if rv.IsNil() {
 				return nil
 			}
@@ -72,7 +72,7 @@ func getAt(obj any, key any) any {
 		return nil
 	default:
 		rv := reflect.ValueOf(obj)
-		if rv.Kind() == reflect.Ptr {
+		if rv.Kind() == reflect.Pointer {
 			if rv.IsNil() {
 				return nil
 			}

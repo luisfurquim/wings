@@ -33,7 +33,7 @@ func mockOAIServer(t *testing.T, entries []oaiBatchEntry) *httptest.Server {
 			}{{Message: oaiMsg{Role: "assistant", Content: string(content)}}},
 		})
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(resp)
+		_, _ = w.Write(resp)
 	}))
 }
 
@@ -101,7 +101,7 @@ func TestOpenAI_MarkdownFences_Stripped(t *testing.T) {
 				Message oaiMsg `json:"message"`
 			}{{Message: oaiMsg{Role: "assistant", Content: fenced}}},
 		})
-		w.Write(resp)
+		_, _ = w.Write(resp)
 	}))
 	defer ts.Close()
 
@@ -176,7 +176,7 @@ func TestOpenAI_InvalidJSON_ReturnsError(t *testing.T) {
 				Message oaiMsg `json:"message"`
 			}{{Message: oaiMsg{Role: "assistant", Content: "not json at all"}}},
 		})
-		w.Write(resp)
+		_, _ = w.Write(resp)
 	}))
 	defer ts.Close()
 

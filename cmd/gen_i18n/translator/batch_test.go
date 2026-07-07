@@ -9,14 +9,6 @@ func makeEntry(label string, cells map[string]string) Entry {
 	return Entry{Label: label, Cells: cells}
 }
 
-func entryLabels(batch []Entry) []string {
-	out := make([]string, len(batch))
-	for i, e := range batch {
-		out[i] = e.Label
-	}
-	return out
-}
-
 func TestBatch_Empty(t *testing.T) {
 	if got := Batch(nil, 10, 1000); got != nil {
 		t.Errorf("expected nil, got %v", got)

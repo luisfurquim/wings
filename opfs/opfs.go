@@ -54,7 +54,7 @@ func await(p js.Value) (js.Value, error) {
 		defer thenFn.Release()
 		defer catchFn.Release()
 		reason := args[0]
-		msg := "unknown error"
+		var msg string
 		if m := reason.Get("message"); !m.IsUndefined() {
 			msg = m.String()
 		} else {

@@ -19,10 +19,12 @@ type fnode struct {
 
 // Fragment is a safe-by-construction piece of content: everything a
 // Builder can express is inside the epubhtml profile, so inserting a
-// Fragment can never smuggle markup past the filter.
+// Fragment can never smuggle markup past the filter. Builder.Done is the
+// only constructor: it already turns any build error into a returned
+// error instead of a Fragment value, so by the time a Fragment exists it
+// is valid — there is no error state left to carry or re-check.
 type Fragment struct {
 	nodes []fnode
-	errs  []error
 }
 
 // Empty reports whether the fragment has no content.

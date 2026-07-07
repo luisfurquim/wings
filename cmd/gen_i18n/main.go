@@ -791,7 +791,7 @@ func isPureBindings(s string) bool {
 	for i < n {
 		if i+1 < n && s[i] == '{' && s[i+1] == '{' {
 			j := i + 2
-			for j+1 < n && !(s[j] == '}' && s[j+1] == '}') {
+			for j+1 < n && (s[j] != '}' || s[j+1] != '}') {
 				j++
 			}
 			if j+1 >= n {

@@ -28,7 +28,7 @@ func vulncheck(root string) error {
 	if err != nil {
 		return err
 	}
-	defer os.RemoveAll(tmp)
+	defer func() { _ = os.RemoveAll(tmp) }()
 	if err := run(root, []string{"GOBIN=" + tmp}, "go", "install", vulnScanner); err != nil {
 		return err
 	}
