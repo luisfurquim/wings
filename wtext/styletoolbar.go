@@ -21,12 +21,12 @@ type StyleToolbar struct{}
 func (StyleToolbar) Items() []ToolbarItem {
 	return []ToolbarItem{
 		InputItem{
-			ID: "style-new", Label: "wtext-style-new", Icon: "style_new",
+			ID: "style-new", Label: "wtext-style-new", Icon: "style_new", Help: "wtext-style-new-help",
 			Placeholder: "wtext-style-name",
 			Do:          CreateStyle,
 		},
 		SelectItem{
-			ID: "style", Label: "wtext-style",
+			ID: "style", Label: "wtext-style", Help: "wtext-style-help",
 			Options: StyleOptions, Current: StyleCurrent, Pick: StylePick,
 		},
 	}

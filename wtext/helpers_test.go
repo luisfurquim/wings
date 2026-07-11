@@ -175,6 +175,66 @@ func TestClassMarkActive(t *testing.T) {
 	}
 }
 
+func TestDualToggleNeitherPresentAppliesClass(t *testing.T) {
+	core := &fakeCore{hasSel: true}
+	if err := DualToggle(core, "wt-b", "strong"); err != nil {
+		t.Fatal(err)
+	}
+	if strings.Join(core.calls, ",") != "apply:wt-b" {
+		t.Errorf("calls = %v, want [apply:wt-b]", core.calls)
+	}
+}
+
+func TestDualToggleClassOnlyRemovesClass(t *testing.T) {
+	core := &fakeCore{hasSel: true, at: []string{"wt-b"}}
+	if err := DualToggle(core, "wt-b", "strong"); err != nil {
+		t.Fatal(err)
+	}
+	if strings.Join(core.calls, ",") != "remove:wt-b" {
+		t.Errorf("calls = %v, want [remove:wt-b]", core.calls)
+	}
+}
+
+// TestDualToggleMarkOnlyUnwrapsMark guards the exact bug reported: text
+// pasted from an external source carries <strong> (not wt-b) and the
+// Bold button must still be able to turn it off.
+func TestDualToggleMarkOnlyUnwrapsMark(t *testing.T) {
+	core := &fakeCore{hasSel: true, marked: map[string]bool{"strong": true}}
+	if !DualMarkActive("wt-b", "strong")(core) {
+		t.Error("pasted <strong> not recognized as active")
+	}
+	if err := DualToggle(core, "wt-b", "strong"); err != nil {
+		t.Fatal(err)
+	}
+	if strings.Join(core.calls, ",") != "unwrap:strong" {
+		t.Errorf("calls = %v, want [unwrap:strong] (never touch wt-b — it was never there)", core.calls)
+	}
+}
+
+// TestDualToggleBothPresentClearsBoth is the defensive case: somehow both
+// the class and the mark wrap the same range (e.g. a class applied on
+// top of pasted semantic markup) — turning off must leave neither.
+func TestDualToggleBothPresentClearsBoth(t *testing.T) {
+	core := &fakeCore{hasSel: true, at: []string{"wt-b"}, marked: map[string]bool{"strong": true}}
+	if err := DualToggle(core, "wt-b", "strong"); err != nil {
+		t.Fatal(err)
+	}
+	want := "remove:wt-b,unwrap:strong"
+	if strings.Join(core.calls, ",") != want {
+		t.Errorf("calls = %v, want %s", core.calls, want)
+	}
+}
+
+func TestDualToggleNoSelection(t *testing.T) {
+	core := &fakeCore{hasSel: false}
+	if err := DualToggle(core, "wt-b", "strong"); err != nil {
+		t.Fatal(err)
+	}
+	if len(core.calls) != 0 {
+		t.Errorf("acted without a selection: %v", core.calls)
+	}
+}
+
 func TestBlockHelpers(t *testing.T) {
 	core := &fakeCore{hasSel: true, block: "h2"}
 	if got := BlockCurrent()(core); got != "h2" {
@@ -366,6 +426,44 @@ func TestFontToolbarShape(t *testing.T) {
 	center := items[4].(ToggleItem)
 	if !center.Active(core) {
 		t.Error("center not active")
+	}
+}
+
+// itemHelp extracts (Label, Help) from any ToolbarItem kind that carries
+// them — the same extraction the widget's help-dialog aggregation does,
+// duplicated here so the contract ("every stock control documents
+// itself") is checked at the plugin level, independent of the widget.
+func itemHelp(item ToolbarItem) (label, help string, ok bool) {
+	switch it := item.(type) {
+	case ToggleItem:
+		return it.Label, it.Help, true
+	case ButtonItem:
+		return it.Label, it.Help, true
+	case SelectItem:
+		return it.Label, it.Help, true
+	case InputItem:
+		return it.Label, it.Help, true
+	default:
+		return "", "", false
+	}
+}
+
+// TestStockTogglesHaveHelp guards the plugin/widget help-dialog contract:
+// every control the stock plugins render (everything but Separator) must
+// supply a non-empty Help id, or it silently vanishes from the composed
+// help dialog with no way for a user to notice the gap.
+func TestStockTogglesHaveHelp(t *testing.T) {
+	plugins := []ToolbarPlugin{BasicToolbar{}, FontToolbar{}, StyleToolbar{}}
+	for _, plug := range plugins {
+		for _, item := range plug.Items() {
+			label, help, ok := itemHelp(item)
+			if !ok {
+				continue // Separator
+			}
+			if help == "" {
+				t.Errorf("%T item %q has no Help id", plug, label)
+			}
+		}
 	}
 }
 

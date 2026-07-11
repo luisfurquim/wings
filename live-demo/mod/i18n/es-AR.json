@@ -872,6 +872,62 @@
     "revised": false
   },
   {
+    "content": "Ayuda",
+    "revised": false
+  },
+  {
+    "content": "Ayuda de la barra de herramientas",
+    "revised": false
+  },
+  {
+    "content": "Pone en negrita el texto seleccionado.",
+    "revised": false
+  },
+  {
+    "content": "Pone en cursiva el texto seleccionado.",
+    "revised": false
+  },
+  {
+    "content": "Marca el texto seleccionado como código.",
+    "revised": false
+  },
+  {
+    "content": "Cambia el tipo de bloque del párrafo (título, cita, bloque de código...).",
+    "revised": false
+  },
+  {
+    "content": "Cambia la familia tipográfica del texto seleccionado.",
+    "revised": false
+  },
+  {
+    "content": "Cambia el tamaño de fuente del texto seleccionado.",
+    "revised": false
+  },
+  {
+    "content": "Alinea el párrafo a la izquierda.",
+    "revised": false
+  },
+  {
+    "content": "Centra el párrafo.",
+    "revised": false
+  },
+  {
+    "content": "Alinea el párrafo a la derecha.",
+    "revised": false
+  },
+  {
+    "content": "Justifica el párrafo (alinea ambos márgenes).",
+    "revised": false
+  },
+  {
+    "content": "Nombra y guarda el formato de la selección como un estilo reutilizable.",
+    "revised": false
+  },
+  {
+    "content": "Aplica un estilo guardado a la selección, o lo quita con \"(sin estilo)\".",
+    "revised": false
+  },
+  {
     "content": "Probador in-web",
     "revised": true
   },

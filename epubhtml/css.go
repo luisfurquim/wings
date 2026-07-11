@@ -3,6 +3,8 @@ package epubhtml
 import (
 	"errors"
 	"fmt"
+	"hash/fnv"
+	"sort"
 	"strings"
 )
 
@@ -199,6 +201,48 @@ func MergeCSS(layers ...string) string {
 	return strings.Join(out, "; ")
 }
 
+// PasteClassName derives a deterministic class name for a sanitized
+// inline-style declaration list (FilterCSS output) — the identity a
+// paste-time auto-registered class gets instead of a webdev-chosen name.
+// Deterministic so identical inline styles across many pasted elements
+// (every paragraph in a Google Docs export typically repeats the same
+// style="" verbatim) collapse onto one shared class rather than
+// registering a near-duplicate per element. Declarations are sorted by
+// property name (stably, so two declarations sharing a property keep
+// their relative order — see below) before hashing, so two elements
+// whose styles list the same properties in a different order — a real
+// possibility, since nothing about how a source serializes style=""
+// guarantees one property order over another — still collapse onto one
+// class instead of registering a spurious duplicate. Sorting the FULL
+// declaration string (property AND value together) would risk the
+// opposite mistake: "color:red;color:blue" and "color:blue;color:red"
+// are NOT equivalent CSS (the cascade means whichever comes last wins,
+// so one nets blue and the other red) but would sort byte-identically if
+// compared as whole strings — grouping by property name with a stable
+// sort keeps genuinely-duplicated properties in their original relative
+// order, so those two inputs still hash differently. The "wt-" prefix
+// keeps the result out of StyleToolbar's picker (an internal translation
+// artifact, not a user-facing named style) and off limits to
+// CreateStyle's own names.
+func PasteClassName(css string) string {
+	decls := strings.Split(css, ";")
+	for i := range decls {
+		decls[i] = strings.TrimSpace(decls[i])
+	}
+	propOf := func(decl string) string {
+		prop, _, _ := strings.Cut(decl, ":")
+		return strings.TrimSpace(prop)
+	}
+	sort.SliceStable(decls, func(i, j int) bool { return propOf(decls[i]) < propOf(decls[j]) })
+
+	h := fnv.New32a()
+	for _, d := range decls {
+		_, _ = h.Write([]byte(d)) // hash.Hash.Write never errors
+		_, _ = h.Write([]byte{';'})
+	}
+	return fmt.Sprintf("wt-paste-%08x", h.Sum32())
+}
+
 // cssBanned are substrings that must not appear anywhere in a rule. They
 // are the escape hatches out of an inert declaration list: url()-family
 // functions load remote resources (tracking/exfiltration), '@' opens
@@ -252,4 +296,57 @@ func SanitizeCSS(css string) (string, error) {
 		return "", fmt.Errorf("%w: no declarations", ErrCSSSyntax)
 	}
 	return strings.Join(out, "; "), nil
+}
+
+// FilterCSS reduces a declaration list to the declarations this profile
+// recognizes, DROPPING everything else silently — an unsupported
+// property, a banned construct, a malformed declaration — rather than
+// rejecting the whole list the way SanitizeCSS does. SanitizeCSS is
+// deliberately strict because it validates a webdev's own DefineClass
+// call, where an unrecognized property is a bug worth surfacing loudly
+// and immediately. FilterCSS is for externally-authored CSS this project
+// never controlled in the first place — a pasted element's inline
+// style="" — where real documents routinely mix a few properties this
+// profile supports (font-family, text-align) with several it was never
+// meant to (vertical-align, white-space, -webkit-* prefixes); rejecting
+// the whole style over one unsupported property would silently discard
+// the declarations that WERE safe and useful along with it. The banned-
+// construct check still runs per declaration, so one hostile declaration
+// poisons only itself, not its neighbors. Returns "" when nothing
+// survives — same as SanitizeCSS's ErrCSSSyntax case, just without the
+// error, since "the source used only unsupported properties" is the
+// ordinary case here, not a mistake to report.
+func FilterCSS(css string) string {
+	if len(css) > MaxCSSLen {
+		return "" // pathologically long for a real clipboard style=""
+	}
+	var out []string
+	for _, decl := range strings.Split(css, ";") {
+		decl = strings.TrimSpace(decl)
+		if decl == "" || !structuralOK(decl) {
+			continue
+		}
+		low := strings.ToLower(decl)
+		banned := false
+		for _, bad := range cssBanned {
+			if strings.Contains(low, bad) {
+				banned = true
+				break
+			}
+		}
+		if banned {
+			continue
+		}
+		prop, val, found := strings.Cut(decl, ":")
+		if !found {
+			continue
+		}
+		prop = strings.ToLower(strings.TrimSpace(prop))
+		val = strings.TrimSpace(val)
+		if val == "" || !cssProps[prop] {
+			continue
+		}
+		out = append(out, prop+": "+val)
+	}
+	return strings.Join(out, "; ")
 }

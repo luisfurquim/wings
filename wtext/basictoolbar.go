@@ -10,8 +10,13 @@ package wtext
 // for pasted or loaded content that already carries them — genuinely
 // semantic bold/italic (from Word documents, external HTML) round-trips
 // fine; BasicToolbar's own Bold/Italic buttons simply stop producing new
-// ones. code stays a real semantic mark: a code span is structural, not
-// a font-weight, and has no meaningful CSS-only substitute.
+// ones. But the buttons still need to SEE that mark: text pasted from an
+// external source may arrive as <strong> rather than wt-b, and a Bold
+// button blind to that would read it as inactive and be unable to turn
+// it off — DualMarkToggle checks and clears either representation, only
+// ever writing the class for new formatting. code stays a real semantic
+// mark: a code span is structural, not a font-weight, and has no
+// meaningful CSS-only substitute.
 const (
 	boldClass   = "wt-b"
 	italicClass = "wt-i"
@@ -37,20 +42,20 @@ func (BasicToolbar) Init(core EditorCore) error {
 func (BasicToolbar) Items() []ToolbarItem {
 	return []ToolbarItem{
 		ToggleItem{
-			ID: "bold", Label: "wtext-bold", Icon: "format_bold",
-			Do: ClassMarkToggle(boldClass), Active: ClassMarkActive(boldClass),
+			ID: "bold", Label: "wtext-bold", Icon: "format_bold", Help: "wtext-bold-help",
+			Do: DualMarkToggle(boldClass, "strong"), Active: DualMarkActive(boldClass, "strong"),
 		},
 		ToggleItem{
-			ID: "italic", Label: "wtext-italic", Icon: "format_italic",
-			Do: ClassMarkToggle(italicClass), Active: ClassMarkActive(italicClass),
+			ID: "italic", Label: "wtext-italic", Icon: "format_italic", Help: "wtext-italic-help",
+			Do: DualMarkToggle(italicClass, "em"), Active: DualMarkActive(italicClass, "em"),
 		},
 		ToggleItem{
-			ID: "code", Label: "wtext-code", Icon: "code",
+			ID: "code", Label: "wtext-code", Icon: "code", Help: "wtext-code-help",
 			Do: MarkToggle(Code()), Active: MarkActive("code"),
 		},
 		Separator{},
 		SelectItem{
-			ID: "block", Label: "wtext-block",
+			ID: "block", Label: "wtext-block", Help: "wtext-block-help",
 			Options: func(EditorCore) []Option {
 				return []Option{
 					{Value: "p", Label: "wtext-block-p"},

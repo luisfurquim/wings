@@ -63,11 +63,18 @@ func retranslate(host js.Value) {
 
 // disconnect tears down the editor when the instance leaves the DOM: its
 // document-level selectionchange listener and hand-built MutationObserver
-// are not reachable by the runtime's subtree auto-release.
+// are not reachable by the runtime's subtree auto-release. The toolbar's
+// help dialog needs the same explicit teardown for a different reason: it
+// is deliberately mounted at document.body (see toolbar.openHelp), so it
+// is not a descendant of host and the runtime's subtree auto-release
+// would never find it either.
 func disconnect(host js.Value) {
 	b, ok := bindingFor(host)
 	if !ok {
 		return
+	}
+	if b.tb != nil {
+		b.tb.closeHelp()
 	}
 	b.editor.Detach()
 	if id, ok := nodeKey(host); ok {

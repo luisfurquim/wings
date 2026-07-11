@@ -230,6 +230,12 @@ func (e *Editor) onPasteLike(ev js.Value, dt js.Value) {
 	}
 	var f Fragment
 	if html := dt.Call("getData", "text/html").String(); html != "" {
+		// The clipboard's text/html payload varies wildly across sources —
+		// there is no way to enumerate every editor's export shape ahead of
+		// time. Surfacing the raw markup here is the fastest way to
+		// diagnose a normalization gap (a paragraph convention this
+		// package doesn't recognize yet, say) against a real source.
+		G.Logf(1, "wtext: paste text/html:\n%s\n", html)
 		var err error
 		f, err = e.sanitizeHTML(html)
 		if err != nil {
@@ -237,6 +243,7 @@ func (e *Editor) onPasteLike(ev js.Value, dt js.Value) {
 			return
 		}
 	} else if text := dt.Call("getData", "text/plain").String(); text != "" {
+		G.Logf(1, "wtext: paste text/plain (no text/html offered):\n%s\n", text)
 		f = e.sanitizeText(text)
 	}
 	if f.Empty() {

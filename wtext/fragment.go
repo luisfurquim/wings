@@ -30,6 +30,70 @@ type Fragment struct {
 // Empty reports whether the fragment has no content.
 func (f Fragment) Empty() bool { return len(f.nodes) == 0 }
 
+// fragmentHasBlocks reports whether any top-level node is a block.
+func fragmentHasBlocks(f Fragment) bool {
+	for i := range f.nodes {
+		if f.nodes[i].tag != "" && epubhtml.IsBlock(f.nodes[i].tag) {
+			return true
+		}
+	}
+	return false
+}
+
+// splitTopLevelBreaks applies the paragraph-break split (splitOnBreaks)
+// to a list of fnodes with no wrapping block at all — the shape
+// copyChildren(body, ...) returns when a clipboard payload had no
+// <p>/<div> around it. Each resulting group is wrapped in a synthesized
+// <p>, since inline content cannot sit at the top of the document
+// (ensureBlockShape would wrap it in one <p> anyway; doing it here keeps
+// a real paragraph break instead of losing it to that later, break-blind
+// pass).
+func splitTopLevelBreaks(nodes []fnode) []fnode {
+	if fragmentHasBlocks(Fragment{nodes: nodes}) {
+		return nodes // already block-shaped; nothing to synthesize
+	}
+	groups := splitOnBreaks(nodes)
+	if len(groups) <= 1 {
+		return nodes
+	}
+	out := make([]fnode, 0, len(groups))
+	for _, g := range groups {
+		out = append(out, fnode{tag: "p", kids: g})
+	}
+	return out
+}
+
+// splitOnBreaks splits a flat list of fnodes on runs of 2+ consecutive
+// <br> — the paragraph-break convention a wrapping block's kids (or
+// bodiless top-level content) may carry instead of real block
+// boundaries: many sources (plain editors, chat apps, some word
+// processors' partial-copy path) export a paragraph break this way
+// instead of separate block elements. A single <br> is left untouched
+// inside its group, still a literal line break. The break run itself is
+// dropped, not kept in either neighboring group.
+func splitOnBreaks(kids []fnode) [][]fnode {
+	start := 0
+	var groups [][]fnode
+	i := 0
+	for i < len(kids) {
+		if kids[i].tag != "br" {
+			i++
+			continue
+		}
+		j := i
+		for j < len(kids) && kids[j].tag == "br" {
+			j++
+		}
+		if j-i >= 2 {
+			groups = append(groups, kids[start:i])
+			start = j
+		}
+		i = j
+	}
+	groups = append(groups, kids[start:])
+	return groups
+}
+
 // Node is the fluent handle to one element being built. Every method
 // returns the same node so calls chain; errors accumulate and surface at
 // Builder.Done.

@@ -872,6 +872,62 @@
     "revised": false
   },
   {
+    "content": "Help",
+    "revised": false
+  },
+  {
+    "content": "Toolbar help",
+    "revised": false
+  },
+  {
+    "content": "Make the selected text bold.",
+    "revised": false
+  },
+  {
+    "content": "Make the selected text italic.",
+    "revised": false
+  },
+  {
+    "content": "Mark the selected text as code.",
+    "revised": false
+  },
+  {
+    "content": "Change the paragraph's block type (heading, quote, code block...).",
+    "revised": false
+  },
+  {
+    "content": "Change the font family of the selected text.",
+    "revised": false
+  },
+  {
+    "content": "Change the font size of the selected text.",
+    "revised": false
+  },
+  {
+    "content": "Align the paragraph to the left.",
+    "revised": false
+  },
+  {
+    "content": "Center the paragraph.",
+    "revised": false
+  },
+  {
+    "content": "Align the paragraph to the right.",
+    "revised": false
+  },
+  {
+    "content": "Justify the paragraph (align both edges).",
+    "revised": false
+  },
+  {
+    "content": "Name and save the selection's formatting as a reusable style.",
+    "revised": false
+  },
+  {
+    "content": "Apply a saved style to the selection, or clear it with \"(no style)\".",
+    "revised": false
+  },
+  {
     "content": "In-web tester",
     "revised": true
   },

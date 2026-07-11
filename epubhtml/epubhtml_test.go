@@ -97,9 +97,10 @@ func TestAttrFor(t *testing.T) {
 		{"A", "HREF", AttrHref},
 		{"p", "class", AttrClass},
 		{"strong", "class", AttrClass},
+		{"p", "style", AttrStyle},
+		{"A", "STYLE", AttrStyle},
 		// nothing else is expressible
 		{"a", "onclick", AttrDrop},
-		{"a", "style", AttrDrop},
 		{"a", "target", AttrDrop},
 		{"a", "id", AttrDrop},
 		{"p", "href", AttrDrop},

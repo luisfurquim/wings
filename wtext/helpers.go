@@ -85,6 +85,67 @@ func ClassMarkActive(name string) func(EditorCore) bool {
 	}
 }
 
+// DualToggle mirrors ToggleClass/ToggleMark's Word nuance but recognizes
+// EITHER a character class or a semantic mark as "this formatting is
+// active" — content a user pasted or loaded may carry the genuine
+// semantic tag (a document authored elsewhere, or a deliberately marked
+// phrase the profile's filter preserves) while the toolbar's own writes
+// use the class; a Bold/Italic click must be able to affect either, or
+// pasted-bold text becomes permanently stuck as far as the toolbar is
+// concerned. Checked at both ends of the selection like its two
+// building blocks. Turning ON with neither present applies the class —
+// the toolbar's own mechanism; turning OFF removes whichever is
+// actually present (both, if somehow both wrap the same range).
+func DualToggle(core EditorCore, className, markTag string) error {
+	sel, ok := core.Sel()
+	if !ok {
+		return nil
+	}
+	classOn, err := core.ClassSpanned(sel, className)
+	if err != nil {
+		return err
+	}
+	markOn, err := core.InMark(sel, markTag)
+	if err != nil {
+		return err
+	}
+	if !classOn && !markOn {
+		return core.ApplyClass(sel, className)
+	}
+	if classOn {
+		if err := core.RemoveClass(sel, className); err != nil {
+			return err
+		}
+	}
+	if markOn {
+		if err := core.Unwrap(sel, markTag); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// DualMarkToggle adapts DualToggle to a ToggleItem.Do closure.
+func DualMarkToggle(className, markTag string) func(EditorCore) error {
+	return func(core EditorCore) error { return DualToggle(core, className, markTag) }
+}
+
+// DualMarkActive returns a ToggleItem.Active closure reporting whether
+// EITHER the class or the mark is active over the whole selection.
+func DualMarkActive(className, markTag string) func(EditorCore) bool {
+	return func(core EditorCore) bool {
+		sel, ok := core.Sel()
+		if !ok {
+			return false
+		}
+		if classOn, err := core.ClassSpanned(sel, className); err == nil && classOn {
+			return true
+		}
+		markOn, err := core.InMark(sel, markTag)
+		return err == nil && markOn
+	}
+}
+
 // BlockCurrent returns a SelectItem.Current closure reporting the block
 // tag at the selection start ("" when there is no selection).
 func BlockCurrent() func(EditorCore) string {

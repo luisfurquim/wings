@@ -872,6 +872,62 @@
     "revised": false
   },
   {
+    "content": "Ajuda",
+    "revised": false
+  },
+  {
+    "content": "Ajuda da barra de ferramentas",
+    "revised": false
+  },
+  {
+    "content": "Deixa o texto selecionado em negrito.",
+    "revised": false
+  },
+  {
+    "content": "Deixa o texto selecionado em itálico.",
+    "revised": false
+  },
+  {
+    "content": "Marca o texto selecionado como código.",
+    "revised": false
+  },
+  {
+    "content": "Muda o tipo de bloco do parágrafo (título, citação, bloco de código...).",
+    "revised": false
+  },
+  {
+    "content": "Muda a família da fonte do texto selecionado.",
+    "revised": false
+  },
+  {
+    "content": "Muda o tamanho da fonte do texto selecionado.",
+    "revised": false
+  },
+  {
+    "content": "Alinha o parágrafo à esquerda.",
+    "revised": false
+  },
+  {
+    "content": "Centraliza o parágrafo.",
+    "revised": false
+  },
+  {
+    "content": "Alinha o parágrafo à direita.",
+    "revised": false
+  },
+  {
+    "content": "Justifica o parágrafo (alinha as duas margens).",
+    "revised": false
+  },
+  {
+    "content": "Nomeia e salva a formatação da seleção como um estilo reutilizável.",
+    "revised": false
+  },
+  {
+    "content": "Aplica um estilo salvo à seleção, ou remove com \"(sem estilo)\".",
+    "revised": false
+  },
+  {
     "content": "Testador in-web",
     "revised": false
   },

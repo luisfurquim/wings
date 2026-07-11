@@ -99,6 +99,104 @@ func TestMergeCSS(t *testing.T) {
 	}
 }
 
+func TestPasteClassName(t *testing.T) {
+	a := PasteClassName("text-align: justify; margin-left: 10pt")
+	b := PasteClassName("text-align: justify; margin-left: 10pt")
+	if a != b {
+		t.Errorf("not deterministic: %q != %q for the same input", a, b)
+	}
+	if !strings.HasPrefix(a, "wt-paste-") {
+		t.Errorf("PasteClassName(...) = %q, want wt-paste- prefix", a)
+	}
+	if err := ValidClassName(a); err != nil {
+		t.Errorf("PasteClassName produced an invalid class name %q: %v", a, err)
+	}
+	if c := PasteClassName("font-family: serif"); c == a {
+		t.Errorf("different CSS collided onto the same class name %q", a)
+	}
+}
+
+// TestPasteClassNameOrderIndependent guards the exact case the user
+// raised: two elements' styles listing the same properties in a
+// different order (nothing about how a source serializes style=""
+// guarantees one property order over another) must collapse onto the
+// SAME class, not register a spurious near-duplicate per element.
+func TestPasteClassNameOrderIndependent(t *testing.T) {
+	a := PasteClassName("color: red; font-size: 1em; text-align: justify")
+	b := PasteClassName("text-align: justify; color: red; font-size: 1em")
+	c := PasteClassName("font-size: 1em; text-align: justify; color: red")
+	if a != b || b != c {
+		t.Errorf("reordered-but-equivalent styles hashed differently: %q, %q, %q", a, b, c)
+	}
+}
+
+// TestPasteClassNameDuplicatePropertyOrderMatters is the case sorting by
+// the WHOLE declaration string (rather than just the property name)
+// would get wrong: these two inputs both duplicate "color", but in
+// opposite order — CSS's cascade means the LAST one wins, so they are
+// NOT equivalent (one nets blue, the other red) and must not collapse
+// onto the same class.
+func TestPasteClassNameDuplicatePropertyOrderMatters(t *testing.T) {
+	redWins := PasteClassName("color: blue; color: red")
+	blueWins := PasteClassName("color: red; color: blue")
+	if redWins == blueWins {
+		t.Errorf("genuinely different cascades (duplicate property, opposite order) collided onto %q", redWins)
+	}
+}
+
+func TestFilterCSS(t *testing.T) {
+	cases := []struct {
+		name, in, want string
+	}{
+		{"all recognized, passes through canonical",
+			"color:red;font-weight:bold", "color: red; font-weight: bold"},
+		{"the real-world Google Docs span: mix of allowed and not " +
+			"(vertical-align isn't recognized, white-space is)",
+			"font-size:11pt;font-family:Arial,sans-serif;color:#000000;" +
+				"background-color:transparent;font-weight:400;font-style:normal;" +
+				"font-variant:normal;text-decoration:none;vertical-align:baseline;" +
+				"white-space:pre;white-space:pre-wrap;",
+			"font-size: 11pt; font-family: Arial,sans-serif; color: #000000; " +
+				"background-color: transparent; font-weight: 400; font-style: normal; " +
+				"font-variant: normal; text-decoration: none; white-space: pre; " +
+				"white-space: pre-wrap"},
+		{"the real-world Google Docs p: all allowed",
+			"line-height:1.38;margin-left: -56.69pt;text-indent: 84.75pt;" +
+				"text-align: justify;margin-top:0pt;margin-bottom:0pt;",
+			"line-height: 1.38; margin-left: -56.69pt; text-indent: 84.75pt; " +
+				"text-align: justify; margin-top: 0pt; margin-bottom: 0pt"},
+		{"nothing recognized survives", "position:fixed;display:none", ""},
+		{"one hostile declaration poisons only itself, not its neighbors",
+			"color:red;background:url(evil);font-size:1em", "color: red; font-size: 1em"},
+		{"at-rule dropped, rest kept", "@import 'x';color:red", "color: red"},
+		{"control char in one declaration drops just that one",
+			"color:re\x00d;font-size:1em", "font-size: 1em"},
+		{"empty input", "", ""},
+		{"only garbage", ";;;", ""},
+	}
+	for _, c := range cases {
+		if got := FilterCSS(c.in); got != c.want {
+			t.Errorf("%s: FilterCSS(%q) = %q, want %q", c.name, c.in, got, c.want)
+		}
+	}
+}
+
+func TestFilterCSSNeverErrors(t *testing.T) {
+	// FilterCSS's whole point is leniency: an oversized or garbage input
+	// degrades to "" (or a partial result), never a panic, and its output
+	// (when non-empty) must always re-pass SanitizeCSS — anything it kept
+	// really is safe to install as a class's CSS.
+	huge := strings.Repeat("color:red;", MaxCSSLen)
+	if got := FilterCSS(huge); got != "" {
+		t.Errorf("oversized input should yield \"\", got %q", got)
+	}
+	if got := FilterCSS("color:red;position:fixed"); got != "" {
+		if _, err := SanitizeCSS(got); err != nil {
+			t.Errorf("FilterCSS output %q does not re-pass SanitizeCSS: %v", got, err)
+		}
+	}
+}
+
 func TestSanitizeCSSRejects(t *testing.T) {
 	cases := []struct {
 		name, in string

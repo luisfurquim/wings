@@ -65,11 +65,11 @@ func DefaultFontSizes() []FontSize {
 
 // alignments are the four paragraph alignments, in toolbar order. The
 // class value doubles as the CSS text-align value.
-var alignments = []struct{ dir, label, icon string }{
-	{"left", "wtext-align-left", "format_align_left"},
-	{"center", "wtext-align-center", "format_align_center"},
-	{"right", "wtext-align-right", "format_align_right"},
-	{"justify", "wtext-align-justify", "format_align_justify"},
+var alignments = []struct{ dir, label, icon, help string }{
+	{"left", "wtext-align-left", "format_align_left", "wtext-align-left-help"},
+	{"center", "wtext-align-center", "format_align_center", "wtext-align-center-help"},
+	{"right", "wtext-align-right", "format_align_right", "wtext-align-right-help"},
+	{"justify", "wtext-align-justify", "format_align_justify", "wtext-align-justify-help"},
 }
 
 func (t FontToolbar) faces() []FontFace {
@@ -121,13 +121,13 @@ func (t FontToolbar) Items() []ToolbarItem {
 	}
 	items := []ToolbarItem{
 		SelectItem{
-			ID: "fontface", Label: "wtext-font",
+			ID: "fontface", Label: "wtext-font", Help: "wtext-font-help",
 			Options: func(EditorCore) []Option { return faceOpts },
 			Current: ClassCurrent(facePrefix),
 			Pick:    ClassPick(facePrefix),
 		},
 		SelectItem{
-			ID: "fontsize", Label: "wtext-size",
+			ID: "fontsize", Label: "wtext-size", Help: "wtext-size-help",
 			Options: func(EditorCore) []Option { return sizeOpts },
 			Current: ClassCurrent(sizePrefix),
 			Pick:    ClassPick(sizePrefix),
@@ -136,7 +136,7 @@ func (t FontToolbar) Items() []ToolbarItem {
 	}
 	for _, a := range alignments {
 		items = append(items, ToggleItem{
-			ID: "align-" + a.dir, Label: a.label, Icon: a.icon,
+			ID: "align-" + a.dir, Label: a.label, Icon: a.icon, Help: a.help,
 			Do:     ClassToggle(alignPrefix, alignPrefix+a.dir),
 			Active: alignActive(a.dir),
 		})

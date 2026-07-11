@@ -96,3 +96,83 @@ func TestBuilderTextCleaned(t *testing.T) {
 		t.Errorf("text not cleaned: %q", got)
 	}
 }
+
+func TestSplitOnBreaks(t *testing.T) {
+	txt := func(s string) fnode { return fnode{text: s} }
+	br := fnode{tag: "br"}
+	cases := []struct {
+		name string
+		in   []fnode
+		want [][]fnode
+	}{
+		{"no breaks", []fnode{txt("a")}, [][]fnode{{txt("a")}}},
+		{"single br is a line break, not a split",
+			[]fnode{txt("a"), br, txt("b")},
+			[][]fnode{{txt("a"), br, txt("b")}}},
+		{"double br splits into two groups",
+			[]fnode{txt("a"), br, br, txt("b")},
+			[][]fnode{{txt("a")}, {txt("b")}}},
+		{"triple br still just one split, run dropped",
+			[]fnode{txt("a"), br, br, br, txt("b")},
+			[][]fnode{{txt("a")}, {txt("b")}}},
+		{"leading double br yields an empty first group",
+			[]fnode{br, br, txt("a")},
+			[][]fnode{{}, {txt("a")}}},
+		{"trailing double br yields an empty last group",
+			[]fnode{txt("a"), br, br},
+			[][]fnode{{txt("a")}, {}}},
+		{"two paragraph breaks, three groups",
+			[]fnode{txt("a"), br, br, txt("b"), br, br, txt("c")},
+			[][]fnode{{txt("a")}, {txt("b")}, {txt("c")}}},
+		{"empty input", nil, [][]fnode{{}}},
+	}
+	for _, c := range cases {
+		got := splitOnBreaks(c.in)
+		if len(got) != len(c.want) {
+			t.Errorf("%s: got %d groups, want %d (%+v)", c.name, len(got), len(c.want), got)
+			continue
+		}
+		for i := range got {
+			if len(got[i]) != len(c.want[i]) {
+				t.Errorf("%s: group %d = %+v, want %+v", c.name, i, got[i], c.want[i])
+			}
+		}
+	}
+}
+
+func TestSplitTopLevelBreaksSynthesizesParagraphs(t *testing.T) {
+	// Bodiless paste: bare text/br at the top level, no wrapping block —
+	// exactly what copyChildren(body, ...) returns when the clipboard
+	// payload had no <p>/<div> around it.
+	in := []fnode{{text: "First."}, {tag: "br"}, {tag: "br"}, {text: "Second."}}
+	out := splitTopLevelBreaks(in)
+	if len(out) != 2 || out[0].tag != "p" || out[1].tag != "p" {
+		t.Fatalf("got %+v, want two synthesized <p>", out)
+	}
+	if len(out[0].kids) != 1 || out[0].kids[0].text != "First." {
+		t.Errorf("first paragraph = %+v", out[0].kids)
+	}
+	if len(out[1].kids) != 1 || out[1].kids[0].text != "Second." {
+		t.Errorf("second paragraph = %+v", out[1].kids)
+	}
+}
+
+func TestSplitTopLevelBreaksLeavesBlockShapedAlone(t *testing.T) {
+	// Already block-shaped (e.g. two real <p> from the source): nothing
+	// to synthesize, even if a stray top-level <br><br> somehow sat
+	// alongside them (fragmentHasBlocks short-circuits the whole thing).
+	in := []fnode{{tag: "p", kids: []fnode{{text: "a"}}}, {tag: "p", kids: []fnode{{text: "b"}}}}
+	out := splitTopLevelBreaks(in)
+	if len(out) != 2 || out[0].tag != "p" || out[1].tag != "p" {
+		t.Fatalf("got %+v, want the two <p> untouched", out)
+	}
+}
+
+func TestFragmentHasBlocks(t *testing.T) {
+	if fragmentHasBlocks(Fragment{nodes: []fnode{{text: "plain"}, {tag: "strong"}}}) {
+		t.Error("text and marks are not blocks")
+	}
+	if !fragmentHasBlocks(Fragment{nodes: []fnode{{text: "a"}, {tag: "p"}}}) {
+		t.Error("a <p> among the nodes should count as block-shaped")
+	}
+}

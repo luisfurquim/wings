@@ -47,6 +47,27 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
+### v0.18.1
+
+- **`w-text` formatting toggles keep the selection they acted on** —
+  Bold/Italic/named-style toggles no longer leave the toolbar showing a
+  stale state or shrink a wider selection down to a leftover fragment
+  after the click; the selection is explicitly restored by character
+  offset, robust to the DOM restructuring a partial toggle causes.
+- **Paste gets smarter**: Bold/Italic now sees and can clear pasted
+  `<strong>`/`<em>`, not just its own CSS classes; a `<br><br>` a source
+  used as its own paragraph-break convention is recognized as one
+  instead of merging two paragraphs into one; pasting from Google Docs no
+  longer merges every paragraph into one falsely-bolded run — its
+  clipboard export wraps everything in a `<b>` purely to cancel default
+  bold rendering, which is now seen for the non-formatting wrapper it is;
+  and a pasted element's own `style=""` (justification, indent, font,
+  color) is now filtered down to what the profile supports and kept as a
+  class, instead of dropped outright.
+- **`w-text`'s toolbar gets a help button** — a "?" opens a dialog listing
+  every control's purpose, composed from each plugin's own `Help` text via
+  a new field on the `ToolbarItem` contract.
+
 ### v0.18.0
 
 - **`w-text` learns fonts, alignment and named styles** — the new
@@ -65,12 +86,6 @@ Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
   sanitized by allowlist-copy through the browser's own parser (new portable,
   fuzzed `epubhtml` policy package), so untrusted markup can't smuggle scripts,
   event handlers, or homograph/`javascript:` links into the document.
-
-### v0.16.16
-
-- **`w-input` completes its `<form>` citizenship** — `form.reset()` restores
-  fields to their default and clears validation, `<fieldset disabled>` disables
-  them, and `w-button type="reset"` resets the form.
 
 ---
 
@@ -1755,16 +1770,35 @@ A plain string binding also works.
 paste, drag-and-drop, and the initial `&value` (which may be stored, untrusted
 data) — is sanitized by **allowlist-copy through the browser's own
 `DOMParser`**: a clean tree is built by copying only what the
-`epubhtml` policy admits, so scripts, event handlers, `style` attributes,
+`epubhtml` policy admits, so scripts, event handlers,
 `<img>`/`<iframe>`, and `javascript:`/`data:` links can't exist in editor
-content. Sanitizing with the same parser the browser will later use leaves no
+content. A `style=""` attribute is never copied verbatim either — its
+declarations are filtered down to the properties this profile already
+supports (`epubhtml.FilterCSS`, the lenient counterpart to `SanitizeCSS`:
+it drops what it doesn't recognize instead of rejecting the whole list, the
+right contract for a real document's inline style rather than a webdev's own
+`DefineClass` call) and kept as a registered class, so a pasted paragraph's
+justification/indent and a pasted run's font/color survive without ever
+letting raw CSS reach the DOM — invisibly in the `StyleToolbar` picker until
+named (see below), same as any other utility class. Sanitizing with the
+same parser the browser will later use leaves no
 parser differential for mutation-XSS. Native formatting shortcuts (Ctrl+B,
 mobile callouts) are intercepted so formatting only ever happens through the
 toolbar; a stray `<b>`/`<i>` from a native path the intercept doesn't cover
 (mobile selection callouts) still canonicalizes to `<strong>`/`<em>`, and
 pasted or loaded content that already carries those tags round-trips as
 written — but `BasicToolbar`'s own Bold/Italic buttons don't produce them (see
-below). Links are
+below). A pasted paragraph break expressed as a run of 2+ `<br>` (common from
+sources that don't wrap each paragraph in its own block) is split into real
+paragraph boundaries; a single `<br>` still means a literal line break. A
+mark-shaped element (something that would canonicalize to `<strong>`, `<em>`,
+etc.) whose actual children are blocks is unwrapped instead of forced inline —
+the real-world case is Google Docs, which wraps its whole clipboard export in
+a `<b style="font-weight:normal" id="docs-internal-guid-…">` purely to cancel
+`<b>`'s default rendering, holding real `<p>` paragraphs despite `<b>` being
+inline-only per the HTML spec (browsers tolerate it regardless); treating
+that wrapper as genuine bold would both falsely bold the paste and erase
+every paragraph break inside it. Links are
 canonicalized (IDN→punycode exposes homograph spoofs; `mailto` is rebuilt from
 validated parts to kill header injection), and a plain-`http` link is flagged
 with a `data-wings-insecure` badge. An app can further restrict link targets
@@ -1785,8 +1819,11 @@ user, not an assertion of semantic importance, and treating it as one meant a
 named style captured from bold text silently dropped the bold on reapplication
 (`StyleToolbar.CreateStyle` only ever captured CSS classes). `<strong>`/`<em>`
 remain fully valid content — they just aren't what the stock buttons produce
-anymore. `code` is unchanged, a genuine semantic mark (a code span is
-structural, not a font weight). Two more stock toolbars compose with it:
+anymore, though the buttons still *recognize* them: pasted or loaded text
+that arrived as `<strong>`/`<em>` lights up Bold/Italic and can be cleared
+from the toolbar like any other bold/italic text, just without rewriting it
+into a class on sight. `code` is unchanged, a genuine semantic mark (a code
+span is structural, not a font weight). Two more stock toolbars compose with it:
 
 ```go
 wtext.RegisterProfile("full", wtext.Profile{
@@ -1811,7 +1848,15 @@ wtext.RegisterProfile("full", wtext.Profile{
   the style); the picker applies a registered style to any selection, with a
   "(none)" option to clear. User style names can't take the reserved `wt-`
   prefix, and `wt-*` direct formatting stays on the range, overriding the
-  style — exactly Word's direct-formatting rule.
+  style — exactly Word's direct-formatting rule. The picker only ever lists
+  *named* styles — anything under the `wt-` prefix is filtered out of it,
+  the same convention that keeps `FontToolbar`'s own utility classes out of
+  sight. A pasted element's translated `style=""` (see below) registers
+  under such a name too (`wt-paste-<hash>`), so it does the right thing
+  visually but never appears in the dropdown on its own — **to make a
+  pasted style reusable and nameable, select the text and press ✎ like any
+  other formatting**; `CreateStyle` reads every class in effect regardless
+  of prefix, so it picks up the pasted one along with everything else.
 
 Classes apply with a **Word split**: character declarations (fonts, colors,
 decorations) ride `<span class>` over the exact range, paragraph declarations
@@ -1822,20 +1867,45 @@ registered class; classless spans are dissolved by the canonicalizer.
 
 Write your own toolbar by composing the exported helpers (`ToggleMark`,
 `MarkActive`, `BlockCurrent`, `SwapClass`, `ClassPick`, `ClassToggle`,
-`ClassCurrent`, `ClassActive`, `ClassMarkToggle`, `ClassMarkActive`, …) over
-the `wtext.EditorCore` API — which now also exposes the class registry
-(`Classes`, `ClassCSS`, `ClassesAt`, `ClassSpanned`). `ClassMarkToggle`/
-`ClassMarkActive` are `ToggleMark`/`MarkActive`'s counterpart for a plain
-on/off character class instead of a semantic mark (`ClassSpanned` checks both
-ends of the selection, the same Word nuance `InMark` gives marks — a
-partially-covered range spans fully before it ever toggles off) — what
-`BasicToolbar` itself builds Bold/Italic from. A
+`ClassCurrent`, `ClassActive`, `ClassMarkToggle`, `ClassMarkActive`,
+`DualMarkToggle`, `DualMarkActive`, …) over the `wtext.EditorCore` API —
+which now also exposes the class registry (`Classes`, `ClassCSS`,
+`ClassesAt`, `ClassSpanned`). `ClassMarkToggle`/`ClassMarkActive` are
+`ToggleMark`/`MarkActive`'s counterpart for a plain on/off character class
+instead of a semantic mark (`ClassSpanned` checks both ends of the
+selection, the same Word nuance `InMark` gives marks — a partially-covered
+range spans fully before it ever toggles off). `DualMarkToggle`/
+`DualMarkActive` go one further: they recognize *either* the class or a
+named mark as "active" and clear whichever is actually present — what
+`BasicToolbar` builds Bold/Italic from, so a click still works on text that
+arrived as `<strong>`/`<em>` from paste rather than the toolbar's own
+class. A
 toolbar item that needs a typed value (a style name, a link URL) declares an
 `InputItem`: the widget renders a button that opens a small popover with a
 `w-input` (import `widget/input` when your profile uses one). A plugin that
 must set the editor up at attach time — defining its utility classes, say —
 implements `wtext.InitPlugin`. The portable half of the `wtext` package
 unit-tests against a fake core without a browser.
+
+**Toolbar help dialog.** Every `ToggleItem`/`ButtonItem`/`SelectItem`/`InputItem`
+carries a `Help` field alongside `Label` — a message id for that control's
+entry in a composed help dialog, resolved the same way. It's additive: a
+plugin written before `Help` existed still compiles (named-field literals),
+its items just come out with `Help == ""` and are silently left out of the
+dialog. The widget renders a trailing "?" button — only when at least one
+active plugin's item sets `Help` — that walks `profile.Toolbar`'s `Items()`
+and opens a `w-dialog` (import `widget/dialog`) listing every documented
+control's label and explanation, in toolbar order — mounted at
+`document.body` rather than inside the toolbar, since `w-text` can itself
+sit inside a `w-tab` panel, and `w-tab`'s `:host` sets a `backdrop-filter`
+unconditionally (its atmosphere-opt-in convention — `blur(0)` still counts
+as non-`none` per the CSS spec), which would otherwise trap the dialog's
+`position: fixed` overlay off-screen instead of centering it on the
+viewport. This is the whole mechanism by which a `ToolbarPlugin` "hands
+over its own help": nothing beyond declaring `Help` on the items it
+already returns from `Items()` — the widget never asks a plugin anything
+else about itself. `BasicToolbar`,
+`FontToolbar` and `StyleToolbar` document every control they declare.
 
 **Localized toolbar.** Toolbar labels are message ids resolved at render, so
 they translate like the rest of your UI. The editor ships built-in English
@@ -1846,8 +1916,11 @@ and `wtext-block-p`/`-h1`…`-h6`/`-quote`/`-pre`; `FontToolbar` adds
 `wtext-font`(+`-default`/`-serif`/`-sans`/`-mono`/`-cursive`), `wtext-size`
 (+`-default`) and `wtext-align-left`/`-center`/`-right`/`-justify`;
 `StyleToolbar` adds `wtext-style`, `wtext-style-new`, `wtext-style-name`,
-`wtext-style-none`, `wtext-ok`, `wtext-cancel`. On a `SetLang` switch the
-toolbar re-resolves and updates in place.
+`wtext-style-none`, `wtext-ok`, `wtext-cancel`. The stock toolbars' `Help`
+ids follow the same `-help` suffix (`wtext-bold-help`,
+`wtext-align-left-help`, …), plus `wtext-help`/`wtext-help-title` for the
+"?" button and dialog title — the same slot convention translates them.
+On a `SetLang` switch the toolbar re-resolves and updates in place.
 
 **Theming.** Reads `--wings-text-*` plus the shared surface/text/radius/motion
 tokens, and follows the active [Material skin](#material-skins--widget-surface-form)

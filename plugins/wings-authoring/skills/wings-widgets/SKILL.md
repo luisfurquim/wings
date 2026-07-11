@@ -227,6 +227,26 @@ import _ "github.com/luisfurquim/wings/widget/dialog"
 - `buttons` is the authoritative, ordered set; valid ids: `save`, `discard`,
   `overwrite`, `cancel`. Each fires the matching event (`@save`, …).
 - `title` optional; body goes in the default slot.
+- **Don't nest a `<w-dialog>` inside a `<w-tab>` panel (or anything else whose
+  own CSS sets a non-`none` `backdrop-filter`, `filter`, `transform`, or
+  `contain`)** — its overlay is `position: fixed`, meant to cover the
+  viewport, but a fixed-position element is positioned relative to the
+  nearest ancestor that establishes a new containing block instead, and
+  `w-tab`'s `:host` sets `backdrop-filter: blur(var(--wings-surface-blur,
+  0))` unconditionally (its atmosphere-opt-in convention) — `blur(0)` still
+  counts as non-`none` per spec, even doing nothing visually. The symptom is
+  exactly "dark overlay tint, no visible box": the dialog rendered, just
+  scrolled off with the ancestor's own content instead of centering on the
+  viewport. If you must open one from inside such a container (this is
+  exactly why `w-text`'s own help dialog does it), create/mount the
+  `<w-dialog>` at `document.body` instead of in place — but note wings'
+  `@save`/`@cancel`/… attribute wiring resolves its handler by walking UP the
+  DOM ancestor chain from the dialog, so it can no longer reach a handler
+  declared on an ancestor once the dialog sits outside that tree; wire a
+  plain DOM listener directly on the internal button instead
+  (`dlg.shadowRoot.querySelector("#dlg-cancel")` — present synchronously the
+  moment the element is created, since its default `InitData` already shows
+  it before `Render` ever runs).
 
 ## Rich-text editor — `w-text`
 
@@ -257,17 +277,40 @@ clears undo; `<fieldset disabled>` → read-only). `::part()` surfaces include
 and it is not something to reproduce ad hoc. Everything entering the document
 (typing, paste, drop, and the initial `&value`, which may be stored/untrusted)
 is sanitized by allowlist-copy through the browser's own `DOMParser`, so
-scripts, `on*` handlers, `style`, `<img>`/`<iframe>`, and `javascript:`/`data:`
-links can't exist in content. Native formatting (Ctrl+B, mobile callouts) is
+scripts, `on*` handlers, `<img>`/`<iframe>`, and `javascript:`/`data:`
+links can't exist in content. A pasted element's `style=""` is never copied
+verbatim either — `epubhtml.FilterCSS` (the lenient counterpart to
+`SanitizeCSS`: drops what it doesn't recognize instead of rejecting the
+whole declaration list, since a real document's inline style routinely
+mixes a couple of supported properties with several this profile was
+never meant to carry) reduces it to what the profile supports and the
+survivors are registered as a class (`PasteClassName`, a deterministic
+hash so identical styles repeated across many pasted elements share one
+class). Native formatting (Ctrl+B, mobile callouts) is
 intercepted — formatting happens only via the toolbar; a stray `<b>`/`<i>`
 from a native path the intercept misses still canonicalizes to
 `<strong>`/`<em>`, and content that already carries those tags (pasted,
-loaded) round-trips as written. Undo/redo is the editor's own, DOM-level and
+loaded) round-trips as written. A pasted paragraph break expressed as 2+
+consecutive `<br>` (some sources never wrap a paragraph in its own block) is
+split into real block boundaries; one `<br>` stays a literal line break. A
+mark-shaped wrapper whose actual children are blocks is unwrapped rather than
+forced inline — Google Docs wraps its whole clipboard export in a
+`<b style="font-weight:normal" id="docs-internal-guid-…">` purely to cancel
+`<b>`'s default rendering, holding real `<p>`s despite `<b>` being inline-only
+per spec; naively canonicalizing it to `<strong>` would both falsely bold the
+paste and dissolve every paragraph inside it as "block inside inline".
+Undo/redo is the editor's own, DOM-level and
 bounded. Toggling a mark with a collapsed caret arms it as **pending** (Word
 behaviour: the next typing comes out marked, or escapes the mark when
 toggling off inside one; moving the caret first disarms) — in plugin terms,
 `Wrap`/`Unwrap` on a collapsed selection arm instead of no-op, and `InMark`
-reads the armed state back so toolbar toggles light up correctly.
+reads the armed state back so toolbar toggles light up correctly. A
+non-collapsed toggle over part of a range (`Wrap`/`Unwrap`/`ApplyClass`/
+`RemoveClass`) carves and lifts text nodes, restructuring the DOM without
+touching its text content — the core re-locates and reapplies the same
+selection by character offset afterward, so the selection a plugin sees
+next is the one the user actually acted on, not a leftover fragment or a
+stale reference to a node the mutation moved.
 
 The stock `basic` profile gives a bold/italic/code toolbar + a block picker
 (`p`, `h1`–`h6`, `blockquote`, `pre`). **Bold and Italic are CSS
@@ -277,9 +320,14 @@ semantic importance, and `StyleToolbar.CreateStyle` only ever captures CSS
 classes: a mark-based bold would silently vanish when a style built from bold
 text got reapplied elsewhere. `code` stays a real mark (structural, not a
 font weight); `<strong>`/`<em>` remain valid content, just not what the stock
-buttons produce. **Don't build a custom Bold/Italic on `Wrap(Strong())` for
-this same reason** — use `ClassMarkToggle("wt-b")`/`ClassMarkActive("wt-b")`
-(and register the class via `InitPlugin`) so it composes with named styles.
+buttons produce — the toggle still *recognizes* them, though: pasted text
+that arrived as `<strong>` lights up Bold and can be cleared from the
+toolbar, same as `wt-b` text, via `DualMarkToggle("wt-b", "strong")`/
+`DualMarkActive("wt-b", "strong")`. **Don't build a custom Bold/Italic on
+`Wrap(Strong())` for the CreateStyle reason above, and don't use the plain
+`ClassMarkToggle`/`ClassMarkActive` pair either** unless you're sure the
+content your profile handles never arrives with the semantic mark already
+on it (register the class via `InitPlugin` either way).
 Two more stock toolbars compose with `basic` — don't rebuild what they
 already do:
 
@@ -315,9 +363,10 @@ wtext.RegisterProfile("post", wtext.Profile{
 ```
 Build a toolbar by composing the exported helpers (`ToggleMark`, `MarkActive`,
 `BlockCurrent`, `BlockPick`, `SwapClass`, `ClassPick`, `ClassToggle`,
-`ClassCurrent`, `ClassActive`, `ClassMarkToggle`, `ClassMarkActive`) over the
-`wtext.EditorCore` API — which also exposes the class registry (`Classes`,
-`ClassCSS`, `ClassesAt`, `ClassSpanned`, `DefineClass`). A toolbar item
+`ClassCurrent`, `ClassActive`, `ClassMarkToggle`, `ClassMarkActive`,
+`DualMarkToggle`, `DualMarkActive`) over the `wtext.EditorCore` API — which
+also exposes the class registry (`Classes`, `ClassCSS`, `ClassesAt`,
+`ClassSpanned`, `DefineClass`). A toolbar item
 needing a typed value (style name, URL)
 declares an `InputItem`; a plugin needing setup at attach time (defining its
 utility classes, say) implements `wtext.InitPlugin`. The portable half of
@@ -326,6 +375,26 @@ utility classes, say) implements `wtext.InitPlugin`. The portable half of
 the native toolchain — no browser needed. When you DO touch the js side, mind
 `sec-wasm-go`: a `js.Value.Call`/`Get` on a number/string primitive panics,
 and a panic is whole-app death.
+
+**Help dialog contract.** `ToggleItem`/`ButtonItem`/`SelectItem`/`InputItem`
+each carry a `Help` field (a message id, alongside `Label`) — this is the
+entire mechanism by which a `ToolbarPlugin` "hands over its own help" to
+compose one dialog covering every control: declare `Help` on the items
+`Items()` already returns, nothing more. It's additive — old plugin code
+with named-field struct literals still compiles; an item with `Help == ""`
+(the zero value) is just left out of the dialog. The widget adds a
+trailing "?" button itself (only when at least one active plugin's item
+sets `Help`), walks `profile.Toolbar`'s `Items()`, and opens a `w-dialog`
+(so a profile using any stock or custom toolbar with `Help` needs
+`import _ "github.com/luisfurquim/wings/widget/dialog"` too) listing every
+documented label + explanation in toolbar order — mounted at
+`document.body` rather than in the toolbar itself (see the `w-dialog`
+nesting gotcha above; `w-text` can sit inside a `w-tab` panel, which
+triggers it). `BasicToolbar`,
+`FontToolbar`, `StyleToolbar` document every item they declare — follow
+that as the reference when adding `Help` to a custom toolbar. Localize the
+`-help` ids the same way as `Label` ids (`<span slot="labels" id="…">`),
+plus `wtext-help`/`wtext-help-title` for the button/dialog title.
 
 ## Combobox — `w-combobox`
 

@@ -119,6 +119,23 @@
   flex: 1;
 }
 
+/* ── Toolbar help dialog (composed from every plugin's Help items) ──────── */
+
+.wt-help-list {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem 0.75rem;
+}
+.wt-help-list dt {
+  font-weight: 600;
+  white-space: nowrap;
+}
+.wt-help-list dd {
+  margin: 0;
+  color: var(--wings-text-muted, #666);
+}
+
 /* ── Editing surface ───────────────────────────────────────────────────── */
 
 .wt-editor {

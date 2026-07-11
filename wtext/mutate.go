@@ -174,6 +174,110 @@ func carve(s textSlice) js.Value {
 	return node
 }
 
+// ── Selection survival across restructuring ─────────────────────────────
+//
+// Wrap/Unwrap/ApplyClass/RemoveClass carve and lift text nodes — pure DOM
+// surgery that never changes the editor's text content or character
+// order, only which elements wrap it. The live browser Selection does not
+// survive that surgery reliably: a boundary point whose node gets
+// detached or re-parented can end up repositioned by the browser's own
+// heuristics anywhere in the document, not just "nearby" — observed
+// escaping the shadow root into unrelated whitespace entirely. Worse, the
+// SAVED fallback (savedStart/savedEnd, meant to survive focus leaving the
+// editor) can silently keep pointing at a stale node that happens to
+// still pass validity checks (still connected, still an in-range offset)
+// while no longer meaning what it used to: after carving a range out of
+// <span class="wt-b">two three</span>, the original text node object
+// becomes the FIRST carved piece ("t", still inside the bold span) —
+// a saved reference captured before the split now silently describes a
+// bold survivor fragment instead of the user's actual selection, so a
+// toggle button reads back "still bold" for text that was just correctly
+// un-bolded.
+//
+// The fix does not trust the browser's post-mutation Range at all:
+// capture the selection's character offsets (relative to the editor
+// root) BEFORE mutating, then re-locate those same offsets in the
+// (possibly restructured) tree AFTERWARD and set the selection there
+// explicitly. Formatting-only mutations never change text content or
+// order, so the same character count always names the same logical
+// position, however the elements around it were rearranged.
+
+// textOffset returns the count of UTF-16 code units of e.root's text
+// content up to (node, offset), walking text nodes in document order.
+// The counterpart to pointAtOffset.
+func (e *Editor) textOffset(node js.Value, offset int) int {
+	walker := e.doc.Call("createTreeWalker", e.root, 4 /* NodeFilter.SHOW_TEXT */)
+	total := 0
+	for {
+		n := walker.Call("nextNode")
+		if !n.Truthy() {
+			break
+		}
+		if n.Equal(node) {
+			return total + offset
+		}
+		total += n.Get("length").Int()
+	}
+	// node was not one of e.root's text nodes (an element boundary, e.g. a
+	// range starting/ending at a block itself) — best effort: the count of
+	// everything walked so far names the position right before it.
+	return total
+}
+
+// pointAtOffset finds the (node, offset) position after total UTF-16 code
+// units of e.root's text content, walking text nodes in document order.
+// ok is false when the editor holds no text at all.
+func (e *Editor) pointAtOffset(total int) (node js.Value, offset int, ok bool) {
+	walker := e.doc.Call("createTreeWalker", e.root, 4 /* NodeFilter.SHOW_TEXT */)
+	remaining := total
+	var last js.Value
+	for {
+		n := walker.Call("nextNode")
+		if !n.Truthy() {
+			break
+		}
+		last = n
+		length := n.Get("length").Int()
+		if remaining <= length {
+			return n, remaining, true
+		}
+		remaining -= length
+	}
+	if last.Truthy() {
+		return last, last.Get("length").Int(), true
+	}
+	return js.Undefined(), 0, false
+}
+
+// selRestorePoint captures s as character offsets from e.root, to be
+// handed to restoreSelAt after a mutation that may have carved or moved
+// the nodes s.From/s.To referenced.
+func (e *Editor) selRestorePoint(rng js.Value) (start, end int) {
+	return e.textOffset(rng.Get("startContainer"), rng.Get("startOffset").Int()),
+		e.textOffset(rng.Get("endContainer"), rng.Get("endOffset").Int())
+}
+
+// restoreSelAt re-locates the character offsets captured by
+// selRestorePoint in the current tree and sets the live selection there,
+// refreshing the saved fallback (savedStart/savedEnd) to match — the
+// stale reference this guards against was exactly a savedSel snapshot
+// nothing had refreshed since before the restructuring.
+func (e *Editor) restoreSelAt(start, end int) {
+	startNode, startOff, ok := e.pointAtOffset(start)
+	if !ok {
+		return
+	}
+	endNode, endOff, ok := e.pointAtOffset(end)
+	if !ok {
+		return
+	}
+	e.guard("restoreselat", func() {
+		e.selectionObj().Call("setBaseAndExtent", startNode, startOff, endNode, endOff)
+	})
+	e.savedStart, e.savedStartOff = startNode, startOff
+	e.savedEnd, e.savedEndOff = endNode, endOff
+}
+
 // ── Writes ──────────────────────────────────────────────────────────────
 
 // Wrap applies a semantic mark to the text covered by s. A collapsed s
@@ -199,6 +303,7 @@ func (e *Editor) Wrap(s Selection, m Mark) error {
 	if err != nil {
 		return err
 	}
+	startOff, endOff := e.selRestorePoint(rng)
 	e.beginWrite()
 	defer e.commitWrite()
 	for _, slice := range e.textSlices(rng) {
@@ -216,6 +321,7 @@ func (e *Editor) Wrap(s Selection, m Mark) error {
 		node.Get("parentNode").Call("insertBefore", wrapper, node)
 		wrapper.Call("appendChild", node)
 	}
+	e.restoreSelAt(startOff, endOff)
 	return nil
 }
 
@@ -234,6 +340,7 @@ func (e *Editor) Unwrap(s Selection, tag string) error {
 	if err != nil {
 		return err
 	}
+	startOff, endOff := e.selRestorePoint(rng)
 	e.beginWrite()
 	defer e.commitWrite()
 	for _, slice := range e.textSlices(rng) {
@@ -244,6 +351,7 @@ func (e *Editor) Unwrap(s Selection, tag string) error {
 		node := carve(slice)
 		e.liftOutOf(node, mark)
 	}
+	e.restoreSelAt(startOff, endOff)
 	return nil
 }
 
@@ -456,6 +564,7 @@ func (e *Editor) ApplyClass(s Selection, name string) error {
 	if err != nil {
 		return err
 	}
+	startOff, endOff := e.selRestorePoint(rng)
 	blocks, err := e.blocksIn(s)
 	if err != nil {
 		return err
@@ -479,6 +588,7 @@ func (e *Editor) ApplyClass(s Selection, name string) error {
 			span.Call("appendChild", node)
 		}
 	}
+	e.restoreSelAt(startOff, endOff)
 	return nil
 }
 
@@ -502,6 +612,7 @@ func (e *Editor) RemoveClass(s Selection, name string) error {
 	if err != nil {
 		return err
 	}
+	startOff, endOff := e.selRestorePoint(rng)
 	blocks, err := e.blocksIn(s)
 	if err != nil {
 		return err
@@ -528,6 +639,7 @@ func (e *Editor) RemoveClass(s Selection, name string) error {
 			wrapper.Call("appendChild", node)
 		}
 	}
+	e.restoreSelAt(startOff, endOff)
 	return nil
 }
 
@@ -592,16 +704,6 @@ func (e *Editor) Replace(s Selection, f Fragment) error {
 	return nil
 }
 
-// fragmentHasBlocks reports whether any top-level node is a block.
-func fragmentHasBlocks(f Fragment) bool {
-	for i := range f.nodes {
-		if f.nodes[i].tag != "" && epubhtml.IsBlock(f.nodes[i].tag) {
-			return true
-		}
-	}
-	return false
-}
-
 // insertBlocks inserts a block-carrying fragment at the (collapsed)
 // range: the enclosing block is split at the caret and the fragment's
 // nodes land between the halves.
@@ -611,6 +713,17 @@ func (e *Editor) insertBlocks(rng js.Value, f Fragment) {
 	if !block.Truthy() {
 		// Caret at root level: append at the range position directly.
 		rng.Call("insertNode", e.materialize(f))
+		return
+	}
+	if strings.TrimSpace(block.Get("textContent").String()) == "" {
+		// The caret sits in an empty block (just the ensureBlockShape <br>
+		// filler, e.g. a fresh document or after Delete) — replace it
+		// outright. Splitting it the general way below would produce two
+		// empty halves sandwiching the pasted blocks instead of one clean
+		// insertion.
+		parent := block.Get("parentNode")
+		parent.Call("insertBefore", e.materialize(f), block)
+		block.Call("remove")
 		return
 	}
 	// Split the block: everything after the caret moves to a clone.

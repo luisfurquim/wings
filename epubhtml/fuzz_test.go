@@ -113,6 +113,42 @@ func FuzzSanitizeCSS(f *testing.F) {
 	})
 }
 
+// FuzzFilterCSS: unlike SanitizeCSS, FilterCSS never errors — for any
+// input, whatever it keeps (if anything) must itself be safe to install
+// as a class's CSS, i.e. re-pass SanitizeCSS verbatim. Seeded with the
+// real Google Docs clipboard style strings this function exists for.
+func FuzzFilterCSS(f *testing.F) {
+	for _, s := range []string{
+		"color: red", "color:red;font-weight:bold",
+		"background-color: url(https://evil/px.gif)",
+		"color: \\75rl(x)", "@import 'x'", "color: red} body{",
+		"font-family: 'A B', serif", "", ";;;", "color: var(--x)",
+		"vertical-align:baseline;color:red;position:fixed",
+		"line-height:1.38;margin-left: -56.69pt;text-align: justify;",
+	} {
+		f.Add(s)
+	}
+	f.Fuzz(func(t *testing.T, s string) {
+		out := FilterCSS(s)
+		if out == "" {
+			return
+		}
+		low := strings.ToLower(out)
+		for _, bad := range cssBanned {
+			if strings.Contains(low, bad) {
+				t.Fatalf("banned construct survived: %q -> %q (%q)", s, out, bad)
+			}
+		}
+		clean, err := SanitizeCSS(out)
+		if err != nil {
+			t.Fatalf("FilterCSS output rejected by SanitizeCSS: %q -> %q: %v", s, out, err)
+		}
+		if clean != out {
+			t.Fatalf("FilterCSS output not already canonical: %q -> %q -> %q", s, out, clean)
+		}
+	})
+}
+
 // FuzzSplitCSS: for any input SanitizeCSS accepts, splitting loses no
 // declaration, sends each to exactly one half, and both halves survive
 // re-sanitization (they reach DefineClass-installed rules verbatim).

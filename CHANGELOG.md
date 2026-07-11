@@ -8,6 +8,124 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
+## [0.18.1] — 2026-07-10
+
+### Added
+- **`w-text` translates a pasted element's inline `style=""` into a
+  registered class instead of dropping it.** `epubhtml.FilterCSS` reduces
+  the declaration list to the properties the profile already supports
+  (font, color, alignment, indent, spacing, …), silently keeping what it
+  recognizes and dropping the rest — unlike `SanitizeCSS` (which exists to
+  validate a webdev's own `DefineClass` call and rejects the *whole* list
+  over one unrecognized property), a real document's inline style
+  routinely mixes a couple of supported properties with several this
+  profile was never meant to carry (`vertical-align`, `white-space`, …),
+  and losing the safe ones over the unsafe ones would throw away exactly
+  the formatting worth keeping. Survivors are registered under a
+  deterministic name (`epubhtml.PasteClassName`) so identical inline
+  styles repeated across many pasted elements — every paragraph in a
+  Google Docs export typically shares one verbatim — share one class
+  instead of registering a near-duplicate per element. The name is a
+  hash of the declarations sorted by property (not the raw string): two
+  styles listing the same properties in a different order — nothing
+  about how a source serializes `style=""` guarantees one order over
+  another — still collapse onto the one class. Sorting by property name
+  rather than the whole declaration matters: `color:red;color:blue` and
+  `color:blue;color:red` both duplicate `color`, but the CSS cascade
+  means whichever comes last wins, so they are genuinely different (one
+  nets blue, the other red) and must not collide — a stable sort keeps
+  duplicated properties in their original relative order, so only
+  actually-equivalent inputs collapse.
+- **`w-text`'s toolbar gets a composed help dialog, and the `ToolbarItem`
+  contract grows a `Help` field to feed it.** `ToggleItem`, `ButtonItem`,
+  `SelectItem` and `InputItem` each gained a `Help` message id alongside
+  `Label` (additive — existing plugin code with named-field literals
+  compiles unchanged, `Help` simply defaults to "" and that item is
+  omitted from the dialog). A trailing "?" button — shown only when at
+  least one active plugin's item declares `Help` — opens a `w-dialog`
+  listing every documented control's label and explanation, gathered by
+  walking `profile.Toolbar`'s `Items()`: this is how a `ToolbarPlugin`
+  "delivers its own help" without the widget knowing anything about what
+  any particular plugin does. `BasicToolbar`, `FontToolbar` and
+  `StyleToolbar` now document every control they declare.
+
+### Fixed
+- **The toolbar's help dialog rendered as an empty dark box instead of its
+  content.** `<w-dialog>`'s overlay is `position: fixed`, meant to cover the
+  viewport — but a fixed-position element is instead positioned relative to
+  the nearest ancestor that establishes a new containing block, and `w-tab`'s
+  own `:host` rule sets a non-`none` `backdrop-filter` unconditionally (its
+  "atmosphere opt-in" pattern reads `blur(var(--wings-surface-blur, 0))`,
+  and `blur(0)` still counts as non-`none` per the CSS spec, even though it
+  visually does nothing). Nested inside a tab panel, as `w-text` is in the
+  demo, the dialog rendered off-screen, scrolled away with the panel's own
+  content instead of centering over the viewport. It now mounts at
+  `document.body` instead, escaping that (and any future ancestor with the
+  same property) entirely. Because wings' own `@cancel`/`Trigger` plumbing
+  resolves a named handler by walking up the DOM ancestor chain — and can no
+  longer reach back into the toolbar's host once the dialog sits outside its
+  tree — the close button is now wired with a direct DOM listener instead.
+- **`w-text` formatting toggles now survive their own DOM surgery.**
+  `Wrap`/`Unwrap`/`ApplyClass`/`RemoveClass` carve and lift text nodes to
+  apply or remove a mark/class over part of a range — pure restructuring,
+  never a text-content change — but the live selection did not reliably
+  survive it: a boundary point whose node got detached or re-parented
+  could be repositioned by the browser's own heuristics anywhere in the
+  document (observed escaping the shadow root into unrelated whitespace),
+  and the remembered fallback selection could keep pointing at a stale
+  node that happened to still pass validity checks while no longer
+  meaning what it used to — e.g. toggling Bold off on part of a bold
+  range would visibly un-bold the text correctly, but the toolbar button
+  stayed lit and a second click on a triple-click-selected paragraph
+  would silently shrink the selection to a leftover fragment instead of
+  toggling the whole thing. All four methods now capture the selection
+  as character offsets from the editor root before mutating and
+  explicitly re-locate and reapply those same offsets afterward —
+  robust to arbitrary node restructuring since a formatting-only edit
+  never changes the text content or its order.
+- **`w-text`'s Bold/Italic buttons can now see and clear pasted
+  `<strong>`/`<em>`.** Content pasted or loaded from elsewhere may
+  legitimately carry those semantic marks (the profile has always kept
+  them valid), but the toolbar's own Bold/Italic only ever looked at
+  their CSS-class counterpart (`wt-b`/`wt-i`), so text that arrived
+  already bold/italic this way read as "not active" and had no way to be
+  turned off from the toolbar at all. The toggle now recognizes either
+  representation — lighting up for whichever is present, and clearing
+  whichever is actually there (the class, the mark, or both) — while
+  still only ever *writing* the class for new formatting, so the
+  CSS/named-style capture path is unaffected.
+- **Pasted paragraph breaks expressed as `<br><br>` are now recognized as
+  real paragraph boundaries.** Not every source wraps each paragraph in
+  its own block element — plain editors, chat apps, and some word
+  processors' partial-copy path export a blank line as a run of
+  consecutive `<br>` inside one container instead. A paste like that
+  used to land as one block with the break preserved as literal line
+  breaks (two paragraphs visually merged into one); a run of 2 or more
+  `<br>` is now split into separate blocks, while a single `<br>` still
+  means what it always did — a literal line break within one paragraph
+  (an address, a line of verse).
+- Pasting into an empty paragraph (a fresh block, or one just cleared) no
+  longer leaves an empty paragraph on each side of the pasted content —
+  the empty block is replaced outright.
+- **Pasting from Google Docs no longer merges every paragraph into one and
+  falsely bolds the whole thing.** Docs wraps its ENTIRE clipboard export in
+  a single `<b style="font-weight:normal" id="docs-internal-guid-…">`,
+  purely to cancel `<b>`'s default rendering, even when nothing was bold —
+  and lets it hold real `<p>` paragraphs despite `<b>` being inline-only
+  per the HTML spec (browsers tolerate it). Canonicalizing that wrapper to
+  `<strong>` and then dissolving "block inside inline" content (the
+  correct rule for genuinely malformed markup) erased every paragraph
+  break with nothing standing in for them, and bolded text that was
+  explicitly marked *not* bold. A mark-shaped wrapper whose direct
+  children are actually blocks is now unwrapped instead — its paragraphs
+  survive as themselves. A trailing `<br class="Apple-interchange-newline">`
+  — WebKit's own clipboard-boundary filler, seen on copies mediated by
+  Safari/WebKit's editing stack — is dropped, the same as `<meta>`. Each
+  paragraph's own `style=""` (justification, indent, spacing) and each
+  run's (font, color) now survive too, via the inline-style-to-class
+  translation above — a Docs paste keeps its visible formatting, not just
+  its paragraph breaks.
+
 ## [0.18.0] — 2026-07-07
 
 ### Added

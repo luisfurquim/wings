@@ -28,6 +28,7 @@ type toolbar struct {
 	profile   wtext.Profile
 	toggles   []trackedToggle
 	selects   []trackedSelect
+	helpDlg   js.Value // the open help dialog, or js.Undefined() when none is open
 }
 
 type trackedToggle struct {
@@ -43,14 +44,18 @@ type trackedSelect struct {
 }
 
 func newToolbar(obj *wings.PranaObj, container js.Value, editor *wtext.Editor, p wtext.Profile) *toolbar {
-	return &toolbar{obj: obj, host: obj.Element, container: container, editor: editor, profile: p}
+	return &toolbar{obj: obj, host: obj.Element, container: container, editor: editor, profile: p, helpDlg: js.Undefined()}
 }
 
 // render draws every item of every toolbar plugin into the container. It is
 // also the re-translation path: an OnRetranslate re-render rebuilds the
 // controls with freshly resolved labels, so the tracked slices are reset
-// first to avoid accumulating stale element references.
+// first to avoid accumulating stale element references. A help dialog left
+// open from before the rebuild is closed too — its "?" button is about to
+// be torn down and recreated, and the dialog holds no state worth keeping
+// across a rebuild.
 func (t *toolbar) render() {
+	t.closeHelp()
 	t.toggles = nil
 	t.selects = nil
 	t.container.Set("innerHTML", "") // static container; safe empty string
@@ -59,6 +64,7 @@ func (t *toolbar) render() {
 			t.renderItem(item)
 		}
 	}
+	t.renderHelp()
 	t.refresh()
 }
 
@@ -85,6 +91,144 @@ func (t *toolbar) renderItem(item wtext.ToolbarItem) {
 		sep.Call("setAttribute", "class", "wt-sep")
 		t.container.Call("appendChild", sep)
 	}
+}
+
+// helpEntry is one resolved row of the toolbar's composed help dialog:
+// a control's label and its plugin-supplied explanation, already run
+// through resolveLabel.
+type helpEntry struct{ label, help string }
+
+// helpEntries walks every plugin's declared items and collects the ones
+// that opted into the help dialog (a non-empty Help id) — the mechanism
+// by which a ToolbarPlugin "delivers its help" without the widget knowing
+// anything about what any particular plugin does. The switch mirrors
+// renderItem's: the sealed ToolbarItem set makes it exhaustive, and
+// Separator (and any future help-less kind) is simply skipped.
+func (t *toolbar) helpEntries() []helpEntry {
+	var out []helpEntry
+	for _, plug := range t.profile.Toolbar {
+		for _, item := range plug.Items() {
+			var labelID, helpID string
+			switch it := item.(type) {
+			case wtext.ToggleItem:
+				labelID, helpID = it.Label, it.Help
+			case wtext.ButtonItem:
+				labelID, helpID = it.Label, it.Help
+			case wtext.SelectItem:
+				labelID, helpID = it.Label, it.Help
+			case wtext.InputItem:
+				labelID, helpID = it.Label, it.Help
+			default:
+				continue
+			}
+			if helpID == "" {
+				continue
+			}
+			out = append(out, helpEntry{label: t.resolveLabel(labelID), help: t.resolveLabel(helpID)})
+		}
+	}
+	return out
+}
+
+// renderHelp draws the toolbar's trailing "?" button, when at least one
+// item across the active plugins opted into the help dialog. The
+// entries are resolved once here (fresh on every render, including an
+// OnRetranslate) and closed over by the click handler, which builds and
+// opens a fresh <w-dialog> via openHelp — closed again by closeHelp.
+func (t *toolbar) renderHelp() {
+	entries := t.helpEntries()
+	if len(entries) == 0 {
+		return
+	}
+	sep := t.doc().Call("createElement", "div")
+	sep.Call("setAttribute", "class", "wt-sep")
+	t.container.Call("appendChild", sep)
+
+	label := t.resolveLabel("wtext-help")
+	btn := t.doc().Call("createElement", "w-button")
+	btn.Call("setAttribute", "type", "button")
+	btn.Call("setAttribute", "variant", "ghost")
+	btn.Call("setAttribute", "size", "sm")
+	btn.Call("setAttribute", "data-item", "help")
+	btn.Call("setAttribute", "aria-label", label)
+	btn.Call("setAttribute", "title", label)
+	btn.Set("textContent", "?")
+	dom.AddEvent(btn, "mousedown", func(_ js.Value, _ []js.Value) any { return nil }, true, false)
+	dom.AddEvent(btn, "click", func(_ js.Value, _ []js.Value) any {
+		t.openHelp(entries)
+		return nil
+	}, false, false)
+	t.container.Call("appendChild", btn)
+}
+
+// openHelp builds one entry per control as a definition list inside a
+// w-dialog — the composed help of every plugin's items, in toolbar
+// order — and mounts it at document.body, a no-op if one is already
+// open. It is mounted at body rather than inside the toolbar's own
+// container deliberately: <w-dialog>'s overlay is position:fixed, meant
+// to cover the viewport, but a fixed-position element is instead
+// positioned relative to the nearest ANCESTOR that establishes a new
+// containing block — and w-tab's own :host rule sets a non-"none"
+// backdrop-filter unconditionally (its "atmosphere opt-in" pattern reads
+// blur(var(--wings-surface-blur, 0)), and blur(0) still counts as
+// non-"none" per the CSS spec, even though it visually does nothing).
+// Nested inside a tab panel, the dialog rendered off-screen, scrolled
+// with the panel's own content instead of centering over the viewport —
+// exactly the "dark box, no visible content" the mounting-inside-
+// container version produced. Mounting at body escapes that (and any
+// future ancestor with the same property) entirely.
+//
+// This also means wings' own @cancel/Trigger plumbing — which resolves
+// a named handler by walking UP the DOM ancestor chain from the firing
+// element to find a prana ancestor carrying it — can no longer reach
+// back into this toolbar's w-text host once the dialog sits outside its
+// tree. So the close button is wired directly instead: the shadow DOM
+// dialog.html builds (including #dlg-cancel) is present synchronously
+// once the element is constructed — elementConstructor calls
+// bindElement, which evaluates ?btn_cancel_show off InitData's own
+// default (true) before Render (the async half) ever runs — so the
+// button can be found and bound the moment the element is created, no
+// wait needed.
+func (t *toolbar) openHelp(entries []helpEntry) {
+	if t.helpDlg.Truthy() {
+		return
+	}
+	dlg := t.doc().Call("createElement", "w-dialog")
+	dlg.Call("setAttribute", "buttons", "cancel")
+	dlg.Call("setAttribute", "title", t.resolveLabel("wtext-help-title"))
+
+	list := t.doc().Call("createElement", "dl")
+	list.Call("setAttribute", "class", "wt-help-list")
+	for _, e := range entries {
+		dt := t.doc().Call("createElement", "dt")
+		dt.Set("textContent", e.label)
+		list.Call("appendChild", dt)
+		dd := t.doc().Call("createElement", "dd")
+		dd.Set("textContent", e.help)
+		list.Call("appendChild", dd)
+	}
+	dlg.Call("appendChild", list)
+
+	if shadow := dlg.Get("shadowRoot"); shadow.Truthy() {
+		if els := dom.Query(shadow, "#dlg-cancel"); len(els) > 0 {
+			dom.AddEvent(els[0], "click", func(_ js.Value, _ []js.Value) any {
+				t.closeHelp()
+				return nil
+			}, false, false)
+		}
+	}
+
+	t.helpDlg = dlg
+	t.doc().Get("body").Call("appendChild", dlg)
+}
+
+// closeHelp removes the open help dialog, if any. Idempotent.
+func (t *toolbar) closeHelp() {
+	if !t.helpDlg.Truthy() {
+		return
+	}
+	t.helpDlg.Call("remove")
+	t.helpDlg = js.Undefined()
 }
 
 // button creates a w-button for a toggle/action item. Label text goes in
@@ -440,6 +584,22 @@ var defaultLabels = map[string]string{
 	"wtext-style-none": "(no style)",
 	"wtext-ok":         "Apply",
 	"wtext-cancel":     "Cancel",
+
+	"wtext-help":       "Help",
+	"wtext-help-title": "Toolbar help",
+
+	"wtext-bold-help":          "Make the selected text bold.",
+	"wtext-italic-help":        "Make the selected text italic.",
+	"wtext-code-help":          "Mark the selected text as code.",
+	"wtext-block-help":         "Change the paragraph's block type (heading, quote, code block...).",
+	"wtext-font-help":          "Change the font family of the selected text.",
+	"wtext-size-help":          "Change the font size of the selected text.",
+	"wtext-align-left-help":    "Align the paragraph to the left.",
+	"wtext-align-center-help":  "Center the paragraph.",
+	"wtext-align-right-help":   "Align the paragraph to the right.",
+	"wtext-align-justify-help": "Justify the paragraph (align both edges).",
+	"wtext-style-new-help":     "Name and save the selection's formatting as a reusable style.",
+	"wtext-style-help":         "Apply a saved style to the selection, or clear it with \"(no style)\".",
 }
 
 // iconGlyph maps a small set of Material symbol names to a unicode glyph,

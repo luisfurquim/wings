@@ -159,8 +159,8 @@ func IsInline(tag string) bool {
 type AttrKind int8
 
 // Attribute kinds. The default is AttrDrop: an attribute is copied only
-// when the policy names it explicitly, so event handlers, style, id and
-// friends are simply not expressible.
+// when the policy names it explicitly, so event handlers, id and friends
+// are simply not expressible.
 const (
 	// AttrDrop marks an attribute that is never copied.
 	AttrDrop AttrKind = iota
@@ -169,18 +169,30 @@ const (
 	// AttrClass marks a class list: every name must have been registered
 	// through the editor's DefineClass before it may be copied.
 	AttrClass
+	// AttrStyle marks an inline style declaration list: FilterCSS reduces
+	// it to the allowed properties (silently, not SanitizeCSS's reject-
+	// everything-on-one-mistake contract — this is a pasted element's own
+	// style, not a webdev's DefineClass call), and whatever survives is
+	// registered as a class (PasteClassName) rather than copied as an
+	// attribute — the element never gets a raw style="" back.
+	AttrStyle
 )
 
 // AttrFor returns the attribute policy for attr on the canonical tag.
 // SetBlock conversions re-run this with the *target* tag, so an attribute
 // that was legal on the source block but not on the new one is dropped,
-// and kept values are re-validated against the destination's rules.
+// and kept values are re-validated against the destination's rules. This
+// never actually applies to "style" — SetBlock only ever re-checks
+// attributes already IN the document, and this profile never leaves a raw
+// style="" there in the first place (see AttrStyle).
 func AttrFor(tag, attr string) AttrKind {
 	tag = strings.ToLower(tag)
 	attr = strings.ToLower(attr)
 	switch {
 	case attr == "class":
 		return AttrClass
+	case attr == "style":
+		return AttrStyle
 	case tag == "a" && attr == "href":
 		return AttrHref
 	}

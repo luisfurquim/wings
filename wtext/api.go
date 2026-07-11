@@ -182,20 +182,24 @@ type ToolbarPlugin interface {
 type ToolbarItem interface{ isToolbarItem() }
 
 // ToggleItem is a two-state button (bold, italic...). Label is a message
-// id resolved through the i18n catalog.
+// id resolved through the i18n catalog. Help is a message id for this
+// item's entry in the toolbar's composed help dialog; empty omits the
+// item from it.
 type ToggleItem struct {
-	ID, Label, Icon string
-	Do              func(EditorCore) error
-	Active          func(EditorCore) bool
+	ID, Label, Icon, Help string
+	Do                    func(EditorCore) error
+	Active                func(EditorCore) bool
 }
 
 func (ToggleItem) isToolbarItem() {}
 
-// ButtonItem is a plain action button.
+// ButtonItem is a plain action button. Help is a message id for this
+// item's entry in the toolbar's composed help dialog; empty omits the
+// item from it.
 type ButtonItem struct {
-	ID, Label, Icon string
-	Do              func(EditorCore) error
-	Enabled         func(EditorCore) bool
+	ID, Label, Icon, Help string
+	Do                    func(EditorCore) error
+	Enabled               func(EditorCore) bool
 }
 
 func (ButtonItem) isToolbarItem() {}
@@ -205,24 +209,27 @@ type Option struct {
 	Value, Label string
 }
 
-// SelectItem is a dropdown (block style picker...).
+// SelectItem is a dropdown (block style picker...). Help is a message id
+// for this item's entry in the toolbar's composed help dialog; empty
+// omits the item from it.
 type SelectItem struct {
-	ID, Label string
-	Options   func(EditorCore) []Option
-	Current   func(EditorCore) string
-	Pick      func(EditorCore, string) error
+	ID, Label, Help string
+	Options         func(EditorCore) []Option
+	Current         func(EditorCore) string
+	Pick            func(EditorCore, string) error
 }
 
 func (SelectItem) isToolbarItem() {}
 
 // InputItem is a button that opens a small text prompt — a w-input in a
 // popover; confirming calls Do with the typed value. Label and
-// Placeholder are message ids resolved through the i18n catalog. It is
-// the affordance for values a click cannot express: a style name, a
-// link's URL.
+// Placeholder are message ids resolved through the i18n catalog. Help is
+// a message id for this item's entry in the toolbar's composed help
+// dialog; empty omits the item from it. It is the affordance for values a
+// click cannot express: a style name, a link's URL.
 type InputItem struct {
-	ID, Label, Icon, Placeholder string
-	Do                           func(EditorCore, string) error
+	ID, Label, Icon, Placeholder, Help string
+	Do                                 func(EditorCore, string) error
 }
 
 func (InputItem) isToolbarItem() {}

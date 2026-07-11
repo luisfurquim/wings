@@ -17,7 +17,14 @@ import (
 // simply never copied. The Fragment is then materialized into real nodes.
 // Paste, drop and SetContent all take this one road.
 
-// sanitizeHTML parses hostile markup and reduces it to a Fragment.
+// sanitizeHTML parses hostile markup and reduces it to a Fragment. Many
+// sources (plain editors, chat apps, some word processors' partial-copy
+// path) export a paragraph break as a run of consecutive <br> instead of
+// separate block elements — copyChildren already preserves those runs
+// faithfully inside whatever single block they landed in (or, if the
+// source had no wrapping block at all, as bare top-level nodes);
+// splitTopLevelBreaks (portable, fragment.go) turns any 2+ run into a
+// real block boundary afterward, at the one place both shapes converge.
 func (e *Editor) sanitizeHTML(html string) (Fragment, error) {
 	parsed := js.Global().Get("DOMParser").New().
 		Call("parseFromString", html, "text/html")
@@ -26,7 +33,7 @@ func (e *Editor) sanitizeHTML(html string) (Fragment, error) {
 		return Fragment{}, nil
 	}
 	var f Fragment
-	f.nodes = e.copyChildren(body, false)
+	f.nodes = splitTopLevelBreaks(e.copyChildren(body, false))
 	return f, nil
 }
 
@@ -91,11 +98,36 @@ func (e *Editor) copyElement(el js.Value, inline bool) []fnode {
 	}
 	canon := pol.Canonical
 	if canon == "br" {
+		if el.Get("classList").Call("contains", "Apple-interchange-newline").Bool() {
+			// WebKit's own clipboard-boundary marker (Safari, Mail.app,
+			// Notes, and anything built on WebKit's editing stack) — a
+			// trailing filler <br> the paste mechanism itself adds, not
+			// content the source ever displayed. Same standing as <meta>.
+			return nil
+		}
 		return []fnode{{tag: "br"}}
 	}
 	if epubhtml.IsBlock(canon) && inline {
 		// A block inside inline content cannot exist in the profile:
 		// dissolve it.
+		return e.copyChildren(el, inline)
+	}
+	if epubhtml.IsMark(canon) && hasBlockChild(el) {
+		// A "mark" wrapper whose actual children are blocks is not real
+		// inline formatting — it's a malformed clipboard wrapper. Google
+		// Docs is the common real-world case: it wraps the ENTIRE copied
+		// selection in a single <b style="font-weight:normal"
+		// id="docs-internal-guid-...">, even when nothing was bold,
+		// purely to cancel <b>'s default rendering — <b> can only hold
+		// inline content per the HTML spec, but DOMParser (like every
+		// browser) tolerates the block <p> children anyway. Canonicalizing
+		// that wrapper to <strong> and then applying the block-inside-
+		// inline dissolve above (the correct rule for content that IS
+		// malformed) would both falsely bold every Docs paste and erase
+		// every paragraph break in it, with nothing — not even a <br> —
+		// left to show where they were. Unwrap the wrapper instead: its
+		// block children survive as themselves, in the SAME inline
+		// context this element itself was found in.
 		return e.copyChildren(el, inline)
 	}
 	node := fnode{tag: canon, attrs: e.copyAttrs(el, canon)}
@@ -107,16 +139,59 @@ func (e *Editor) copyElement(el js.Value, inline bool) []fnode {
 	if epubhtml.IsInline(canon) && len(node.kids) == 0 {
 		return nil // empty inline element marks nothing
 	}
+	if epubhtml.IsBlock(canon) && !inline {
+		if groups := splitOnBreaks(node.kids); len(groups) > 1 {
+			out := make([]fnode, 0, len(groups))
+			for _, g := range groups {
+				out = append(out, fnode{tag: canon, attrs: node.attrs, kids: g})
+			}
+			return out
+		}
+	}
 	return []fnode{node}
+}
+
+// hasBlockChild reports whether el's direct element children include
+// anything the profile would keep as a block — the sign of a malformed
+// mark-candidate wrapper (see the Google Docs case above copyElement).
+func hasBlockChild(el js.Value) bool {
+	kids := el.Get("children") // element children only, no text nodes
+	n := kids.Get("length").Int()
+	for i := 0; i < n; i++ {
+		tag := strings.ToLower(kids.Index(i).Get("tagName").String())
+		pol := epubhtml.ElementFor(tag)
+		if pol.Disposition == epubhtml.Keep && epubhtml.IsBlock(pol.Canonical) {
+			return true
+		}
+	}
+	return false
 }
 
 // copyAttrs keeps only what the policy names for the canonical tag,
 // validating each value for its kind — hrefs are canonicalized under the
-// profile's LinkPolicy, class lists are cut down to registered names. A
-// value that fails validation is not copied: the element survives as
-// text carrier, the attribute does not (fail toward text).
+// profile's LinkPolicy, class lists are cut down to registered names, and
+// an inline style is filtered down to the properties the profile
+// supports and turned into a registered class (see AttrStyle) rather
+// than copied as an attribute. A value that fails validation is not
+// copied: the element survives as text carrier, the attribute does not
+// (fail toward text). class and style both contribute to the SAME
+// output class list — addClass appends regardless of which attribute
+// ran first, so neither overwrites the other's contribution.
 func (e *Editor) copyAttrs(el js.Value, canon string) map[string]string {
 	var attrs map[string]string
+	addClass := func(cls string) {
+		if cls == "" {
+			return
+		}
+		if attrs == nil {
+			attrs = map[string]string{}
+		}
+		if cur := attrs["class"]; cur != "" {
+			attrs["class"] = cur + " " + cls
+		} else {
+			attrs["class"] = cls
+		}
+	}
 	names := el.Call("getAttributeNames")
 	n := names.Get("length").Int()
 	for i := 0; i < n; i++ {
@@ -133,18 +208,27 @@ func (e *Editor) copyAttrs(el js.Value, canon string) map[string]string {
 			}
 			attrs["href"] = canonHref
 		case epubhtml.AttrClass:
-			var keep []string
 			for _, cls := range strings.Fields(el.Call("getAttribute", name).String()) {
 				if e.classDefined(cls) {
-					keep = append(keep, cls)
+					addClass(cls)
 				}
 			}
-			if len(keep) > 0 {
-				if attrs == nil {
-					attrs = map[string]string{}
-				}
-				attrs["class"] = strings.Join(keep, " ")
+		case epubhtml.AttrStyle:
+			// FilterCSS, not SanitizeCSS: this is a pasted element's own
+			// style="", authored by whatever app produced the clipboard
+			// payload, not a webdev's DefineClass call — SanitizeCSS's
+			// reject-the-whole-list-on-one-bad-property contract is wrong
+			// here (real documents routinely mix a couple of properties
+			// this profile supports with several it was never meant to).
+			clean := epubhtml.FilterCSS(el.Call("getAttribute", name).String())
+			if clean == "" {
+				continue // nothing the profile recognizes survived
 			}
+			cls := epubhtml.PasteClassName(clean)
+			if err := e.DefineClass(cls, clean); err != nil {
+				continue // unreachable in practice: FilterCSS output is always valid
+			}
+			addClass(cls)
 		}
 	}
 	return attrs
