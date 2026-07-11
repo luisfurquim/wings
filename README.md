@@ -47,7 +47,7 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
-### Unreleased
+### v0.19.0
 
 - **`w-text` gains a live char/letter/word counter** — add
   `wtext.CounterToolbar{}` to a profile; built on the new passive

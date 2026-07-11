@@ -8,7 +8,7 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
-## [Unreleased]
+## [0.19.0] — 2026-07-11
 
 ### Added
 - **`w-text` char/letter/word counter** — `wtext.CounterToolbar{}`, a stock
