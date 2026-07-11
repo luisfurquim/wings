@@ -928,6 +928,18 @@
     "revised": false
   },
   {
+    "content": "Contador",
+    "revised": false
+  },
+  {
+    "content": "Caracteres: %d · Letras: %d · Palavras: %d",
+    "revised": false
+  },
+  {
+    "content": "Contagem ao vivo de caracteres (espaços contam, quebras de linha não), letras e palavras do documento.",
+    "revised": false
+  },
+  {
     "content": "Testador in-web",
     "revised": false
   },

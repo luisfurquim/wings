@@ -35,12 +35,14 @@ type WidgetsTab struct{}
 
 func init() {
 	// The demo editor uses the full toolbar: basic marks + font/alignment
-	// (FontToolbar) + named styles (StyleToolbar).
+	// (FontToolbar) + named styles (StyleToolbar) + the passive
+	// char/letter/word counter (CounterToolbar).
 	wtext.RegisterProfile("full", wtext.Profile{
 		Toolbar: []wtext.ToolbarPlugin{
 			wtext.BasicToolbar{},
 			wtext.FontToolbar{},
 			wtext.StyleToolbar{},
+			wtext.CounterToolbar{},
 		},
 	})
 	wings.Register(

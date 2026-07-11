@@ -72,6 +72,14 @@ type EditorCore interface {
 	Sel() (sel Selection, ok bool)
 	// Text returns the plain text covered by s.
 	Text(s Selection) (string, error)
+	// DocText returns the plain text of the whole document, with a
+	// newline at every block boundary and <br> — a bare textContent read
+	// would fuse the last word of one paragraph with the first of the
+	// next. It is the whole-document read for passive observers (word
+	// counters and such): a plugin cannot ask for it through Text, since
+	// Point handles are minted by the core and no Selection spanning the
+	// document can be fabricated from outside.
+	DocText() string
 	// InMark reports whether both ends of s sit inside a mark element tag.
 	// At a collapsed s an armed pending mark overrides the tree, so a
 	// toggle reads back what the next typing will produce.
@@ -233,6 +241,21 @@ type InputItem struct {
 }
 
 func (InputItem) isToolbarItem() {}
+
+// StatusItem is a passive read-out — the widget refreshes it alongside
+// toggle/select state, and it never performs an action. Label is a
+// message id naming the item (tooltip and its row in the help dialog).
+// Format is a message id whose resolved text is a fmt template the
+// widget fills with Args' values: the plugin computes the numbers, the
+// catalog owns their presentation, and a translator reorders with
+// explicit indexes (%[2]d) when the language needs it. Help is a message
+// id for this item's entry in the composed help dialog; empty omits it.
+type StatusItem struct {
+	ID, Label, Format, Help string
+	Args                    func(EditorCore) []any
+}
+
+func (StatusItem) isToolbarItem() {}
 
 // Separator draws a divider between item groups.
 type Separator struct{}

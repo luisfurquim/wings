@@ -380,6 +380,35 @@ func (e *Editor) Content() string {
 	return sb.String()
 }
 
+// DocText returns the document's plain text with a newline at every
+// block boundary and <br> — a bare textContent read would fuse the last
+// word of one paragraph with the first of the next.
+func (e *Editor) DocText() string {
+	var sb strings.Builder
+	var walk func(n js.Value)
+	walk = func(n js.Value) {
+		switch n.Get("nodeType").Int() {
+		case 3: // text
+			sb.WriteString(n.Get("data").String())
+		case 1: // element
+			tag := strings.ToLower(n.Get("tagName").String())
+			if tag == "br" {
+				sb.WriteString("\n")
+				return
+			}
+			kids := n.Get("childNodes")
+			for i := 0; i < kids.Get("length").Int(); i++ {
+				walk(kids.Index(i))
+			}
+			if epubhtml.IsBlock(tag) {
+				sb.WriteString("\n")
+			}
+		}
+	}
+	walk(e.root)
+	return sb.String()
+}
+
 // usedClassRules renders the registered classes the tree references, in
 // the persistable logical form (one unsplit rule per class), sorted.
 func (e *Editor) usedClassRules() string {

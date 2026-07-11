@@ -342,6 +342,13 @@ already do:
   The `wt-` prefix is reserved; direct formatting stays on the range and
   overrides the style, as in Word. Requires `widget/input` (the prompt
   popover renders a `w-input`).
+- **`wtext.CounterToolbar{}`** — a live char/letter/word count docked to the
+  toolbar's right edge. Purely passive: one `StatusItem` whose `Args`
+  closure recounts `core.DocText()` on every refresh. Chars are runes with
+  spaces included but line breaks excluded; letters are `unicode.IsLetter`
+  runes; words are whitespace-separated fields carrying at least one letter
+  or digit (a standalone comma or dash is not a word). It's also the
+  reference for writing your own read-outs (see `StatusItem` below).
 
 Classes apply with the **Word split**: character declarations become
 `<span class>` on the exact range, paragraph declarations mark the touched
@@ -366,9 +373,15 @@ Build a toolbar by composing the exported helpers (`ToggleMark`, `MarkActive`,
 `ClassCurrent`, `ClassActive`, `ClassMarkToggle`, `ClassMarkActive`,
 `DualMarkToggle`, `DualMarkActive`) over the `wtext.EditorCore` API — which
 also exposes the class registry (`Classes`, `ClassCSS`, `ClassesAt`,
-`ClassSpanned`, `DefineClass`). A toolbar item
+`ClassSpanned`, `DefineClass`) and the whole-document plain text
+(`DocText`, with a newline at every block boundary so words in adjacent
+paragraphs don't fuse). A toolbar item
 needing a typed value (style name, URL)
-declares an `InputItem`; a plugin needing setup at attach time (defining its
+declares an `InputItem`; a passive read-out (a counter, a save indicator)
+declares a `StatusItem` — `Format` is a message id resolving to a `fmt`
+template, `Args` computes its values, and the widget re-renders it in the
+same pass that refreshes toggle state (translators reorder with `%[2]d`);
+a plugin needing setup at attach time (defining its
 utility classes, say) implements `wtext.InitPlugin`. The portable half of
 `wtext` (the `EditorCore` interface, the `Fragment` builder, the sealed
 `Mark` constructors, the stock toolbars) unit-tests against a fake core with
@@ -376,8 +389,8 @@ the native toolchain — no browser needed. When you DO touch the js side, mind
 `sec-wasm-go`: a `js.Value.Call`/`Get` on a number/string primitive panics,
 and a panic is whole-app death.
 
-**Help dialog contract.** `ToggleItem`/`ButtonItem`/`SelectItem`/`InputItem`
-each carry a `Help` field (a message id, alongside `Label`) — this is the
+**Help dialog contract.** `ToggleItem`/`ButtonItem`/`SelectItem`/`InputItem`/
+`StatusItem` each carry a `Help` field (a message id, alongside `Label`) — this is the
 entire mechanism by which a `ToolbarPlugin` "hands over its own help" to
 compose one dialog covering every control: declare `Help` on the items
 `Items()` already returns, nothing more. It's additive — old plugin code

@@ -928,6 +928,18 @@
     "revised": false
   },
   {
+    "content": "Contador",
+    "revised": false
+  },
+  {
+    "content": "Caracteres: %d · Letras: %d · Palabras: %d",
+    "revised": false
+  },
+  {
+    "content": "Conteo en vivo de caracteres (los espacios cuentan, los saltos de línea no), letras y palabras del documento.",
+    "revised": false
+  },
+  {
     "content": "Probador in-web",
     "revised": true
   },

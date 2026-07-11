@@ -4,6 +4,7 @@ package text
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"syscall/js"
 
@@ -28,6 +29,7 @@ type toolbar struct {
 	profile   wtext.Profile
 	toggles   []trackedToggle
 	selects   []trackedSelect
+	statuses  []trackedStatus
 	helpDlg   js.Value // the open help dialog, or js.Undefined() when none is open
 }
 
@@ -41,6 +43,13 @@ type trackedSelect struct {
 	current  func(wtext.EditorCore) string
 	options  func(wtext.EditorCore) []wtext.Option
 	lastOpts string // JSON last written to the options attribute
+}
+
+type trackedStatus struct {
+	el     js.Value
+	format string // resolved fmt template (re-resolved on every render)
+	args   func(wtext.EditorCore) []any
+	last   string // text last written, to skip no-op DOM writes
 }
 
 func newToolbar(obj *wings.PranaObj, container js.Value, editor *wtext.Editor, p wtext.Profile) *toolbar {
@@ -58,6 +67,7 @@ func (t *toolbar) render() {
 	t.closeHelp()
 	t.toggles = nil
 	t.selects = nil
+	t.statuses = nil
 	t.container.Set("innerHTML", "") // static container; safe empty string
 	for _, plug := range t.profile.Toolbar {
 		for _, item := range plug.Items() {
@@ -86,6 +96,8 @@ func (t *toolbar) renderItem(item wtext.ToolbarItem) {
 		t.selectControl(it)
 	case wtext.InputItem:
 		t.inputControl(it)
+	case wtext.StatusItem:
+		t.statusControl(it)
 	case wtext.Separator:
 		sep := t.doc().Call("createElement", "div")
 		sep.Call("setAttribute", "class", "wt-sep")
@@ -117,6 +129,8 @@ func (t *toolbar) helpEntries() []helpEntry {
 			case wtext.SelectItem:
 				labelID, helpID = it.Label, it.Help
 			case wtext.InputItem:
+				labelID, helpID = it.Label, it.Help
+			case wtext.StatusItem:
 				labelID, helpID = it.Label, it.Help
 			default:
 				continue
@@ -455,6 +469,23 @@ func (t *toolbar) inputControl(it wtext.InputItem) {
 	}, false, false)
 }
 
+// statusControl renders a StatusItem: a passive text span refreshed in
+// the same pass as toggle/select state. The item's name travels as title
+// only — an aria-label would override the visible numbers for assistive
+// tech, and aria-live would announce every keystroke.
+func (t *toolbar) statusControl(it wtext.StatusItem) {
+	el := t.doc().Call("createElement", "span")
+	el.Call("setAttribute", "class", "wt-status")
+	el.Call("setAttribute", "data-item", it.ID)
+	el.Call("setAttribute", "title", t.resolveLabel(it.Label))
+	t.container.Call("appendChild", el)
+	if it.Args != nil {
+		t.statuses = append(t.statuses, trackedStatus{
+			el: el, format: t.resolveLabel(it.Format), args: it.Args,
+		})
+	}
+}
+
 func (t *toolbar) trackToggle(active func(wtext.EditorCore) bool) {
 	// The most recently appended button is this toggle's element.
 	kids := t.container.Get("children")
@@ -501,6 +532,14 @@ func (t *toolbar) refresh() {
 			// caret into unformatted text resyncs the display back to the
 			// picker's "Default"/"None" option instead of going stale.
 			sl.el.Call("setAttribute", "value", sl.current(t.editor))
+		}
+	}
+	for i := range t.statuses {
+		st := &t.statuses[i]
+		text := fmt.Sprintf(st.format, st.args(t.editor)...)
+		if text != st.last {
+			st.last = text
+			st.el.Set("textContent", text)
 		}
 	}
 }
@@ -587,6 +626,10 @@ var defaultLabels = map[string]string{
 
 	"wtext-help":       "Help",
 	"wtext-help-title": "Toolbar help",
+
+	"wtext-counter-label": "Counter",
+	"wtext-counter":       "Chars: %d · Letters: %d · Words: %d",
+	"wtext-counter-help":  "Live count of the document's characters (spaces included, line breaks not), letters and words.",
 
 	"wtext-bold-help":          "Make the selected text bold.",
 	"wtext-italic-help":        "Make the selected text italic.",

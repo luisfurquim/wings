@@ -47,6 +47,13 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
+### Unreleased
+
+- **`w-text` gains a live char/letter/word counter** — add
+  `wtext.CounterToolbar{}` to a profile; built on the new passive
+  `StatusItem` toolbar kind and `EditorCore.DocText()`, both open to
+  custom read-out plugins.
+
 ### v0.18.1
 
 - **`w-text` formatting toggles keep the selection they acted on** —
@@ -1857,6 +1864,13 @@ wtext.RegisterProfile("full", wtext.Profile{
   pasted style reusable and nameable, select the text and press ✎ like any
   other formatting**; `CreateStyle` reads every class in effect regardless
   of prefix, so it picks up the pasted one along with everything else.
+- **`CounterToolbar`** — a live character/letter/word count docked to the
+  toolbar's right edge. Characters are runes with spaces included but line
+  breaks excluded, letters are the runes `unicode.IsLetter` accepts, words
+  are whitespace-separated fields carrying at least one letter or digit
+  (standalone punctuation is not a word — the office-suite rule). Purely
+  passive — it declares a single `StatusItem` (see below) and never
+  touches the document.
 
 Classes apply with a **Word split**: character declarations (fonts, colors,
 decorations) ride `<span class>` over the exact range, paragraph declarations
@@ -1882,12 +1896,20 @@ arrived as `<strong>`/`<em>` from paste rather than the toolbar's own
 class. A
 toolbar item that needs a typed value (a style name, a link URL) declares an
 `InputItem`: the widget renders a button that opens a small popover with a
-`w-input` (import `widget/input` when your profile uses one). A plugin that
+`w-input` (import `widget/input` when your profile uses one). A passive
+read-out (a counter, a save indicator) declares a `StatusItem`: `Format` is
+a message id whose resolved text is a `fmt` template, `Args` computes its
+values, and the widget re-renders the item in the same pass that refreshes
+toggle/select state — the plugin owns the numbers, the catalog owns their
+presentation, and a translator reorders with explicit indexes (`%[2]d`).
+`EditorCore` backs whole-document read-outs with `DocText()` — the plain
+text of the entire document, with a newline at every block boundary so the
+last word of one paragraph never fuses with the first of the next. A plugin that
 must set the editor up at attach time — defining its utility classes, say —
 implements `wtext.InitPlugin`. The portable half of the `wtext` package
 unit-tests against a fake core without a browser.
 
-**Toolbar help dialog.** Every `ToggleItem`/`ButtonItem`/`SelectItem`/`InputItem`
+**Toolbar help dialog.** Every `ToggleItem`/`ButtonItem`/`SelectItem`/`InputItem`/`StatusItem`
 carries a `Help` field alongside `Label` — a message id for that control's
 entry in a composed help dialog, resolved the same way. It's additive: a
 plugin written before `Help` existed still compiles (named-field literals),
@@ -1905,7 +1927,8 @@ viewport. This is the whole mechanism by which a `ToolbarPlugin` "hands
 over its own help": nothing beyond declaring `Help` on the items it
 already returns from `Items()` — the widget never asks a plugin anything
 else about itself. `BasicToolbar`,
-`FontToolbar` and `StyleToolbar` document every control they declare.
+`FontToolbar`, `StyleToolbar` and `CounterToolbar` document every control
+they declare.
 
 **Localized toolbar.** Toolbar labels are message ids resolved at render, so
 they translate like the rest of your UI. The editor ships built-in English

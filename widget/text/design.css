@@ -90,6 +90,17 @@
   color: var(--wings-text-toolbar-active-color, var(--wings-primary, #1976d2));
 }
 
+/* A StatusItem is a passive read-out (the counter): muted, small, docked
+   to the toolbar's right edge, never a click target. */
+.wt-status {
+  margin-inline-start: auto;
+  padding-inline: 0.35rem;
+  font-size: 0.8em;
+  color: var(--wings-text-muted, #666);
+  white-space: nowrap;
+  user-select: none;
+}
+
 /* ── Toolbar input popover (InputItem: style name, link URL...) ────────── */
 
 .wt-inputitem {

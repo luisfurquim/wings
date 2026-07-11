@@ -8,6 +8,22 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
+## [Unreleased]
+
+### Added
+- **`w-text` char/letter/word counter** — `wtext.CounterToolbar{}`, a stock
+  toolbar plugin rendering a live count docked to the toolbar's right edge:
+  characters (runes, spaces included, line breaks not), letters
+  (`unicode.IsLetter`) and words (whitespace-separated fields carrying at
+  least one letter or digit — standalone punctuation is not a word). Built on two
+  contract additions open to custom plugins: `StatusItem`, a passive sealed
+  toolbar kind whose `Format` message id resolves to a `fmt` template filled
+  with `Args`' values on every state refresh (translators reorder with
+  `%[2]d`), and `EditorCore.DocText()`, the whole-document plain text with a
+  newline at every block boundary so words in adjacent paragraphs don't
+  fuse. `StatusItem` carries `Help` and joins the composed help dialog like
+  every other kind. The live-demo Widgets tab's editor now shows it.
+
 ## [0.18.1] — 2026-07-10
 
 ### Added

@@ -928,6 +928,18 @@
     "revised": false
   },
   {
+    "content": "Counter",
+    "revised": false
+  },
+  {
+    "content": "Chars: %d · Letters: %d · Words: %d",
+    "revised": false
+  },
+  {
+    "content": "Live count of the document's characters (spaces included, line breaks not), letters and words.",
+    "revised": false
+  },
+  {
     "content": "In-web tester",
     "revised": true
   },
