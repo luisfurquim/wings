@@ -42,6 +42,7 @@ package dialog
 
 import (
 	_ "embed"
+	"fmt"
 	"strings"
 	"syscall/js"
 
@@ -195,4 +196,35 @@ func (d *Dialog) bindButton(selector, event string) {
 		d.obj.Trigger(event)
 		return nil
 	}, false, false)
+}
+
+// AnchorTo switches dlg (a <w-dialog> element, mounted anywhere in the
+// document) to anchored mode: positioned over anchor's document
+// rectangle, its overlay dimming only that rectangle and its box filling
+// it minus --wings-dialog-anchor-inset (default 1% per edge) — the
+// visual statement that THIS element is what the dialog configures.
+// Absolute document coordinates make it scroll with the page; the
+// returned release removes the window resize listener that keeps it
+// glued across layout changes, and must be called when the dialog goes
+// away (it is not under the anchor's subtree, so the runtime's
+// auto-release cannot find it).
+func AnchorTo(dlg, anchor js.Value) (release func()) {
+	place := func() {
+		rect := anchor.Call("getBoundingClientRect")
+		win := js.Global()
+		top := rect.Get("top").Float() + win.Get("scrollY").Float()
+		left := rect.Get("left").Float() + win.Get("scrollX").Float()
+		style := dlg.Get("style")
+		style.Set("top", fmt.Sprintf("%.0fpx", top))
+		style.Set("left", fmt.Sprintf("%.0fpx", left))
+		style.Set("width", fmt.Sprintf("%.0fpx", rect.Get("width").Float()))
+		style.Set("height", fmt.Sprintf("%.0fpx", rect.Get("height").Float()))
+	}
+	dlg.Call("setAttribute", "anchored", "")
+	place()
+	id := dom.AddEvent(js.Global(), "resize", func(_ js.Value, _ []js.Value) any {
+		place()
+		return nil
+	}, false, false)
+	return func() { dom.RmEvent(id) }
 }

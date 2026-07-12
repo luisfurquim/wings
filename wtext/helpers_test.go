@@ -19,6 +19,8 @@ type fakeCore struct {
 	block   string
 	docText string            // what DocText returns
 	content string            // what Content returns
+	cfg     map[string]string // SetConfig store
+	cfgDefs map[string]string // declared defaults (read fallback)
 	classes map[string]string // DefineClass registry
 	at      []string          // classes in effect at the selection
 	// blockOnly names classes present in `at` only through block-level
@@ -35,6 +37,32 @@ func (f *fakeCore) Text(Selection) (string, error) {
 }
 func (f *fakeCore) DocText() string { return f.docText }
 func (f *fakeCore) Content() string { return f.content }
+func (f *fakeCore) Config(key string) string {
+	if v, ok := f.cfg[key]; ok {
+		return v
+	}
+	return f.cfgDefs[key]
+}
+func (f *fakeCore) SetConfig(key, value string) error {
+	if err := validateConfigKey(key); err != nil {
+		return err
+	}
+	if len(value) > MaxConfigValueLen {
+		return ErrConfigValue
+	}
+	if value == "" {
+		delete(f.cfg, key)
+		return nil
+	}
+	if f.cfg == nil {
+		f.cfg = map[string]string{}
+	}
+	if _, ok := f.cfg[key]; !ok && len(f.cfg) >= MaxConfigKeys {
+		return ErrConfigFull
+	}
+	f.cfg[key] = value
+	return nil
+}
 func (f *fakeCore) InMark(_ Selection, tag string) (bool, error) {
 	return f.marked[tag], nil
 }

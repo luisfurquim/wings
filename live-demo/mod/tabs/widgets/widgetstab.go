@@ -38,7 +38,12 @@ func init() {
 	// The demo editor uses the full toolbar: basic marks + font/alignment
 	// (FontToolbar) + named styles (StyleToolbar) + the passive
 	// char/letter/word counter (CounterToolbar); EPUB export (wtextepub)
-	// lands in the side menu under the standard Export group.
+	// lands in the side menu under the standard Export group and registers
+	// its book-metadata settings page (same instance in Menu and Config).
+	epubExport := wtextepub.Menu{Cfg: wtextepub.Config{
+		Title:  "Biografia",
+		Author: "wings live demo",
+	}}
 	wtext.RegisterProfile("full", wtext.Profile{
 		Toolbar: []wtext.ToolbarPlugin{
 			wtext.BasicToolbar{},
@@ -46,12 +51,8 @@ func init() {
 			wtext.StyleToolbar{},
 			wtext.CounterToolbar{},
 		},
-		Menu: []wtext.MenuPlugin{
-			wtextepub.Menu{Cfg: wtextepub.Config{
-				Title:  "Biografia",
-				Author: "wings live demo",
-			}},
-		},
+		Menu:   []wtext.MenuPlugin{epubExport},
+		Config: []wtext.ConfigPlugin{epubExport},
 	})
 	wings.Register(
 		"widgets-tab",

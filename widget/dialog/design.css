@@ -79,3 +79,34 @@
   background: var(--wings-primary-hover-bg, #0056b3);
   border-color: var(--wings-primary-hover-bg, #0056b3);
 }
+
+/* ── Anchored mode ────────────────────────────────────────────────────────
+   AnchorTo positions the HOST over an anchor element's document rectangle
+   (absolute coordinates: the dialog scrolls WITH the page, unlike the
+   fixed default). The overlay then dims only that rectangle — the visual
+   statement that THIS element is being configured — and the box fills it
+   minus a small inset that keeps the anchor's frame visible around it.
+   When the floor (min sizes) beats the inset, auto margins re-center the
+   box over the anchor. */
+:host([anchored]) {
+  position: absolute;
+  z-index: 1000;
+}
+:host([anchored]) .w-dialog-overlay {
+  position: absolute;
+  inset: 0;
+}
+:host([anchored]) .w-dialog {
+  position: absolute;
+  inset: var(--wings-dialog-anchor-inset, 1%);
+  margin: auto;
+  max-width: none;
+  min-width: min(24rem, 90vw);
+  min-height: min(16rem, 80vh);
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+:host([anchored]) .w-dialog-content {
+  flex: 1;
+}

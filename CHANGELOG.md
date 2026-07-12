@@ -8,6 +8,27 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
+## [Unreleased]
+
+### Added
+- **`w-text` document settings (`ConfigPlugin`)** — the iOS model: plugins
+  register configuration SCHEMAS (`ConfigSection` + sealed
+  `ConfigText`/`ConfigChoice` fields with defaults) and the widget renders
+  a central settings UI per section under the standard Settings menu
+  group. Values live in the DOCUMENT (persisted as `wt-cfg-*` head metas
+  in `Content()`, reloaded by `SetContent`) and are a commons readable by
+  every plugin via the new `EditorCore.Config`/`SetConfig` (bounded;
+  validation at the point of use, never in the store). `wtextepub`
+  registers its book-metadata section (title/author/publisher; the
+  constructor `Config` becomes the defaults) and the export reads the
+  store — user edits reach the OPF.
+- **`w-dialog` anchored mode** — `dialog.AnchorTo(dlg, anchor)` positions
+  the dialog over an element's rectangle in document coordinates
+  (scrolls with the page; re-glues on resize), dims only that rectangle
+  and fills it minus `--wings-dialog-anchor-inset` (default 1% per edge,
+  minimum floor for small anchors): the settings dialog visually claims
+  the editor it configures.
+
 ## [0.21.0] — 2026-07-12
 
 ### Added

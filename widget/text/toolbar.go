@@ -32,6 +32,9 @@ type toolbar struct {
 	selects   []trackedSelect
 	statuses  []trackedStatus
 	helpDlg   js.Value // the open help dialog, or js.Undefined() when none is open
+
+	cfgDlg     js.Value // the open settings dialog, or js.Undefined()
+	cfgRelease func()   // releases the settings dialog's anchor listener
 }
 
 type trackedToggle struct {
@@ -54,7 +57,7 @@ type trackedStatus struct {
 }
 
 func newToolbar(obj *wings.PranaObj, container, menu js.Value, editor *wtext.Editor, p wtext.Profile) *toolbar {
-	return &toolbar{obj: obj, host: obj.Element, container: container, menu: menu, editor: editor, profile: p, helpDlg: js.Undefined()}
+	return &toolbar{obj: obj, host: obj.Element, container: container, menu: menu, editor: editor, profile: p, helpDlg: js.Undefined(), cfgDlg: js.Undefined()}
 }
 
 // render draws every item of every toolbar plugin into the container. It is
@@ -66,6 +69,7 @@ func newToolbar(obj *wings.PranaObj, container, menu js.Value, editor *wtext.Edi
 // across a rebuild.
 func (t *toolbar) render() {
 	t.closeHelp()
+	t.closeConfig()
 	t.toggles = nil
 	t.selects = nil
 	t.statuses = nil
@@ -673,6 +677,7 @@ var defaultLabels = map[string]string{
 	"wtext-menu":   "Menu",
 	"wtext-export": "Export",
 	"wtext-import": "Import",
+	"wtext-config": "Settings",
 
 	"wtext-counter-label": "Counter",
 	"wtext-counter":       "Chars: %d · Letters: %d · Words: %d",

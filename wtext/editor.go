@@ -45,6 +45,13 @@ type Editor struct {
 	classes map[string]string
 	styleEl js.Value
 
+	// config is the document-property store (see EditorCore.Config): it
+	// persists inside Content()'s head and reloads in SetContent.
+	// configDefaults carries the ConfigPlugins' declared defaults, the
+	// read fallback for keys the document does not store.
+	config         map[string]string
+	configDefaults map[string]string
+
 	undo *undoStack[jsOp]
 
 	// observer is built by hand (not dom.Observe) because the capture
@@ -109,9 +116,11 @@ func New(root js.Value, p Profile) (*Editor, error) {
 		profile: p,
 		handles: map[int]js.Value{},
 		classes: map[string]string{},
+		config:  map[string]string{},
 		undo: newUndoStack[jsOp](undoMaxSteps, undoMaxBytes,
 			func(op jsOp) int { return op.bytes() }),
 	}
+	e.configDefaults = configDefaults(p)
 	e.styleEl = e.doc.Call("createElement", "style")
 	root.Get("parentNode").Call("insertBefore", e.styleEl, root)
 	root.Call("setAttribute", "contenteditable", "true")
@@ -374,10 +383,93 @@ func (e *Editor) Content() string {
 		sb.WriteString(rules)
 		sb.WriteString("</style>")
 	}
+	sb.WriteString(e.configMetas())
 	sb.WriteString("</head><body>")
 	sb.WriteString(e.root.Get("innerHTML").String())
 	sb.WriteString("</body></html>")
 	return sb.String()
+}
+
+// Config reads a document property: the value this document stores,
+// falling back to the profile's declared default, then "".
+func (e *Editor) Config(key string) string {
+	if v, ok := e.config[key]; ok {
+		return v
+	}
+	return e.configDefaults[key]
+}
+
+// SetConfig stores a document property (bounded); an empty value deletes
+// the entry, reverting reads to the declared default.
+func (e *Editor) SetConfig(key, value string) error {
+	if err := validateConfigKey(key); err != nil {
+		return err
+	}
+	if len(value) > MaxConfigValueLen {
+		return fmt.Errorf("%w: %d bytes", ErrConfigValue, len(value))
+	}
+	if value == "" {
+		delete(e.config, key)
+		return nil
+	}
+	if _, ok := e.config[key]; !ok && len(e.config) >= MaxConfigKeys {
+		return ErrConfigFull
+	}
+	e.config[key] = value
+	return nil
+}
+
+// configMetas renders the store as the persisted head metas, sorted for
+// deterministic output. Keys are pre-validated (no quotes/whitespace);
+// values are attribute-escaped.
+func (e *Editor) configMetas() string {
+	if len(e.config) == 0 {
+		return ""
+	}
+	keys := make([]string, 0, len(e.config))
+	for k := range e.config {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	var sb strings.Builder
+	for _, k := range keys {
+		sb.WriteString(`<meta name="wt-cfg-`)
+		sb.WriteString(k)
+		sb.WriteString(`" content="`)
+		sb.WriteString(metaAttrEscaper.Replace(e.config[k]))
+		sb.WriteString(`"/>`)
+	}
+	return sb.String()
+}
+
+var metaAttrEscaper = strings.NewReplacer(
+	"&", "&amp;", "<", "&lt;", ">", "&gt;", "\"", "&quot;",
+)
+
+// adoptDocConfig loads the wt-cfg- head metas of a stored document into
+// the store. Hostile input: SetConfig's own validation bounds each entry,
+// and a failing one is skipped (fail toward losing a property, never the
+// document).
+func (e *Editor) adoptDocConfig(parsed js.Value) {
+	head := parsed.Get("head")
+	if !head.Truthy() {
+		return
+	}
+	metas := head.Call("querySelectorAll", `meta[name]`)
+	for i := 0; i < metas.Get("length").Int(); i++ {
+		m := metas.Index(i)
+		name := m.Call("getAttribute", "name").String()
+		if !strings.HasPrefix(name, "wt-cfg-") {
+			continue
+		}
+		val := ""
+		if c := m.Call("getAttribute", "content"); c.Truthy() {
+			val = c.String()
+		}
+		if err := e.SetConfig(strings.TrimPrefix(name, "wt-cfg-"), val); err != nil {
+			G.Logf(1, "wtext: dropping stored config %q: %v\n", name, err)
+		}
+	}
 }
 
 // DocText returns the document's plain text with a newline at every
@@ -446,6 +538,8 @@ func (e *Editor) usedClassRules() string {
 func (e *Editor) SetContent(html string) error {
 	parsed := js.Global().Get("DOMParser").New().
 		Call("parseFromString", html, "text/html")
+	e.config = map[string]string{} // a content load replaces the document's properties too
+	e.adoptDocConfig(parsed)
 	e.adoptDocClasses(parsed)
 	var f Fragment
 	if body := parsed.Get("body"); body.Truthy() {

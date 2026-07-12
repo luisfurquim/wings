@@ -15,6 +15,7 @@ package wtext
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/luisfurquim/wings/epubhtml"
 )
@@ -60,6 +61,13 @@ var (
 	// ErrNoSelection reports an action that needs a selection inside the
 	// editor when there is none.
 	ErrNoSelection = errors.New("wtext: no selection inside the editor")
+	// ErrConfigKey reports a config key that is empty, too long, or
+	// carries whitespace/control/quote characters.
+	ErrConfigKey = errors.New("wtext: invalid config key")
+	// ErrConfigValue reports a config value over MaxConfigValueLen.
+	ErrConfigValue = errors.New("wtext: config value too long")
+	// ErrConfigFull reports a store already holding MaxConfigKeys entries.
+	ErrConfigFull = errors.New("wtext: config store full")
 )
 
 // EditorCore is a plugin's only gate to the document. Reads return plain
@@ -143,6 +151,19 @@ type EditorCore interface {
 	// class attributes and the CSS (sanitized) is installed with the
 	// editor. Defining an existing name replaces its CSS.
 	DefineClass(name, css string) error
+	// Config reads a document property: the value stored in THIS document
+	// (they persist inside Content()'s head and travel with &value),
+	// falling back to the default the property's ConfigPlugin declared,
+	// then to "". Keys are namespaced section.field (see ConfigKey) and
+	// are a commons: any plugin may read any property — the EPUB exporter
+	// reading the page margins a ruler plugin declared is the point.
+	// Values are plain strings; whoever USES one runs it through the
+	// validator of its destination (CSS, XML...), never the store.
+	Config(key string) string
+	// SetConfig stores a document property (bounded; see MaxConfig*). An
+	// empty value deletes the stored entry, falling back to the default.
+	SetConfig(key, value string) error
+
 	// Replace substitutes the content covered by s with a Fragment.
 	Replace(s Selection, f Fragment) error
 	// Delete removes the content covered by s.
@@ -322,6 +343,92 @@ type MenuInput struct {
 
 func (MenuInput) isMenuItem() {}
 
+// ConfigPlugin declares sections of USER-editable document configuration
+// — the iOS Settings model: each plugin registers the schema of what it
+// needs configured (the EPUB exporter its book metadata, a page plugin
+// its paper size and margins), the widget renders one central settings
+// UI per section, and the VALUES live in the document itself, readable
+// by every plugin (see EditorCore.Config).
+type ConfigPlugin interface {
+	ConfigSections() []ConfigSection
+}
+
+// ConfigSection is one settings page: a labelled group of fields. Its ID
+// namespaces the fields' keys (section.field — see ConfigKey).
+type ConfigSection struct {
+	ID, Label, Help string
+	Fields          []ConfigField
+}
+
+// ConfigField is a sealed per-kind interface, ToolbarItem's counterpart
+// for settings fields: only this package defines the kinds the widget
+// knows how to draw.
+type ConfigField interface{ isConfigField() }
+
+// ConfigText is a free-text property (a title, an author). Default seeds
+// the value until the user edits it — the plugin's own zero-config
+// experience, which a webdev tunes by constructing the plugin with
+// different defaults.
+type ConfigText struct {
+	ID, Label, Help, Default string
+}
+
+func (ConfigText) isConfigField() {}
+
+// ConfigChoice is a closed-vocabulary property (paper size, orientation).
+type ConfigChoice struct {
+	ID, Label, Help, Default string
+	Options                  []Option
+}
+
+func (ConfigChoice) isConfigField() {}
+
+// ConfigKey is the store key of a section's field: section.field.
+func ConfigKey(sectionID, fieldID string) string { return sectionID + "." + fieldID }
+
+// configDefaults flattens a profile's ConfigPlugins into the key→Default
+// map the read chain falls back to.
+func configDefaults(p Profile) map[string]string {
+	defs := map[string]string{}
+	for _, plug := range p.Config {
+		for _, s := range plug.ConfigSections() {
+			for _, f := range s.Fields {
+				switch fd := f.(type) {
+				case ConfigText:
+					defs[ConfigKey(s.ID, fd.ID)] = fd.Default
+				case ConfigChoice:
+					defs[ConfigKey(s.ID, fd.ID)] = fd.Default
+				}
+			}
+		}
+	}
+	return defs
+}
+
+// Bounds of the per-document config store — bounded everything: a hostile
+// or runaway document must not grow memory or its own persisted head
+// without limit.
+const (
+	MaxConfigKeys     = 256
+	MaxConfigKeyLen   = 128
+	MaxConfigValueLen = 4096
+)
+
+// validateConfigKey enforces the key shape shared by the js store and the
+// portable fake: non-empty, bounded, no control characters or whitespace
+// (keys become <meta name="wt-cfg-KEY"> attributes in the persisted head).
+func validateConfigKey(key string) error {
+	if key == "" || len(key) > MaxConfigKeyLen {
+		return fmt.Errorf("%w: %q", ErrConfigKey, key)
+	}
+	for _, r := range key {
+		if r <= ' ' || r == 0x7f || r == '"' || r == '\'' {
+			return fmt.Errorf("%w: %q", ErrConfigKey, key)
+		}
+	}
+	return nil
+}
+
 // InitPlugin is an optional interface any plugin may implement to run
 // setup against the editor at attach time — defining the utility classes
 // a toolbar will apply, for instance. It runs once per editor instance,
@@ -336,6 +443,7 @@ type InitPlugin interface {
 type Profile struct {
 	Toolbar   []ToolbarPlugin
 	Menu      []MenuPlugin
+	Config    []ConfigPlugin
 	Edition   []EditionPlugin
 	Clipboard []ClipboardPlugin
 	// LinkPolicy optionally restricts where links may point (host

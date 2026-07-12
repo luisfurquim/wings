@@ -964,6 +964,30 @@
     "revised": false
   },
   {
+    "content": "Configuración",
+    "revised": false
+  },
+  {
+    "content": "Libro",
+    "revised": false
+  },
+  {
+    "content": "Título, autoría y editorial usados en el e-book exportado; quedan guardados en el propio documento.",
+    "revised": false
+  },
+  {
+    "content": "Título",
+    "revised": false
+  },
+  {
+    "content": "Autoría",
+    "revised": false
+  },
+  {
+    "content": "Editorial",
+    "revised": false
+  },
+  {
     "content": "Genera un e-book EPUB con el contenido del editor y descarga el archivo.",
     "revised": false
   },

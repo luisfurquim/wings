@@ -47,6 +47,14 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
+### Unreleased
+
+- **`w-text` gains document settings** — the new `ConfigPlugin` contract:
+  plugins declare configuration schemas (the EPUB exporter its book
+  metadata), the user edits them in a dialog **anchored over the editor**
+  (new `w-dialog` mode), and the values persist inside the document
+  itself, readable by every plugin.
+
 ### v0.21.0
 
 - **`w-text` gains Underline** — same CSS-class design as Bold/Italic
@@ -55,8 +63,9 @@ Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
   Palatino, Times, Arial, Verdana, Trebuchet, Courier join the generics,
   each option rendered in its own typeface (`w-combobox` learned a
   per-option `font` key).
-- **EPUB export asks the file name** (Save-As prompt via the new
-  `MenuInput` menu kind) **and the TOC opens the book** instead of
+- **EPUB export asks the document name** (Save-As prompt via the new
+  `MenuInput` menu kind — the typed name becomes the TOC entry, its
+  sanitized form the file name) **and the TOC opens the book** instead of
   trailing it (ugarit v0.0.2).
 
 ### v0.20.0
@@ -1944,7 +1953,8 @@ plugin written before `Help` existed still compiles (named-field literals),
 its items just come out with `Help == ""` and are silently left out of the
 dialog. The widget renders a trailing "?" button — only when at least one
 active plugin's item sets `Help` — that walks `profile.Toolbar`'s `Items()`
-and opens a `w-dialog` (import `widget/dialog`) listing every documented
+and opens a `w-dialog` (registered along with `w-text` itself, which now
+imports the dialog widget) listing every documented
 control's label and explanation, in toolbar order — mounted at
 `document.body` rather than inside the toolbar, since `w-text` can itself
 sit inside a `w-tab` panel, and `w-tab`'s `:host` sets a `backdrop-filter`
@@ -1972,50 +1982,77 @@ name, a target — declares a `MenuInput` instead: the same prompt popover
 as the toolbar's `InputItem`, plus a `Value` hook that seeds it (opened
 selected — Enter keeps the suggestion, typing replaces it; a Save-As
 dialog never opens empty). A hamburger button heads the column,
-collapsing it to
-its own width to hand the space back to the editor (`aria-expanded`
-reflects the state). The whole thing is pay-per-use: a group with no items
+collapsing it to its own width to hand the space back to the editor
+(`aria-expanded` reflects the state). The whole thing is pay-per-use: a group with no items
 is never created, a profile with no menu items gets no column at all, and
 since the w-tabs family is registered by the app (not by `w-text`), a
 profile using menu plugins needs
 `import _ ".../widget/tabs"`, `".../widget/tabbutton"` and `".../widget/tab"`.
 
+**Document settings — `ConfigPlugin`.** The iOS model: each plugin
+registers the SCHEMA of what it needs configured — a `ConfigSection` of
+sealed fields (`ConfigText`, `ConfigChoice`) with declared defaults — and
+the widget renders one central settings UI per section, under the
+standard "Settings" menu group. The VALUES belong to the document: they
+persist as `<meta name="wt-cfg-section.field">` entries in `Content()`'s
+head (so they travel with `&value` and reload with the document), and
+they are a commons — any plugin reads any property through
+`EditorCore.Config(key)` (`SetConfig` to write; both bounded). The read
+chain is stored value → declared default → empty; whoever USES a value
+runs it through the validator of its destination, never the store. The
+defaults double as the webdev's knob: construct the plugin with different
+defaults and the zero-config experience follows. Each section opens in an
+**anchored dialog** — `w-dialog` gained an anchored mode
+(`dialog.AnchorTo(dlg, anchor)`): positioned over the anchor element's
+rectangle in document coordinates (it scrolls with the page), its scrim
+dimming only that rectangle and its box filling it minus
+`--wings-dialog-anchor-inset` (default 1% per edge, with a minimum floor
+for small anchors) — the visual statement of WHICH editor is being
+configured on a page with several.
+
 **EPUB export — the `wtextepub` module.** A separate Go module
 (`github.com/luisfurquim/wings/wtextepub`), so wings itself takes no
 dependency on the packager: it builds on
 [ugarit](https://github.com/luisfurquim/ugarit) for the EPUB 3 container
-(OCF zip, OPF manifest, nav TOC). Add it to a profile's menu and provide
-its label ids like any other:
+(OCF zip, OPF manifest, nav TOC). Add it to a profile's menu — and to its
+config, so the user can edit the book metadata in the settings dialog —
+and provide its label ids like any other:
 
 ```go
 import "github.com/luisfurquim/wings/wtextepub"
 
+epub := wtextepub.Menu{Cfg: wtextepub.Config{Title: "My Book", Author: "Me"}}
 wtext.RegisterProfile("post", wtext.Profile{
     Toolbar: []wtext.ToolbarPlugin{wtext.BasicToolbar{}},
-    Menu: []wtext.MenuPlugin{
-        wtextepub.Menu{Cfg: wtextepub.Config{Title: "My Book", Author: "Me"}},
-    },
+    Menu:    []wtext.MenuPlugin{epub},
+    Config:  []wtext.ConfigPlugin{epub}, // Settings › Book: title, author, publisher
 })
 ```
 ```html
 <span slot="labels" id="wtext-export">Export</span>
 <span slot="labels" id="wtext-epub">EPUB</span>
+<span slot="labels" id="wtext-epub-name">File name</span>
 <span slot="labels" id="wtext-epub-help">Builds an EPUB e-book from the editor content and downloads it.</span>
+<!-- the settings section (Profile.Config) -->
+<span slot="labels" id="wtext-epub-config">Book</span>
+<span slot="labels" id="wtext-epub-title">Title</span>
+<span slot="labels" id="wtext-epub-author">Author</span>
+<span slot="labels" id="wtext-epub-publisher">Publisher</span>
 ```
 
 The action prompts for the document name (a `MenuInput` seeded with the
 book title): the typed string names the document as is — the TOC entry,
 the content page's `<title>` — while its `Filename`-sanitized form is
-only the download name (`Config.Title` stays the book's `dc:title`). It
-then serializes the whole document
-through the new
+only the download name. It then serializes the whole document through
 `EditorCore.Content()` (the same string `&value` persists), re-serializes
 the browser's HTML as well-formed XHTML — self-closed voids, XML-safe
 entities; an EPUB 3 content document is XML, and `innerHTML` output is not
 — packages it with the used styles as a single-page book, and hands the
 bytes to the browser as a download. The book's language is `wings.Locale`
-at the moment of the click; title, author and publisher come from
-`wtextepub.Config`. The portable half (`Build`, `Filename`) is unit-tested
+at the moment of the click; title, author and publisher come from the
+document's settings (the `epub.*` config section above), with the
+constructor's `wtextepub.Config` as their defaults — the stored title is
+the book's `dc:title`. The portable half (`Build`, `Filename`) is unit-tested
 natively — the tests unzip the output and feed every document to
 `encoding/xml` as the well-formedness proof.
 
@@ -2028,8 +2065,10 @@ and `wtext-block-p`/`-h1`…`-h6`/`-quote`/`-pre`; `FontToolbar` adds
 `wtext-font`(+`-default`/`-serif`/`-sans`/`-mono`/`-cursive`), `wtext-size`
 (+`-default`) and `wtext-align-left`/`-center`/`-right`/`-justify`;
 `StyleToolbar` adds `wtext-style`, `wtext-style-new`, `wtext-style-name`,
-`wtext-style-none`, `wtext-ok`, `wtext-cancel`. The stock toolbars' `Help`
-ids follow the same `-help` suffix (`wtext-bold-help`,
+`wtext-style-none`, `wtext-ok`, `wtext-cancel`; `CounterToolbar` adds
+`wtext-counter`(+`-label`); the side menu adds `wtext-menu`,
+`wtext-export`, `wtext-import` and `wtext-config`. The stock toolbars'
+`Help` ids follow the same `-help` suffix (`wtext-bold-help`,
 `wtext-align-left-help`, …), plus `wtext-help`/`wtext-help-title` for the
 "?" button and dialog title — the same slot convention translates them.
 On a `SetLang` switch the toolbar re-resolves and updates in place.

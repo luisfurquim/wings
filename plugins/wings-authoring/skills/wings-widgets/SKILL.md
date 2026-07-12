@@ -313,8 +313,8 @@ next is the one the user actually acted on, not a leftover fragment or a
 stale reference to a node the mutation moved.
 
 The stock `basic` profile gives a bold/italic/underline/code toolbar + a block picker
-(`p`, `h1`–`h6`, `blockquote`, `pre`). **Bold and Italic are CSS
-(`wt-b`/`wt-i`, `font-weight`/`font-style`), not `<strong>`/`<em>`** — a
+(`p`, `h1`–`h6`, `blockquote`, `pre`). **Bold, Italic and Underline are
+CSS (`wt-b`/`wt-i`/`wt-u`), not `<strong>`/`<em>`/`<u>`** — a
 toolbar click is a visual toggle for nearly every user, not an assertion of
 semantic importance, and `StyleToolbar.CreateStyle` only ever captures CSS
 classes: a mark-based bold would silently vanish when a style built from bold
@@ -360,13 +360,16 @@ already do:
   actions never go on the toolbar), from the SEPARATE module
   `github.com/luisfurquim/wings/wtextepub` (wings itself takes no ugarit
   dependency — respect that split; never add ugarit to an app's imports
-  through wings). It prompts for the DOCUMENT name (Save-As, seeded with
-  the book title): the typed string is the TOC entry and page `<title>`
-  as is, its `Filename`-sanitized form is only the download name, and
-  `Config.Title` stays the book's `dc:title`. It packages
-  `core.Content()` as an EPUB 3 book and
-  downloads it; book language is `wings.Locale` at click time;
-  `Config.Title` is required. The nav/TOC
+  through wings). Add the SAME instance to `Profile.Config` too: it
+  registers the Settings › Book section (title/author/publisher), whose
+  values persist in the document and feed the export — the constructor
+  `Cfg` is only their defaults (`Config.Title` required). It prompts for
+  the DOCUMENT name (Save-As, seeded with the stored title): the typed
+  string is the TOC entry and page `<title>` as is, its
+  `Filename`-sanitized form is only the download name, and the stored
+  title is the book's `dc:title`. It packages `core.Content()` as an
+  EPUB 3 book and downloads it; book language is `wings.Locale` at click
+  time. The nav/TOC
   is the first spine itemref (book opens on the TOC) and coverless books
   carry no cover landmark (both via ugarit v0.0.2). Its item
   label ids (`wtext-epub`, `wtext-epub-name`, `wtext-epub-help`) have NO built-in default —
@@ -414,9 +417,22 @@ Help, Do}` — or `MenuInput` when the action needs a typed value first
 seeding it, opened selected: Enter keeps, typing replaces) — the widget
 renders one accordion section per `Group`
 (`w-tabs mode="accordion"` = native `<details>`) in a column beside the
-editor, only when items exist (a hamburger button collapses the column);
-use the standard group ids `wtext-export`
-/ `wtext-import` where they fit, and remember the app must
+editor, only when items exist (a hamburger button collapses the column).
+USER-editable configuration is its own contract: `ConfigPlugin`
+(`Profile.Config`) declares `ConfigSection`s of sealed fields
+(`ConfigText`/`ConfigChoice` with defaults); the widget renders them
+under the standard Settings menu group, each section opening a w-dialog
+ANCHORED over the editor (`dialog.AnchorTo`; token
+`--wings-dialog-anchor-inset`, default 1%/edge). Values persist INSIDE
+the document (`wt-cfg-*` head metas of `Content()`) and are a commons:
+read ANY property with `core.Config("section.field")`, write with
+`SetConfig` (bounded; sanitize at the point of USE, the store is dumb
+strings). Plugin constructor fields should feed the `Default`s — that is
+the webdev's knob. Gotcha: seed a programmatically-created w-input via
+its `value` ATTRIBUTE (the model), never the inner input — the widget's
+async render wipes direct DOM writes. For menu groups, use the standard
+ids `wtext-export`/`wtext-import`/`wtext-config` where they fit, and
+remember the app must
 `import _ ".../widget/tabs"`, `".../widget/tabbutton"`, `".../widget/tab"`
 for the menu to render. The portable half of
 `wtext` (the `EditorCore` interface, the `Fragment` builder, the sealed
@@ -434,8 +450,8 @@ with named-field struct literals still compiles; an item with `Help == ""`
 (the zero value) is just left out of the dialog. The widget adds a
 trailing "?" button itself (only when at least one active plugin's item
 sets `Help`), walks `profile.Toolbar`'s `Items()`, and opens a `w-dialog`
-(so a profile using any stock or custom toolbar with `Help` needs
-`import _ "github.com/luisfurquim/wings/widget/dialog"` too) listing every
+(registered along with `w-text` itself, which imports the dialog
+widget) listing every
 documented label + explanation in toolbar order — mounted at
 `document.body` rather than in the toolbar itself (see the `w-dialog`
 nesting gotcha above; `w-text` can sit inside a `w-tab` panel, which

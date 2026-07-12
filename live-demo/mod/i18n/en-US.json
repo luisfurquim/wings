@@ -964,6 +964,30 @@
     "revised": false
   },
   {
+    "content": "Settings",
+    "revised": false
+  },
+  {
+    "content": "Book",
+    "revised": false
+  },
+  {
+    "content": "Title, author and publisher used in the exported e-book; stored inside the document itself.",
+    "revised": false
+  },
+  {
+    "content": "Title",
+    "revised": false
+  },
+  {
+    "content": "Author",
+    "revised": false
+  },
+  {
+    "content": "Publisher",
+    "revised": false
+  },
+  {
     "content": "Builds an EPUB e-book from the editor content and downloads the file.",
     "revised": false
   },

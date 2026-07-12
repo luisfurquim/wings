@@ -43,17 +43,7 @@ func (t *toolbar) renderMenu() {
 			}
 		}
 	}
-	if len(groups) == 0 {
-		return
-	}
 
-	// Hamburger: collapses the column down to itself, freeing the width
-	// for the editor. The state attribute lives on the nav — outside the
-	// innerHTML wipe above — so it survives a retranslation re-render.
-	t.menu.Call("appendChild", t.menuToggle())
-
-	body := t.doc().Call("createElement", "div")
-	body.Call("setAttribute", "class", "wt-menu-body")
 	tabs := t.doc().Call("createElement", "w-tabs")
 	tabs.Call("setAttribute", "mode", "accordion")
 	for _, g := range groups {
@@ -71,6 +61,19 @@ func (t *toolbar) renderMenu() {
 		}
 		tabs.Call("appendChild", tab)
 	}
+	// The standard settings group (ConfigPlugins) closes the menu.
+	t.renderConfigGroup(tabs)
+	if !tabs.Get("firstChild").Truthy() {
+		return // no groups at all: the column stays empty and collapses
+	}
+
+	// Hamburger: collapses the column down to itself, freeing the width
+	// for the editor. The state attribute lives on the nav — outside the
+	// innerHTML wipe above — so it survives a retranslation re-render.
+	t.menu.Call("appendChild", t.menuToggle())
+
+	body := t.doc().Call("createElement", "div")
+	body.Call("setAttribute", "class", "wt-menu-body")
 	body.Call("appendChild", tabs)
 	t.menu.Call("appendChild", body)
 }
