@@ -77,44 +77,6 @@ Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
   itself stays dependency-free) puts "Export › EPUB" there, packaging the
   document as an EPUB 3 e-book download.
 
-### v0.19.0
-
-- **`w-text` gains a live char/letter/word counter** — add
-  `wtext.CounterToolbar{}` to a profile; built on the new passive
-  `StatusItem` toolbar kind and `EditorCore.DocText()`, both open to
-  custom read-out plugins.
-
-### v0.18.1
-
-- **`w-text` formatting toggles keep the selection they acted on** —
-  Bold/Italic/named-style toggles no longer leave the toolbar showing a
-  stale state or shrink a wider selection down to a leftover fragment
-  after the click; the selection is explicitly restored by character
-  offset, robust to the DOM restructuring a partial toggle causes.
-- **Paste gets smarter**: Bold/Italic now sees and can clear pasted
-  `<strong>`/`<em>`, not just its own CSS classes; a `<br><br>` a source
-  used as its own paragraph-break convention is recognized as one
-  instead of merging two paragraphs into one; pasting from Google Docs no
-  longer merges every paragraph into one falsely-bolded run — its
-  clipboard export wraps everything in a `<b>` purely to cancel default
-  bold rendering, which is now seen for the non-formatting wrapper it is;
-  and a pasted element's own `style=""` (justification, indent, font,
-  color) is now filtered down to what the profile supports and kept as a
-  class, instead of dropped outright.
-- **`w-text`'s toolbar gets a help button** — a "?" opens a dialog listing
-  every control's purpose, composed from each plugin's own `Help` text via
-  a new field on the `ToolbarItem` contract.
-
-### v0.18.0
-
-- **`w-text` learns fonts, alignment and named styles** — the new
-  `FontToolbar` (font face/size pickers + paragraph alignment) and
-  `StyleToolbar` (capture the selection's formatting as a reusable named
-  style, Word-style) plugins. No inline styles ever: every choice is a CSS
-  class, split automatically between the exact text range and the touched
-  paragraphs, and the classes travel inside the value — now a complete
-  EPUB-style document — so styles survive save/reload.
-
 ### v0.17.0
 
 - **`w-text` rich-text editor** joins the widget family — a pluggable
