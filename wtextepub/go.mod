@@ -2,13 +2,12 @@ module github.com/luisfurquim/wings/wtextepub
 
 go 1.25.0
 
-// The wings require lags on purpose: this module needs
-// EditorCore.Content()/MenuPlugin, which ship in the release AFTER v0.19.0
-// — until then it builds inside the wings workspace only. Bump wings here
-// when tagging wtextepub (prefixed tag: wtextepub/vX.Y.Z).
+// Nested module: releases use the directory-prefixed tag (wtextepub/vX.Y.Z),
+// and the wings require must first ship the contract this module builds on
+// (EditorCore.Content, MenuPlugin) — bump it before tagging.
 require (
 	github.com/luisfurquim/ugarit v0.0.1
-	github.com/luisfurquim/wings v0.19.0
+	github.com/luisfurquim/wings v0.20.0
 	golang.org/x/net v0.55.0
 )
 
