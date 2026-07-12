@@ -47,7 +47,7 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
-### Unreleased
+### v0.22.0
 
 - **`w-text` gains document settings** — the new `ConfigPlugin` contract:
   plugins declare configuration schemas (the EPUB exporter its book
