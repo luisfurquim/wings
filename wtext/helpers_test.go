@@ -293,8 +293,8 @@ func TestCreateStyleCapturesBoldClass(t *testing.T) {
 
 func TestBasicToolbarShape(t *testing.T) {
 	items := BasicToolbar{}.Items()
-	if len(items) != 5 {
-		t.Fatalf("items = %d, want 5", len(items))
+	if len(items) != 6 {
+		t.Fatalf("items = %d, want 6", len(items))
 	}
 	toggles := 0
 	selects := 0
@@ -313,8 +313,8 @@ func TestBasicToolbarShape(t *testing.T) {
 			}
 		}
 	}
-	if toggles != 3 || selects != 1 {
-		t.Errorf("toggles=%d selects=%d, want 3 and 1", toggles, selects)
+	if toggles != 4 || selects != 1 {
+		t.Errorf("toggles=%d selects=%d, want 4 and 1", toggles, selects)
 	}
 }
 

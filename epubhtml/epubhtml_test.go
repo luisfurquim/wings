@@ -37,8 +37,9 @@ func TestElementFor(t *testing.T) {
 		// class carrier: kept, but the walkers unwrap it when classless
 		{"span", Keep, "span"},
 		{"SPAN", Keep, "span"},
+		// u joined the profile for Underline (DualMark, like b/strong)
+		{"u", Keep, "u"},
 		// presentational and unknown markup fails toward text
-		{"u", Unwrap, ""},
 		{"font", Unwrap, ""},
 		{"marquee", Unwrap, ""},
 		{"x-custom-thing", Unwrap, ""},
@@ -115,7 +116,7 @@ func TestAttrFor(t *testing.T) {
 }
 
 func TestIsMarkIsBlock(t *testing.T) {
-	if !IsMark("strong") || !IsMark("a") || IsMark("p") || IsMark("u") {
+	if !IsMark("strong") || !IsMark("a") || !IsMark("u") || IsMark("p") {
 		t.Error("IsMark misclassifies")
 	}
 	if !IsBlock("p") || !IsBlock("h4") || IsBlock("strong") || IsBlock("div") {

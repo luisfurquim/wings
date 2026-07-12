@@ -43,7 +43,7 @@ type ElementPolicy struct {
 }
 
 // marks are the semantic inline elements of the profile. Everything
-// presentational (u, span, font...) is expressed as a named class instead.
+// presentational (span, font...) is expressed as a named class instead.
 var marks = map[string]bool{
 	"strong": true,
 	"em":     true,
@@ -51,6 +51,12 @@ var marks = map[string]bool{
 	"code":   true,
 	"sup":    true,
 	"sub":    true,
+	// u is HTML's "unarticulated annotation" — valid XHTML/EPUB. It is in
+	// the profile so pasted underlines survive and BasicToolbar's
+	// Underline can see and clear either representation (DualMark), the
+	// same arrangement Bold/Italic have with strong/em; the toolbar's own
+	// toggle only ever writes the wt-u class.
+	"u": true,
 }
 
 // blocks are the block-level elements of the profile. Lists (ul/ol/li) are

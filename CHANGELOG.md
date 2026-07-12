@@ -8,6 +8,16 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
+## [Unreleased]
+
+### Added
+- **`w-text` Underline toggle** in `BasicToolbar`, same design as
+  Bold/Italic: a utility class (`wt-u`, `text-decoration: underline`), with
+  `<u>` admitted into the content profile so pasted underlines survive and
+  the toggle sees and clears either representation (DualMark). Native
+  Ctrl+U stays blocked like all `format*` input — formatting exists only
+  through the toolbar.
+
 ## [0.20.0] — 2026-07-12
 
 ### Added

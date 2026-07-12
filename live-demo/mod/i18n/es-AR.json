@@ -756,6 +756,10 @@
     "revised": true
   },
   {
+    "content": "Subrayado",
+    "revised": false
+  },
+  {
     "content": "Código",
     "revised": true
   },
@@ -885,6 +889,10 @@
   },
   {
     "content": "Pone en cursiva el texto seleccionado.",
+    "revised": false
+  },
+  {
+    "content": "Subraya el texto seleccionado.",
     "revised": false
   },
   {

@@ -756,6 +756,10 @@
     "revised": false
   },
   {
+    "content": "Sublinhado",
+    "revised": false
+  },
+  {
     "content": "Código",
     "revised": false
   },
@@ -885,6 +889,10 @@
   },
   {
     "content": "Deixa o texto selecionado em itálico.",
+    "revised": false
+  },
+  {
+    "content": "Sublinha o texto selecionado.",
     "revised": false
   },
   {

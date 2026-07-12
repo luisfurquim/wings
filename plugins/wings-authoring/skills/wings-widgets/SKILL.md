@@ -312,7 +312,7 @@ selection by character offset afterward, so the selection a plugin sees
 next is the one the user actually acted on, not a leftover fragment or a
 stale reference to a node the mutation moved.
 
-The stock `basic` profile gives a bold/italic/code toolbar + a block picker
+The stock `basic` profile gives a bold/italic/underline/code toolbar + a block picker
 (`p`, `h1`–`h6`, `blockquote`, `pre`). **Bold and Italic are CSS
 (`wt-b`/`wt-i`, `font-weight`/`font-style`), not `<strong>`/`<em>`** — a
 toolbar click is a visual toggle for nearly every user, not an assertion of

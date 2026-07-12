@@ -608,6 +608,7 @@ func (t *toolbar) resolveLabel(id string) string {
 var defaultLabels = map[string]string{
 	"wtext-bold":        "Bold",
 	"wtext-italic":      "Italic",
+	"wtext-underline":   "Underline",
 	"wtext-code":        "Code",
 	"wtext-block":       "Block",
 	"wtext-block-p":     "Paragraph",
@@ -653,6 +654,7 @@ var defaultLabels = map[string]string{
 
 	"wtext-bold-help":          "Make the selected text bold.",
 	"wtext-italic-help":        "Make the selected text italic.",
+	"wtext-underline-help":     "Underline the selected text.",
 	"wtext-code-help":          "Mark the selected text as code.",
 	"wtext-block-help":         "Change the paragraph's block type (heading, quote, code block...).",
 	"wtext-font-help":          "Change the font family of the selected text.",
@@ -674,6 +676,8 @@ func iconGlyph(name, label string) string {
 		return "B"
 	case "format_italic":
 		return "I"
+	case "format_underlined":
+		return "U"
 	case "code":
 		return "</>"
 	case "format_align_left":

@@ -18,8 +18,9 @@ package wtext
 // mark: a code span is structural, not a font-weight, and has no
 // meaningful CSS-only substitute.
 const (
-	boldClass   = "wt-b"
-	italicClass = "wt-i"
+	boldClass      = "wt-b"
+	italicClass    = "wt-i"
+	underlineClass = "wt-u"
 )
 
 // BasicToolbar is the stock ToolbarPlugin: bold/italic/code toggles plus a
@@ -35,7 +36,10 @@ func (BasicToolbar) Init(core EditorCore) error {
 	if err := core.DefineClass(boldClass, "font-weight: bold"); err != nil {
 		return err
 	}
-	return core.DefineClass(italicClass, "font-style: italic")
+	if err := core.DefineClass(italicClass, "font-style: italic"); err != nil {
+		return err
+	}
+	return core.DefineClass(underlineClass, "text-decoration: underline")
 }
 
 // Items declares the stock items.
@@ -48,6 +52,10 @@ func (BasicToolbar) Items() []ToolbarItem {
 		ToggleItem{
 			ID: "italic", Label: "wtext-italic", Icon: "format_italic", Help: "wtext-italic-help",
 			Do: DualMarkToggle(italicClass, "em"), Active: DualMarkActive(italicClass, "em"),
+		},
+		ToggleItem{
+			ID: "underline", Label: "wtext-underline", Icon: "format_underlined", Help: "wtext-underline-help",
+			Do: DualMarkToggle(underlineClass, "u"), Active: DualMarkActive(underlineClass, "u"),
 		},
 		ToggleItem{
 			ID: "code", Label: "wtext-code", Icon: "code", Help: "wtext-code-help",

@@ -756,6 +756,10 @@
     "revised": true
   },
   {
+    "content": "Underline",
+    "revised": false
+  },
+  {
     "content": "Code",
     "revised": true
   },
@@ -885,6 +889,10 @@
   },
   {
     "content": "Make the selected text italic.",
+    "revised": false
+  },
+  {
+    "content": "Underline the selected text.",
     "revised": false
   },
   {

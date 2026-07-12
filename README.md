@@ -47,6 +47,11 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
+### Unreleased
+
+- **`w-text` gains Underline** — same CSS-class design as Bold/Italic
+  (`wt-u`), recognizing and clearing pasted `<u>` too.
+
 ### v0.20.0
 
 - **`w-text` gains a side menu for document actions, and EPUB export lives
@@ -1827,17 +1832,19 @@ toolbar action into a single step. `Ctrl+Z`/`Ctrl+Y` are handled internally
 
 **Profiles and plugins.** Behaviour is a `wtext.Profile` — collections of
 toolbar, edition, and clipboard plugins — registered by name and selected with
-`profile="…"`. The stock `basic` profile is a `BasicToolbar` (bold/italic/code
-toggles + a block-style picker for `p`, `h1`–`h6`, `blockquote`, `pre`). Bold
-and Italic are utility classes (`wt-b`/`wt-i`, `font-weight`/`font-style`),
-not `<strong>`/`<em>`: a toolbar click is a visual toggle for nearly every
+`profile="…"`. The stock `basic` profile is a `BasicToolbar`
+(bold/italic/underline/code toggles + a block-style picker for `p`,
+`h1`–`h6`, `blockquote`, `pre`). Bold, Italic and Underline
+are utility classes (`wt-b`/`wt-i`/`wt-u` — `font-weight`/`font-style`/
+`text-decoration`), not `<strong>`/`<em>`/`<u>`: a toolbar click is a visual toggle for nearly every
 user, not an assertion of semantic importance, and treating it as one meant a
 named style captured from bold text silently dropped the bold on reapplication
 (`StyleToolbar.CreateStyle` only ever captured CSS classes). `<strong>`/`<em>`
-remain fully valid content — they just aren't what the stock buttons produce
+remain fully valid content (`<u>` joined the profile alongside them) — they
+just aren't what the stock buttons produce
 anymore, though the buttons still *recognize* them: pasted or loaded text
-that arrived as `<strong>`/`<em>` lights up Bold/Italic and can be cleared
-from the toolbar like any other bold/italic text, just without rewriting it
+that arrived as `<strong>`/`<em>`/`<u>` lights up its toggle and can be cleared
+from the toolbar like any other formatted text, just without rewriting it
 into a class on sight. `code` is unchanged, a genuine semantic mark (a code
 span is structural, not a font weight). Two more stock toolbars compose with it:
 
