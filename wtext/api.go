@@ -224,6 +224,12 @@ func (ButtonItem) isToolbarItem() {}
 // Option is one choice of a SelectItem.
 type Option struct {
 	Value, Label string
+	// Font, when set, previews the option in its own typeface: the widget
+	// assigns it to the rendered option's style.fontFamily — a property
+	// assignment, which the browser parses as a single value, so the
+	// string cannot smuggle other declarations the way interpolating into
+	// a style attribute could. Face pickers set it; most options don't.
+	Font string
 }
 
 // SelectItem is a dropdown (block style picker...). Help is a message id

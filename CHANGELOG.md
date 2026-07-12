@@ -11,6 +11,16 @@ per-commit record see the git log and tags.
 ## [Unreleased]
 
 ### Added
+- **Web-safe named font stacks + picker preview** — `DefaultFontFaces()`
+  grows Georgia/Palatino/Times/Arial/Verdana/Trebuchet/Courier (every stack
+  ends in a generic — device- and EPUB-safe, no licensing strings);
+  `wtext.Option` gains `Font` and `w-combobox` a per-option `font` JSON key
+  rendering each option in its own typeface. Deliberately a
+  `style.fontFamily` PROPERTY assignment, never style-attribute
+  interpolation: a property value parses as exactly one CSS value, so a
+  hostile string cannot smuggle extra declarations. Phase 1 of the font
+  plan — phase 2 (webfont "store" allowlist, dev/user font loading, EPUB
+  embedding) is specified and pending.
 - **`w-text` Underline toggle** in `BasicToolbar`, same design as
   Bold/Italic: a utility class (`wt-u`, `text-decoration: underline`), with
   `<u>` admitted into the content profile so pasted underlines survive and

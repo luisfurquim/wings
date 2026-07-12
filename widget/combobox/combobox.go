@@ -166,7 +166,9 @@ func (cb *cbCtx) isSingle() bool {
 
 // parseOptions converts the JSON string from the options attribute into a
 // normalised []any where every element is map[string]any{"label":…,"value":…}.
-// Accepts either []string or []{"label":string,"value":string}.
+// Accepts either []string or []{"label":string,"value":string}. An optional
+// "font" key rides along: the dropdown previews that option in its own
+// typeface (see paintFonts).
 func parseOptions(raw string) []any {
 	raw = strings.TrimSpace(raw)
 	if raw == "" {
@@ -208,7 +210,11 @@ func parseOptions(raw string) []any {
 			} else {
 				value = label
 			}
-			result[i] = map[string]any{"label": label, "value": value}
+			norm := map[string]any{"label": label, "value": value}
+			if f, ok := o["font"].(string); ok && f != "" {
+				norm["font"] = f
+			}
+			result[i] = norm
 		}
 		return result
 	}
@@ -273,6 +279,34 @@ func (cb *cbCtx) applyFilter(query string) {
 		}
 	}
 	cb.obj.This.Set("filtered_options", filtered)
+	cb.paintFonts(filtered)
+}
+
+// paintFonts previews each rendered option in its own typeface, when its
+// entry carries a "font". Deliberately a PROPERTY assignment
+// (style.fontFamily), never a style-attribute interpolation: the browser
+// parses a property value as exactly one value, so a hostile string
+// cannot smuggle extra declarations (url(...) exfiltration and friends)
+// past it — it just fails to parse and the option renders in the default
+// face. Runs right after filtered_options lands: the reactive loop has
+// already rebuilt the .cb-opt elements by the time Set returns.
+func (cb *cbCtx) paintFonts(filtered []any) {
+	opts := dom.Query(cb.obj.Dom, ".cb-opt")
+	for _, el := range opts {
+		fi := el.Call("getAttribute", "data-fi")
+		if !fi.Truthy() {
+			continue
+		}
+		i, err := strconv.Atoi(fi.String())
+		if err != nil || i < 0 || i >= len(filtered) {
+			continue
+		}
+		font := ""
+		if m, ok := filtered[i].(map[string]any); ok {
+			font, _ = m["font"].(string)
+		}
+		el.Get("style").Set("fontFamily", font)
+	}
 }
 
 // loadOptions parses the options attribute (JSON) into all_options.

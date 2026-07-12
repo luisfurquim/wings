@@ -343,6 +343,7 @@ func (t *toolbar) selectControl(it wtext.SelectItem) {
 type cbOption struct {
 	Value string `json:"value"`
 	Label string `json:"label"`
+	Font  string `json:"font,omitempty"`
 }
 
 // optionsJSON renders a SelectItem's options as the combobox JSON, with
@@ -351,7 +352,7 @@ type cbOption struct {
 func (t *toolbar) optionsJSON(opts []wtext.Option) string {
 	arr := make([]cbOption, 0, len(opts))
 	for _, o := range opts {
-		arr = append(arr, cbOption{Value: o.Value, Label: t.resolveLabel(o.Label)})
+		arr = append(arr, cbOption{Value: o.Value, Label: t.resolveLabel(o.Label), Font: o.Font})
 	}
 	b, err := json.Marshal(arr)
 	if err != nil {

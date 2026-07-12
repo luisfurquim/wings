@@ -333,7 +333,13 @@ already do:
 
 - **`wtext.FontToolbar{}`** — font face/size pickers + the four alignment
   toggles. Configurable `Faces`/`Sizes`; defaults are the CSS generic
-  families and an em ladder. Never inline styles: each pick is a utility
+  families PLUS curated web-safe named stacks (Georgia, Palatino, Times,
+  Arial, Verdana, Trebuchet, Courier — always end a custom stack in a
+  generic). The face picker previews each option in its own typeface: set
+  `wtext.Option.Font` (flows to w-combobox's per-option `font` key; applied
+  as a style.fontFamily PROPERTY assignment — never interpolate font strings
+  into a style attribute, that's an injection vector). Never inline styles:
+  each pick is a utility
   class (`wt-ff-*`, `wt-fs-*`, `wt-al-*`), one per axis, pending-at-caret
   like bold.
 - **`wtext.StyleToolbar{}`** — "create style from selection" (✎ prompts for

@@ -51,6 +51,10 @@ Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
 - **`w-text` gains Underline** — same CSS-class design as Bold/Italic
   (`wt-u`), recognizing and clearing pasted `<u>` too.
+- **Font picker grows web-safe named stacks with live preview** — Georgia,
+  Palatino, Times, Arial, Verdana, Trebuchet, Courier join the generics,
+  each option rendered in its own typeface (`w-combobox` learned a
+  per-option `font` key).
 
 ### v0.20.0
 
@@ -1860,7 +1864,12 @@ wtext.RegisterProfile("full", wtext.Profile{
 
 - **`FontToolbar`** — font face and font size pickers plus the four paragraph
   alignment toggles. Faces/sizes are configurable; the defaults are the CSS
-  generic families and an em-based ladder (EPUB-friendly). Nothing becomes an
+  generic families **plus a curated set of web-safe named stacks** (Georgia,
+  Palatino, Times New Roman, Arial, Verdana, Trebuchet MS, Courier New —
+  every stack ends in a generic, so it degrades safely on any device and in
+  any EPUB reader) and an em-based ladder (EPUB-friendly). The face picker
+  **previews each option in its own typeface** (`wtext.Option.Font`, carried
+  to the combobox's per-option `font` key). Nothing becomes an
   inline style: each choice is a utility class (`wt-ff-*`, `wt-fs-*`,
   `wt-al-*`) defined at attach time, one per axis — picking another face
   replaces the previous. With a collapsed caret the pick arms as **pending**,
@@ -2041,7 +2050,7 @@ keyboard support.
 
 | Attribute | Description |
 |-----------|-------------|
-| `options` | JSON array of strings or `[{"label":"...","value":"..."},...]` objects |
+| `options` | JSON array of strings or `[{"label":"...","value":"..."},...]` objects. An optional `"font"` key previews that option in its own typeface (applied as a `style.fontFamily` property assignment — one CSS value, no way to smuggle extra declarations) |
 | `placeholder` | Input placeholder text (default: "Type to filter...") |
 | `mode` | `"multi"` (default — tag-based multi-select) or `"single"` (replaces previous selection, hides tag display, shows label in the input) |
 | `value` | Pre-selected value. In `single` mode this attribute is **authoritative**: if it disagrees with the current selection (e.g. the parent reverts it after the user cancels a confirmation dialog), the visible selection re-syncs to match. The re-sync is silent — `@change` does NOT fire — so a controlled parent can safely roll back without re-entering its own change handler. In `multi` mode `value` only seeds the initial selection. |

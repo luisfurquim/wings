@@ -38,15 +38,25 @@ const (
 	alignPrefix = "wt-al-"
 )
 
-// DefaultFontFaces is the stock face list: the CSS generic families.
-// They are device-safe and EPUB-safe — a reading system substitutes its
-// own fonts — and carry no licensing strings attached.
+// DefaultFontFaces is the stock face list: the CSS generic families plus
+// a curated set of web-safe named stacks. Every stack ends in a generic,
+// so it is device-safe and EPUB-safe — a reading system without the
+// named face substitutes its own — and carries no licensing strings
+// attached. Font names are proper nouns: their Labels are shown as-is,
+// not translated.
 func DefaultFontFaces() []FontFace {
 	return []FontFace{
 		{ID: "serif", Label: "wtext-font-serif", Family: "serif"},
 		{ID: "sans", Label: "wtext-font-sans", Family: "sans-serif"},
 		{ID: "mono", Label: "wtext-font-mono", Family: "monospace"},
 		{ID: "cursive", Label: "wtext-font-cursive", Family: "cursive"},
+		{ID: "georgia", Label: "Georgia", Family: "Georgia, 'Times New Roman', serif"},
+		{ID: "palatino", Label: "Palatino", Family: "'Palatino Linotype', Palatino, serif"},
+		{ID: "times", Label: "Times New Roman", Family: "'Times New Roman', Times, serif"},
+		{ID: "arial", Label: "Arial", Family: "Arial, Helvetica, sans-serif"},
+		{ID: "verdana", Label: "Verdana", Family: "Verdana, Geneva, sans-serif"},
+		{ID: "trebuchet", Label: "Trebuchet MS", Family: "'Trebuchet MS', Tahoma, sans-serif"},
+		{ID: "courier", Label: "Courier New", Family: "'Courier New', Courier, monospace"},
 	}
 }
 
@@ -113,7 +123,7 @@ func (t FontToolbar) Init(core EditorCore) error {
 func (t FontToolbar) Items() []ToolbarItem {
 	faceOpts := []Option{{Value: "", Label: "wtext-font-default"}}
 	for _, f := range t.faces() {
-		faceOpts = append(faceOpts, Option{Value: f.ID, Label: f.Label})
+		faceOpts = append(faceOpts, Option{Value: f.ID, Label: f.Label, Font: f.Family})
 	}
 	sizeOpts := []Option{{Value: "", Label: "wtext-size-default"}}
 	for _, s := range t.sizes() {
