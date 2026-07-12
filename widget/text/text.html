@@ -7,9 +7,12 @@
     </label>
   </div>
 
-  <!-- Field zone: toolbar + the contenteditable surface. -->
+  <!-- Field zone: toolbar + side menu + the contenteditable surface. The
+       menu column is populated only when the profile's MenuPlugins declare
+       items; empty, it collapses and the layout is toolbar + editor. -->
   <div part="field" class="wt-field">
     <div part="toolbar" class="wt-toolbar" role="toolbar" aria-label="wt-toolbar-label"></div>
+    <nav part="menu" class="wt-menu"></nav>
     <div part="editor" class="wt-editor" role="textbox" aria-multiline="true"
          aria-labelledby="wt-label" aria-describedby="wt-helper wt-error"></div>
   </div>

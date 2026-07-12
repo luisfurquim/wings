@@ -25,6 +25,7 @@ type toolbar struct {
 	obj       *wings.PranaObj
 	host      js.Value
 	container js.Value
+	menu      js.Value // the side-menu container (.wt-menu), or undefined
 	editor    *wtext.Editor
 	profile   wtext.Profile
 	toggles   []trackedToggle
@@ -52,8 +53,8 @@ type trackedStatus struct {
 	last   string // text last written, to skip no-op DOM writes
 }
 
-func newToolbar(obj *wings.PranaObj, container js.Value, editor *wtext.Editor, p wtext.Profile) *toolbar {
-	return &toolbar{obj: obj, host: obj.Element, container: container, editor: editor, profile: p, helpDlg: js.Undefined()}
+func newToolbar(obj *wings.PranaObj, container, menu js.Value, editor *wtext.Editor, p wtext.Profile) *toolbar {
+	return &toolbar{obj: obj, host: obj.Element, container: container, menu: menu, editor: editor, profile: p, helpDlg: js.Undefined()}
 }
 
 // render draws every item of every toolbar plugin into the container. It is
@@ -75,6 +76,7 @@ func (t *toolbar) render() {
 		}
 	}
 	t.renderHelp()
+	t.renderMenu()
 	t.refresh()
 }
 
@@ -139,6 +141,20 @@ func (t *toolbar) helpEntries() []helpEntry {
 				continue
 			}
 			out = append(out, helpEntry{label: t.resolveLabel(labelID), help: t.resolveLabel(helpID)})
+		}
+	}
+	for _, plug := range t.profile.Menu {
+		for _, item := range plug.MenuItems() {
+			switch it := item.(type) {
+			case wtext.MenuAction:
+				if it.Help == "" {
+					continue
+				}
+				out = append(out, helpEntry{
+					label: t.resolveLabel(it.Group) + " › " + t.resolveLabel(it.Label),
+					help:  t.resolveLabel(it.Help),
+				})
+			}
 		}
 	}
 	return out
@@ -626,6 +642,10 @@ var defaultLabels = map[string]string{
 
 	"wtext-help":       "Help",
 	"wtext-help-title": "Toolbar help",
+
+	"wtext-menu":   "Menu",
+	"wtext-export": "Export",
+	"wtext-import": "Import",
 
 	"wtext-counter-label": "Counter",
 	"wtext-counter":       "Chars: %d · Letters: %d · Words: %d",

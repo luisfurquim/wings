@@ -80,6 +80,15 @@ type EditorCore interface {
 	// Point handles are minted by the core and no Selection spanning the
 	// document can be fabricated from outside.
 	DocText() string
+	// Content serializes the whole document as a complete EPUB-style
+	// content document — the same string the widget persists through
+	// &value: body markup (which by construction only holds what the
+	// policy let in) plus the registered classes the tree actually uses,
+	// as rules in a head <style>. It is the whole-document read for
+	// exporters (EPUB packagers and such). The markup is the browser's
+	// HTML serialization; an XML consumer re-serializes it (see the
+	// wtextepub module).
+	Content() string
 	// InMark reports whether both ends of s sit inside a mark element tag.
 	// At a collapsed s an armed pending mark overrides the tree, so a
 	// toggle reads back what the next typing will produce.
@@ -262,6 +271,36 @@ type Separator struct{}
 
 func (Separator) isToolbarItem() {}
 
+// MenuPlugin declares items for the editor's side menu — document-level
+// actions (export, import...) that would clutter the toolbar, whose
+// vocabulary is formatting used keystroke-by-keystroke. The widget
+// renders the menu as an accordion column beside the editing surface,
+// one section per distinct Group, in first-seen declaration order — and
+// renders NO menu at all when no plugin declares an item, so profiles
+// without document actions keep today's exact layout.
+type MenuPlugin interface {
+	MenuItems() []MenuItem
+}
+
+// MenuItem is a sealed per-kind interface, ToolbarItem's counterpart for
+// the side menu: only this package defines the kinds the widget knows
+// how to draw.
+type MenuItem interface{ isMenuItem() }
+
+// MenuAction is a plain action inside a menu group. Group is the message
+// id of the section it lands in — wtext-export and wtext-import are the
+// standard ids (with built-in defaults); a plugin inventing a new group
+// supplies its label like any other. Label names the item, Help is its
+// entry in the composed help dialog (empty omits it), and Do runs on
+// click against the live document.
+type MenuAction struct {
+	Group, ID, Label, Help string
+	Do                     func(EditorCore) error
+	Enabled                func(EditorCore) bool
+}
+
+func (MenuAction) isMenuItem() {}
+
 // InitPlugin is an optional interface any plugin may implement to run
 // setup against the editor at attach time — defining the utility classes
 // a toolbar will apply, for instance. It runs once per editor instance,
@@ -275,6 +314,7 @@ type InitPlugin interface {
 // select a registered profile by name: <w-text profile="basic">.
 type Profile struct {
 	Toolbar   []ToolbarPlugin
+	Menu      []MenuPlugin
 	Edition   []EditionPlugin
 	Clipboard []ClipboardPlugin
 	// LinkPolicy optionally restricts where links may point (host

@@ -18,6 +18,7 @@ type fakeCore struct {
 	marked  map[string]bool // tag → selection fully inside the mark
 	block   string
 	docText string            // what DocText returns
+	content string            // what Content returns
 	classes map[string]string // DefineClass registry
 	at      []string          // classes in effect at the selection
 	// blockOnly names classes present in `at` only through block-level
@@ -33,6 +34,7 @@ func (f *fakeCore) Text(Selection) (string, error) {
 	return "", nil
 }
 func (f *fakeCore) DocText() string { return f.docText }
+func (f *fakeCore) Content() string { return f.content }
 func (f *fakeCore) InMark(_ Selection, tag string) (bool, error) {
 	return f.marked[tag], nil
 }

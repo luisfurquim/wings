@@ -47,6 +47,15 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
+### Unreleased
+
+- **`w-text` gains a side menu for document actions, and EPUB export lives
+  in it** — the new `MenuPlugin` contract renders an accordion column
+  (`w-tabs` over native `<details>`) beside the editor, only when a plugin
+  declares items; the new `wtextepub` module (own Go module, so wings
+  itself stays dependency-free) puts "Export › EPUB" there, packaging the
+  document as an EPUB 3 e-book download.
+
 ### v0.19.0
 
 - **`w-text` gains a live char/letter/word counter** — add
@@ -1929,6 +1938,57 @@ already returns from `Items()` — the widget never asks a plugin anything
 else about itself. `BasicToolbar`,
 `FontToolbar`, `StyleToolbar` and `CounterToolbar` document every control
 they declare.
+
+**The side menu — document-level actions.** Toolbars are for formatting
+used keystroke-by-keystroke; document actions (export, import...) belong
+in a menu, or every new exporter would sprout another button. A plugin
+implementing `MenuPlugin` declares `MenuAction`s, each naming its `Group`
+(a message id — `wtext-export` and `wtext-import` are the standard ids,
+with built-in label defaults). The widget renders one accordion section
+per distinct group — a `w-tabs mode="accordion"`, which is native
+`<details>` under the hood — in a column beside the editing surface, and
+composes each action's `Help` into the same "?" dialog as the toolbar's
+("Export › EPUB"). A hamburger button heads the column, collapsing it to
+its own width to hand the space back to the editor (`aria-expanded`
+reflects the state). The whole thing is pay-per-use: a group with no items
+is never created, a profile with no menu items gets no column at all, and
+since the w-tabs family is registered by the app (not by `w-text`), a
+profile using menu plugins needs
+`import _ ".../widget/tabs"`, `".../widget/tabbutton"` and `".../widget/tab"`.
+
+**EPUB export — the `wtextepub` module.** A separate Go module
+(`github.com/luisfurquim/wings/wtextepub`), so wings itself takes no
+dependency on the packager: it builds on
+[ugarit](https://github.com/luisfurquim/ugarit) for the EPUB 3 container
+(OCF zip, OPF manifest, nav TOC). Add it to a profile's menu and provide
+its label ids like any other:
+
+```go
+import "github.com/luisfurquim/wings/wtextepub"
+
+wtext.RegisterProfile("post", wtext.Profile{
+    Toolbar: []wtext.ToolbarPlugin{wtext.BasicToolbar{}},
+    Menu: []wtext.MenuPlugin{
+        wtextepub.Menu{Cfg: wtextepub.Config{Title: "My Book", Author: "Me"}},
+    },
+})
+```
+```html
+<span slot="labels" id="wtext-export">Export</span>
+<span slot="labels" id="wtext-epub">EPUB</span>
+<span slot="labels" id="wtext-epub-help">Builds an EPUB e-book from the editor content and downloads it.</span>
+```
+
+The action serializes the whole document through the new
+`EditorCore.Content()` (the same string `&value` persists), re-serializes
+the browser's HTML as well-formed XHTML — self-closed voids, XML-safe
+entities; an EPUB 3 content document is XML, and `innerHTML` output is not
+— packages it with the used styles as a single-page book, and hands the
+bytes to the browser as a download. The book's language is `wings.Locale`
+at the moment of the click; title, author and publisher come from
+`wtextepub.Config`. The portable half (`Build`, `Filename`) is unit-tested
+natively — the tests unzip the output and feed every document to
+`encoding/xml` as the well-formedness proof.
 
 **Localized toolbar.** Toolbar labels are message ids resolved at render, so
 they translate like the rest of your UI. The editor ships built-in English

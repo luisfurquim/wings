@@ -8,6 +8,29 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
+## [Unreleased]
+
+### Added
+- **`w-text` side menu for document-level actions** — new `MenuPlugin`
+  contract (`Profile.Menu`, sealed `MenuItem`/`MenuAction`): plugins
+  declare actions under a named group (`wtext-export`/`wtext-import` are
+  the standard ids), the widget renders one accordion section per group —
+  `w-tabs mode="accordion"`, native `<details>` under the hood — in a
+  column beside the editor, and composes each action's `Help` into the
+  toolbar's "?" dialog. A hamburger button collapses the column to hand
+  the width back to the editor. Pay-per-use: no items, no column; the
+  w-tabs family is registered by the app, not by `w-text`.
+- **EPUB export for `w-text`** — new `wtextepub` module (its own Go module,
+  keeping ugarit out of wings' dependency tree): `wtextepub.Menu` puts
+  "Export › EPUB" in the side menu, packaging the editor document as an
+  EPUB 3 e-book via github.com/luisfurquim/ugarit and downloading it. The
+  portable `Build` re-serializes the browser's HTML as well-formed XHTML
+  (self-closed voids, XML-safe entities, literal NBSP) and is natively
+  tested by unzipping the output and parsing every document with
+  `encoding/xml`. Book language is `wings.Locale` at click time.
+  `EditorCore` gains `Content()` — the whole-document serialization
+  `&value` already persisted, now readable by exporter plugins.
+
 ## [0.19.0] — 2026-07-11
 
 ### Added

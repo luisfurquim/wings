@@ -349,6 +349,17 @@ already do:
   runes; words are whitespace-separated fields carrying at least one letter
   or digit (a standalone comma or dash is not a word). It's also the
   reference for writing your own read-outs (see `StatusItem` below).
+- **`wtextepub.Menu{Cfg: wtextepub.Config{Title: …}}`** — "Export › EPUB"
+  in the SIDE MENU (a `MenuPlugin`, NOT a toolbar plugin — document-level
+  actions never go on the toolbar), from the SEPARATE module
+  `github.com/luisfurquim/wings/wtextepub` (wings itself takes no ugarit
+  dependency — respect that split; never add ugarit to an app's imports
+  through wings). It packages `core.Content()` as an EPUB 3 book and
+  downloads it; book language is `wings.Locale` at click time;
+  `Config.Title` is required (also drives the download filename). Its item
+  label ids (`wtext-epub`, `wtext-epub-help`) have NO built-in default —
+  the app must provide the `<span slot="labels" id="…">` pair or the item
+  shows the raw id (the `wtext-export` group id does have a default).
 
 Classes apply with the **Word split**: character declarations become
 `<span class>` on the exact range, paragraph declarations mark the touched
@@ -373,16 +384,26 @@ Build a toolbar by composing the exported helpers (`ToggleMark`, `MarkActive`,
 `ClassCurrent`, `ClassActive`, `ClassMarkToggle`, `ClassMarkActive`,
 `DualMarkToggle`, `DualMarkActive`) over the `wtext.EditorCore` API — which
 also exposes the class registry (`Classes`, `ClassCSS`, `ClassesAt`,
-`ClassSpanned`, `DefineClass`) and the whole-document plain text
-(`DocText`, with a newline at every block boundary so words in adjacent
-paragraphs don't fuse). A toolbar item
+`ClassSpanned`, `DefineClass`) and the whole-document reads: `DocText`
+(plain text, with a newline at every block boundary so words in adjacent
+paragraphs don't fuse) and `Content` (the persisted EPUB-style
+serialization — what exporter plugins consume). A toolbar item
 needing a typed value (style name, URL)
 declares an `InputItem`; a passive read-out (a counter, a save indicator)
 declares a `StatusItem` — `Format` is a message id resolving to a `fmt`
 template, `Args` computes its values, and the widget re-renders it in the
 same pass that refreshes toggle state (translators reorder with `%[2]d`);
 a plugin needing setup at attach time (defining its
-utility classes, say) implements `wtext.InitPlugin`. The portable half of
+utility classes, say) implements `wtext.InitPlugin`. Document-level
+actions (export, import…) do NOT go on the toolbar: implement
+`MenuPlugin` (`Profile.Menu`) declaring `MenuAction{Group, ID, Label,
+Help, Do}` — the widget renders one accordion section per `Group`
+(`w-tabs mode="accordion"` = native `<details>`) in a column beside the
+editor, only when items exist (a hamburger button collapses the column);
+use the standard group ids `wtext-export`
+/ `wtext-import` where they fit, and remember the app must
+`import _ ".../widget/tabs"`, `".../widget/tabbutton"`, `".../widget/tab"`
+for the menu to render. The portable half of
 `wtext` (the `EditorCore` interface, the `Fragment` builder, the sealed
 `Mark` constructors, the stock toolbars) unit-tests against a fake core with
 the native toolchain — no browser needed. When you DO touch the js side, mind

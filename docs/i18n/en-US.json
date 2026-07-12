@@ -940,6 +940,22 @@
     "revised": false
   },
   {
+    "content": "Menu",
+    "revised": false
+  },
+  {
+    "content": "Export",
+    "revised": false
+  },
+  {
+    "content": "EPUB",
+    "revised": false
+  },
+  {
+    "content": "Builds an EPUB e-book from the editor content and downloads the file.",
+    "revised": false
+  },
+  {
     "content": "In-web tester",
     "revised": true
   },

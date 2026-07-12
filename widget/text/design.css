@@ -27,14 +27,41 @@
   margin-inline-start: 0.15em;
 }
 
-/* ── Field: toolbar + editor share one bordered box ────────────────────── */
+/* ── Field: toolbar + menu + editor share one bordered box ─────────────
+   Grid: the toolbar spans the full width; below it, the side menu takes
+   the first (auto-sized) column and the editor the rest. An empty menu
+   is display:none, its auto column collapses to zero, and the layout is
+   exactly the menu-less one. */
 
 .wt-field {
+  display: grid;
+  grid-template-columns: auto 1fr;
   border: var(--wings-text-border, 1px solid var(--wings-border, #ccc));
   border-radius: var(--wings-text-radius, var(--wings-radius-md, 6px));
   background: var(--wings-text-bg, var(--wings-surface, #fff));
   overflow: hidden;
   transition: border-color var(--wings-transition-fast, 0.15s);
+}
+.wt-toolbar { grid-column: 1 / -1; }
+.wt-menu    { grid-column: 1; }
+.wt-editor  { grid-column: 2; }
+
+/* Side menu: one accordion section (w-tabs mode=accordion → native
+   <details>) per plugin-declared group; action items are w-buttons. The
+   hamburger collapses the column to its own width, freeing the editor. */
+.wt-menu {
+  width: var(--wings-text-menu-width, 11rem);
+  padding: 0.35rem;
+  border-inline-end: var(--wings-text-border, 1px solid var(--wings-border, #ccc));
+  background: var(--wings-text-toolbar-bg, var(--wings-surface-muted, #f7f7f7));
+}
+.wt-menu:empty { display: none; }
+.wt-menu[data-collapsed] { width: auto; }
+.wt-menu[data-collapsed] .wt-menu-body { display: none; }
+.wt-menu w-button {
+  display: block;
+  width: 100%;
+  text-align: start;
 }
 :host([data-focused]) .wt-field {
   border-color: var(--wings-text-border-focus, var(--wings-border-focus, var(--wings-primary, #1976d2)));

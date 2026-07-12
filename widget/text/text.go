@@ -230,9 +230,14 @@ func (t *Text) Render(obj *wings.PranaObj) {
 	// Reflect disabled to the editing surface.
 	applyDisabled(obj.Element, editEl, obj.Element.Call("hasAttribute", "disabled").Bool())
 
-	// Render the toolbar and keep its state fresh on selection changes.
+	// Render the toolbar (and the side menu, when the profile declares
+	// menu items) and keep state fresh on selection changes.
 	if len(toolbarES) > 0 {
-		tb := newToolbar(obj, toolbarES[0], editor, prof)
+		menu := js.Undefined()
+		if menuES := dom.Query(obj.Dom, ".wt-menu"); len(menuES) > 0 {
+			menu = menuES[0]
+		}
+		tb := newToolbar(obj, toolbarES[0], menu, editor, prof)
 		b.tb = tb
 		editor.OnSelectionChange(tb.refresh)
 		tb.render()

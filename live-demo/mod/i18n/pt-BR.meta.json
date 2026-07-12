@@ -940,6 +940,22 @@
     "ctxdetail": "span@tabs/widgets/widgetstab.html:203:51"
   },
   {
+    "context": "tabs/widgets/widgetstab.html:204:43",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:204:43"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:205:45",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:205:45"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:206:43",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:206:43"
+  },
+  {
+    "context": "tabs/widgets/widgetstab.html:207:48",
+    "ctxdetail": "span@tabs/widgets/widgetstab.html:207:48"
+  },
+  {
     "context": "tabs/wtest/wtesttab.html:2:7",
     "ctxdetail": "h2@tabs/wtest/wtesttab.html:2:7"
   },
