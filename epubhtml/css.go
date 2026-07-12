@@ -30,7 +30,7 @@ var (
 	ErrCSSValue = errors.New("epubhtml: forbidden construct in CSS")
 )
 
-// ValidClassName checks a Word-style named class ("titulo", "destaque-1"):
+// ValidClassName checks a Word-style named class ("title", "highlight-1"):
 // an ASCII letter followed by letters, digits, '-' or '_'. The name is the
 // only selector a class rule ever gets, so this also guarantees the name
 // cannot alter the selector's meaning.

@@ -13,6 +13,20 @@ import (
 	"github.com/luisfurquim/wings"
 )
 
+// signaturesRequired reports whether catalog signature verification is enabled,
+// i.e. a public key was configured via SetCatalogPublicKey. When it returns
+// false, callers MUST NOT fetch .sig sidecars at all (no signing in use). When
+// true, every loaded catalog must carry a valid .sig or be rejected.
+//
+// It lives HERE, not in the portable verify.go, on purpose: its only caller
+// is this js-only file, and in verify.go the native golangci-lint pass
+// (which cannot see js callers) flagged it unused and failed CI.
+func signaturesRequired() bool {
+	catalogPubKeyMu.RLock()
+	defer catalogPubKeyMu.RUnlock()
+	return catalogPubKey != nil
+}
+
 // localeBundle holds everything one locale needs at runtime: the text
 // catalog, the inflections catalog (may be nil if the app uses no flex
 // blocks), the format config (may be nil when no <lang>.fmt.json was

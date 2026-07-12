@@ -40,21 +40,6 @@ func SetCatalogPublicKey(pemBytes []byte) error {
 	return nil
 }
 
-// signaturesRequired reports whether catalog signature verification is enabled,
-// i.e. a public key was configured via SetCatalogPublicKey. When it returns
-// false, callers MUST NOT fetch .sig sidecars at all (no signing in use). When
-// true, every loaded catalog must carry a valid .sig or be rejected.
-//
-// Its only caller (setlang.go) carries //go:build js, so a native-only lint
-// pass reports this as unused — a false positive of running one build target
-// at a time, not dead code. Cross-check against GOOS=js GOARCH=wasm before
-// trusting a native-only "unused" finding anywhere in this module.
-func signaturesRequired() bool {
-	catalogPubKeyMu.RLock()
-	defer catalogPubKeyMu.RUnlock()
-	return catalogPubKey != nil
-}
-
 // verifyCatalog checks the ed25519 signature of jsonBody against the base64
 // signature in sigB64. Returns nil when the signature is valid or when no
 // public key has been configured (opt-in verification).
