@@ -8,9 +8,23 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
-## [Unreleased]
+## [0.21.0] — 2026-07-12
 
 ### Added
+- **`MenuInput`** joins the sealed menu-item set: a menu action that
+  prompts for a typed value first (the toolbar `InputItem`'s popover,
+  extracted and shared), with a `Value` hook seeding the prompt — opened
+  selected, so Enter keeps the suggestion and typing replaces it.
+- **EPUB export asks the document name** (`wtextepub` v0.2.0) — Save-As
+  style, seeded with the book title. The typed string names the document
+  AS IS (the TOC entry and the content page's `<title>`); only the
+  download filename goes through the `Filename` sanitizer, and
+  `Config.Title` stays the book's `dc:title`. The generated book also got three fixes, two of
+  them via ugarit v0.0.2: the nav/TOC document is now the FIRST spine
+  itemref (out of the spine its placement was reader-defined — one reader
+  showed the TOC after the content), the TOC is flat (no nested duplicate
+  entry), and a coverless book no longer emits a landmarks nav pointing
+  at a cover.xhtml that does not exist.
 - **Web-safe named font stacks + picker preview** — `DefaultFontFaces()`
   grows Georgia/Palatino/Times/Arial/Verdana/Trebuchet/Courier (every stack
   ends in a generic — device- and EPUB-safe, no licensing strings);

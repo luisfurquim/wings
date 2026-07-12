@@ -19,7 +19,10 @@ const sample = `<!DOCTYPE html>
 
 func buildSample(t *testing.T) map[string][]byte {
 	t.Helper()
-	b, err := Build(sample, "pt-BR", Config{Title: "Minha Biografia", Author: "Autora"})
+	// docName ≠ cfg.Title on purpose: the tests below assert each lands in
+	// its own place (TOC entry + page title vs the book's dc:title).
+	b, err := Build(sample, "pt-BR", "Memórias & Causos",
+		Config{Title: "Minha Biografia", Author: "Autora"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,7 +95,7 @@ func TestBuildContentDocument(t *testing.T) {
 	doc := string(files["OEBPS/content.xhtml"])
 	for _, want := range []string{
 		`xmlns="http://www.w3.org/1999/xhtml"`,
-		"<title>Minha Biografia</title>",
+		"<title>Memórias &amp; Causos</title>", // docName, escaped
 		".destaque { font-weight: bold }",
 		"<h1>Título</h1>",
 		`<span class="destaque">mundo</span>`,
@@ -115,8 +118,32 @@ func TestBuildContentDocument(t *testing.T) {
 	}
 }
 
+// TestBuildTOC pins the QA findings of 2026-07-12: the nav document must
+// be the FIRST spine itemref (out of the spine its placement is
+// reader-defined — one reader appended it after the content), the TOC
+// must be flat (TOCTitle+TOCItemTitle nested a duplicate entry), and a
+// coverless book must not carry a landmarks nav pointing at a cover that
+// does not exist.
+func TestBuildTOC(t *testing.T) {
+	files := buildSample(t)
+	opf := string(files["OEBPS/content.opf"])
+	spine := opf[strings.Index(opf, "<spine"):]
+	nav := strings.Index(spine, `idref="nav"`)
+	page := strings.Index(spine, `idref="pg0"`)
+	if nav == -1 || page == -1 || nav > page {
+		t.Errorf("nav must be the first spine itemref:\n%s", spine)
+	}
+	toc := string(files["OEBPS/index.xhtml"])
+	if n := strings.Count(toc, "Memórias &amp; Causos"); n != 1 { // the one flat entry, as typed
+		t.Errorf("TOC mentions the doc name %d times, want 1 (flat, no nested duplicate):\n%s", n, toc)
+	}
+	if strings.Contains(toc, "cover.xhtml") || strings.Contains(toc, "landmarks") {
+		t.Errorf("coverless book must not carry a cover landmark:\n%s", toc)
+	}
+}
+
 func TestBuildValidation(t *testing.T) {
-	if _, err := Build(sample, "pt-BR", Config{}); err == nil {
+	if _, err := Build(sample, "pt-BR", "nome", Config{}); err == nil {
 		t.Error("Build without a title must fail")
 	}
 }

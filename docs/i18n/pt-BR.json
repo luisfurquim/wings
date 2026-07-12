@@ -960,6 +960,10 @@
     "revised": false
   },
   {
+    "content": "Nome do arquivo",
+    "revised": false
+  },
+  {
     "content": "Gera um e-book EPUB com o conteúdo do editor e baixa o arquivo.",
     "revised": false
   },

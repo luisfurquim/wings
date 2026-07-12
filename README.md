@@ -47,7 +47,7 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
-### Unreleased
+### v0.21.0
 
 - **`w-text` gains Underline** — same CSS-class design as Bold/Italic
   (`wt-u`), recognizing and clearing pasted `<u>` too.
@@ -55,6 +55,9 @@ Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
   Palatino, Times, Arial, Verdana, Trebuchet, Courier join the generics,
   each option rendered in its own typeface (`w-combobox` learned a
   per-option `font` key).
+- **EPUB export asks the file name** (Save-As prompt via the new
+  `MenuInput` menu kind) **and the TOC opens the book** instead of
+  trailing it (ugarit v0.0.2).
 
 ### v0.20.0
 
@@ -1964,7 +1967,12 @@ with built-in label defaults). The widget renders one accordion section
 per distinct group — a `w-tabs mode="accordion"`, which is native
 `<details>` under the hood — in a column beside the editing surface, and
 composes each action's `Help` into the same "?" dialog as the toolbar's
-("Export › EPUB"). A hamburger button heads the column, collapsing it to
+("Export › EPUB"). An action that needs a typed value first — a file
+name, a target — declares a `MenuInput` instead: the same prompt popover
+as the toolbar's `InputItem`, plus a `Value` hook that seeds it (opened
+selected — Enter keeps the suggestion, typing replaces it; a Save-As
+dialog never opens empty). A hamburger button heads the column,
+collapsing it to
 its own width to hand the space back to the editor (`aria-expanded`
 reflects the state). The whole thing is pay-per-use: a group with no items
 is never created, a profile with no menu items gets no column at all, and
@@ -1995,7 +2003,12 @@ wtext.RegisterProfile("post", wtext.Profile{
 <span slot="labels" id="wtext-epub-help">Builds an EPUB e-book from the editor content and downloads it.</span>
 ```
 
-The action serializes the whole document through the new
+The action prompts for the document name (a `MenuInput` seeded with the
+book title): the typed string names the document as is — the TOC entry,
+the content page's `<title>` — while its `Filename`-sanitized form is
+only the download name (`Config.Title` stays the book's `dc:title`). It
+then serializes the whole document
+through the new
 `EditorCore.Content()` (the same string `&value` persists), re-serializes
 the browser's HTML as well-formed XHTML — self-closed voids, XML-safe
 entities; an EPUB 3 content document is XML, and `innerHTML` output is not

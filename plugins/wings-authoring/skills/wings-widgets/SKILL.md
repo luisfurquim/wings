@@ -360,10 +360,16 @@ already do:
   actions never go on the toolbar), from the SEPARATE module
   `github.com/luisfurquim/wings/wtextepub` (wings itself takes no ugarit
   dependency — respect that split; never add ugarit to an app's imports
-  through wings). It packages `core.Content()` as an EPUB 3 book and
+  through wings). It prompts for the DOCUMENT name (Save-As, seeded with
+  the book title): the typed string is the TOC entry and page `<title>`
+  as is, its `Filename`-sanitized form is only the download name, and
+  `Config.Title` stays the book's `dc:title`. It packages
+  `core.Content()` as an EPUB 3 book and
   downloads it; book language is `wings.Locale` at click time;
-  `Config.Title` is required (also drives the download filename). Its item
-  label ids (`wtext-epub`, `wtext-epub-help`) have NO built-in default —
+  `Config.Title` is required. The nav/TOC
+  is the first spine itemref (book opens on the TOC) and coverless books
+  carry no cover landmark (both via ugarit v0.0.2). Its item
+  label ids (`wtext-epub`, `wtext-epub-name`, `wtext-epub-help`) have NO built-in default —
   the app must provide the `<span slot="labels" id="…">` pair or the item
   shows the raw id (the `wtext-export` group id does have a default).
 
@@ -403,7 +409,10 @@ a plugin needing setup at attach time (defining its
 utility classes, say) implements `wtext.InitPlugin`. Document-level
 actions (export, import…) do NOT go on the toolbar: implement
 `MenuPlugin` (`Profile.Menu`) declaring `MenuAction{Group, ID, Label,
-Help, Do}` — the widget renders one accordion section per `Group`
+Help, Do}` — or `MenuInput` when the action needs a typed value first
+(same prompt popover as the toolbar's `InputItem`, with a `Value` hook
+seeding it, opened selected: Enter keeps, typing replaces) — the widget
+renders one accordion section per `Group`
 (`w-tabs mode="accordion"` = native `<details>`) in a column beside the
 editor, only when items exist (a hamburger button collapses the column);
 use the standard group ids `wtext-export`

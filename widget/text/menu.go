@@ -26,15 +26,20 @@ func (t *toolbar) renderMenu() {
 	}
 	t.menu.Set("innerHTML", "") // static container; safe empty string
 	var groups []string
-	items := map[string][]wtext.MenuAction{}
+	items := map[string][]wtext.MenuItem{}
+	add := func(group string, item wtext.MenuItem) {
+		if _, ok := items[group]; !ok {
+			groups = append(groups, group)
+		}
+		items[group] = append(items[group], item)
+	}
 	for _, plug := range t.profile.Menu {
 		for _, item := range plug.MenuItems() {
 			switch it := item.(type) {
 			case wtext.MenuAction:
-				if _, ok := items[it.Group]; !ok {
-					groups = append(groups, it.Group)
-				}
-				items[it.Group] = append(items[it.Group], it)
+				add(it.Group, it)
+			case wtext.MenuInput:
+				add(it.Group, it)
 			}
 		}
 	}
@@ -56,8 +61,13 @@ func (t *toolbar) renderMenu() {
 		btn.Set("textContent", t.resolveLabel(g))
 		tabs.Call("appendChild", btn)
 		tab := t.doc().Call("createElement", "w-tab")
-		for _, it := range items[g] {
-			tab.Call("appendChild", t.menuAction(it))
+		for _, item := range items[g] {
+			switch it := item.(type) {
+			case wtext.MenuAction:
+				tab.Call("appendChild", t.menuAction(it))
+			case wtext.MenuInput:
+				tab.Call("appendChild", t.menuInput(it))
+			}
 		}
 		tabs.Call("appendChild", tab)
 	}
@@ -121,4 +131,44 @@ func (t *toolbar) menuAction(it wtext.MenuAction) js.Value {
 		return nil
 	}, false, false)
 	return btn
+}
+
+// menuInput renders a MenuInput: the item button plus the shared prompt
+// popover (inputPopover), seeded by the item's Value on every open.
+func (t *toolbar) menuInput(it wtext.MenuInput) js.Value {
+	wrap := t.doc().Call("createElement", "span")
+	wrap.Call("setAttribute", "class", "wt-inputitem wt-menu-inputitem")
+
+	btn := t.doc().Call("createElement", "w-button")
+	btn.Call("setAttribute", "type", "button")
+	btn.Call("setAttribute", "variant", "ghost")
+	btn.Call("setAttribute", "size", "sm")
+	btn.Call("setAttribute", "data-item", it.ID)
+	label := t.resolveLabel(it.Label)
+	btn.Call("setAttribute", "aria-label", label)
+	btn.Call("setAttribute", "title", label)
+	btn.Set("textContent", label)
+	wrap.Call("appendChild", btn)
+
+	prefill := func() string { return "" }
+	if it.Value != nil {
+		prefill = func() string { return it.Value(t.editor) }
+	}
+	toggle := t.inputPopover(wrap, t.resolveLabel(it.Placeholder), prefill,
+		func(val string) {
+			if it.Do == nil {
+				return
+			}
+			if err := it.Do(t.editor, val); err != nil {
+				G.Logf(1, "w-text: menu input %q failed: %v\n", it.ID, err)
+			}
+			t.refresh()
+		})
+
+	dom.AddEvent(btn, "mousedown", func(_ js.Value, _ []js.Value) any { return nil }, true, false)
+	dom.AddEvent(btn, "click", func(_ js.Value, _ []js.Value) any {
+		toggle()
+		return nil
+	}, false, false)
+	return wrap
 }

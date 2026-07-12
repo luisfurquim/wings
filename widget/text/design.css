@@ -58,11 +58,15 @@
 .wt-menu:empty { display: none; }
 .wt-menu[data-collapsed] { width: auto; }
 .wt-menu[data-collapsed] .wt-menu-body { display: none; }
-.wt-menu w-button {
+/* Item buttons fill the column; the child selectors keep the prompt
+   popover's own OK/Cancel out of this rule. */
+.wt-menu w-tab > w-button,
+.wt-menu .wt-menu-inputitem > w-button {
   display: block;
   width: 100%;
   text-align: start;
 }
+.wt-menu-inputitem { display: block; }
 :host([data-focused]) .wt-field {
   border-color: var(--wings-text-border-focus, var(--wings-border-focus, var(--wings-primary, #1976d2)));
   box-shadow: var(--wings-text-focus-shadow, 0 0 0 3px var(--wings-focus-ring, rgba(25, 118, 210, 0.15)));

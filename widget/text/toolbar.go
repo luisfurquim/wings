@@ -145,16 +145,22 @@ func (t *toolbar) helpEntries() []helpEntry {
 	}
 	for _, plug := range t.profile.Menu {
 		for _, item := range plug.MenuItems() {
+			var groupID, labelID, helpID string
 			switch it := item.(type) {
 			case wtext.MenuAction:
-				if it.Help == "" {
-					continue
-				}
-				out = append(out, helpEntry{
-					label: t.resolveLabel(it.Group) + " › " + t.resolveLabel(it.Label),
-					help:  t.resolveLabel(it.Help),
-				})
+				groupID, labelID, helpID = it.Group, it.Label, it.Help
+			case wtext.MenuInput:
+				groupID, labelID, helpID = it.Group, it.Label, it.Help
+			default:
+				continue
 			}
+			if helpID == "" {
+				continue
+			}
+			out = append(out, helpEntry{
+				label: t.resolveLabel(groupID) + " › " + t.resolveLabel(labelID),
+				help:  t.resolveLabel(helpID),
+			})
 		}
 	}
 	return out
@@ -388,10 +394,35 @@ func (t *toolbar) inputControl(it wtext.InputItem) {
 	}
 	wrap.Call("appendChild", btn)
 
+	toggle := t.inputPopover(wrap, t.resolveLabel(it.Placeholder),
+		func() string { return "" },
+		func(val string) {
+			if err := it.Do(t.editor, val); err != nil {
+				G.Logf(1, "w-text: toolbar input %q failed: %v\n", it.ID, err)
+				return
+			}
+			t.afterAction()
+		})
+
+	// Decision 8.2: the opener never steals the selection; the w-input
+	// inside the popover does take focus once open.
+	dom.AddEvent(btn, "mousedown", func(_ js.Value, _ []js.Value) any { return nil }, true, false)
+	dom.AddEvent(btn, "click", func(_ js.Value, _ []js.Value) any {
+		toggle()
+		return nil
+	}, false, false)
+}
+
+// inputPopover builds the typed-value prompt shared by toolbar InputItems
+// and menu MenuInputs — a .wt-popover with a w-input plus OK/Cancel —
+// appended to wrap, returning the open/close toggle. prefill seeds the
+// input on EVERY open, selected: Enter keeps the suggestion, typing
+// replaces it. confirm receives the trimmed value; empty confirmations
+// are discarded here, never delivered.
+func (t *toolbar) inputPopover(wrap js.Value, placeholder string, prefill func() string, confirm func(string)) (toggle func()) {
 	pop := t.doc().Call("createElement", "div")
 	pop.Call("setAttribute", "class", "wt-popover")
 	pop.Call("setAttribute", "hidden", "")
-	placeholder := t.resolveLabel(it.Placeholder)
 	inp := t.doc().Call("createElement", "w-input")
 	inp.Call("setAttribute", "type", "text")
 	inp.Call("setAttribute", "placeholder", placeholder)
@@ -422,7 +453,7 @@ func (t *toolbar) inputControl(it wtext.InputItem) {
 		pop.Call("setAttribute", "hidden", "")
 		t.editor.RestoreSel()
 	}
-	confirm := func() {
+	doConfirm := func() {
 		val := ""
 		if v := inp.Get("value"); v.Type() == js.TypeString {
 			val = strings.TrimSpace(v.String())
@@ -431,37 +462,23 @@ func (t *toolbar) inputControl(it wtext.InputItem) {
 		if val == "" {
 			return
 		}
-		if err := it.Do(t.editor, val); err != nil {
-			G.Logf(1, "w-text: toolbar input %q failed: %v\n", it.ID, err)
-			return
-		}
-		t.afterAction()
+		confirm(val)
 	}
 	open := func() {
-		setValue("")
+		setValue(prefill())
 		pop.Call("removeAttribute", "hidden")
 		if shadow := inp.Get("shadowRoot"); shadow.Truthy() {
 			if els := dom.Query(shadow, "input"); len(els) > 0 {
 				els[0].Call("focus")
+				els[0].Call("select")
 				return
 			}
 		}
 		inp.Call("focus")
 	}
 
-	// Decision 8.2: the opener never steals the selection; the w-input
-	// inside the popover does take focus once open.
-	dom.AddEvent(btn, "mousedown", func(_ js.Value, _ []js.Value) any { return nil }, true, false)
-	dom.AddEvent(btn, "click", func(_ js.Value, _ []js.Value) any {
-		if pop.Call("hasAttribute", "hidden").Bool() {
-			open()
-		} else {
-			dismiss()
-		}
-		return nil
-	}, false, false)
 	dom.AddEvent(okBtn, "click", func(_ js.Value, _ []js.Value) any {
-		confirm()
+		doConfirm()
 		return nil
 	}, false, false)
 	dom.AddEvent(cancelBtn, "click", func(_ js.Value, _ []js.Value) any {
@@ -477,13 +494,21 @@ func (t *toolbar) inputControl(it wtext.InputItem) {
 		switch args[0].Get("key").String() {
 		case "Enter":
 			args[0].Call("preventDefault")
-			confirm()
+			doConfirm()
 		case "Escape":
 			args[0].Call("preventDefault")
 			dismiss()
 		}
 		return nil
 	}, false, false)
+
+	return func() {
+		if pop.Call("hasAttribute", "hidden").Bool() {
+			open()
+		} else {
+			dismiss()
+		}
+	}
 }
 
 // statusControl renders a StatusItem: a passive text span refreshed in

@@ -22,11 +22,18 @@ type Config struct {
 
 // Build packages an EditorCore.Content() document as an EPUB 3 book with
 // a single content page and a nav TOC. lang is the book's BCP 47 tag —
-// the js toolbar passes wings.Locale at click time. The returned bytes
+// the js menu passes wings.Locale at click time. docName names THIS
+// document: it becomes the TOC entry and the content page's <title>,
+// exactly as typed (the export prompt's raw string; its sanitized form
+// is only the download filename), while cfg.Title stays the BOOK's
+// dc:title. Empty docName falls back to cfg.Title. The returned bytes
 // are the complete .epub file.
-func Build(content, lang string, cfg Config) ([]byte, error) {
+func Build(content, lang, docName string, cfg Config) ([]byte, error) {
 	if cfg.Title == "" {
 		return nil, fmt.Errorf("wtextepub: Config.Title is required")
+	}
+	if docName == "" {
+		docName = cfg.Title
 	}
 	if lang == "" {
 		lang = "en"
@@ -54,13 +61,15 @@ func Build(content, lang string, cfg Config) ([]byte, error) {
 		return nil, fmt.Errorf("wtextepub: creating book: %w", err)
 	}
 
-	page := contentDocument(cfg.Title, parts)
+	page := contentDocument(docName, parts)
+	// TOCItemTitle alone: a flat, single TOC entry. TOCTitle would open a
+	// SECTION containing the entry — a nested duplicate for a one-page book.
 	_, _, _, err = book.AddPage(
 		"content.xhtml",
 		"application/xhtml+xml",
 		strings.NewReader(page),
 		"",
-		&epub30.EPubOptions{TOCTitle: cfg.Title, TOCItemTitle: cfg.Title},
+		&epub30.EPubOptions{TOCItemTitle: docName},
 	)
 	if err != nil {
 		return nil, fmt.Errorf("wtextepub: adding page: %w", err)

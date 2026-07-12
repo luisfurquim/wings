@@ -307,6 +307,21 @@ type MenuAction struct {
 
 func (MenuAction) isMenuItem() {}
 
+// MenuInput is a menu action that needs a typed value first — a filename,
+// a target — InputItem's counterpart for the side menu: the widget
+// renders a button that opens a small prompt (a w-input in a popover) and
+// confirming calls Do with the typed value. Value optionally seeds the
+// prompt (a Save-As dialog never opens empty: Enter keeps the suggestion,
+// typing replaces it — the text opens selected); the empty string leaves
+// it blank. An empty confirmation is discarded, never delivered to Do.
+type MenuInput struct {
+	Group, ID, Label, Placeholder, Help string
+	Value                               func(EditorCore) string
+	Do                                  func(EditorCore, string) error
+}
+
+func (MenuInput) isMenuItem() {}
+
 // InitPlugin is an optional interface any plugin may implement to run
 // setup against the editor at attach time — defining the utility classes
 // a toolbar will apply, for instance. It runs once per editor instance,
