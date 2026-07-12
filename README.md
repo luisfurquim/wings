@@ -47,7 +47,7 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
-### Unreleased
+### v0.20.0
 
 - **`w-text` gains a side menu for document actions, and EPUB export lives
   in it** — the new `MenuPlugin` contract renders an accordion column

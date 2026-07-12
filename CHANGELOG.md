@@ -8,7 +8,7 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
-## [Unreleased]
+## [0.20.0] — 2026-07-12
 
 ### Added
 - **`w-text` side menu for document-level actions** — new `MenuPlugin`
