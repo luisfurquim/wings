@@ -8,8 +8,8 @@ github.com/luisfurquim/goose v0.1.0 h1:mvnU8GNwv/4e3XLKBLSgI+qp+SS9g9ceGzMN0+RKa
 github.com/luisfurquim/goose v0.1.0/go.mod h1:7ImG4cPD2O9s8tvUpm/M+079kHPcI9uL6F3w/rzqevY=
 github.com/luisfurquim/ugarit v0.0.2 h1:0Y+VH9Z2f7ilBYG6/useBV2XbK8beJoHKx8JivjmpNA=
 github.com/luisfurquim/ugarit v0.0.2/go.mod h1:LVXgBoQ+LhzSkjQ2PhXzWYARZks01DJlxRtBdVBZQ6Q=
-github.com/luisfurquim/wings v0.21.0 h1:Hqi40sv1Jh+DdHeWzuh/143znUjMQaq2vBw9NRomK9k=
-github.com/luisfurquim/wings v0.21.0/go.mod h1:w7MUmF4sF/NKg9AN5cjIaKMp07Fm9JVyRFP+NlrNbDQ=
+github.com/luisfurquim/wings v0.22.0 h1:a14i5Jyc4BxltACwTgsXmYJBpMQ/g4FG9GdX20aQauY=
+github.com/luisfurquim/wings v0.22.0/go.mod h1:w7MUmF4sF/NKg9AN5cjIaKMp07Fm9JVyRFP+NlrNbDQ=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20210921155107-089bfa567519/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=
