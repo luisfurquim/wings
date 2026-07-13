@@ -39,9 +39,17 @@
   border: var(--wings-text-border, 1px solid var(--wings-border, #ccc));
   border-radius: var(--wings-text-radius, var(--wings-radius-md, 6px));
   background: var(--wings-text-bg, var(--wings-surface, #fff));
-  overflow: hidden;
+  /* NO overflow:hidden — it clipped the toolbar pickers' dropdowns to the
+     field box. The rounded look survives via per-corner radii below. */
   transition: border-color var(--wings-transition-fast, 0.15s);
 }
+.wt-toolbar {
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
+}
+.wt-menu   { border-bottom-left-radius: inherit; }
+.wt-editor { border-bottom-right-radius: inherit; border-bottom-left-radius: inherit; }
+.wt-menu ~ .wt-editor { border-bottom-left-radius: 0; }
 .wt-toolbar { grid-column: 1 / -1; }
 .wt-menu    { grid-column: 1; }
 .wt-editor  { grid-column: 2; }

@@ -38,7 +38,12 @@ func domCreateSpan() js.Value {
 
 func domCreateStyleNode(css string) js.Value {
 	el := domCreateElement("style")
-	el.Set("innerText", css)
+	// textContent, NOT innerText: innerText interprets line breaks by
+	// inserting <br> ELEMENTS — every widget's shadow <style> was carrying
+	// hundreds of them (the CSS still parsed, since the CSSOM concatenates
+	// the text nodes around the junk, but any rule relying on a newline as
+	// its only token separator would silently break).
+	el.Set("textContent", css)
 	return el
 }
 

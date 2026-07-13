@@ -18,6 +18,22 @@ type Config struct {
 	Title     string
 	Author    string
 	Publisher string
+	// Fonts are webfont files to embed in the book — the store fonts the
+	// document actually uses, collected by the export action. Embedding
+	// is legitimate BECAUSE the stores are curated for libre catalogs
+	// (OFL/Apache); do not feed fonts of restrictive licenses here.
+	Fonts []EmbeddedFont
+}
+
+// EmbeddedFont is one font file packaged inside the book, with the
+// metadata its @font-face rule declares. Range carries the subset's
+// unicode-range: stores split each (style, weight) into per-script
+// files, and every one must ship, each under its range, or readers
+// render fallback glyphs exactly like the browser did.
+type EmbeddedFont struct {
+	Family, Style, Weight, Format string
+	Range                         string
+	Data                          []byte
 }
 
 // Build packages an EditorCore.Content() document as an EPUB 3 book with
@@ -59,6 +75,22 @@ func Build(content, lang, docName string, cfg Config) ([]byte, error) {
 	)
 	if err != nil {
 		return nil, fmt.Errorf("wtextepub: creating book: %w", err)
+	}
+
+	// Embedded fonts: each file joins the OCF (and the manifest, via
+	// AddFile) and its @font-face rule joins the content document's
+	// style, so the reader renders the same faces the editor showed.
+	// woff2 is an EPUB 3.3 core media type.
+	for i, f := range cfg.Fonts {
+		if len(f.Data) == 0 {
+			continue
+		}
+		path := fontPath(f, i)
+		_, _, err = book.AddFile(path, fontMime(f.Format), bytes.NewReader(f.Data), "", nil)
+		if err != nil {
+			return nil, fmt.Errorf("wtextepub: embedding font %s: %w", path, err)
+		}
+		parts.css += fontFaceRule(f, path)
 	}
 
 	page := contentDocument(docName, parts)
@@ -106,6 +138,49 @@ func contentDocument(title string, parts contentParts) string {
 	sb.WriteString(parts.body)
 	sb.WriteString("</body></html>")
 	return sb.String()
+}
+
+// fontPath names an embedded font file inside the book. The index keeps
+// subset files of one (style, weight) apart.
+func fontPath(f EmbeddedFont, i int) string {
+	name := Filename(f.Family) // slug + ".epub"
+	name = strings.TrimSuffix(name, ".epub")
+	w := strings.ReplaceAll(f.Weight, " ", "-") // variable ranges: "100 900"
+	return fmt.Sprintf("fonts/%s-%s-%s-%d.%s", name, w, f.Style, i, fontExt(f.Format))
+}
+
+func fontExt(format string) string {
+	if format == "" {
+		return "woff2"
+	}
+	return format
+}
+
+func fontMime(format string) string {
+	switch fontExt(format) {
+	case "woff":
+		return "font/woff"
+	case "ttf":
+		return "font/ttf"
+	case "otf":
+		return "font/otf"
+	default:
+		return "font/woff2"
+	}
+}
+
+// fontFaceRule renders the @font-face of one embedded file. Family,
+// style and weight came through the wtext store parser (bounded,
+// shape-checked); the escaping here is belt and suspenders.
+func fontFaceRule(f EmbeddedFont, path string) string {
+	fam := strings.ReplaceAll(f.Family, `"`, "")
+	urange := ""
+	if f.Range != "" {
+		urange = " unicode-range: " + f.Range + ";"
+	}
+	return fmt.Sprintf(
+		"@font-face { font-family: %q; font-style: %s; font-weight: %s;%s src: url(%s) format(%q); }\n",
+		fam, f.Style, f.Weight, urange, path, fontExt(f.Format))
 }
 
 // Filename derives a safe download name from the book title: letters and

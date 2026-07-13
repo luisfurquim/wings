@@ -338,7 +338,16 @@ already do:
   generic). The face picker previews each option in its own typeface: set
   `wtext.Option.Font` (flows to w-combobox's per-option `font` key; applied
   as a style.fontFamily PROPERTY assignment — never interpolate font strings
-  into a style attribute, that's an injection vector). Never inline styles:
+  into a style attribute, that's an injection vector). WEBFONTS come only
+  from the HARD-CODED store allowlist (Google Fonts, Bunny Fonts — libre
+  catalogs, which is what legitimizes EPUB embedding): the user pastes a
+  store URL into the face picker (Enter → `@notinlist`), or the webdev
+  calls `wtext.AddFont(url, done)`; NEVER try to fetch a font from any
+  other origin — the parsers re-verify every file URL against the
+  store's hosts and refuse the rest. Webdev control is deny-only:
+  `wtext.DenyFontStore("google")` / `wtext.DisableWebFonts()` (fail
+  closed; the list only shrinks). Used store fonts are embedded in the
+  EPUB automatically. Never inline styles:
   each pick is a utility
   class (`wt-ff-*`, `wt-fs-*`, `wt-al-*`), one per axis, pending-at-caret
   like bold.

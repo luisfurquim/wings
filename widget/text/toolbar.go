@@ -35,6 +35,7 @@ type toolbar struct {
 
 	cfgDlg     js.Value // the open settings dialog, or js.Undefined()
 	cfgRelease func()   // releases the settings dialog's anchor listener
+	unsubFonts func()   // unsubscribes the webfont-registry watcher
 }
 
 type trackedToggle struct {
@@ -334,6 +335,30 @@ func (t *toolbar) selectControl(it wtext.SelectItem) {
 		t.afterAction()
 	})
 	cb.Call("setAttribute", "@change", key)
+
+	// The not-in-list door (Enter on unmatched text): the face picker
+	// uses it to accept a dropped webfont store URL.
+	if it.NotInList != nil {
+		nk := "wt_nil_" + it.ID
+		t.obj.This.Set(nk, func(args ...any) {
+			text := ""
+			for _, a := range args {
+				if s, ok := a.(string); ok && s != "" {
+					text = s
+					break
+				}
+			}
+			if text == "" {
+				return
+			}
+			if err := it.NotInList(t.editor, strings.TrimSpace(text)); err != nil {
+				G.Logf(1, "w-text: %q not-in-list: %v\n", it.ID, err)
+			}
+			t.editor.RestoreSel()
+			t.afterAction()
+		})
+		cb.Call("setAttribute", "@notinlist", nk)
+	}
 
 	// Unlike the buttons, the combobox MUST take focus — its dropdown opens
 	// on the inner input's focus and the user may type to filter. The

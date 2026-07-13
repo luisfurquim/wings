@@ -94,7 +94,10 @@
 
 /* ── Dropdown wrapper ────────────────────────────────────────────────────── */
 
-/* Initial state is display:none.  Render() toggles this via dropWrap.style. */
+/* Initial state is display:none.  Render() toggles this via dropWrap.style.
+   The element carries popover="manual" (top layer, so no ancestor overflow
+   can clip the open list); margin/padding/color are pinned because the UA
+   stylesheet gives [popover] elements its own defaults for them. */
 .cb-drop-wrap {
    display: none;
    position: absolute;
@@ -102,6 +105,9 @@
    top: calc(100% + 4px);
    left: 0;
    right: 0;
+   margin: 0;
+   padding: 0;
+   color: inherit;
    background: var(--wings-list-box-bg, #ffffff);
    /* Atmosphere opt-in: tint via glass-opacity so the blur has something to
       show through; falls through to opaque when no atmosphere skin is active. */

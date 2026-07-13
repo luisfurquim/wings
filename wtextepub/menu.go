@@ -3,6 +3,8 @@
 package wtextepub
 
 import (
+	"strings"
+
 	"github.com/luisfurquim/wings"
 	"github.com/luisfurquim/wings/wtext"
 )
@@ -43,6 +45,26 @@ func (m Menu) ConfigSections() []wtext.ConfigSection {
 	}}
 }
 
+// usedWebFonts collects the store fonts the document actually uses —
+// its wt-ff-<id> class appears in the persisted content — as embeddable
+// files. The store curation (libre catalogs) is what makes the embed
+// legitimate.
+func usedWebFonts(content string) []EmbeddedFont {
+	var out []EmbeddedFont
+	for _, wf := range wtext.InstalledWebFonts() {
+		if !strings.Contains(content, "wt-ff-"+wf.ID) {
+			continue
+		}
+		for _, s := range wf.Sources {
+			out = append(out, EmbeddedFont{
+				Family: wf.Label, Style: s.Style, Weight: s.Weight,
+				Range: s.Range, Format: s.Format, Data: s.Data,
+			})
+		}
+	}
+	return out
+}
+
 // bookConfig assembles the export-time Config from the document store
 // (user edits win; the store already falls back to the declared
 // defaults), guarded by the constructor Cfg for profiles that registered
@@ -78,7 +100,10 @@ func (m Menu) MenuItems() []wtext.MenuItem {
 				return m.bookConfig(core).Title
 			},
 			Do: func(core wtext.EditorCore, name string) error {
-				b, err := Build(core.Content(), wings.Locale, name, m.bookConfig(core))
+				content := core.Content()
+				cfg := m.bookConfig(core)
+				cfg.Fonts = usedWebFonts(content)
+				b, err := Build(content, wings.Locale, name, cfg)
 				if err != nil {
 					return err
 				}

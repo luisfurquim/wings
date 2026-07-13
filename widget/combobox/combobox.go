@@ -56,6 +56,7 @@ package combobox
 import (
 	_ "embed"
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"strings"
 	"syscall/js"
@@ -233,12 +234,75 @@ type cbCtx struct {
 	lastValue    string
 }
 
+// showDrop opens the dropdown. On browsers with the Popover API the list
+// is promoted to the top layer: any ancestor with overflow (a tab panel,
+// the editor's own box) clips a merely position:absolute dropdown, which
+// used to cut its tail off near a container's bottom edge — no maxHeight
+// clamp can fix that, because the clip happens outside the widget. A
+// top-layer popover is fixed-positioned, so it is anchored to the field's
+// viewport rect, and its height is clamped to the space below (with a
+// floor). Browsers without the API keep the absolute in-flow dropdown.
 func (cb *cbCtx) showDrop() {
-	cb.dropWrap.Get("style").Set("display", "block")
+	style := cb.dropWrap.Get("style")
+	if cb.dropWrap.Get("showPopover").Type() == js.TypeFunction {
+		// All geometry derives from the ANCHOR's rect (the .cb-root): the
+		// dropdown's own rect is useless here — a closed [popover] is
+		// display:none !important per the UA sheet, so measuring it before
+		// showPopover() yields zeros (which once inflated the height clamp
+		// past the viewport).
+		anchor := cb.dropWrap.Get("parentElement").Call("getBoundingClientRect")
+		top := anchor.Get("bottom").Float() + 4
+		style.Set("position", "fixed")
+		style.Set("inset", "auto")
+		style.Set("left", fmt.Sprintf("%.0fpx", anchor.Get("left").Float()))
+		style.Set("top", fmt.Sprintf("%.0fpx", top))
+		style.Set("width", fmt.Sprintf("%.0fpx", anchor.Get("width").Float()))
+		style.Set("margin", "0")
+		style.Set("maxHeight", fmt.Sprintf("%.0fpx", clampDropHeight(js.Global().Get("innerHeight").Float()-top-8)))
+		style.Set("overflowY", "auto")
+		style.Set("display", "block")
+		if !cb.dropWrap.Call("matches", ":popover-open").Bool() {
+			cb.dropWrap.Call("showPopover")
+		}
+		return
+	}
+	// No Popover API: the absolute in-flow dropdown, clamped to the space
+	// below it in the viewport (ancestors with overflow may still clip it).
+	style.Set("display", "block")
+	rect := cb.dropWrap.Call("getBoundingClientRect")
+	style.Set("maxHeight", fmt.Sprintf("%.0fpx", clampDropHeight(js.Global().Get("innerHeight").Float()-rect.Get("top").Float()-8)))
+	style.Set("overflowY", "auto")
+}
+
+// clampDropHeight bounds the open list's height: a floor keeps it usable
+// when the field sits near the viewport bottom, a ceiling keeps a long
+// option list from swallowing the screen.
+func clampDropHeight(free float64) float64 {
+	if free < 96 {
+		return 96
+	}
+	if free > 320 {
+		return 320
+	}
+	return free
 }
 
 func (cb *cbCtx) hideDrop() {
+	if cb.dropWrap.Get("hidePopover").Type() == js.TypeFunction &&
+		cb.dropWrap.Call("matches", ":popover-open").Bool() {
+		cb.dropWrap.Call("hidePopover")
+	}
 	cb.dropWrap.Get("style").Set("display", "none")
+}
+
+// inputFocused reports whether the inner input is its shadow root's
+// active element — i.e., the user is in the field right now.
+func (cb *cbCtx) inputFocused() bool {
+	root := cb.inp.Call("getRootNode")
+	if !root.Truthy() {
+		return false
+	}
+	return root.Get("activeElement").Equal(cb.inp)
 }
 
 // applyFilter rebuilds filtered_options from all_options, excluding
@@ -369,6 +433,15 @@ func (cb *cbCtx) resyncSingleValue(val string) {
 			label, _ := m["label"].(string)
 			cb.obj.This.Set("input_val", label)
 			cb.applyFilter("")
+			// This resync often lands asynchronously (the sentinel's
+			// MutationObserver) a frame AFTER the field was focused —
+			// the repaint above rewrites the input and silently kills
+			// onFocus's select-all, so the user's next paste APPENDS to
+			// the label instead of replacing it. Re-select to keep the
+			// type-to-replace affordance alive.
+			if cb.inputFocused() {
+				cb.inp.Call("select")
+			}
 			return
 		}
 	}
@@ -402,6 +475,11 @@ func (cb *cbCtx) applyValuePreset(val string) {
 				cb.obj.This.Set("input_val", "")
 			}
 			cb.applyFilter("")
+			// Same select-all preservation as resyncSingleValue: never
+			// leave a focused field deselected after a silent rewrite.
+			if cb.isSingle() && cb.inputFocused() {
+				cb.inp.Call("select")
+			}
 			return
 		}
 	}
@@ -495,9 +573,15 @@ func (cb *cbCtx) onFocus(_ js.Value, _ []js.Value) any {
 	return nil
 }
 
-// onInput filters the dropdown as the user types.
+// onInput filters the dropdown as the user types. The typed value is
+// synced into the model FIRST: the &value two-way binding only syncs
+// DOM→data on `change` (blur), and applyFilter's own Set re-renders the
+// template — which repaints this very input from the model. With a stale
+// model that repaint ERASED each keystroke as it was typed.
 func (cb *cbCtx) onInput(_ js.Value, _ []js.Value) any {
-	cb.applyFilter(cb.inp.Get("value").String())
+	val := cb.inp.Get("value").String()
+	cb.obj.This.Set("input_val", val)
+	cb.applyFilter(val)
 	cb.showDrop()
 	return nil
 }
@@ -507,6 +591,12 @@ func (cb *cbCtx) onKeydown(_ js.Value, args []js.Value) any {
 	key := args[0].Get("key").String()
 	switch key {
 	case "Enter":
+		// The @notinlist/@change handlers may move focus (w-text's
+		// RestoreSel returns it to the editor) DURING this dispatch; the
+		// browser then delivers the key's default action to the newly
+		// focused element — a contenteditable receives a paragraph break
+		// out of nowhere. Kill the default before triggering anything.
+		args[0].Call("preventDefault")
 		val := strings.TrimSpace(cb.inp.Get("value").String())
 		if val == "" {
 			return nil
@@ -623,6 +713,9 @@ func (c *Combobox) Render(obj *wings.PranaObj) {
 		dropWrap:     dropWraps[0],
 		selectedVals: map[string]bool{},
 	}
+	// Top-layer dropdown (see showDrop). "manual" keeps light-dismiss off:
+	// open/close stays fully owned by this widget's own handlers.
+	cb.dropWrap.Call("setAttribute", "popover", "manual")
 
 	// Parse options that may already be present via the attribute.
 	cb.loadOptions()

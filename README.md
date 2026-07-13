@@ -47,6 +47,23 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
+### Unreleased
+
+- **Webfonts from trusted stores** — paste a Google Fonts or Bunny Fonts
+  URL into `w-text`'s face picker (or call `wtext.AddFont`) and the font
+  loads, previews, applies and **embeds in the exported EPUB**. The store
+  list is hard-coded (libre catalogs only — that's what makes embedding
+  legitimate); a webdev can only shrink it (`DenyFontStore`,
+  `DisableWebFonts`).
+- **Fixed: typing into a filterable `w-combobox` was being erased** as it
+  was typed (the filter's own re-render repainted the input from a stale
+  model), and **every widget's shadow `<style>` carried hundreds of junk
+  `<br>` elements** (CSS injected via `innerText`; now `textContent`).
+- **Fixed: `w-combobox` dropdown** — now opens in the browser's top layer
+  (Popover API), immune to clipping by scrolling containers; pasting into
+  a single-mode picker reliably replaces the previous label; Enter no
+  longer echoes a paragraph break into `w-text`'s editor.
+
 ### v0.22.0
 
 - **`w-text` gains document settings** — the new `ConfigPlugin` contract:
@@ -1848,6 +1865,23 @@ wtext.RegisterProfile("full", wtext.Profile{
   `wt-al-*`) defined at attach time, one per axis — picking another face
   replaces the previous. With a collapsed caret the pick arms as **pending**,
   like bold: the next typing comes out in the new font.
+
+  **Webfonts, through trusted stores only.** Paste a
+  [Google Fonts](https://fonts.google.com) or
+  [Bunny Fonts](https://fonts.bunny.net) URL (a specimen page, a css2 API
+  URL) into the face picker and press Enter: the font is fetched from the
+  store, installed via the browser's `FontFace` API, joins the picker
+  (previewing in itself) and, once used, **its files are embedded in the
+  exported EPUB** with their `@font-face` rules. A webdev preloads fonts
+  with `wtext.AddFont(url, done)` — same door, same checks. The store
+  list is HARD-CODED in wings: both stores serve libre catalogs
+  (OFL/Apache), which is exactly what makes the EPUB embedding
+  legitimate, and every fetched file URL is re-verified against the
+  store's own hosts (a hostile or misconfigured response cannot pull
+  files from elsewhere; everything is bounded). The webdev's control only
+  shrinks the surface: `wtext.DenyFontStore("google")` removes one store,
+  `wtext.DisableWebFonts()` closes the feature — there is no way to add
+  an origin the allowlist does not carry.
 - **`StyleToolbar`** — Word's style gallery: the ✎ button prompts for a name
   and captures the formatting classes covering the selection into one named,
   reusable class (replacing them on the source selection, which then follows
@@ -2014,7 +2048,10 @@ bytes to the browser as a download. The book's language is `wings.Locale`
 at the moment of the click; title, author and publisher come from the
 document's settings (the `epub.*` config section above), with the
 constructor's `wtextepub.Config` as their defaults — the stored title is
-the book's `dc:title`. The portable half (`Build`, `Filename`) is unit-tested
+the book's `dc:title`. Store webfonts the document uses are embedded:
+their files join the OCF (woff2 is an EPUB 3.3 core media type) and
+their `@font-face` rules the content document, so the book renders the
+same faces the editor showed. The portable half (`Build`, `Filename`) is unit-tested
 natively — the tests unzip the output and feed every document to
 `encoding/xml` as the well-formedness proof.
 

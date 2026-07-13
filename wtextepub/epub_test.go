@@ -148,6 +148,62 @@ func TestBuildValidation(t *testing.T) {
 	}
 }
 
+// TestBuildEmbeddedFonts: an embedded webfont's file must land in the
+// OCF and the manifest, its @font-face rule in the content document —
+// and the book must stay well-formed XML.
+func TestBuildEmbeddedFonts(t *testing.T) {
+	fake := []byte("wOF2FAKEBYTES")
+	b, err := Build(sample, "pt-BR", "Doc", Config{
+		Title: "Minha Biografia",
+		Fonts: []EmbeddedFont{
+			{Family: "Lato", Style: "normal", Weight: "400", Range: "U+0000-00FF", Format: "woff2", Data: fake},
+			{Family: "Lato", Style: "normal", Weight: "400", Range: "U+0100-02BA", Format: "woff2", Data: fake},
+			{Family: "Vazia", Style: "normal", Weight: "400", Data: nil}, // skipped
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	zr, err := zip.NewReader(bytes.NewReader(b), int64(len(b)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	files := map[string][]byte{}
+	for _, f := range zr.File {
+		r, _ := f.Open()
+		data, _ := io.ReadAll(r)
+		r.Close()
+		files[f.Name] = data
+	}
+	if got := files["OEBPS/fonts/lato-400-normal-0.woff2"]; !bytes.Equal(got, fake) {
+		t.Errorf("first subset file missing/corrupt (%d bytes)", len(got))
+	}
+	if _, ok := files["OEBPS/fonts/lato-400-normal-1.woff2"]; !ok {
+		t.Error("second subset of the SAME (style, weight) missing — files must not collide")
+	}
+	if _, ok := files["OEBPS/fonts/vazia-400-normal-2.woff2"]; ok {
+		t.Error("dataless font must be skipped")
+	}
+	opf := string(files["OEBPS/content.opf"])
+	if !strings.Contains(opf, `href="fonts/lato-400-normal-0.woff2"`) || !strings.Contains(opf, "font/woff2") {
+		t.Errorf("font missing from manifest:\n%s", opf)
+	}
+	doc := string(files["OEBPS/content.xhtml"])
+	if !strings.Contains(doc, `@font-face { font-family: "Lato"; font-style: normal; font-weight: 400; unicode-range: U+0000-00FF; src: url(fonts/lato-400-normal-0.woff2) format("woff2"); }`) {
+		t.Errorf("@font-face rule with unicode-range missing:\n%s", doc)
+	}
+	dec := xml.NewDecoder(strings.NewReader(doc))
+	for {
+		_, err := dec.Token()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			t.Fatalf("content.xhtml with fonts is not well-formed: %v", err)
+		}
+	}
+}
+
 func TestFilename(t *testing.T) {
 	cases := map[string]string{
 		"Minha Biografia":  "minha-biografia.epub",

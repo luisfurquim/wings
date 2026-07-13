@@ -238,6 +238,10 @@ func (t *Text) Render(obj *wings.PranaObj) {
 			menu = menuES[0]
 		}
 		tb := newToolbar(obj, toolbarES[0], menu, editor, prof)
+		// A finished asynchronous AddFont (URL dropped into the face
+		// picker) refreshes the options so the new font shows up without
+		// waiting for the next selection change.
+		tb.unsubFonts = wtext.OnWebFontsChanged(tb.refresh)
 		b.tb = tb
 		editor.OnSelectionChange(tb.refresh)
 		tb.render()

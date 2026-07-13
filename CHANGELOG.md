@@ -8,6 +8,60 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
+## [Unreleased]
+
+### Added
+- **Webfonts through trusted stores (font plan, phase 2)** — a HARD-CODED
+  allowlist of libre-catalog providers (Google Fonts: fonts.google.com /
+  fonts.googleapis.com / fonts.gstatic.com; Bunny Fonts: fonts.bunny.net)
+  feeds two doors into `w-text`'s face picker: `wtext.AddFont(url, done)`
+  for the webdev and a store URL pasted straight into the picker
+  (`SelectItem` gained the optional `NotInList` hook riding w-combobox's
+  `@notinlist`). The store CSS is parsed as hostile input (bounded;
+  every file URL re-verified against the store's own hosts; both parsers
+  fuzzed), files load via the browser's `FontFace` API — EVERY per-script subset,
+  each under its `unicode-range` (loading a single subset "succeeds" and
+  then renders fallback glyphs, letter by letter) — and their bytes
+  stay in a bounded registry (`InstalledWebFonts`,
+  `OnWebFontsChanged`) — which is how the picker refreshes when an
+  asynchronous load finishes and how `wtextepub` **embeds the used fonts
+  in the exported EPUB** (`Config.Fonts`/`EmbeddedFont`: files in the
+  OCF, `@font-face` rules in the content document; the libre-catalog
+  curation is what makes the embed legitimate). The webdev's control is
+  deny-only, fail-closed: `DenyFontStore(name)` (unknown names error) and
+  `DisableWebFonts()` — the hard-coded list is a ceiling, never a floor.
+
+### Fixed
+- **Every widget's shadow `<style>` was littered with `<br>` elements** —
+  the engine injected component CSS via `innerText`, which interprets
+  newlines by forging `<br>`s (hundreds per instance). The CSS still
+  parsed, since the CSSOM concatenates the text nodes around the junk,
+  but any rule relying on a newline as its only token separator would
+  silently break. Both injectors (creation and `wings.Update`) now use
+  `textContent`.
+- **Typing into a filterable `w-combobox` was erased as it was typed**:
+  the `&value` two-way binding only syncs DOM→data on `change` (blur),
+  and the filter's own reactive re-render repainted the input from the
+  stale model, wiping each keystroke. `onInput` now syncs the model
+  first. Longstanding bug — every filter-by-typing flow was affected.
+- **`w-combobox` dropdown clipped by scrolling containers** — the open
+  list now rides the Popover API's top layer (fixed-position, anchored
+  to the field, height clamped to the viewport), so no ancestor with
+  `overflow` (a tab panel, `w-text`'s own box) can cut its tail off.
+  Browsers without the API keep the previous in-flow dropdown.
+- **Pasting a value into a single-mode `w-combobox` could append to the
+  previous label instead of replacing it** — an async model resync
+  repainted the input right after focus and killed the select-all, so
+  the paste landed after the old text. The resync now re-selects while
+  the field is focused; and the face picker's URL door additionally
+  salvages a URL glued to leftover text ("Serifadahttps://…"), which
+  used to be dropped in silence — the reason a freshly added webfont
+  seemed to appear only after the NEXT one was added.
+- **Enter inside a `w-combobox` echoed into `w-text`'s editor** — the
+  trigger handler returns focus to the editor during the keydown
+  dispatch and the key's default action followed it, inserting a
+  paragraph break at the caret. The Enter keydown is now cancelled.
+
 ## [0.22.0] — 2026-07-12
 
 ### Added

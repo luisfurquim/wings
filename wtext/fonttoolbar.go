@@ -1,6 +1,9 @@
 package wtext
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 // FontToolbar is the stock character/paragraph formatting plugin: font
 // face and font size pickers plus the four paragraph alignment toggles.
@@ -82,6 +85,36 @@ var alignments = []struct{ dir, label, icon, help string }{
 	{"justify", "wtext-align-justify", "format_align_justify", "wtext-align-justify-help"},
 }
 
+// webFontAwarePick is ClassPick(facePrefix) plus lazy class definition:
+// a runtime-installed webfont has no attach-time Init to define its
+// wt-ff-* class, so the first pick defines it here.
+func webFontAwarePick() func(EditorCore, string) error {
+	pick := ClassPick(facePrefix)
+	return func(core EditorCore, value string) error {
+		if value != "" {
+			if err := defineWebFontClass(core, value); err != nil {
+				return err
+			}
+		}
+		return pick(core, value)
+	}
+}
+
+// defineWebFontClass ensures an installed webfont's utility class exists
+// on this editor. A no-op for ids that are not installed webfonts or
+// whose class is already defined.
+func defineWebFontClass(core EditorCore, id string) error {
+	name := facePrefix + id
+	if _, ok := core.ClassCSS(name); ok {
+		return nil
+	}
+	wf, found := webFontByID(id)
+	if !found {
+		return nil
+	}
+	return core.DefineClass(name, "font-family: "+wf.Family)
+}
+
 func (t FontToolbar) faces() []FontFace {
 	if len(t.Faces) > 0 {
 		return t.Faces
@@ -132,9 +165,56 @@ func (t FontToolbar) Items() []ToolbarItem {
 	items := []ToolbarItem{
 		SelectItem{
 			ID: "fontface", Label: "wtext-font", Help: "wtext-font-help",
-			Options: func(EditorCore) []Option { return faceOpts },
+			// Webfonts installed at runtime (AddFont / a store URL dropped
+			// into this very picker) join the configured faces on every
+			// refresh — Options is dynamic like the style picker's.
+			Options: func(EditorCore) []Option {
+				opts := append([]Option(nil), faceOpts...)
+				configured := map[string]bool{}
+				for _, f := range t.faces() {
+					configured[f.ID] = true
+				}
+				for _, wf := range InstalledWebFonts() {
+					if configured[wf.ID] {
+						continue
+					}
+					opts = append(opts, Option{Value: wf.ID, Label: wf.Label, Font: wf.Family})
+				}
+				return opts
+			},
 			Current: ClassCurrent(facePrefix),
-			Pick:    ClassPick(facePrefix),
+			Pick:    webFontAwarePick(),
+			// The URL door: Enter on text no option matches. Only store
+			// URLs pass (allowlist, deny state); the loaded font applies
+			// to the remembered selection and appears in the picker.
+			NotInList: func(core EditorCore, text string) error {
+				if loadWebFont == nil {
+					return fmt.Errorf("wtext: webfont loading unavailable")
+				}
+				text = strings.TrimSpace(text)
+				// A pasted URL sometimes arrives GLUED to the field's
+				// previous label ("Lobsterhttps://..."): an async repaint
+				// can kill the input's select-all right before the paste,
+				// turning replace into append. Salvage the URL — the
+				// store allowlist still has the final word on it.
+				if i := strings.Index(text, "https://"); i > 0 {
+					text = text[i:]
+				}
+				if !strings.HasPrefix(text, "https://") {
+					return nil // ordinary typing, not a URL drop
+				}
+				loadWebFont(text, func(family string, err error) {
+					if err != nil {
+						return // the loader logged it
+					}
+					id := fontSlug(family)
+					if err := defineWebFontClass(core, id); err != nil {
+						return
+					}
+					_ = SwapClass(core, facePrefix, facePrefix+id)
+				})
+				return nil
+			},
 		},
 		SelectItem{
 			ID: "fontsize", Label: "wtext-size", Help: "wtext-size-help",

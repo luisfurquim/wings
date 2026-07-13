@@ -76,6 +76,9 @@ func disconnect(host js.Value) {
 	if b.tb != nil {
 		b.tb.closeHelp()
 		b.tb.closeConfig()
+		if b.tb.unsubFonts != nil {
+			b.tb.unsubFonts()
+		}
 	}
 	b.editor.Detach()
 	if id, ok := nodeKey(host); ok {

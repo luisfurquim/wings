@@ -261,6 +261,10 @@ type SelectItem struct {
 	Options         func(EditorCore) []Option
 	Current         func(EditorCore) string
 	Pick            func(EditorCore, string) error
+	// NotInList, when set, receives text the user confirmed (Enter) that
+	// matches no option — the face picker's webfont URL drop rides this.
+	// Optional; absent, unmatched text just does nothing.
+	NotInList func(EditorCore, string) error
 }
 
 func (SelectItem) isToolbarItem() {}

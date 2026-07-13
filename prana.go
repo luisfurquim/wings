@@ -774,7 +774,7 @@ func Update(tagName string, cssContent string) {
 			shadowRoot.Call("insertBefore", styleNode, shadowRoot.Get("firstChild"))
 			continue
 		}
-		styleNode.Set("innerText", cssContent)
+		styleNode.Set("textContent", cssContent) // not innerText: it forges <br> from newlines
 	}
 }
 
