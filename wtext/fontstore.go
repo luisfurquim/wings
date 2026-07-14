@@ -65,10 +65,17 @@ type WebFontSource struct {
 // WebFont is one font installed through a store, as the registry and the
 // face picker see it.
 type WebFont struct {
-	ID      string // face-picker id: class wt-ff-<ID>
-	Label   string // display name (the family, shown as-is)
-	Family  string // CSS stack: "Family", generic fallback
-	Sources []WebFontSource
+	ID     string // face-picker id: class wt-ff-<ID>
+	Label  string // display name (the family, shown as-is)
+	Family string // CSS stack: "Family", generic fallback
+	// StoreURL is the canonical store URL this font came from — the
+	// REFERENCE that can re-install it: it is what a document persists
+	// (so reopening it brings the font back) and what a style library
+	// file carries (so importing a style brings its font along). Fonts
+	// travel as this URL and never as bytes: the allowlist gets the final
+	// word again every time one is followed.
+	StoreURL string
+	Sources  []WebFontSource
 }
 
 // fontStore is one hard-coded provider: how to recognize its URLs, where
@@ -238,6 +245,30 @@ func InstalledWebFonts() []WebFont {
 	out := make([]WebFont, len(webFonts))
 	copy(out, webFonts)
 	return out
+}
+
+// webFontCfgPrefix namespaces the document properties that remember an
+// installed webfont: one wtfont.<id> per font, holding the store URL it
+// can be re-installed from. They ride Content()'s head like any other
+// property, so a document that uses a webfont reopens WITH it — the class
+// rule alone (font-family: "Lobster") only says which font the text
+// wants, not where the browser can get it.
+const webFontCfgPrefix = "wtfont."
+
+// rememberWebFont persists an installed webfont in the DOCUMENT, as the
+// store reference it came from. Only fonts the USER installed are worth
+// remembering (a URL dropped into the face picker, a style library
+// imported): a font the webdev adds at boot is put back by the app on
+// every load, and persisting it would only stale the document with a URL
+// the app itself owns.
+func rememberWebFont(core EditorCore, id string) {
+	wf, ok := webFontByID(id)
+	if !ok || wf.StoreURL == "" {
+		return
+	}
+	if err := core.SetConfig(webFontCfgPrefix+id, wf.StoreURL); err != nil {
+		G.Logf(1, "wtext: webfont %q not persisted: %v\n", id, err)
+	}
 }
 
 // webFontByID looks an installed font up by its face-picker id.

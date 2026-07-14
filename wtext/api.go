@@ -347,6 +347,91 @@ type MenuInput struct {
 
 func (MenuInput) isMenuItem() {}
 
+// DefaultUploadLen bounds a MenuUpload file whose MaxLen is 0.
+const DefaultUploadLen = 1 << 20
+
+// MenuUpload is a menu action that acts on a FILE the user picks —
+// MenuInput's counterpart for import: the widget renders a button that
+// opens the browser's file picker, reads the chosen file and calls Do
+// with its bytes. The plugin never sees the file input, only the payload,
+// which is hostile input like any other — Do parses and validates it.
+type MenuUpload struct {
+	Group, ID, Label, Help string
+	// Accept filters what the picker offers (the <input accept> syntax,
+	// e.g. ".json,application/json"). A convenience for the user, never a
+	// check: a file that gets through still faces Do's own validation.
+	Accept string
+	// MaxLen bounds the file; 0 means DefaultUploadLen. A larger file is
+	// refused before a byte of it reaches Go.
+	MaxLen int
+	Do     func(core EditorCore, data []byte) error
+}
+
+func (MenuUpload) isMenuItem() {}
+
+// PendingDecision is the error a plugin action returns when it cannot
+// finish without an answer only the user can give — an import about to
+// overwrite existing styles, say. A plugin never touches the DOM, so it
+// does not open a dialog: it DECLARES the question (a title, a message,
+// what is at stake, the options) and the widget asks it, with the app's
+// own widgets, in the app's language, then calls Resume with the chosen
+// option's Value.
+//
+// Remember names the answer for the "don't ask again" checkbox: ticking
+// it stores the PICKED OPTION under that key, so the widget can answer
+// the same question by itself from then on — what gets remembered is the
+// policy, not merely the silence.
+type PendingDecision struct {
+	Title, Message string // message ids
+	// Detail lists what is at stake (the colliding style names...). It is
+	// user data, shown as-is: never a message id.
+	Detail []string
+	// Options are the answers, in display order. The first is the one a
+	// keyboard user reaches first; none is "default" — an unanswered
+	// question resumes nothing.
+	Options []DecisionOption
+	// Remember is the storage key of the "don't ask again" answer; empty
+	// means the question is always asked.
+	Remember string
+	// Resume finishes the action with the chosen option's Value. It runs
+	// on the live document, possibly long after Do returned.
+	Resume func(core EditorCore, choice string) error
+}
+
+// Error makes PendingDecision an error, so it rides the ordinary error
+// return out of Do and the widget picks it out with errors.As.
+func (d *PendingDecision) Error() string {
+	return "wtext: pending decision: " + d.Title
+}
+
+// Valid reports whether the decision can actually be asked and answered:
+// an option to pick and a Resume to call. The widget checks it before
+// opening anything — a malformed decision degrades to a logged error,
+// never a dialog the user cannot escape.
+func (d *PendingDecision) Valid() bool {
+	return d != nil && d.Resume != nil && len(d.Options) > 0
+}
+
+// Allows reports whether choice is one of the declared options. The
+// widget validates a REMEMBERED answer through it: the store it comes
+// from (localStorage) is user-writable, so what comes back is input, not
+// state.
+func (d *PendingDecision) Allows(choice string) bool {
+	for _, o := range d.Options {
+		if o.Value == choice {
+			return true
+		}
+	}
+	return false
+}
+
+// DecisionOption is one answer to a PendingDecision: the Value handed to
+// Resume (and stored by "don't ask again"), and the message id of its
+// button.
+type DecisionOption struct {
+	Value, Label string
+}
+
 // ConfigPlugin declares sections of USER-editable document configuration
 // — the iOS Settings model: each plugin registers the schema of what it
 // needs configured (the EPUB exporter its book metadata, a page plugin
@@ -417,6 +502,11 @@ const (
 	MaxConfigKeyLen   = 128
 	MaxConfigValueLen = 4096
 )
+
+// maxDocClasses bounds how many class rules one document (or one style
+// library file) may define. It lives here, in the portable half, because
+// both the js loader and the native library parser answer to it.
+const maxDocClasses = 256
 
 // validateConfigKey enforces the key shape shared by the js store and the
 // portable fake: non-empty, bounded, no control characters or whitespace

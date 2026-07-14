@@ -8,16 +8,8 @@ import (
 	"strings"
 	"syscall/js"
 
-	"github.com/luisfurquim/goose"
 	"github.com/luisfurquim/wings/epubhtml"
 )
-
-// G is the logger for this module. Errors are visible by default: the
-// guard recovers report through Logf(1), and a swallowed panic with no
-// trace is undebuggable.
-var G goose.Alert
-
-func init() { G.Set(1) }
 
 // Undo bounds: a step cap and a byte budget over retained strings/nodes,
 // whichever trips first (see undostack.go).
@@ -366,10 +358,6 @@ func (e *Editor) rangeFor(s Selection) (js.Value, error) {
 
 // ── Content I/O ─────────────────────────────────────────────────────────
 
-// maxDocClasses bounds how many class rules a stored document may define
-// on load — bounded everything.
-const maxDocClasses = 256
-
 // Content serializes the document as a complete EPUB-style content
 // document: the body is the editor tree (which by construction only
 // holds what the policy let in), and the registered classes the tree
@@ -540,6 +528,7 @@ func (e *Editor) SetContent(html string) error {
 		Call("parseFromString", html, "text/html")
 	e.config = map[string]string{} // a content load replaces the document's properties too
 	e.adoptDocConfig(parsed)
+	e.restoreWebFonts()
 	e.adoptDocClasses(parsed)
 	var f Fragment
 	if body := parsed.Get("body"); body.Truthy() {
@@ -556,6 +545,32 @@ func (e *Editor) SetContent(html string) error {
 	e.clearPending()
 	e.undo.Clear()
 	return nil
+}
+
+// restoreWebFonts re-installs the webfonts a loaded document remembers
+// (its wtfont.<id> properties, see webFontCfgPrefix). Without this a
+// document reopens carrying the class rule that NAMES its font —
+// font-family: "Lobster" — with no @font-face behind it, so the text
+// silently falls back to a generic family and the face picker does not
+// even list the font: the formatting is there, the font is gone.
+//
+// The URLs are hostile input like everything else a document carries: each
+// goes back through the store allowlist inside AddFont, which is what
+// keeps a document from naming an origin the hard-coded list does not
+// have. Loading is asynchronous and failures are logged, never fatal — a
+// font that does not come back leaves the text in its fallback family,
+// exactly as a reader without the font would see it.
+func (e *Editor) restoreWebFonts() {
+	for key, url := range e.config {
+		id, ok := strings.CutPrefix(key, webFontCfgPrefix)
+		if !ok || id == "" {
+			continue
+		}
+		if _, installed := webFontByID(id); installed {
+			continue // already in the registry (another editor, another load)
+		}
+		AddFont(url, nil)
+	}
 }
 
 // adoptDocClasses registers the class rules a stored document carries in

@@ -35,6 +35,7 @@ type toolbar struct {
 
 	cfgDlg     js.Value // the open settings dialog, or js.Undefined()
 	cfgRelease func()   // releases the settings dialog's anchor listener
+	decDlg     js.Value // the open decision dialog, or js.Undefined()
 	unsubFonts func()   // unsubscribes the webfont-registry watcher
 }
 
@@ -58,7 +59,11 @@ type trackedStatus struct {
 }
 
 func newToolbar(obj *wings.PranaObj, container, menu js.Value, editor *wtext.Editor, p wtext.Profile) *toolbar {
-	return &toolbar{obj: obj, host: obj.Element, container: container, menu: menu, editor: editor, profile: p, helpDlg: js.Undefined(), cfgDlg: js.Undefined()}
+	return &toolbar{
+		obj: obj, host: obj.Element, container: container, menu: menu,
+		editor: editor, profile: p,
+		helpDlg: js.Undefined(), cfgDlg: js.Undefined(), decDlg: js.Undefined(),
+	}
 }
 
 // render draws every item of every toolbar plugin into the container. It is
@@ -71,6 +76,7 @@ func newToolbar(obj *wings.PranaObj, container, menu js.Value, editor *wtext.Edi
 func (t *toolbar) render() {
 	t.closeHelp()
 	t.closeConfig()
+	t.closeDecision()
 	t.toggles = nil
 	t.selects = nil
 	t.statuses = nil
@@ -155,6 +161,8 @@ func (t *toolbar) helpEntries() []helpEntry {
 			case wtext.MenuAction:
 				groupID, labelID, helpID = it.Group, it.Label, it.Help
 			case wtext.MenuInput:
+				groupID, labelID, helpID = it.Group, it.Label, it.Help
+			case wtext.MenuUpload:
 				groupID, labelID, helpID = it.Group, it.Label, it.Help
 			default:
 				continue
@@ -293,9 +301,7 @@ func (t *toolbar) button(id, labelID, icon string, do func() error) js.Value {
 	// Decision 8.2: keep the selection alive across the click.
 	dom.AddEvent(btn, "mousedown", func(_ js.Value, _ []js.Value) any { return nil }, true, false)
 	dom.AddEvent(btn, "click", func(_ js.Value, _ []js.Value) any {
-		if err := do(); err != nil {
-			G.Logf(1, "w-text: toolbar action %q failed: %v\n", id, err)
-		}
+		t.actionErr(id, do())
 		t.afterAction()
 		return nil
 	}, false, false)
@@ -426,10 +432,7 @@ func (t *toolbar) inputControl(it wtext.InputItem) {
 	toggle := t.inputPopover(wrap, t.resolveLabel(it.Placeholder),
 		func() string { return "" },
 		func(val string) {
-			if err := it.Do(t.editor, val); err != nil {
-				G.Logf(1, "w-text: toolbar input %q failed: %v\n", it.ID, err)
-				return
-			}
+			t.actionErr(it.ID, it.Do(t.editor, val))
 			t.afterAction()
 		})
 
@@ -699,10 +702,21 @@ var defaultLabels = map[string]string{
 	"wtext-help":       "Help",
 	"wtext-help-title": "Toolbar help",
 
-	"wtext-menu":   "Menu",
-	"wtext-export": "Export",
-	"wtext-import": "Import",
-	"wtext-config": "Settings",
+	"wtext-menu":     "Menu",
+	"wtext-export":   "Export",
+	"wtext-import":   "Import",
+	"wtext-config":   "Settings",
+	"wtext-remember": "Don't ask again",
+
+	"wtext-stylelib-export":       "Styles",
+	"wtext-stylelib-export-help":  "Save this document's named styles to a file, to reuse them in other documents.",
+	"wtext-stylelib-import":       "Styles",
+	"wtext-stylelib-import-help":  "Load styles from a saved file. They join the style picker; nothing is applied to the text.",
+	"wtext-stylelib-name":         "File name",
+	"wtext-stylelib-conflict":     "Styles with the same name",
+	"wtext-stylelib-conflict-msg": "This document already has styles with these names. Replace them with the ones from the file, or keep the ones you have?",
+	"wtext-stylelib-overwrite":    "Replace",
+	"wtext-stylelib-skip":         "Keep mine",
 
 	"wtext-counter-label": "Counter",
 	"wtext-counter":       "Chars: %d · Letters: %d · Words: %d",

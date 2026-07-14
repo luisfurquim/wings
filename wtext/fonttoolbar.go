@@ -211,6 +211,9 @@ func (t FontToolbar) Items() []ToolbarItem {
 					if err := defineWebFontClass(core, id); err != nil {
 						return
 					}
+					// The document remembers where the font came from, so
+					// reopening it brings the font back and not just its name.
+					rememberWebFont(core, id)
 					_ = SwapClass(core, facePrefix, facePrefix+id)
 				})
 				return nil

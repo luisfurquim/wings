@@ -78,10 +78,15 @@ func AddFont(rawURL string, done func(family string, err error)) {
 			return
 		}
 		err = registerWebFont(WebFont{
-			ID:      fontSlug(family),
-			Label:   family,
-			Family:  `"` + family + `"`,
-			Sources: loaded,
+			ID:     fontSlug(family),
+			Label:  family,
+			Family: `"` + family + `"`,
+			// The store's CANONICAL css URL, not the raw string dropped:
+			// a specimen page, an old css v1 link and a css2 link for the
+			// same family all normalize to one reference, so a document
+			// (or a library file) never persists two entries for one font.
+			StoreURL: p.cssURL,
+			Sources:  loaded,
 		})
 		if err != nil {
 			finish("", err)
