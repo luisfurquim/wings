@@ -992,6 +992,42 @@
     "revised": false
   },
   {
+    "content": "Importar",
+    "revised": false
+  },
+  {
+    "content": "Estilos",
+    "revised": false
+  },
+  {
+    "content": "Guarda los estilos con nombre de este documento en un archivo, para reusarlos en otros documentos.",
+    "revised": false
+  },
+  {
+    "content": "Carga estilos desde un archivo guardado. Entran en la caja \"Estilo\"; no se aplica nada al texto.",
+    "revised": false
+  },
+  {
+    "content": "Estilos con el mismo nombre",
+    "revised": false
+  },
+  {
+    "content": "Este documento ya tiene estilos con estos nombres. ¿Reemplazarlos por los del archivo, o conservar los propios?",
+    "revised": false
+  },
+  {
+    "content": "Reemplazar",
+    "revised": false
+  },
+  {
+    "content": "Conservar los míos",
+    "revised": false
+  },
+  {
+    "content": "No preguntar de nuevo",
+    "revised": false
+  },
+  {
     "content": "Probador in-web",
     "revised": true
   },

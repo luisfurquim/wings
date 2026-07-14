@@ -364,6 +364,21 @@ already do:
   runes; words are whitespace-separated fields carrying at least one letter
   or digit (a standalone comma or dash is not a word). It's also the
   reference for writing your own read-outs (see `StatusItem` below).
+- **`wtext.StyleLibrary{DefaultName: "my-styles"}`** — the personal style
+  library in the SIDE MENU (a `MenuPlugin`): "Export › Styles" downloads the
+  document's NAMED styles as JSON (`{"wtstyles":1,"styles":[…],"fonts":[…]}`;
+  `wt-*` utilities are wings' vocabulary and stay out), "Import › Styles"
+  (a `MenuUpload`) loads one back. Pairs with `StyleToolbar` — it is how the
+  styles a user builds in one document reach the next. Do NOT write a
+  parallel importer: the file is hostile input and `ParseStyleLib` already
+  bounds it (256 KiB / 256 styles / version) and funnels every entry through
+  the SAME gate as a stored document's `<style>` (`ValidClassName` +
+  `SanitizeCSS` + reserved `wt-`), dropping bad entries and keeping good
+  ones. Two invariants to preserve if you extend it: fonts travel as a store
+  REFERENCE (`WebFont.StoreURL`, re-followed through the allowlist), never as
+  bytes or an `@font-face` rule; and import DEFINES styles, never APPLIES
+  them. Its label ids (`wtext-stylelib-*`, `wtext-remember`) have built-in
+  English defaults, so localize them as usual with `<span slot="labels">`.
 - **`wtextepub.Menu{Cfg: wtextepub.Config{Title: …}}`** — "Export › EPUB"
   in the SIDE MENU (a `MenuPlugin`, NOT a toolbar plugin — document-level
   actions never go on the toolbar), from the SEPARATE module
@@ -423,10 +438,29 @@ actions (export, import…) do NOT go on the toolbar: implement
 `MenuPlugin` (`Profile.Menu`) declaring `MenuAction{Group, ID, Label,
 Help, Do}` — or `MenuInput` when the action needs a typed value first
 (same prompt popover as the toolbar's `InputItem`, with a `Value` hook
-seeding it, opened selected: Enter keeps, typing replaces) — the widget
-renders one accordion section per `Group`
+seeding it, opened selected: Enter keeps, typing replaces), or
+`MenuUpload` when it acts on a FILE the user picks (the widget owns the
+hidden `<input type=file>` and bounds the read — `MaxLen`, default 1 MiB —
+then hands `Do(core, data []byte)` the bytes; `Accept` only filters what
+the picker offers, so validate the payload as the hostile input it is;
+never build your own file input, a plugin does not touch the DOM) — the
+widget renders one accordion section per `Group`
 (`w-tabs mode="accordion"` = native `<details>`) in a column beside the
 editor, only when items exist (a hamburger button collapses the column).
+When an action cannot finish without the USER's answer (an import about to
+overwrite existing styles), do NOT open a dialog — a plugin never touches
+the DOM. Return a `*wtext.PendingDecision` as an ordinary error
+(`Title`/`Message` message ids, `Detail []string` of what is at stake — user
+data, shown as-is — `Options []DecisionOption{Value, Label}`, an optional
+`Remember` storage key, and `Resume(core, choice) error`): the widget picks
+it out with `errors.As`, asks the question in a `w-dialog` with the app's own
+widgets and catalog, and calls `Resume` with the chosen option's `Value`.
+`Remember` adds the "don't ask again" checkbox (label id `wtext-remember`),
+which stores the PICKED OPTION — a policy the widget can apply by itself
+next time — re-validated against the declared options on read, since
+`localStorage` is user-writable input, not state. Raise ONE decision per
+action covering every affected item (a decision returned from inside
+`Resume` is logged and dropped: no dialog loops).
 USER-editable configuration is its own contract: `ConfigPlugin`
 (`Profile.Config`) declares `ConfigSection`s of sealed fields
 (`ConfigText`/`ConfigChoice` with defaults); the widget renders them

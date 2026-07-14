@@ -40,6 +40,8 @@ func init() {
 	// char/letter/word counter (CounterToolbar); EPUB export (wtextepub)
 	// lands in the side menu under the standard Export group and registers
 	// its book-metadata settings page (same instance in Menu and Config).
+	// StyleLibrary adds the other pair of menu entries: save this
+	// document's named styles to a file, load them into another one.
 	epubExport := wtextepub.Menu{Cfg: wtextepub.Config{
 		Title:  "Biografia",
 		Author: "wings live demo",
@@ -51,7 +53,7 @@ func init() {
 			wtext.StyleToolbar{},
 			wtext.CounterToolbar{},
 		},
-		Menu:   []wtext.MenuPlugin{epubExport},
+		Menu:   []wtext.MenuPlugin{epubExport, wtext.StyleLibrary{DefaultName: "meus-estilos"}},
 		Config: []wtext.ConfigPlugin{epubExport},
 	})
 	wings.Register(

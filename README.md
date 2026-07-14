@@ -49,6 +49,13 @@ Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
 ### Unreleased
 
+- **Personal style library** — `wtext.StyleLibrary` saves a document's named
+  styles to a file and loads them into another one, fonts included (as store
+  references, never bytes). Two contracts came with it: `MenuUpload` (a menu
+  item that acts on a file the user picks) and `PendingDecision` (a plugin
+  asks the user a question — the widget opens the dialog, and can remember
+  the answer). A document now also **remembers the webfonts it uses**, so
+  reopening it brings the fonts back and not just their names.
 - **Webfonts from trusted stores** — paste a Google Fonts or Bunny Fonts
   URL into `w-text`'s face picker (or call `wtext.AddFont`) and the font
   loads, previews, applies and **embeds in the exported EPUB**. The store
@@ -1977,7 +1984,12 @@ composes each action's `Help` into the same "?" dialog as the toolbar's
 name, a target — declares a `MenuInput` instead: the same prompt popover
 as the toolbar's `InputItem`, plus a `Value` hook that seeds it (opened
 selected — Enter keeps the suggestion, typing replaces it; a Save-As
-dialog never opens empty). A hamburger button heads the column,
+dialog never opens empty). An action that acts on a FILE — the import
+direction — declares a `MenuUpload`: the widget renders the button, owns
+the hidden `<input type=file>`, bounds the file (`MaxLen`, default 1 MiB)
+and hands `Do` the bytes, which the plugin parses as the hostile input
+they are (`Accept` only filters what the picker offers — it is a courtesy,
+never a check). A hamburger button heads the column,
 collapsing it to its own width to hand the space back to the editor
 (`aria-expanded` reflects the state). The whole thing is pay-per-use: a group with no items
 is never created, a profile with no menu items gets no column at all, and
@@ -2055,6 +2067,76 @@ same faces the editor showed. The portable half (`Build`, `Filename`) is unit-te
 natively — the tests unzip the output and feed every document to
 `encoding/xml` as the well-formedness proof.
 
+**Personal style library — `StyleLibrary`.** The styles a user builds up
+with `StyleToolbar` belong to the document that holds them; the library is
+how they travel to the next one — Word's "styles live in the template",
+minus the template. Add the plugin to a profile's menu and it declares two
+items, one per direction:
+
+```go
+wtext.RegisterProfile("post", wtext.Profile{
+    Toolbar: []wtext.ToolbarPlugin{wtext.BasicToolbar{}, wtext.StyleToolbar{}},
+    Menu:    []wtext.MenuPlugin{wtext.StyleLibrary{DefaultName: "my-styles"}},
+})
+```
+
+**Export** (under the standard Export group) prompts for a file name and
+downloads every *named* style of the document — the `wt-*` utilities are
+wings' own vocabulary, not the user's, so they stay out — as a small,
+readable, hand-editable JSON file:
+
+```json
+{ "wtstyles": 1,
+  "styles": [{"name": "epigraph", "css": "font-style: italic; font-family: \"Lobster\""}],
+  "fonts":  [{"family": "Lobster", "url": "https://fonts.googleapis.com/css2?family=Lobster"}] }
+```
+
+**Import** (`MenuUpload`, under Import) reads a file back. A library file is
+hostile input and is treated as one: it is bounded (256 KiB, 256 styles),
+its version must be one this build reads, and **every entry funnels through
+the very same gate as a stored document's `<style>`** — `ValidClassName` +
+`SanitizeCSS` + the reserved-`wt-` rule — with the same fail-toward-text
+rule, so one bad entry poisons only itself while the good ones load
+(`ParseStyleLib` is a pure function over bytes, fuzzed). Two invariants
+carry the design:
+
+- **Fonts travel as a store REFERENCE, never as bytes and never as an
+  `@font-face` rule.** Import re-follows the URL through the hard-coded
+  store allowlist, exactly as if the user had just dropped it into the face
+  picker — a file cannot smuggle in an origin the list does not carry, and a
+  font that fails to load costs the import nothing (the style still imports,
+  in its fallback family).
+- **Import DEFINES styles; it never APPLIES them.** A library populates the
+  picker — what the text wears stays the user's decision.
+
+A name the document already uses is the one thing the plugin will not decide
+alone. It returns a **`PendingDecision`** — the general contract for "a
+plugin needs an answer": the plugin never touches the DOM, so it *declares*
+the question (title, message, what is at stake, the options) and the widget
+asks it in a `w-dialog`, with the app's own widgets and the app's own
+catalog, then calls `Resume` with the chosen option. The dialog is raised
+once per import, listing every colliding name at once, and its "don't ask
+again" checkbox stores the PICKED OPTION (in `localStorage`, under the key
+the plugin named) — what gets remembered is a policy the widget can apply by
+itself, not merely the silence. A remembered answer is re-validated against
+the options the plugin declared before it counts: `localStorage` is
+user-writable, so what comes out of it is input, not state.
+
+An imported style the user never applies still exists — it sits in the
+picker for the next selection. It only lands in the *document* once something
+wears it (`Content()` persists the styles the tree uses); the library file is
+where an unused style lives.
+
+**Webfonts persist in the document.** A font the USER installs — a store URL
+dropped into the face picker, or one that came in with a library file — is
+remembered in the document as a `wtfont.<id>` property (a `<meta name="wt-cfg-…">`
+in `Content()`'s head, the store URL as its value). Reopening the document
+re-installs it through the allowlist, asynchronously: without this the class
+rule that NAMES the font (`font-family: "Lobster"`) would come back with no
+`@font-face` behind it and the text would silently fall back — the formatting
+there, the font gone. Fonts the webdev adds at boot with `AddFont` are not
+persisted: the app puts them back on every load anyway.
+
 **Localized toolbar.** Toolbar labels are message ids resolved at render, so
 they translate like the rest of your UI. The editor ships built-in English
 fallbacks; to localize, provide `<span slot="labels" id="wtext-…">` nodes in
@@ -2066,7 +2148,12 @@ and `wtext-block-p`/`-h1`…`-h6`/`-quote`/`-pre`; `FontToolbar` adds
 `StyleToolbar` adds `wtext-style`, `wtext-style-new`, `wtext-style-name`,
 `wtext-style-none`, `wtext-ok`, `wtext-cancel`; `CounterToolbar` adds
 `wtext-counter`(+`-label`); the side menu adds `wtext-menu`,
-`wtext-export`, `wtext-import` and `wtext-config`. The stock toolbars'
+`wtext-export`, `wtext-import` and `wtext-config`; `StyleLibrary` adds
+`wtext-stylelib-export`(+`-help`), `wtext-stylelib-import`(+`-help`),
+`wtext-stylelib-name`, and — for the collision dialog —
+`wtext-stylelib-conflict`(+`-msg`), `wtext-stylelib-overwrite`,
+`wtext-stylelib-skip` and `wtext-remember` (the "don't ask again" label,
+shared by every `PendingDecision`). The stock toolbars'
 `Help` ids follow the same `-help` suffix (`wtext-bold-help`,
 `wtext-align-left-help`, …), plus `wtext-help`/`wtext-help-title` for the
 "?" button and dialog title — the same slot convention translates them.

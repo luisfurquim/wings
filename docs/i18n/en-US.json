@@ -992,6 +992,42 @@
     "revised": false
   },
   {
+    "content": "Import",
+    "revised": false
+  },
+  {
+    "content": "Styles",
+    "revised": false
+  },
+  {
+    "content": "Save this document's named styles to a file, to reuse them in other documents.",
+    "revised": false
+  },
+  {
+    "content": "Load styles from a saved file. They join the \"Style\" box; nothing is applied to the text.",
+    "revised": false
+  },
+  {
+    "content": "Styles with the same name",
+    "revised": false
+  },
+  {
+    "content": "This document already has styles with these names. Replace them with the ones from the file, or keep yours?",
+    "revised": false
+  },
+  {
+    "content": "Replace",
+    "revised": false
+  },
+  {
+    "content": "Keep mine",
+    "revised": false
+  },
+  {
+    "content": "Don't ask again",
+    "revised": false
+  },
+  {
     "content": "In-web tester",
     "revised": true
   },

@@ -11,6 +11,40 @@ per-commit record see the git log and tags.
 ## [Unreleased]
 
 ### Added
+- **Personal style library (`wtext.StyleLibrary`)** — a menu plugin that
+  saves a document's *named* styles to a JSON file (`{"wtstyles":1,
+  "styles":[…], "fonts":[…]}`, readable and hand-editable) and loads them
+  into another document. The file is hostile input and gets no special
+  trust: it is bounded (256 KiB, 256 styles, version-checked) and every
+  entry funnels through the SAME gate a stored document's `<style>` does
+  (`ValidClassName` + `SanitizeCSS` + the reserved `wt-` rule), one bad
+  entry poisoning only itself (`ParseStyleLib` is portable and fuzzed).
+  Fonts travel as a store REFERENCE (`WebFont.StoreURL`), never as bytes
+  and never as an `@font-face` rule — import re-follows the URL through
+  the hard-coded store allowlist — and import DEFINES styles, never
+  APPLIES them: a library populates the picker, the text stays the user's
+  decision.
+- **`MenuUpload`** — the import counterpart of `MenuInput`: a sealed menu
+  kind whose action acts on a FILE the user picks. The widget owns the
+  hidden file input, bounds the file (`MaxLen`, default 1 MiB) and hands
+  `Do` the bytes; the plugin never sees the DOM, and treats the payload as
+  the hostile input it is (`Accept` only filters the picker's offer).
+- **`PendingDecision`** — the general "a plugin needs an answer" contract:
+  an action that cannot finish alone returns it as an ordinary `error`
+  (title, message, what is at stake, the options, an optional `Remember`
+  key) and the widget — the only half that may touch the DOM — asks the
+  question in a `w-dialog` and calls `Resume` with the chosen option. The
+  "don't ask again" checkbox stores the PICKED OPTION, so what is
+  remembered is a policy; a remembered answer is re-validated against the
+  declared options, since `localStorage` is user-writable input, not state.
+- **A document remembers the webfonts it uses** — a font the USER installs
+  (a store URL dropped into the face picker, or one arriving with a style
+  library) is persisted as a `wtfont.<id>` document property holding its
+  store URL, and re-installed through the allowlist when the document is
+  reopened. Without it the class rule naming the font came back with no
+  `@font-face` behind it: the formatting there, the font silently gone.
+  Fonts the webdev adds at boot are not persisted — the app puts them back
+  on every load.
 - **Webfonts through trusted stores (font plan, phase 2)** — a HARD-CODED
   allowlist of libre-catalog providers (Google Fonts: fonts.google.com /
   fonts.googleapis.com / fonts.gstatic.com; Bunny Fonts: fonts.bunny.net)
