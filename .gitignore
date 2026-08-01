@@ -40,3 +40,4 @@ cmd/build/build
 example/example
 helpers/wlate/wlate
 live-demo/live-demo
+.grafia.db*

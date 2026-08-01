@@ -8,7 +8,7 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
-## [Unreleased]
+## [0.24.0] — 2026-07-14
 
 ### Added
 - **Personal style library (`wtext.StyleLibrary`)** — a menu plugin that
@@ -45,6 +45,10 @@ per-commit record see the git log and tags.
   `@font-face` behind it: the formatting there, the font silently gone.
   Fonts the webdev adds at boot are not persisted — the app puts them back
   on every load.
+
+## [0.23.0] — 2026-07-12
+
+### Added
 - **Webfonts through trusted stores (font plan, phase 2)** — a HARD-CODED
   allowlist of libre-catalog providers (Google Fonts: fonts.google.com /
   fonts.googleapis.com / fonts.gstatic.com; Bunny Fonts: fonts.bunny.net)

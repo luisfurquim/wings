@@ -47,7 +47,7 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
-### Unreleased
+### v0.24.0
 
 - **Personal style library** — `wtext.StyleLibrary` saves a document's named
   styles to a file and loads them into another one, fonts included (as store
@@ -56,20 +56,21 @@ Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
   asks the user a question — the widget opens the dialog, and can remember
   the answer). A document now also **remembers the webfonts it uses**, so
   reopening it brings the fonts back and not just their names.
+
+### v0.23.0
+
 - **Webfonts from trusted stores** — paste a Google Fonts or Bunny Fonts
   URL into `w-text`'s face picker (or call `wtext.AddFont`) and the font
   loads, previews, applies and **embeds in the exported EPUB**. The store
   list is hard-coded (libre catalogs only — that's what makes embedding
   legitimate); a webdev can only shrink it (`DenyFontStore`,
   `DisableWebFonts`).
-- **Fixed: typing into a filterable `w-combobox` was being erased** as it
-  was typed (the filter's own re-render repainted the input from a stale
-  model), and **every widget's shadow `<style>` carried hundreds of junk
-  `<br>` elements** (CSS injected via `innerText`; now `textContent`).
-- **Fixed: `w-combobox` dropdown** — now opens in the browser's top layer
-  (Popover API), immune to clipping by scrolling containers; pasting into
-  a single-mode picker reliably replaces the previous label; Enter no
-  longer echoes a paragraph break into `w-text`'s editor.
+- **Fixed** — typing into a filterable `w-combobox` was being erased as it
+  was typed; its dropdown now rides the browser's top layer (Popover API),
+  immune to clipping by scrolling containers; pasting into a single-mode
+  picker reliably replaces the previous label; Enter no longer echoes a
+  paragraph break into `w-text`'s editor; and every widget's shadow
+  `<style>` no longer carries hundreds of junk `<br>` elements.
 
 ### v0.22.0
 

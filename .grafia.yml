@@ -1,0 +1,11 @@
+languages:
+  - go
+  - shell        # opcional: os 9 .sh de build; remova se preferir só Go
+
+ignore:
+  - .git/
+  - _work/
+  - assets/
+  - build/
+  - live-demo/
+
