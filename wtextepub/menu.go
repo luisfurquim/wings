@@ -83,13 +83,29 @@ func (m Menu) bookConfig(core wtext.EditorCore) Config {
 	}
 }
 
-// MenuItems declares the export action: a MenuInput whose prompt asks
-// the document name, Save-As style — seeded with the book title (Enter
-// keeps it, typing replaces it). The typed string names the document AS
-// IS (the TOC entry, the content page's <title>); its Filename-sanitized
-// form is only the download name.
+// MenuItems declares the two halves of the book round trip.
+//
+// Export is a MenuInput whose prompt asks the document name, Save-As
+// style — seeded with the book title (Enter keeps it, typing replaces
+// it). The typed string names the document AS IS (the TOC entry, the
+// content page's <title>); its Filename-sanitized form is only the
+// download name.
+//
+// Import is a MenuUpload: the widget owns the file picker and hands over
+// the bytes, which importAction treats as the hostile input they are. Its
+// label ids have no built-in default in the widget either (this is not a
+// stock plugin) — supply them through the host's labels slot.
 func (m Menu) MenuItems() []wtext.MenuItem {
 	return []wtext.MenuItem{
+		wtext.MenuUpload{
+			Group:  "wtext-import",
+			ID:     "epub",
+			Label:  "wtext-epub-import",
+			Help:   "wtext-epub-import-help",
+			Accept: ".epub,application/epub+zip",
+			MaxLen: MaxImportBytes,
+			Do:     importAction,
+		},
 		wtext.MenuInput{
 			Group:       "wtext-export",
 			ID:          "epub",

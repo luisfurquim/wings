@@ -97,6 +97,17 @@ type EditorCore interface {
 	// HTML serialization; an XML consumer re-serializes it (see the
 	// wtextepub module).
 	Content() string
+	// SetContent replaces the WHOLE document with html — the write half of
+	// Content, for importers (an EPUB reader and such). The string is
+	// hostile input like any other and buys no trust from having been
+	// handed over by a plugin: it goes through the same DOMParser + policy
+	// walker a paste does, its head properties and class rules are
+	// re-validated one by one, and its remembered webfonts are re-followed
+	// through the store allowlist. The undo stack is cleared — history
+	// cannot reach across a content load — so an import is not undoable:
+	// a plugin about to discard the user's document should ask first
+	// (see PendingDecision).
+	SetContent(html string) error
 	// InMark reports whether both ends of s sit inside a mark element tag.
 	// At a collapsed s an armed pending mark overrides the tree, so a
 	// toggle reads back what the next typing will produce.
@@ -426,10 +437,16 @@ func (d *PendingDecision) Allows(choice string) bool {
 }
 
 // DecisionOption is one answer to a PendingDecision: the Value handed to
-// Resume (and stored by "don't ask again"), and the message id of its
-// button.
+// Resume (and stored by "don't ask again"), and what the option says.
+//
+// Label is a message id, resolved through the app's catalog — right for
+// the answers a plugin writes itself ("replace", "keep both"). Text is
+// USER DATA, shown as-is, for answers that come out of the document being
+// acted upon (the chapters of an imported book): sending those through
+// the catalog would translate a chapter that happened to be titled like a
+// message id. Text wins when both are set.
 type DecisionOption struct {
-	Value, Label string
+	Value, Label, Text string
 }
 
 // ConfigPlugin declares sections of USER-editable document configuration

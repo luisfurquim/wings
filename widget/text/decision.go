@@ -62,8 +62,9 @@ func (t *toolbar) resume(pd *wtext.PendingDecision, choice string) {
 }
 
 // openDecision builds the question as a w-dialog: the message, what is at
-// stake, one button per option, and the "don't ask again" checkbox when
-// the decision is one the plugin lets us remember. Mounted at body like
+// stake, the answers (buttons, or a picker when there are many — see
+// maxDecisionButtons) and the "don't ask again" checkbox when the
+// decision is one the plugin lets us remember. Mounted at body like
 // the help and settings dialogs (an ancestor's backdrop-filter would trap
 // a fixed-position descendant inside the tab panel), so its buttons are
 // bound directly in the shadow instead of through wings' triggers.
@@ -117,31 +118,11 @@ func (t *toolbar) openDecision(pd *wtext.PendingDecision) {
 		dlg.Call("appendChild", row)
 	}
 
-	buttons := t.doc().Call("createElement", "div")
-	bst := buttons.Get("style")
-	bst.Set("display", "flex")
-	bst.Set("gap", "0.5rem")
-	bst.Set("flexWrap", "wrap")
-	for i, opt := range pd.Options {
-		btn := t.doc().Call("createElement", "w-button")
-		btn.Call("setAttribute", "type", "button")
-		btn.Call("setAttribute", "size", "sm")
-		if i > 0 {
-			btn.Call("setAttribute", "variant", "ghost")
-		}
-		btn.Set("textContent", t.resolveLabel(opt.Label))
-		value := opt.Value
-		dom.AddEvent(btn, "click", func(_ js.Value, _ []js.Value) any {
-			if check.Truthy() && check.Get("checked").Bool() {
-				t.remember(pd.Remember, value)
-			}
-			t.closeDecision()
-			t.resume(pd, value)
-			return nil
-		}, false, false)
-		buttons.Call("appendChild", btn)
+	if len(pd.Options) > maxDecisionButtons {
+		t.decisionPicker(dlg, pd, check)
+	} else {
+		t.decisionButtons(dlg, pd, check)
 	}
-	dlg.Call("appendChild", buttons)
 
 	// Cancel: the question goes unanswered and the action simply does not
 	// finish — never a default answer picked on the user's behalf.
@@ -156,6 +137,96 @@ func (t *toolbar) openDecision(pd *wtext.PendingDecision) {
 
 	t.decDlg = dlg
 	t.doc().Get("body").Call("appendChild", dlg)
+}
+
+// maxDecisionButtons is where a row of answers stops being a question and
+// starts being a list. Up to it, each option is a button — the fastest
+// answer, one click. Beyond it (the chapters of an imported book) the
+// options become a picker plus a single confirm button: forty buttons is
+// not a dialog anyone reads.
+const maxDecisionButtons = 6
+
+// decisionButtons renders one button per option, first one solid.
+func (t *toolbar) decisionButtons(dlg js.Value, pd *wtext.PendingDecision, check js.Value) {
+	buttons := t.doc().Call("createElement", "div")
+	bst := buttons.Get("style")
+	bst.Set("display", "flex")
+	bst.Set("gap", "0.5rem")
+	bst.Set("flexWrap", "wrap")
+	for i, opt := range pd.Options {
+		btn := t.doc().Call("createElement", "w-button")
+		btn.Call("setAttribute", "type", "button")
+		btn.Call("setAttribute", "size", "sm")
+		if i > 0 {
+			btn.Call("setAttribute", "variant", "ghost")
+		}
+		btn.Set("textContent", t.optionText(opt))
+		value := opt.Value
+		dom.AddEvent(btn, "click", func(_ js.Value, _ []js.Value) any {
+			t.answer(pd, check, value)
+			return nil
+		}, false, false)
+		buttons.Call("appendChild", btn)
+	}
+	dlg.Call("appendChild", buttons)
+}
+
+// decisionPicker renders many options as the same native <select> the
+// settings dialog uses (the dialog body is LIGHT DOM, out of this widget's
+// shadow stylesheet's reach) plus one confirm button. Nothing is picked
+// until the button is pressed: the select's initial row is a value the
+// user merely SEES, and a question answers to a deliberate act.
+func (t *toolbar) decisionPicker(dlg js.Value, pd *wtext.PendingDecision, check js.Value) {
+	row := t.doc().Call("createElement", "div")
+	rst := row.Get("style")
+	rst.Set("display", "flex")
+	rst.Set("gap", "0.5rem")
+	rst.Set("alignItems", "center")
+	rst.Set("flexWrap", "wrap")
+
+	sel := t.doc().Call("createElement", "select")
+	sel.Call("setAttribute", "class", "wt-cfg-select")
+	sel.Call("setAttribute", "aria-label", t.resolveLabel(pd.Title))
+	for _, opt := range pd.Options {
+		o := t.doc().Call("createElement", "option")
+		o.Set("value", opt.Value)
+		o.Set("textContent", t.optionText(opt))
+		sel.Call("appendChild", o)
+	}
+	row.Call("appendChild", sel)
+
+	btn := t.doc().Call("createElement", "w-button")
+	btn.Call("setAttribute", "type", "button")
+	btn.Call("setAttribute", "size", "sm")
+	btn.Set("textContent", t.resolveLabel("wtext-choose"))
+	dom.AddEvent(btn, "click", func(_ js.Value, _ []js.Value) any {
+		t.answer(pd, check, sel.Get("value").String())
+		return nil
+	}, false, false)
+	row.Call("appendChild", btn)
+
+	dlg.Call("appendChild", row)
+}
+
+// optionText is what an option's control says: user data as-is when the
+// option carries it (an imported book's chapter titles), otherwise its
+// message id through the catalog. A chapter titled like a message id is
+// exactly why the two are different fields.
+func (t *toolbar) optionText(opt wtext.DecisionOption) string {
+	if opt.Text != "" {
+		return opt.Text
+	}
+	return t.resolveLabel(opt.Label)
+}
+
+// answer commits the user's pick: remember it when asked to, close the
+// dialog, then resume the action.
+func (t *toolbar) answer(pd *wtext.PendingDecision, check js.Value, value string) {
+	if check.Truthy() && check.Get("checked").Bool() {
+		t.remember(pd.Remember, value)
+	}
+	t.closeDecision()
+	t.resume(pd, value)
 }
 
 // closeDecision removes the open decision dialog, if any. Idempotent.

@@ -85,9 +85,24 @@ func escapeAttr(s string) string { return attrEscaper.Replace(s) }
 // contentParts is what splitContent extracts from an
 // EditorCore.Content() document.
 type contentParts struct {
-	css  string // the <style> rules of the head (may be empty)
-	body string // the body markup re-serialized as XHTML
+	css   string // the <style> rules of the head (may be empty)
+	body  string // the body markup re-serialized as XHTML
+	props []prop // the document's wt-cfg-* properties, in document order
 }
+
+// prop is one persisted document property (an editor's wt-cfg-<key> head
+// meta): the webfonts the document remembers, the book metadata, whatever
+// else a plugin stored in it. They ride the exported book so that reading
+// it back restores the document, not merely its text — a font in
+// particular comes back as the store REFERENCE it always was, never as
+// bytes from the file.
+type prop struct{ name, value string }
+
+// docPropPrefix names the head metas that carry document properties. It
+// mirrors the editor's own prefix (wtext.Content writes them); the two
+// halves agree on the string, not on a shared constant, because this
+// module is separate and its wings dependency is a published version.
+const docPropPrefix = "wt-cfg-"
 
 // splitContent parses the editor's persisted document and returns its
 // style rules and its body as XHTML. html.Parse is lenient by design —
@@ -109,6 +124,11 @@ func splitContent(content string) (contentParts, error) {
 					p.css += n.FirstChild.Data
 				}
 				return
+			case "meta":
+				if name, value, ok := docProp(n); ok {
+					p.props = append(p.props, prop{name, value})
+				}
+				return
 			case "body":
 				body = n
 				return
@@ -123,4 +143,22 @@ func splitContent(content string) (contentParts, error) {
 		p.body = xhtmlBody(body)
 	}
 	return p, nil
+}
+
+// docProp reads a <meta name="wt-cfg-…" content="…"> node. A meta without
+// both attributes, or one naming anything else (charset, viewport, a
+// reader's own metadata), is not a document property and is ignored.
+func docProp(n *html.Node) (name, value string, ok bool) {
+	for _, a := range n.Attr {
+		switch a.Key {
+		case "name":
+			name = a.Val
+		case "content":
+			value = a.Val
+		}
+	}
+	if !strings.HasPrefix(name, docPropPrefix) || len(name) == len(docPropPrefix) {
+		return "", "", false
+	}
+	return name, value, true
 }

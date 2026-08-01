@@ -129,6 +129,18 @@ func contentDocument(title string, parts contentParts) string {
 	sb.WriteString(`<html xmlns="http://www.w3.org/1999/xhtml"><head><title>`)
 	sb.WriteString(escapeText(title))
 	sb.WriteString("</title>")
+	// The document's own properties ride along, so that reading the book
+	// back restores the document and not just its text: which webfonts it
+	// remembers (as store URLs — never bytes), what a plugin configured in
+	// it. A reader that does not know these metas ignores them, which is
+	// what generic name/content metas are for.
+	for _, p := range parts.props {
+		sb.WriteString(`<meta name="`)
+		sb.WriteString(escapeAttr(p.name))
+		sb.WriteString(`" content="`)
+		sb.WriteString(escapeAttr(p.value))
+		sb.WriteString(`"/>`)
+	}
 	if parts.css != "" {
 		sb.WriteString(`<style type="text/css">` + "\n")
 		sb.WriteString(parts.css)

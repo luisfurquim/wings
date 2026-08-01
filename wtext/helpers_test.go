@@ -37,6 +37,11 @@ func (f *fakeCore) Text(Selection) (string, error) {
 }
 func (f *fakeCore) DocText() string { return f.docText }
 func (f *fakeCore) Content() string { return f.content }
+func (f *fakeCore) SetContent(html string) error {
+	f.content = html
+	f.calls = append(f.calls, "SetContent")
+	return nil
+}
 func (f *fakeCore) Config(key string) string {
 	if v, ok := f.cfg[key]; ok {
 		return v

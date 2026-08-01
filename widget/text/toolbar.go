@@ -707,6 +707,7 @@ var defaultLabels = map[string]string{
 	"wtext-import":   "Import",
 	"wtext-config":   "Settings",
 	"wtext-remember": "Don't ask again",
+	"wtext-choose":   "Choose",
 
 	"wtext-stylelib-export":       "Styles",
 	"wtext-stylelib-export-help":  "Save this document's named styles to a file, to reuse them in other documents.",
