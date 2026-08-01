@@ -527,6 +527,7 @@ func (e *Editor) SetContent(html string) error {
 	parsed := js.Global().Get("DOMParser").New().
 		Call("parseFromString", html, "text/html")
 	e.config = map[string]string{} // a content load replaces the document's properties too
+	clearDocumentFontMarks()       // and the provenance marks of the document leaving
 	e.adoptDocConfig(parsed)
 	e.restoreWebFonts()
 	e.adoptDocClasses(parsed)

@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/url"
 	"path"
+	"regexp"
 	"strings"
 
 	"github.com/luisfurquim/ugarit"
@@ -290,7 +291,14 @@ func importAction(core wtext.EditorCore, data []byte) error {
 		if err != nil {
 			return err
 		}
-		return core.SetContent(doc)
+		if err := core.SetContent(doc); err != nil {
+			return err
+		}
+		// After the load, never before: SetContent replaces the document's
+		// properties, and a font remembered into the OLD document would go
+		// with it.
+		requestFonts(core, doc)
+		return nil
 	}
 	chapters := book.Chapters()
 	occupied := strings.TrimSpace(core.DocText()) != ""
@@ -320,6 +328,155 @@ func importAction(core wtext.EditorCore, data []byte) error {
 		d.Options = append(d.Options, wtext.DecisionOption{Value: c.ID, Text: c.Title})
 	}
 	return d
+}
+
+// maxDocumentFonts bounds how many families one imported document may ask
+// the stores about — each is a network round trip.
+const maxDocumentFonts = 16
+
+// requestFonts asks the STORES for the fonts the imported document
+// carried embedded, by family name.
+//
+// The book's own font files are never installed. A font file is a binary
+// of unknown origin, and the store's curated libre catalog is what makes
+// a font legitimate to carry into the next export; so what a book's
+// `@font-face` buys here is only the NAME to ask the store for. A family
+// the store does not have installs nothing, and the text falls back — the
+// same as before this existed, except now it says so out loud, which is
+// the whole difference between a fallback and a mystery.
+func requestFonts(core wtext.EditorCore, doc string) {
+	parts, err := splitContent(doc)
+	if err != nil {
+		return
+	}
+	installed := map[string]bool{}
+	for _, wf := range wtext.InstalledWebFonts() {
+		installed[strings.ToLower(wf.Label)] = true
+	}
+	asked := 0
+	for _, family := range embeddedFontFamilies(parts.css) {
+		// Provenance first, whichever way this font arrives: installed
+		// already, arriving from the document's own store URL as the
+		// content load runs, or asked for by name below.
+		wtext.MarkDocumentFont(family)
+		if installed[strings.ToLower(family)] {
+			continue // already here: the same family the picker holds
+		}
+		if asked >= maxDocumentFonts {
+			G.Logf(1, "wtextepub: import asks the stores for at most %d fonts; the rest keep their fallback\n",
+				maxDocumentFonts)
+			return
+		}
+		asked++
+		installed[strings.ToLower(family)] = true
+		name := family
+		wtext.AddDocumentFont(core, name, func(err error) {
+			if err != nil {
+				G.Logf(1, "wtextepub: the book embeds %q, which the font stores do not have (%v); that text keeps its fallback font\n",
+					name, err)
+				return
+			}
+			G.Logf(1, "wtextepub: the book embeds %q; installed the stores' copy of it (the file's own font is never used)\n", name)
+		})
+	}
+}
+
+// fontUsage reports, for a persisted document, whether an installed font
+// is one the document uses — by the picker's class or by the family name
+// in the document's own rules.
+//
+// This is what keeps a book's typography across save/load/save/load: the
+// rules a document carries name the family, the import re-adopts those
+// rules and the export sees the name again, so every cycle reaches the
+// same conclusion from the DOCUMENT, never from session state. Provenance
+// (WebFont.Embedded) deliberately plays no part: a flag that decided this
+// would have to survive every round trip, and the first one it did not
+// survive would silently strip the book.
+func fontUsage(content string) func(id, label string) bool {
+	named := map[string]bool{}
+	if parts, err := splitContent(content); err == nil {
+		for _, fam := range namedFontFamilies(parts.css) {
+			named[strings.ToLower(fam)] = true
+		}
+	}
+	return func(id, label string) bool {
+		return strings.Contains(content, "wt-ff-"+id) || named[strings.ToLower(label)]
+	}
+}
+
+// fontFaceRE matches an @font-face block; fontFamilyRE, a font-family
+// declaration's value. RE2 is linear-time and the CSS is already bounded
+// (MaxStyleBytes), so neither can be made to run away.
+var (
+	fontFaceRE   = regexp.MustCompile(`(?is)@font-face\s*\{([^}]*)\}`)
+	fontFamilyRE = regexp.MustCompile(`(?is)font-family\s*:\s*([^;}]+)`)
+)
+
+// embeddedFontFamilies returns the families an @font-face in css declares
+// — what the document carries embedded — deduplicated, in order.
+func embeddedFontFamilies(css string) []string {
+	var out []string
+	seen := map[string]bool{}
+	for _, block := range fontFaceRE.FindAllStringSubmatch(css, maxDocumentFonts*4) {
+		decl := fontFamilyRE.FindStringSubmatch(block[1])
+		if decl == nil {
+			continue // an @font-face with no family names nothing
+		}
+		for _, fam := range familyValues(decl[1]) {
+			if isGenericFamily(fam) {
+				continue // the browser has these; no store does
+			}
+			if key := strings.ToLower(fam); !seen[key] {
+				seen[key] = true
+				out = append(out, fam)
+			}
+		}
+	}
+	return out
+}
+
+// namedFontFamilies returns every family any rule in css names — how the
+// exporter learns which installed fonts the document actually uses when
+// it names them directly (an imported book's own rules) instead of
+// through the picker's wt-ff-<id> class.
+func namedFontFamilies(css string) []string {
+	var out []string
+	seen := map[string]bool{}
+	for _, m := range fontFamilyRE.FindAllStringSubmatch(css, -1) {
+		for _, fam := range familyValues(m[1]) {
+			if key := strings.ToLower(fam); !seen[key] {
+				seen[key] = true
+				out = append(out, fam)
+			}
+		}
+	}
+	return out
+}
+
+// genericFamilies are the families the browser resolves by itself. They
+// are legitimate values, and no store has any of them.
+var genericFamilies = map[string]bool{
+	"serif": true, "sans-serif": true, "monospace": true, "cursive": true,
+	"fantasy": true, "system-ui": true, "ui-serif": true, "ui-sans-serif": true,
+	"ui-monospace": true, "ui-rounded": true, "math": true, "emoji": true,
+	"fangsong": true, "inherit": true, "initial": true, "unset": true, "revert": true,
+}
+
+func isGenericFamily(name string) bool { return genericFamilies[strings.ToLower(name)] }
+
+// familyValues splits a font-family value into its names, unquoted and
+// trimmed.
+func familyValues(value string) []string {
+	var out []string
+	for _, part := range strings.Split(value, ",") {
+		part = strings.TrimSpace(part)
+		part = strings.Trim(part, `"'`)
+		part = strings.TrimSpace(part)
+		if part != "" && len(part) <= 128 {
+			out = append(out, part)
+		}
+	}
+	return out
 }
 
 // has reports whether id names a chapter of THIS book. The id makes a

@@ -3,8 +3,6 @@
 package wtextepub
 
 import (
-	"strings"
-
 	"github.com/luisfurquim/wings"
 	"github.com/luisfurquim/wings/wtext"
 )
@@ -45,14 +43,22 @@ func (m Menu) ConfigSections() []wtext.ConfigSection {
 	}}
 }
 
-// usedWebFonts collects the store fonts the document actually uses —
-// its wt-ff-<id> class appears in the persisted content — as embeddable
-// files. The store curation (libre catalogs) is what makes the embed
-// legitimate.
+// usedWebFonts collects the store fonts the document actually uses, as
+// embeddable files. The store curation (libre catalogs) is what makes the
+// embed legitimate.
+//
+// A document uses a font in one of two ways, and both count. The picker
+// applies one through its `wt-ff-<id>` class, which shows up in the
+// markup. A document that arrived from somewhere else — an imported book
+// — names the family in its OWN rules instead (`font-family: "Lobster"`),
+// and its font was installed from the store by that name: a book that
+// came in with embedded fonts must go back out with them, or a round trip
+// through this editor would quietly strip a book of its typography.
 func usedWebFonts(content string) []EmbeddedFont {
+	used := fontUsage(content)
 	var out []EmbeddedFont
 	for _, wf := range wtext.InstalledWebFonts() {
-		if !strings.Contains(content, "wt-ff-"+wf.ID) {
+		if !used(wf.ID, wf.Label) {
 			continue
 		}
 		for _, s := range wf.Sources {

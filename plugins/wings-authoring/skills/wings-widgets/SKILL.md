@@ -402,8 +402,14 @@ already do:
   being edited (a content load clears the undo stack). A document's
   properties ride the exported book as `wt-cfg-*` head metas, which is how
   a re-imported book brings back the webfonts it remembered — as store
-  URLs re-followed through the allowlist, never as bytes, so an embedded
-  `@font-face` in a foreign book still installs nothing. Its item
+  URLs re-followed through the allowlist, never as bytes. A FOREIGN book's
+  embedded `@font-face` is never installed from the file either: only its
+  family NAME is used, to ask the store for the same family
+  (`wtext.AddDocumentFont`, which marks the font `WebFont.Embedded`); a
+  family no store has installs nothing and the text keeps its fallback,
+  with a console line saying which. Export embeds a font the document
+  names in its own rules, so a book that came in with embedded fonts goes
+  back out with them. Its item
   label ids (`wtext-epub`, `wtext-epub-name`, `wtext-epub-help`,
   `wtext-epub-import`, `wtext-epub-import-help`, `wtext-epub-import-open`,
   `wtext-epub-import-replace`, `wtext-epub-import-pick`,

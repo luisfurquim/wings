@@ -54,7 +54,10 @@ Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
   one when the book holds several. An exported book now carries the
   document's own properties, so it comes back with the styles and the
   webfonts it had — as store references, re-followed through the
-  allowlist, never as bytes from the file.
+  allowlist, never as bytes from the file. A book from elsewhere keeps
+  its fonts too, by asking the stores for the families its `@font-face`
+  names (a font file from an unknown source is never installed), and an
+  export embeds them again.
 
 ### v0.24.0
 
@@ -2106,9 +2109,18 @@ through the editor's own policy walker, class-rule validation and property
 bounds — the same gate a paste faces. A chapter's linked stylesheets are
 followed INSIDE the book (never to the network) and merged into the
 document's head, where only rules the class registry accepts survive.
-Fonts embedded in a foreign book install nothing: a font is only ever
-installed from a store URL through the hard-coded allowlist, which is
-exactly how a book exported from here brings its webfonts back. The
+A font a foreign book embeds is never installed from the book: its bytes
+are a binary of unknown origin, and the stores' curated libre catalogs are
+what make a font legitimate to carry into the next export. What the book's
+`@font-face` buys is the family NAME, which the import asks the store for
+(`wtext.AddDocumentFont`) — so a book set in a libre font opens with that
+font, marked as one the document brought (`WebFont.Embedded`), and an
+export embeds it again, because the document names the family in its own
+rules. A family no store has installs nothing and the text keeps the
+fallback its rules name, with a line in the console saying so — the
+difference between a fallback and a mystery. A book exported from here
+needs none of this: it carries its fonts as store URLs in its properties.
+The
 portable half (`Build`, `Filename`, `Open`, `Book.Document`) is unit-tested
 natively — the tests unzip the output and feed every document to
 `encoding/xml` as the well-formedness proof, round-trip a document through

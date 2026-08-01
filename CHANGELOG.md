@@ -24,9 +24,21 @@ per-commit record see the git log and tags.
   each chapter and stylesheet as it is read) and trusted for nothing
   after: the chapter goes through `SetContent`, the same policy walker,
   class-rule validation and property bounds a paste faces. Linked
-  stylesheets are followed inside the book and never to the network;
-  fonts embedded in a foreign book install nothing, since a font is only
-  ever installed from a store URL through the hard-coded allowlist.
+  stylesheets are followed inside the book and never to the network.
+- **A book's embedded fonts come back — from the STORE.** An imported
+  book's `@font-face` is never installed from the file: a font file is a
+  binary of unknown origin fed to the browser's font engine, and the
+  stores' curated libre catalogs are what make a font legitimate to carry
+  into the next export. Only the family NAME is taken from the book, to
+  ask the store for the same family (`wtext.AddDocumentFont`); what
+  installs is the store's copy, marked `WebFont.Embedded`. A family no
+  store has installs nothing and the text keeps the fallback its rules
+  name, with a line in the console saying which font and why — the
+  difference between a fallback and a mystery. The EPUB export now also
+  embeds fonts the document names in its OWN rules (not only those
+  applied through the picker's `wt-ff-<id>` class), so a book that came
+  in with embedded fonts goes back out with them instead of being quietly
+  stripped of its typography.
 - **`EditorCore.SetContent`** — the write half of `Content`, for
   importers: it replaces the whole document, re-validating markup, class
   rules and properties, and clears the undo stack. It is the only way a

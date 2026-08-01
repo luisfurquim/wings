@@ -305,3 +305,100 @@ func TestDocumentInlinesLinkedStylesheet(t *testing.T) {
 		t.Errorf("linked stylesheet did not travel with the chapter:\n%s", doc)
 	}
 }
+
+// TestEmbeddedFontFamilies: the book's @font-face buys exactly one thing
+// — the NAME to ask the store for. Generic families are the browser's own
+// and are not asked about.
+func TestEmbeddedFontFamilies(t *testing.T) {
+	css := `
+@font-face { font-family: "Lobster"; src: url(fonts/lobster.woff2) format("woff2") }
+@FONT-FACE { font-family: EB Garamond ; font-weight: 700; src: url(fonts/ebg.otf) }
+@font-face { font-family: "Lobster"; font-style: italic; src: url(fonts/lobster-i.woff2) }
+@font-face { font-family: serif; src: url(nope.ttf) }
+.corpo { font-family: "Only In A Rule", serif }
+`
+	got := embeddedFontFamilies(css)
+	want := []string{"Lobster", "EB Garamond"}
+	if len(got) != len(want) {
+		t.Fatalf("families = %q, want %q", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("families = %q, want %q", got, want)
+		}
+	}
+}
+
+// TestNamedFontFamilies feeds the exporter: a document that names a
+// family in its own rules uses that font, with no wt-ff-<id> anywhere.
+func TestNamedFontFamilies(t *testing.T) {
+	css := `.corpo { font-family: "Lobster", serif } .cabeca{font-family:EB Garamond}`
+	got := namedFontFamilies(css)
+	want := map[string]bool{"Lobster": true, "serif": true, "EB Garamond": true}
+	if len(got) != len(want) {
+		t.Fatalf("families = %q, want %v", got, want)
+	}
+	for _, f := range got {
+		if !want[f] {
+			t.Errorf("unexpected family %q in %q", f, got)
+		}
+	}
+}
+
+// A document whose CSS is absurd must not make the importer misbehave: no
+// panic, no runaway — the regexps are RE2 and the input is already bounded.
+func FuzzFontFamilies(f *testing.F) {
+	f.Add("@font-face{font-family:\"X\";src:url(x)}")
+	f.Add(".a{font-family:}")
+	f.Add("@font-face{@font-face{font-family:")
+	f.Fuzz(func(t *testing.T, css string) {
+		for _, fam := range embeddedFontFamilies(css) {
+			if fam == "" {
+				t.Fatal("empty family name returned")
+			}
+		}
+		namedFontFamilies(css)
+	})
+}
+
+// TestEmbeddingSurvivesTheLoop is the answer to "an author who does
+// load/save/load/save will eventually lose the embedding": every cycle
+// decides from the DOCUMENT's own rules, so the answer never drifts.
+// Three full round trips, with the font's provenance flag deliberately
+// absent from the reasoning.
+func TestEmbeddingSurvivesTheLoop(t *testing.T) {
+	// What the editor holds right after importing a foreign book: the
+	// book's rule names its family, and the document remembers the store
+	// URL the font was installed from.
+	content := `<!DOCTYPE html>
+<html><head><meta charset="utf-8"/>` +
+		`<meta name="wt-cfg-wtfont.lobster" content="https://fonts.googleapis.com/css2?family=Lobster"/>` +
+		`<style>
+.corpo { font-family: "Lobster", serif }
+</style></head><body><p class="corpo">Kiyomori recolheu-se.</p></body></html>`
+
+	for cycle := 1; cycle <= 3; cycle++ {
+		used := fontUsage(content)
+		if !used("lobster", "Lobster") {
+			t.Fatalf("cycle %d: the document stopped counting Lobster as used — the export would strip it", cycle)
+		}
+		epub, err := Build(content, "pt-BR", "Capítulo", Config{Title: "Livro"})
+		if err != nil {
+			t.Fatalf("cycle %d: %v", cycle, err)
+		}
+		book, err := Open(epub)
+		if err != nil {
+			t.Fatalf("cycle %d: %v", cycle, err)
+		}
+		doc, err := book.Document(book.Chapters()[0].ID)
+		if err != nil {
+			t.Fatalf("cycle %d: %v", cycle, err)
+		}
+		// The store reference must survive too, or the next load would have
+		// to guess the family again instead of following the URL.
+		if !strings.Contains(doc, "wt-cfg-wtfont.lobster") {
+			t.Fatalf("cycle %d: the document lost the store reference:\n%s", cycle, doc)
+		}
+		content = doc
+	}
+}

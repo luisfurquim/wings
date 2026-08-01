@@ -76,6 +76,15 @@ type WebFont struct {
 	// word again every time one is followed.
 	StoreURL string
 	Sources  []WebFontSource
+	// Embedded records that a DOCUMENT asked for this font by carrying it
+	// embedded (an imported EPUB), rather than a user picking it. What was
+	// installed is still the STORE's copy, matched by family name — the
+	// file's own bytes are never used — so this is provenance, not a
+	// different kind of font. It is session state: a document persists the
+	// store URL (see webFontCfgPrefix) and nothing else, which is enough
+	// to bring the font back, and what makes an export embed it is the
+	// document naming the family in its own rules, not this flag.
+	Embedded bool
 }
 
 // fontStore is one hard-coded provider: how to recognize its URLs, where
@@ -157,6 +166,10 @@ var (
 
 	webFontWatchers   = map[int]func(){}
 	nextFontWatcherID int
+
+	// embeddedFamilies holds provenance marks for fonts that have not
+	// finished installing yet (see MarkDocumentFont), by face-picker id.
+	embeddedFamilies = map[string]bool{}
 )
 
 // OnWebFontsChanged subscribes to registry changes — how a face picker
@@ -271,6 +284,151 @@ func rememberWebFont(core EditorCore, id string) {
 	}
 }
 
+// ErrFontFamily reports a family name no store can be asked about.
+var ErrFontFamily = fmt.Errorf("wtext: not a font family name")
+
+// maxFontFamilyLen bounds a family name coming from a document.
+const maxFontFamilyLen = 128
+
+// StoreURLForFamily returns the canonical store URL that asks for a
+// family BY NAME — the door for a document that names a font instead of
+// linking to a store (an imported EPUB's `font-family: "Lobster"`). The
+// first enabled store answers; a family the store does not have simply
+// fails to load later, which is the honest outcome.
+//
+// The name is hostile input (it comes out of a file): bounded, and
+// escaped into the query by the store's own URL builder, so nothing in it
+// can reach past the query parameter.
+func StoreURLForFamily(family string) (string, error) {
+	family = strings.TrimSpace(strings.Trim(strings.TrimSpace(family), `"'`))
+	if family == "" || len(family) > maxFontFamilyLen {
+		return "", fmt.Errorf("%w: %q", ErrFontFamily, family)
+	}
+	for _, r := range family {
+		// A family name is a name: letters, digits, spaces and the marks
+		// real font families use. Anything else is not one.
+		if r < 0x20 || strings.ContainsRune("\"'();{}<>\\", r) {
+			return "", fmt.Errorf("%w: %q", ErrFontFamily, family)
+		}
+	}
+	fontMu.Lock()
+	disabled := webFontsDisabled
+	denied := make(map[string]bool, len(deniedStores))
+	for k, v := range deniedStores {
+		denied[k] = v
+	}
+	fontMu.Unlock()
+	if disabled {
+		return "", ErrWebFontsDisabled
+	}
+	for _, st := range fontStores {
+		if !denied[st.name] {
+			return st.cssURL(family), nil
+		}
+	}
+	return "", ErrFontStoreDenied
+}
+
+// AddDocumentFont installs the STORE's copy of a font that a DOCUMENT
+// carries embedded, matched by family name, and marks it as one the
+// document brought (WebFont.Embedded).
+//
+// The embedded file itself is never installed: its bytes are a binary of
+// unknown origin handed to the browser's font engine, and the store's
+// curated catalog is what makes the font legitimate to carry onward. What
+// the document gets is the same family from the allowlist — or, when the
+// store does not have it, nothing, and the text falls back to the family
+// it names. Portable: with no browser behind it (the native toolchain)
+// this does nothing and reports success, like every other font door.
+func AddDocumentFont(core EditorCore, family string, done func(err error)) {
+	finish := func(err error) {
+		if done != nil {
+			done(err)
+		}
+	}
+	// The provenance mark goes down FIRST, whichever way the font arrives:
+	// by name here, or from the document's own store URL while the content
+	// load runs. It waits for the font when the font is not here yet.
+	MarkDocumentFont(family)
+
+	// A document that already REMEMBERS this font is having it installed
+	// from its own store URL right now (SetContent → restoreWebFonts, which
+	// is asynchronous and has not reached the registry yet). Asking the
+	// store again by name would fetch the same CSS and the same subset
+	// files a second time — visible every time a book exported from here
+	// is imported back, since such a book carries both the property and
+	// the embedded files.
+	if core != nil && core.Config(webFontCfgPrefix+fontSlug(family)) != "" {
+		finish(nil)
+		return
+	}
+	rawURL, err := StoreURLForFamily(family)
+	if err != nil {
+		finish(err)
+		return
+	}
+	if loadWebFont == nil {
+		finish(nil)
+		return
+	}
+	loadWebFont(rawURL, func(installed string, err error) {
+		if err != nil {
+			finish(err)
+			return
+		}
+		// The store may name the family slightly differently from the book;
+		// mark what actually installed, not only what was asked for.
+		id := fontSlug(installed)
+		MarkDocumentFont(installed)
+		rememberWebFont(core, id)
+		finish(nil)
+	})
+}
+
+// clearDocumentFontMarks drops the provenance marks still waiting for a
+// font to install. A content load calls it: a mark belongs to the
+// document that made it, and one left pending — a family the stores never
+// had — would otherwise sit in the set forever and stamp "this came from
+// a book" on some unrelated font a user picks later. State that outlives
+// what it describes stops describing anything.
+func clearDocumentFontMarks() {
+	fontMu.Lock()
+	clear(embeddedFamilies)
+	fontMu.Unlock()
+}
+
+// MarkDocumentFont records that the document being loaded carries this
+// family embedded, so the installed font shows that provenance
+// (WebFont.Embedded) — even when the font is not installed YET.
+//
+// The mark is needed because the two ways a document's font arrives land
+// at different times: a family matched by NAME is installed by
+// AddDocumentFont, while a document that remembers the store URL has it
+// installed asynchronously by the content load. The mark waits in a
+// bounded set until a font with that id registers, and survives
+// re-registration, so a document that was imported from a book keeps
+// saying so through a session of loads and saves.
+//
+// It is provenance only: nothing decides anything from it (an export
+// embeds a font because the DOCUMENT's rules name it, which is what
+// survives every round trip — see wtextepub's fontUsage). Nothing about
+// it persists: a reloaded document says what fonts it uses, not where
+// they were first met.
+func MarkDocumentFont(family string) {
+	id := fontSlug(family)
+	fontMu.Lock()
+	defer fontMu.Unlock()
+	for i := range webFonts {
+		if webFonts[i].ID == id {
+			webFonts[i].Embedded = true
+			return
+		}
+	}
+	if len(embeddedFamilies) < maxWebFonts {
+		embeddedFamilies[id] = true
+	}
+}
+
 // webFontByID looks an installed font up by its face-picker id.
 func webFontByID(id string) (WebFont, bool) {
 	fontMu.Lock()
@@ -284,12 +442,19 @@ func webFontByID(id string) (WebFont, bool) {
 }
 
 // registerWebFont installs (or replaces, by ID) a loaded font and
-// notifies the watchers.
+// notifies the watchers. Provenance is sticky: a font a document declared
+// embedded (MarkDocumentFont, possibly before it finished installing)
+// keeps saying so across re-registrations.
 func registerWebFont(f WebFont) error {
 	fontMu.Lock()
+	if embeddedFamilies[f.ID] {
+		f.Embedded = true
+		delete(embeddedFamilies, f.ID)
+	}
 	replaced := false
 	for i := range webFonts {
 		if webFonts[i].ID == f.ID {
+			f.Embedded = f.Embedded || webFonts[i].Embedded
 			webFonts[i] = f
 			replaced = true
 			break

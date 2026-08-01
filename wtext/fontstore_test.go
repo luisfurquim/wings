@@ -15,6 +15,7 @@ func resetFontState(t *testing.T) {
 		deniedStores = map[string]bool{}
 		webFontsDisabled = false
 		webFonts = nil
+		clear(embeddedFamilies)
 		fontMu.Unlock()
 	})
 }
@@ -223,6 +224,84 @@ func TestFontSlug(t *testing.T) {
 	for in, want := range cases {
 		if got := fontSlug(in); got != want {
 			t.Errorf("fontSlug(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
+// TestAddDocumentFontSkipsRemembered: a document that already remembers a
+// font is having it installed from its own store URL (restoreWebFonts,
+// asynchronous). Asking the store again by name would fetch the same
+// files twice — which is exactly what importing a book exported from here
+// would do, since such a book carries both the property and the files.
+func TestAddDocumentFontSkipsRemembered(t *testing.T) {
+	prev := loadWebFont
+	defer func() { loadWebFont = prev }()
+	asked := 0
+	loadWebFont = func(string, func(string, error)) { asked++ }
+
+	core := &fakeCore{cfg: map[string]string{
+		webFontCfgPrefix + fontSlug("Lobster"): "https://fonts.googleapis.com/css2?family=Lobster",
+	}}
+	var err error
+	AddDocumentFont(core, "Lobster", func(e error) { err = e })
+	if err != nil {
+		t.Errorf("err = %v, want nil (the restore path owns this font)", err)
+	}
+	if asked != 0 {
+		t.Errorf("asked the store %d time(s) for a font the document remembers", asked)
+	}
+
+	// A font the document does NOT remember still goes to the store.
+	AddDocumentFont(&fakeCore{}, "EB Garamond", func(error) {})
+	if asked != 1 {
+		t.Errorf("store asks = %d, want 1 for an unknown family", asked)
+	}
+}
+
+// TestStoreURLForFamily: the name comes out of a file, so it is checked
+// before it becomes a URL.
+func TestStoreURLForFamily(t *testing.T) {
+	got, err := StoreURLForFamily(`"EB Garamond"`)
+	if err != nil || !strings.Contains(got, "EB+Garamond") {
+		t.Errorf("StoreURLForFamily = %q, %v", got, err)
+	}
+	for _, bad := range []string{"", "   ", `Foo"); }`, "Foo\nBar", strings.Repeat("x", 200)} {
+		if _, err := StoreURLForFamily(bad); err == nil {
+			t.Errorf("StoreURLForFamily(%q) was accepted", bad)
+		}
+	}
+}
+
+// TestMarkDocumentFontWaitsForTheFont: the two ways a document's font
+// arrives land at different times, so the provenance mark has to be able
+// to wait for one that is still installing — the case of a book exported
+// from here and imported back, whose font comes from the remembered store
+// URL, asynchronously.
+func TestMarkDocumentFontWaitsForTheFont(t *testing.T) {
+	resetFontState(t)
+	clearDocumentFontMarks()
+	MarkDocumentFont("Lobster")
+	if err := registerWebFont(WebFont{ID: fontSlug("Lobster"), Label: "Lobster"}); err != nil {
+		t.Fatal(err)
+	}
+	fonts := InstalledWebFonts()
+	if len(fonts) != 1 || !fonts[0].Embedded {
+		t.Fatalf("font = %+v, want Embedded", fonts)
+	}
+	// Re-registering (the same font installed again) must not forget it.
+	if err := registerWebFont(WebFont{ID: fontSlug("Lobster"), Label: "Lobster"}); err != nil {
+		t.Fatal(err)
+	}
+	if fonts = InstalledWebFonts(); !fonts[0].Embedded {
+		t.Error("provenance was lost when the font re-registered")
+	}
+	// And a font nobody marked stays unmarked.
+	if err := registerWebFont(WebFont{ID: fontSlug("EB Garamond"), Label: "EB Garamond"}); err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range InstalledWebFonts() {
+		if f.Label == "EB Garamond" && f.Embedded {
+			t.Error("a font nobody marked came out marked")
 		}
 	}
 }
