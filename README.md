@@ -47,7 +47,7 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
-### Unreleased
+### v0.25.0
 
 - **EPUB import** — `w-text` opens an e-book, not just writes one:
   "Import › EPUB" loads a book's document into the editor, asking which

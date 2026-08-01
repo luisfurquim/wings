@@ -8,7 +8,7 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
-## [Unreleased]
+## [0.25.0] — 2026-08-01
 
 ### Added
 - **EPUB import (`wtextepub`)** — the reading half of the book round
