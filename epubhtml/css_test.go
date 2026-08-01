@@ -232,3 +232,53 @@ func TestSanitizeCSSRejects(t *testing.T) {
 		}
 	}
 }
+
+// TestCSSAcceptsMultilineRules pins the fix for a whole book losing its
+// typography to its own indentation: newline, tab and friends ARE control
+// characters, but they are how a stylesheet is written, not how meaning
+// is hidden — the check exists for invisibles (zero width, bidi), which
+// stay refused.
+func TestCSSAcceptsMultilineRules(t *testing.T) {
+	const multiline = "font-family: \"EB Garamond\",\n\tserif;\r\n  text-align: justify;\n"
+	got, err := SanitizeCSS(multiline)
+	if err != nil {
+		t.Fatalf("SanitizeCSS of a multi-line rule: %v", err)
+	}
+	for _, want := range []string{"font-family:", "text-align: justify"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("SanitizeCSS = %q, missing %q", got, want)
+		}
+	}
+	if strings.ContainsAny(got, "\n\t\r") {
+		t.Errorf("SanitizeCSS kept raw whitespace controls: %q", got)
+	}
+	if got := FilterCSS(multiline); !strings.Contains(got, "text-align: justify") {
+		t.Errorf("FilterCSS = %q, want the supported declarations", got)
+	}
+	// The invisibles this check exists for stay refused: zero-width space,
+	// right-to-left override, and a bare NUL.
+	for _, bad := range []string{
+		"color: red​", "color:‮red", "color: red\x00",
+	} {
+		if _, err := SanitizeCSS(bad); err == nil {
+			t.Errorf("SanitizeCSS(%q) was accepted", bad)
+		}
+	}
+}
+
+// TestFilterCSSKeepsSupportedAlongsideUnsupported is the property the
+// document-load path now depends on: a book's rule mixing counter-reset
+// (unsupported) with text-align (supported) keeps the supported half
+// instead of being dropped whole.
+func TestFilterCSSKeepsSupportedAlongsideUnsupported(t *testing.T) {
+	got := FilterCSS("counter-reset: chapter 1; text-align: center; list-style-type: none; font-size: 2em")
+	if !strings.Contains(got, "text-align: center") || !strings.Contains(got, "font-size: 2em") {
+		t.Errorf("FilterCSS = %q, want the supported declarations kept", got)
+	}
+	if strings.Contains(got, "counter-reset") || strings.Contains(got, "list-style-type") {
+		t.Errorf("FilterCSS = %q, want the unsupported ones dropped", got)
+	}
+	if _, err := SanitizeCSS(got); err != nil {
+		t.Errorf("what the filter left must pass the strict gate: %v", err)
+	}
+}

@@ -262,6 +262,7 @@ func SanitizeCSS(css string) (string, error) {
 	if len(css) > MaxCSSLen {
 		return "", ErrCSSTooLong
 	}
+	css = normalizeCSSSpace(css)
 	if !structuralOK(css) {
 		return "", fmt.Errorf("%w: control or invisible character", ErrCSSValue)
 	}
@@ -298,6 +299,29 @@ func SanitizeCSS(css string) (string, error) {
 	return strings.Join(out, "; "), nil
 }
 
+// normalizeCSSSpace turns the ASCII whitespace CSS itself treats as plain
+// separators — tab, newline, carriage return, form feed, vertical tab —
+// into spaces.
+//
+// Without this, every rule written across more than one line is refused
+// as holding a "control character": those bytes ARE control characters,
+// and structuralOK cannot tell them from the invisibles it exists to stop
+// (zero-width joiners, bidi overrides, the Trojan-Source family). But a
+// stylesheet written by a human, or by any tool that formats its output,
+// is multi-line by default — a whole book's typography was being dropped
+// over its own indentation. Normalizing first keeps the check aimed at
+// what it was aimed at: characters that hide meaning, not characters that
+// arrange it.
+func normalizeCSSSpace(css string) string {
+	return strings.Map(func(r rune) rune {
+		switch r {
+		case '\t', '\n', '\r', '\f', '\v':
+			return ' '
+		}
+		return r
+	}, css)
+}
+
 // FilterCSS reduces a declaration list to the declarations this profile
 // recognizes, DROPPING everything else silently — an unsupported
 // property, a banned construct, a malformed declaration — rather than
@@ -320,6 +344,7 @@ func FilterCSS(css string) string {
 	if len(css) > MaxCSSLen {
 		return "" // pathologically long for a real clipboard style=""
 	}
+	css = normalizeCSSSpace(css)
 	var out []string
 	for _, decl := range strings.Split(css, ";") {
 		decl = strings.TrimSpace(decl)

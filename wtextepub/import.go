@@ -372,7 +372,13 @@ func requestFonts(core wtext.EditorCore, doc string) {
 		name := family
 		wtext.AddDocumentFont(core, name, func(err error) {
 			if err != nil {
-				G.Logf(1, "wtextepub: the book embeds %q, which the font stores do not have (%v); that text keeps its fallback font\n",
+				// "The stores could not provide it" — not "it does not
+				// exist": a store answers an unknown family with an error
+				// response, which reaches us as a failed request, and so does
+				// a network that is simply down. The name is what the reader
+				// needs either way, since a book's @font-face often names its
+				// face something the catalog never called it.
+				G.Logf(1, "wtextepub: the book embeds %q and no font store could provide it (%v); that text keeps its fallback font\n",
 					name, err)
 				return
 			}

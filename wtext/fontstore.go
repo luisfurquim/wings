@@ -321,12 +321,40 @@ func StoreURLForFamily(family string) (string, error) {
 	if disabled {
 		return "", ErrWebFontsDisabled
 	}
+	urls := storeURLsFor(family, denied)
+	if len(urls) == 0 {
+		return "", ErrFontStoreDenied
+	}
+	return urls[0], nil
+}
+
+// storeURLsFor lists the family's URL at every enabled store, in
+// allowlist order. Callers that can afford to try more than one use the
+// list: a family one catalog does not carry another may.
+func storeURLsFor(family string, denied map[string]bool) []string {
+	var urls []string
 	for _, st := range fontStores {
 		if !denied[st.name] {
-			return st.cssURL(family), nil
+			urls = append(urls, st.cssURL(family))
 		}
 	}
-	return "", ErrFontStoreDenied
+	return urls
+}
+
+// enabledStoreURLs is StoreURLForFamily's list form: the same validation,
+// every enabled store.
+func enabledStoreURLs(family string) ([]string, error) {
+	if _, err := StoreURLForFamily(family); err != nil {
+		return nil, err
+	}
+	family = strings.TrimSpace(strings.Trim(strings.TrimSpace(family), `"'`))
+	fontMu.Lock()
+	denied := make(map[string]bool, len(deniedStores))
+	for k, v := range deniedStores {
+		denied[k] = v
+	}
+	fontMu.Unlock()
+	return storeURLsFor(family, denied), nil
 }
 
 // AddDocumentFont installs the STORE's copy of a font that a DOCUMENT
@@ -362,7 +390,7 @@ func AddDocumentFont(core EditorCore, family string, done func(err error)) {
 		finish(nil)
 		return
 	}
-	rawURL, err := StoreURLForFamily(family)
+	urls, err := enabledStoreURLs(family)
 	if err != nil {
 		finish(err)
 		return
@@ -371,18 +399,28 @@ func AddDocumentFont(core EditorCore, family string, done func(err error)) {
 		finish(nil)
 		return
 	}
-	loadWebFont(rawURL, func(installed string, err error) {
-		if err != nil {
-			finish(err)
-			return
-		}
-		// The store may name the family slightly differently from the book;
-		// mark what actually installed, not only what was asked for.
-		id := fontSlug(installed)
-		MarkDocumentFont(installed)
-		rememberWebFont(core, id)
-		finish(nil)
-	})
+	// Try the stores in turn: a catalog that does not carry this family
+	// answers with an error, and the next one gets its chance. Only when
+	// none of them has it does the text keep its fallback.
+	var try func(i int)
+	try = func(i int) {
+		loadWebFont(urls[i], func(installed string, err error) {
+			if err != nil {
+				if i+1 < len(urls) {
+					try(i + 1)
+					return
+				}
+				finish(err)
+				return
+			}
+			// The store may name the family slightly differently from the
+			// book; mark what actually installed, not what was asked for.
+			MarkDocumentFont(installed)
+			rememberWebFont(core, fontSlug(installed))
+			finish(nil)
+		})
+	}
+	try(0)
 }
 
 // clearDocumentFontMarks drops the provenance marks still waiting for a

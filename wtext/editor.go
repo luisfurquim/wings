@@ -581,6 +581,21 @@ func (e *Editor) restoreWebFonts() {
 // never trusted. Utility classes (wt-*) already defined by the attached
 // plugins are theirs — a document cannot redefine what the toolbar will
 // apply. The DOMParser tree is inert, so nothing here ever executes.
+//
+// The declarations are FILTERED before they are defined, not judged whole:
+// a stylesheet this editor never wrote — a book from anywhere — routinely
+// mixes properties the profile supports with properties it does not
+// (counter-reset, list-style-type), and refusing the rule over one of
+// them dropped the supported ones with it, stripping a book of its
+// typography one paragraph style at a time. The strict gate still runs:
+// DefineClass re-validates what the filter left, and the filter's output
+// is guaranteed to pass it (the property FuzzFilterCSS asserts).
+//
+// What is not a plain ".name" rule — a descendant selector, a
+// pseudo-class, an at-rule's innards — is skipped quietly at a debug
+// level. In a foreign book those are most of the sheet, and a wall of
+// errors about things this editor was never going to support buries the
+// one line that matters.
 func (e *Editor) adoptDocClasses(parsed js.Value) {
 	head := parsed.Get("head")
 	if !head.Truthy() {
@@ -603,6 +618,13 @@ func (e *Editor) adoptDocClasses(parsed js.Value) {
 				continue
 			}
 			name := sel[1:]
+			if err := epubhtml.ValidClassName(name); err != nil {
+				// A compound selector (".chtitle *", ".a > .b", ".x:hover"):
+				// not a named style this editor can hold. Expected in any
+				// sheet written for a browser, so not an error.
+				G.Logf(3, "wtext: document selector %q is not a plain class; skipped\n", sel)
+				continue
+			}
 			if strings.HasPrefix(name, "wt-") && e.classDefined(name) {
 				continue
 			}
@@ -610,7 +632,12 @@ func (e *Editor) adoptDocClasses(parsed js.Value) {
 				G.Logf(1, "wtext: document sheet beyond %d classes; rest ignored\n", maxDocClasses)
 				return
 			}
-			if err := e.DefineClass(name, strings.TrimSpace(decls)); err != nil {
+			css := epubhtml.FilterCSS(decls)
+			if css == "" {
+				G.Logf(2, "wtext: document style %q uses nothing this profile supports; skipped\n", name)
+				continue
+			}
+			if err := e.DefineClass(name, css); err != nil {
 				G.Logf(1, "wtext: document style %q rejected: %v\n", name, err)
 				continue
 			}
