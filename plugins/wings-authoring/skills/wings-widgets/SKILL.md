@@ -395,10 +395,22 @@ already do:
   EPUB 3 book and downloads it; book language is `wings.Locale` at click
   time. The nav/TOC
   is the first spine itemref (book opens on the TOC) and coverless books
-  carry no cover landmark (both via ugarit v0.0.2). Its item
-  label ids (`wtext-epub`, `wtext-epub-name`, `wtext-epub-help`) have NO built-in default —
+  carry no cover landmark (both via ugarit v0.0.2). The SAME instance also
+  puts "Import › EPUB" in the menu (a `MenuUpload`): it opens a book and
+  loads one of its documents through `core.SetContent`, asking WHICH when
+  the book holds several and warning that the load replaces the document
+  being edited (a content load clears the undo stack). A document's
+  properties ride the exported book as `wt-cfg-*` head metas, which is how
+  a re-imported book brings back the webfonts it remembered — as store
+  URLs re-followed through the allowlist, never as bytes, so an embedded
+  `@font-face` in a foreign book still installs nothing. Its item
+  label ids (`wtext-epub`, `wtext-epub-name`, `wtext-epub-help`,
+  `wtext-epub-import`, `wtext-epub-import-help`, `wtext-epub-import-open`,
+  `wtext-epub-import-replace`, `wtext-epub-import-pick`,
+  `wtext-epub-import-pick-replace`) have NO built-in default —
   the app must provide the `<span slot="labels" id="…">` pair or the item
-  shows the raw id (the `wtext-export` group id does have a default).
+  shows the raw id (the `wtext-export`/`wtext-import` group ids do have
+  defaults, as does `wtext-choose`, the picker's confirm button).
 
 Classes apply with the **Word split**: character declarations become
 `<span class>` on the exact range, paragraph declarations mark the touched
@@ -426,7 +438,11 @@ also exposes the class registry (`Classes`, `ClassCSS`, `ClassesAt`,
 `ClassSpanned`, `DefineClass`) and the whole-document reads: `DocText`
 (plain text, with a newline at every block boundary so words in adjacent
 paragraphs don't fuse) and `Content` (the persisted EPUB-style
-serialization — what exporter plugins consume). A toolbar item
+serialization — what exporter plugins consume). Its write counterpart is
+`SetContent(html)`, for IMPORTERS: it replaces the whole document,
+re-validating the markup, the class rules and the properties exactly as a
+paste is validated, and clears the undo stack — so ask the user before
+calling it over work in progress (see `PendingDecision`). A toolbar item
 needing a typed value (style name, URL)
 declares an `InputItem`; a passive read-out (a counter, a save indicator)
 declares a `StatusItem` — `Format` is a message id resolving to a `fmt`
@@ -451,8 +467,14 @@ When an action cannot finish without the USER's answer (an import about to
 overwrite existing styles), do NOT open a dialog — a plugin never touches
 the DOM. Return a `*wtext.PendingDecision` as an ordinary error
 (`Title`/`Message` message ids, `Detail []string` of what is at stake — user
-data, shown as-is — `Options []DecisionOption{Value, Label}`, an optional
-`Remember` storage key, and `Resume(core, choice) error`): the widget picks
+data, shown as-is — `Options []DecisionOption{Value, Label, Text}`, an optional
+`Remember` storage key, and `Resume(core, choice) error`): an option says
+either `Label` (a message id, for answers you wrote: "replace", "keep
+mine") or `Text` (USER DATA shown as-is, for answers that come out of the
+material being acted on: the chapters of an imported book — a catalog
+lookup would translate a chapter titled like a message id). Beyond six
+options the widget renders a picker plus one confirm button instead of a
+button row, so a forty-chapter book is still a dialog. The widget picks
 it out with `errors.As`, asks the question in a `w-dialog` with the app's own
 widgets and catalog, and calls `Resume` with the chosen option's `Value`.
 `Remember` adds the "don't ask again" checkbox (label id `wtext-remember`),

@@ -8,6 +8,46 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
+## [Unreleased]
+
+### Added
+- **EPUB import (`wtextepub`)** — the reading half of the book round
+  trip, in the same `Menu` plugin as the export: "Import › EPUB" opens a
+  book (a `MenuUpload`, so the widget owns the file picker) and loads one
+  of its documents into the editor. WHICH document, when the book holds
+  several, and WHETHER to discard what the editor already holds are asked
+  as ONE question — a content load clears the undo stack, and a decision
+  raised from inside another one does not chain. The answer is never
+  remembered: "which chapter" means nothing in the next book, and
+  remembering "yes, replace" would silently discard work. The file is
+  bounded before it is read (declared unpacked size, entry count, then
+  each chapter and stylesheet as it is read) and trusted for nothing
+  after: the chapter goes through `SetContent`, the same policy walker,
+  class-rule validation and property bounds a paste faces. Linked
+  stylesheets are followed inside the book and never to the network;
+  fonts embedded in a foreign book install nothing, since a font is only
+  ever installed from a store URL through the hard-coded allowlist.
+- **`EditorCore.SetContent`** — the write half of `Content`, for
+  importers: it replaces the whole document, re-validating markup, class
+  rules and properties, and clears the undo stack. It is the only way a
+  plugin can replace a document (`Replace` needs a `Selection`, and no
+  plugin can fabricate one spanning the document).
+- **`DecisionOption.Text`** — a `PendingDecision` option whose text is
+  USER DATA shown as-is (an imported book's chapter titles), as opposed
+  to `Label`, which is a message id resolved through the catalog. Sending
+  a chapter title through the catalog would translate one that happened
+  to be titled like a message id. Past six options the widget renders a
+  picker plus a confirm button instead of a row of buttons, so a
+  forty-chapter book is still a dialog.
+
+### Changed
+- **An exported EPUB carries the document's properties** as `wt-cfg-*`
+  head metas of its content document — the webfonts the document
+  remembers (as store URLs), the book metadata, whatever a plugin stored
+  in it. Without them a re-imported book came back as text that names
+  fonts nobody can find. A reader that does not know these metas ignores
+  them.
+
 ## [0.24.0] — 2026-07-14
 
 ### Added

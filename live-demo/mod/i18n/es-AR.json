@@ -732,8 +732,8 @@
     "revised": true
   },
   {
-    "content": " no\n      pueden existir en el documento. Además de las marcas básicas, la barra\n      trae fuente, tamaño y alineación — y el botón ✎ captura el formato de\n      la selección como un estilo con nombre reutilizable, aplicable desde la\n      caja \"Estilo\". Los rótulos de la barra son traducibles — cambiá el\n      idioma arriba y la barra acompaña.\n    ",
-    "revised": false
+    "content": " no\n      pueden existir en el documento. Además de las marcas básicas, la barra\n      trae fuente, tamaño y alineación — y el botón ✎ captura el formato de\n      la selección como un estilo con nombre reutilizable, aplicable desde la\n      caja \"Estilo\". En el menú lateral, \"Exportar › Estilos\" guarda los\n      estilos con nombre de este documento en un archivo e \"Importar ›\n      Estilos\" los trae de vuelta en otro documento, junto con las webfonts\n      que usan; \"Importar › EPUB\" abre un e-book entero en el editor —\n      incluso uno que vos mismo exportaste, que vuelve con los estilos y las\n      fuentes que tenía. Los rótulos de la barra son traducibles — cambiá el\n      idioma arriba y la barra acompaña.\n    ",
+    "revised": true
   },
   {
     "content": "Biografía",
@@ -994,6 +994,30 @@
   {
     "content": "Importar",
     "revised": false
+  },
+  {
+    "content": "Abre un e-book EPUB en el editor. El libro trae de vuelta los estilos y las webfonts que el documento recordaba.",
+    "revised": true
+  },
+  {
+    "content": "Abrir",
+    "revised": true
+  },
+  {
+    "content": "Abrir este libro reemplaza el documento que estás editando, y eso no se puede deshacer.",
+    "revised": true
+  },
+  {
+    "content": "Este libro tiene varios documentos. ¿Cuál abrir?",
+    "revised": true
+  },
+  {
+    "content": "Este libro tiene varios documentos. ¿Cuál abrir? El elegido reemplaza el documento que estás editando, y eso no se puede deshacer.",
+    "revised": true
+  },
+  {
+    "content": "Elegir",
+    "revised": true
   },
   {
     "content": "Estilos",

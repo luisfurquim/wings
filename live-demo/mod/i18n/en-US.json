@@ -732,8 +732,8 @@
     "revised": true
   },
   {
-    "content": " cannot\n      exist in the document. Beyond the basic marks, the toolbar brings\n      font, size and alignment — and the ✎ button captures the selection's\n      formatting as a reusable named style, applied through the \"Style\"\n      box. The toolbar labels are translatable — switch the language at the\n      top and the toolbar follows.\n    ",
-    "revised": false
+    "content": " cannot\n      exist in the document. Beyond the basic marks, the toolbar brings\n      font, size and alignment — and the ✎ button captures the selection's\n      formatting as a reusable named style, applied through the \"Style\"\n      box. In the side menu, \"Export › Styles\" saves this document's named\n      styles to a file and \"Import › Styles\" brings them back in another\n      document, along with the webfonts they use; \"Import › EPUB\" opens a\n      whole e-book in the editor — including one you exported yourself,\n      which comes back with the styles and fonts it had. The toolbar labels\n      are translatable — switch the language at the top and the toolbar\n      follows.\n    ",
+    "revised": true
   },
   {
     "content": "Biography",
@@ -994,6 +994,30 @@
   {
     "content": "Import",
     "revised": false
+  },
+  {
+    "content": "Opens an EPUB e-book in the editor. The book brings back the styles and the webfonts the document remembered.",
+    "revised": true
+  },
+  {
+    "content": "Open",
+    "revised": true
+  },
+  {
+    "content": "Opening this book replaces the document you are editing, and that cannot be undone.",
+    "revised": true
+  },
+  {
+    "content": "This book holds several documents. Which one should be opened?",
+    "revised": true
+  },
+  {
+    "content": "This book holds several documents. Which one should be opened? The one you pick replaces the document you are editing, and that cannot be undone.",
+    "revised": true
+  },
+  {
+    "content": "Choose",
+    "revised": true
   },
   {
     "content": "Styles",

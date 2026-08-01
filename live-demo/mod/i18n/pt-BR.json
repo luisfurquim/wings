@@ -732,7 +732,7 @@
     "revised": false
   },
   {
-    "content": " não\n      conseguem existir no documento. Além das marcas básicas, a barra traz\n      fonte, tamanho e alinhamento — e o botão ✎ captura a formatação da\n      seleção como um estilo nomeado reutilizável, aplicável pela caixa\n      \"Estilo\". No menu lateral, \"Exportar › Estilos\" salva seus estilos\n      nomeados num arquivo e \"Importar › Estilos\" os traz de volta em outro\n      documento, junto com as webfontes que eles usam. Os rótulos da barra são\n      traduzíveis — troque o idioma no topo e a barra acompanha.\n    ",
+    "content": " não\n      conseguem existir no documento. Além das marcas básicas, a barra traz\n      fonte, tamanho e alinhamento — e o botão ✎ captura a formatação da\n      seleção como um estilo nomeado reutilizável, aplicável pela caixa\n      \"Estilo\". No menu lateral, \"Exportar › Estilos\" salva seus estilos\n      nomeados num arquivo e \"Importar › Estilos\" os traz de volta em outro\n      documento, junto com as webfontes que eles usam; \"Importar › EPUB\" abre\n      um e-book inteiro no editor — inclusive um que você mesmo exportou, que\n      volta com os estilos e as fontes que tinha. Os rótulos da barra são\n      traduzíveis — troque o idioma no topo e a barra acompanha.\n    ",
     "revised": false
   },
   {
@@ -993,6 +993,30 @@
   },
   {
     "content": "Importar",
+    "revised": false
+  },
+  {
+    "content": "Abre um e-book EPUB no editor. O livro traz de volta os estilos e as webfontes que o documento lembrava.",
+    "revised": false
+  },
+  {
+    "content": "Abrir",
+    "revised": false
+  },
+  {
+    "content": "Abrir este livro substitui o documento que você está editando, e isso não dá para desfazer.",
+    "revised": false
+  },
+  {
+    "content": "Este livro tem vários documentos. Qual deles abrir?",
+    "revised": false
+  },
+  {
+    "content": "Este livro tem vários documentos. Qual deles abrir? O escolhido substitui o documento que você está editando, e isso não dá para desfazer.",
+    "revised": false
+  },
+  {
+    "content": "Escolher",
     "revised": false
   },
   {

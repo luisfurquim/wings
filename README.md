@@ -47,6 +47,15 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
+### Unreleased
+
+- **EPUB import** — `w-text` opens an e-book, not just writes one:
+  "Import › EPUB" loads a book's document into the editor, asking which
+  one when the book holds several. An exported book now carries the
+  document's own properties, so it comes back with the styles and the
+  webfonts it had — as store references, re-followed through the
+  allowlist, never as bytes from the file.
+
 ### v0.24.0
 
 - **Personal style library** — `wtext.StyleLibrary` saves a document's named
@@ -2019,7 +2028,7 @@ dimming only that rectangle and its box filling it minus
 for small anchors) — the visual statement of WHICH editor is being
 configured on a page with several.
 
-**EPUB export — the `wtextepub` module.** A separate Go module
+**EPUB export and import — the `wtextepub` module.** A separate Go module
 (`github.com/luisfurquim/wings/wtextepub`), so wings itself takes no
 dependency on the packager: it builds on
 [ugarit](https://github.com/luisfurquim/ugarit) for the EPUB 3 container
@@ -2042,6 +2051,14 @@ wtext.RegisterProfile("post", wtext.Profile{
 <span slot="labels" id="wtext-epub">EPUB</span>
 <span slot="labels" id="wtext-epub-name">File name</span>
 <span slot="labels" id="wtext-epub-help">Builds an EPUB e-book from the editor content and downloads it.</span>
+<!-- the import direction -->
+<span slot="labels" id="wtext-import">Import</span>
+<span slot="labels" id="wtext-epub-import">EPUB</span>
+<span slot="labels" id="wtext-epub-import-help">Opens an EPUB e-book in the editor.</span>
+<span slot="labels" id="wtext-epub-import-open">Open</span>
+<span slot="labels" id="wtext-epub-import-replace">Opening this book replaces the document you are editing, and that cannot be undone.</span>
+<span slot="labels" id="wtext-epub-import-pick">This book holds several documents. Which one should be opened?</span>
+<span slot="labels" id="wtext-epub-import-pick-replace">This book holds several documents. Which one should be opened? The one you pick replaces the document you are editing, and that cannot be undone.</span>
 <!-- the settings section (Profile.Config) -->
 <span slot="labels" id="wtext-epub-config">Book</span>
 <span slot="labels" id="wtext-epub-title">Title</span>
@@ -2064,9 +2081,38 @@ constructor's `wtextepub.Config` as their defaults — the stored title is
 the book's `dc:title`. Store webfonts the document uses are embedded:
 their files join the OCF (woff2 is an EPUB 3.3 core media type) and
 their `@font-face` rules the content document, so the book renders the
-same faces the editor showed. The portable half (`Build`, `Filename`) is unit-tested
+same faces the editor showed. The document's own properties travel too,
+as `wt-cfg-*` head metas of the content document (a reader that does not
+know them ignores them) — which is what lets a book come back as the
+DOCUMENT it was, not merely as its text.
+
+The same instance declares the other direction, "Import › EPUB" (a
+`MenuUpload`, so the widget owns the file picker and the plugin only ever
+sees bytes). It opens the book, lists the documents its table of contents
+offers, and loads the chosen one through `EditorCore.SetContent`. Two
+things can make it a question rather than an act, and they are asked as
+one: WHICH document, when the book holds several, and WHETHER to discard
+what the editor already holds — a content load clears the undo stack, so
+the old document is not coming back. A single-document book loaded into an
+empty editor asks nothing. The answer is never remembered: "which chapter"
+means nothing in the next book, and remembering "yes, replace" would
+silently discard work.
+
+The file is hostile input from an unknown source, so it is bounded before
+it is read (the archive's declared unpacked size and entry count, then
+each chapter and stylesheet as it is read), and what comes out is not
+trusted either: the chapter is handed to `SetContent`, which runs it
+through the editor's own policy walker, class-rule validation and property
+bounds — the same gate a paste faces. A chapter's linked stylesheets are
+followed INSIDE the book (never to the network) and merged into the
+document's head, where only rules the class registry accepts survive.
+Fonts embedded in a foreign book install nothing: a font is only ever
+installed from a store URL through the hard-coded allowlist, which is
+exactly how a book exported from here brings its webfonts back. The
+portable half (`Build`, `Filename`, `Open`, `Book.Document`) is unit-tested
 natively — the tests unzip the output and feed every document to
-`encoding/xml` as the well-formedness proof.
+`encoding/xml` as the well-formedness proof, round-trip a document through
+build-and-open, and fuzz the importer against arbitrary bytes.
 
 **Personal style library — `StyleLibrary`.** The styles a user builds up
 with `StyleToolbar` belong to the document that holds them; the library is
