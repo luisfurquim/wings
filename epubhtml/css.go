@@ -108,6 +108,92 @@ var cssProps = map[string]bool{
 	"break-before":      true,
 	"break-after":       true,
 	"break-inside":      true,
+
+	// Flow and box. These arrived with the document-sheet pass-through:
+	// once a book's own stylesheet is carried instead of reduced to named
+	// styles, this list stops being "what the editor writes" and becomes
+	// "what a book may say", and most of what was missing was never a
+	// safety matter — it was a profile drawn for the narrower job. Measured
+	// on one real book, thirteen properties were being lost and only one
+	// family (position, below) had any security story at all: a drop cap
+	// styled `float: left` came out sitting on the baseline, and thirty-six
+	// rules were dropped whole for holding nothing but `counter-reset`.
+	//
+	// Deliberately still absent: position and its offsets (top/right/
+	// bottom/left). `position: fixed` positions against the VIEWPORT, so a
+	// rule inside the editor could cover the application around it — the
+	// one case here where a declaration reaches past the text it styles.
+	"float": true,
+	"clear": true,
+
+	"width": true, "height": true,
+	"min-width": true, "min-height": true,
+	"max-width": true, "max-height": true,
+
+	"vertical-align": true,
+
+	"list-style":          true,
+	"list-style-type":     true,
+	"list-style-position": true,
+
+	// Inert on their own: a counter is only ever SEEN through `content`,
+	// which is not allowlisted. Carrying them changes nothing visually and
+	// stops a word processor's list machinery from emptying whole rules.
+	"counter-reset":     true,
+	"counter-increment": true,
+
+	"grid-template-columns": true,
+	"grid-template-rows":    true,
+	"align-items":           true,
+	"justify-items":         true,
+	"gap":                   true,
+
+	// Value-restricted — see cssPropValues.
+	"display":  true,
+	"overflow": true,
+}
+
+// cssPropValues restricts the VALUES of properties that are safe in
+// general but not in every value. A property absent from this map accepts
+// any value the rest of the pipeline allows.
+//
+// This is the first value-level rule in the profile: until the document
+// sheet was carried verbatim, judging by property NAME alone was enough,
+// because everything came from the editor itself.
+var cssPropValues = map[string]func(string) bool{
+	// display: none would let an imported document hide its own text —
+	// which then travels, still invisible, into the next export. Every
+	// other display value only changes how a box lays out.
+	"display": func(v string) bool { return v != "none" },
+	// The values that CONTAIN what overflows: clip it, always scroll it,
+	// or scroll it when there is something to scroll. `visible` is the
+	// initial value and asks for nothing, so carrying it would only add
+	// noise to a rule.
+	"overflow": func(v string) bool {
+		return v == "hidden" || v == "scroll" || v == "auto"
+	},
+}
+
+// cssValueOK reports whether val is acceptable for prop.
+func cssValueOK(prop, val string) bool {
+	check, restricted := cssPropValues[prop]
+	if !restricted {
+		return true
+	}
+	return check(cssValueKey(val))
+}
+
+// cssValueKey reduces a declaration's value to the form the restrictions
+// test: lowercased, without !important, single-spaced. A value that keeps
+// its priority marker or its capitals would slip past a plain comparison,
+// which is the whole point of normalizing before the check rather than
+// after.
+func cssValueKey(val string) string {
+	v := strings.ToLower(strings.TrimSpace(val))
+	if i := strings.IndexByte(v, '!'); i >= 0 {
+		v = v[:i]
+	}
+	return strings.Join(strings.Fields(v), " ")
 }
 
 // blockProps are the allowlisted properties that only take effect at
@@ -134,6 +220,22 @@ var blockProps = map[string]bool{
 
 	"page-break-before": true, "page-break-after": true, "page-break-inside": true,
 	"break-before": true, "break-after": true, "break-inside": true,
+
+	// Flow and box are paragraph-level, and they travel TOGETHER: a
+	// `float: right` split away from the `width` that sizes what is being
+	// floated would leave a named style whose two halves each do nothing.
+	// (Only named styles are split at all — a document rule is emitted
+	// with the selector the book wrote, so this classification never
+	// touches an imported book's own drop cap.)
+	"float": true, "clear": true,
+	"width": true, "height": true,
+	"min-width": true, "min-height": true,
+	"max-width": true, "max-height": true,
+	"display": true, "overflow": true,
+	"list-style": true, "list-style-type": true, "list-style-position": true,
+	"counter-reset": true, "counter-increment": true,
+	"grid-template-columns": true, "grid-template-rows": true,
+	"align-items": true, "justify-items": true, "gap": true,
 }
 
 // PropIsBlock reports whether an allowlisted property is paragraph-level.
@@ -291,6 +393,9 @@ func SanitizeCSS(css string) (string, error) {
 		if val == "" {
 			return "", fmt.Errorf("%w: empty value for %q", ErrCSSSyntax, prop)
 		}
+		if !cssValueOK(prop, val) {
+			return "", fmt.Errorf("%w: %q is not allowed for %q", ErrCSSValue, val, prop)
+		}
 		out = append(out, prop+": "+val)
 	}
 	if len(out) == 0 {
@@ -368,7 +473,7 @@ func FilterCSS(css string) string {
 		}
 		prop = strings.ToLower(strings.TrimSpace(prop))
 		val = strings.TrimSpace(val)
-		if val == "" || !cssProps[prop] {
+		if val == "" || !cssProps[prop] || !cssValueOK(prop, val) {
 			continue
 		}
 		out = append(out, prop+": "+val)

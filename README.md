@@ -2130,6 +2130,21 @@ close the rule and open a raw one. Declarations still pass the property
 allowlist, so a pseudo-element cannot inject text (`content` is not
 allowlisted) and nothing loads a remote resource.
 
+The allowlist covers typography, colour, spacing, borders, pagination and
+the flow and box properties a book needs — `float` (a drop cap is a
+floated letter, and without it the letter sits on the first line's
+baseline), `clear`, `width`/`height` with their min/max, `vertical-align`,
+`list-style*`, the counters, grid and `gap`. Two properties are carried
+but restricted by VALUE: `display` accepts anything except `none`, since
+a document that hides its own text would carry that text, still invisible,
+into the next export; and `overflow` accepts `hidden`, `scroll` and
+`auto` — the values that contain what overflows — but not `visible`,
+which is the initial value and asks for nothing. **`position` and its offsets are refused** —
+`position: fixed` resolves against the viewport, so a rule living inside
+the editor could cover the application around it. That is the one place
+in this list where refusing is about safety rather than about what a book
+is for.
+
 What does not survive is reported. At-rules are not carried (`@font-face`
 is read by the font path instead, `@import` is a network fetch), and a
 rule left with nothing this profile supports is dropped. Losing formatting

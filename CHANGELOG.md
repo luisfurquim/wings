@@ -32,6 +32,28 @@ per-commit record see the git log and tags.
   scan) and `epubhtml.ScopeSelector` confines each rule to the edited
   text, part by part — the editor and the toolbar share one shadow tree.
 
+### Changed
+- **The CSS property allowlist is a profile, and it had been drawn for
+  the wrong job.** With a book's stylesheet now carried instead of
+  reduced to named styles, the list stopped meaning "what this editor
+  writes" and started meaning "what a book may say" — and most of what it
+  refused was never a safety matter. Measured on a real book, thirteen
+  properties were being lost and only one family had any security story:
+  a drop cap styled `float: left` came out sitting on the first line's
+  baseline, and thirty-six rules were dropped whole for holding nothing
+  but `counter-reset`. Flow and box properties are now carried — `float`,
+  `clear`, `width`/`height` with their min/max, `vertical-align`,
+  `list-style*`, `counter-reset`/`counter-increment`, the grid and gap
+  properties. Two are carried but value-restricted, the first value-level
+  rules in the profile: `display` accepts everything except `none` (which
+  would let a document hide its own text, and the text would then travel
+  invisible into the next export), and `overflow` accepts `hidden`,
+  `scroll` and `auto` — the values that contain what overflows — but not
+  `visible`, the initial value, which asks for nothing. `position` and its offsets stay
+  refused, and now for a stated reason rather than by omission:
+  `position: fixed` resolves against the VIEWPORT, so a rule inside the
+  editor could cover the application around it.
+
 ### Fixed
 - **An imported book no longer loses its formatting in silence.**
   Adopting a document's stylesheet drops any rule it cannot hold as a

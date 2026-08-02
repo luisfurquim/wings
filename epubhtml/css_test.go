@@ -150,16 +150,15 @@ func TestFilterCSS(t *testing.T) {
 	}{
 		{"all recognized, passes through canonical",
 			"color:red;font-weight:bold", "color: red; font-weight: bold"},
-		{"the real-world Google Docs span: mix of allowed and not " +
-			"(vertical-align isn't recognized, white-space is)",
+		{"the real-world Google Docs span: every property in it is carried now",
 			"font-size:11pt;font-family:Arial,sans-serif;color:#000000;" +
 				"background-color:transparent;font-weight:400;font-style:normal;" +
 				"font-variant:normal;text-decoration:none;vertical-align:baseline;" +
 				"white-space:pre;white-space:pre-wrap;",
 			"font-size: 11pt; font-family: Arial,sans-serif; color: #000000; " +
 				"background-color: transparent; font-weight: 400; font-style: normal; " +
-				"font-variant: normal; text-decoration: none; white-space: pre; " +
-				"white-space: pre-wrap"},
+				"font-variant: normal; text-decoration: none; vertical-align: baseline; " +
+				"white-space: pre; white-space: pre-wrap"},
 		{"the real-world Google Docs p: all allowed",
 			"line-height:1.38;margin-left: -56.69pt;text-indent: 84.75pt;" +
 				"text-align: justify;margin-top:0pt;margin-bottom:0pt;",
@@ -214,7 +213,10 @@ func TestSanitizeCSSRejects(t *testing.T) {
 		{"control char", "color: re\x00d", ErrCSSValue},
 		{"position", "position: fixed", ErrCSSProperty},
 		{"content", "content: 'fake'", ErrCSSProperty},
-		{"display", "display: none", ErrCSSProperty},
+		// display is carried now, but not this value: it would let a document
+		// hide its own text, which then travels invisible into the export.
+		{"display: none", "display: none", ErrCSSValue},
+		{"positioning", "position: fixed", ErrCSSProperty},
 		{"unknown property", "colour: red", ErrCSSProperty},
 		{"no colon", "color red", ErrCSSSyntax},
 		{"empty value", "color:", ErrCSSSyntax},
@@ -267,18 +269,83 @@ func TestCSSAcceptsMultilineRules(t *testing.T) {
 }
 
 // TestFilterCSSKeepsSupportedAlongsideUnsupported is the property the
-// document-load path now depends on: a book's rule mixing counter-reset
-// (unsupported) with text-align (supported) keeps the supported half
-// instead of being dropped whole.
+// document-load path depends on: a book's rule mixing an unsupported
+// property with a supported one keeps the supported half instead of
+// being dropped whole. (counter-reset and list-style-type used to play
+// the unsupported role here; both are carried now, so the example moved
+// to position, which stays out on purpose.)
 func TestFilterCSSKeepsSupportedAlongsideUnsupported(t *testing.T) {
-	got := FilterCSS("counter-reset: chapter 1; text-align: center; list-style-type: none; font-size: 2em")
+	got := FilterCSS("position: fixed; text-align: center; top: 0; font-size: 2em")
 	if !strings.Contains(got, "text-align: center") || !strings.Contains(got, "font-size: 2em") {
 		t.Errorf("FilterCSS = %q, want the supported declarations kept", got)
 	}
-	if strings.Contains(got, "counter-reset") || strings.Contains(got, "list-style-type") {
+	if strings.Contains(got, "position") || strings.Contains(got, "top") {
 		t.Errorf("FilterCSS = %q, want the unsupported ones dropped", got)
 	}
 	if _, err := SanitizeCSS(got); err != nil {
 		t.Errorf("what the filter left must pass the strict gate: %v", err)
+	}
+}
+
+// TestCSSValueRestrictions: the first value-level rules in the profile.
+// Judging by property name alone stopped being enough once a book's own
+// stylesheet was carried verbatim.
+func TestCSSValueRestrictions(t *testing.T) {
+	for _, tc := range []struct {
+		css  string
+		keep bool
+	}{
+		// display: everything but none, whatever the spelling.
+		{"display: block", true},
+		{"display: grid", true},
+		{"display: inline-block", true},
+		{"display: none", false},
+		{"display: NONE", false},
+		{"display:none !important", false},
+		{"display:   none   ", false},
+		// overflow: the values that contain what overflows.
+		{"overflow: hidden", true},
+		{"overflow: scroll", true},
+		{"overflow: auto", true},
+		{"overflow: HIDDEN !important", true},
+		{"overflow: visible", false},
+		{"overflow: hidden auto", false}, // two-value form is not one of them
+		// Unrestricted properties are unaffected.
+		{"float: left", true},
+		{"color: none", true},
+	} {
+		got := FilterCSS(tc.css) != ""
+		if got != tc.keep {
+			t.Errorf("FilterCSS(%q) kept=%v, want %v", tc.css, got, tc.keep)
+		}
+		_, err := SanitizeCSS(tc.css)
+		if (err == nil) != tc.keep {
+			t.Errorf("SanitizeCSS(%q) err=%v, want accepted=%v", tc.css, err, tc.keep)
+		}
+	}
+}
+
+// TestCSSFlowProperties: the properties the document-sheet pass-through
+// brought in. float is the one that turns a big letter into a drop cap;
+// without it the letter sits on the first line's baseline.
+func TestCSSFlowProperties(t *testing.T) {
+	css := "float: left; width: 2em; height: 2em; vertical-align: super; " +
+		"list-style-type: none; counter-reset: x 0; gap: 1em"
+	clean, err := SanitizeCSS(css)
+	if err != nil {
+		t.Fatalf("SanitizeCSS refused the flow group: %v", err)
+	}
+	for _, prop := range []string{"float", "width", "height", "vertical-align",
+		"list-style-type", "counter-reset", "gap"} {
+		if !strings.Contains(clean, prop) {
+			t.Errorf("%q did not survive: %q", prop, clean)
+		}
+	}
+	// position stays out: fixed positions against the viewport and would
+	// let a rule inside the editor cover the application around it.
+	for _, bad := range []string{"position: fixed", "position: static", "top: 0", "left: 0"} {
+		if FilterCSS(bad) != "" {
+			t.Errorf("FilterCSS(%q) kept a positioning declaration", bad)
+		}
 	}
 }
