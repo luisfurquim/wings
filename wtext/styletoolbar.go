@@ -66,16 +66,52 @@ func CreateStyle(core EditorCore, name string) error {
 	if err := core.DefineClass(name, merged); err != nil {
 		return err
 	}
+	// Each step RE-READS the selection instead of reusing the one captured
+	// above, and that is not defensive noise: RemoveClass carves text
+	// nodes, and a Selection captured before a carve silently stops
+	// describing the user's range — the original text node object becomes
+	// the FIRST carved piece, so the stale handles still pass every
+	// validity check while naming a fragment (the hazard mutate.go spells
+	// out at length). Reusing one Selection across the removals left the
+	// final ApplyClass working on a sliver, so a style created from a
+	// selection was not applied to the very text it was created from.
+	//
+	// Re-reading is safe because every mutation restores the document
+	// selection by CHARACTER OFFSET (restoreSelAt), which survives the
+	// restructuring the handles do not.
 	return core.Txn(func(c EditorCore) error {
 		for _, cls := range classes {
 			if cls == name {
 				continue
 			}
-			if err := c.RemoveClass(sel, cls); err != nil {
+			if _, defined := c.ClassCSS(cls); !defined {
+				// A class the DOCUMENT brought and this editor never
+				// registered — a book's `dropcaps`, kept on the element so
+				// the book's own `span.dropcaps` rule can still match it.
+				// Not ours to remove: RemoveClass refuses an unregistered
+				// class (ErrUnknownClass) and would take the whole
+				// transaction down with it, so creating a style anywhere
+				// inside an imported document failed outright and silently
+				// left the text unstyled.
+				//
+				// Skipping is also the right behaviour and not merely the
+				// safe one: stripping the hook a book's stylesheet selects
+				// on would delete formatting the user never asked to lose.
+				continue
+			}
+			cur, ok := c.Sel()
+			if !ok {
+				return ErrNoSelection
+			}
+			if err := c.RemoveClass(cur, cls); err != nil {
 				return err
 			}
 		}
-		return c.ApplyClass(sel, name)
+		cur, ok := c.Sel()
+		if !ok {
+			return ErrNoSelection
+		}
+		return c.ApplyClass(cur, name)
 	})
 }
 

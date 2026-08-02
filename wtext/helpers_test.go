@@ -29,9 +29,27 @@ type fakeCore struct {
 	// ClassSpanned exists to see past.
 	blockOnly map[string]bool
 	calls     []string
+
+	// freshSel makes every Sel() hand back a DISTINCT selection, stamped
+	// with a generation in its offsets — the way a real editor does after
+	// a mutation restores the selection by character offset. gotSel
+	// records what each class mutation was actually handed, so a test can
+	// tell a re-read selection from a reused (and by then stale) one.
+	freshSel bool
+	selGen   int
+	gotSel   []Selection
 }
 
-func (f *fakeCore) Sel() (Selection, bool) { return f.sel, f.hasSel }
+func (f *fakeCore) Sel() (Selection, bool) {
+	if !f.freshSel {
+		return f.sel, f.hasSel
+	}
+	f.selGen++
+	return Selection{
+		From: Point{Node: 1, Offset: f.selGen},
+		To:   Point{Node: 1, Offset: f.selGen + 100},
+	}, f.hasSel
+}
 func (f *fakeCore) Text(Selection) (string, error) {
 	return "", nil
 }
@@ -90,12 +108,14 @@ func (f *fakeCore) SetBlock(_ Selection, tag string) error {
 	f.calls = append(f.calls, "setblock:"+tag)
 	return nil
 }
-func (f *fakeCore) ApplyClass(_ Selection, name string) error {
+func (f *fakeCore) ApplyClass(s Selection, name string) error {
 	f.calls = append(f.calls, "apply:"+name)
+	f.gotSel = append(f.gotSel, s)
 	return nil
 }
-func (f *fakeCore) RemoveClass(_ Selection, name string) error {
+func (f *fakeCore) RemoveClass(s Selection, name string) error {
 	f.calls = append(f.calls, "remove:"+name)
+	f.gotSel = append(f.gotSel, s)
 	return nil
 }
 func (f *fakeCore) DefineClass(name, css string) error {

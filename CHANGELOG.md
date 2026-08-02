@@ -8,6 +8,34 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
+## [Unreleased]
+
+### Fixed
+- **Creating a style inside an imported document no longer fails
+  outright.** Carrying a book's stylesheet means an element may carry a
+  class the editor never registered — a book's `dropcaps`, kept so the
+  book's own `span.dropcaps` rule can match it — and that broke an
+  assumption every path had until then: that a class on an element is a
+  registered one. `CreateStyle` removes the classes it folds into the new
+  style, `RemoveClass` refuses an unregistered class, and the whole
+  transaction went down with it, so "create style from selection"
+  silently did nothing anywhere inside an imported book. Classes the
+  document owns are now left alone — which is also the right behaviour
+  and not merely the safe one, since stripping the hook a book's
+  stylesheet selects on would delete formatting nobody asked to lose.
+- **A style created from a selection is now applied to that selection.**
+  `CreateStyle` folds the formatting in effect into a new named class,
+  then removes the classes it absorbed before applying the new one — and
+  it captured the selection ONCE, reusing it across every step. But
+  `RemoveClass` carves text nodes, and a selection captured before a
+  carve stops describing the user's range: the original text node becomes
+  the first carved piece, so the stale handles keep passing every
+  validity check while naming a fragment. The final apply therefore
+  landed on a sliver, and the text the style was made from did not get
+  it. Every step re-reads the selection now, which is safe because each
+  mutation restores it by character offset. Found by the new CSS
+  inspector, which made the absence visible for the first time.
+
 ## [0.26.0] — 2026-08-02
 
 ### Added

@@ -287,3 +287,83 @@ func itoa(n int) string {
 	}
 	return string(digits)
 }
+
+// TestCreateStyleRereadsSelection pins the bug the CSS inspector exposed:
+// a style created from a selection was not applied to the text it was
+// created from.
+//
+// CreateStyle removes the classes it folded into the new style before
+// applying it, and RemoveClass CARVES text nodes. A Selection captured
+// before a carve stops describing the user's range — the original text
+// node becomes the first carved piece, so stale handles keep passing
+// every validity check while naming a fragment (mutate.go documents the
+// hazard). Reusing one Selection across the removals left the final
+// ApplyClass working on that sliver.
+//
+// Every mutation therefore has to be handed a FRESHLY read selection.
+func TestCreateStyleRereadsSelection(t *testing.T) {
+	core := &fakeCore{hasSel: true, freshSel: true, at: []string{"wt-b", "wt-u"}}
+	if err := core.DefineClass("wt-b", "font-weight: bold"); err != nil {
+		t.Fatal(err)
+	}
+	if err := core.DefineClass("wt-u", "text-decoration: underline"); err != nil {
+		t.Fatal(err)
+	}
+	core.gotSel = nil
+
+	if err := CreateStyle(core, "teste"); err != nil {
+		t.Fatalf("CreateStyle: %v", err)
+	}
+	if len(core.gotSel) != 3 { // two removals, then the apply
+		t.Fatalf("mutations = %v, want two removals and one apply", core.calls)
+	}
+	for i := 1; i < len(core.gotSel); i++ {
+		if core.gotSel[i].From.Offset <= core.gotSel[i-1].From.Offset {
+			t.Errorf("mutation %d reused the selection of mutation %d (offsets %d and %d): "+
+				"a selection captured before a carve names a fragment, not the user's range",
+				i, i-1, core.gotSel[i-1].From.Offset, core.gotSel[i].From.Offset)
+		}
+	}
+}
+
+// TestCreateStyleSurvivesDocumentClasses pins a regression the CSS
+// inspector's own bug report uncovered: creating a style anywhere inside
+// an IMPORTED document failed outright, leaving the text unstyled.
+//
+// Carrying a book's stylesheet means an element may now carry a class the
+// editor never registered — `dropcaps`, kept so the book's own
+// `span.dropcaps` rule can match it. ClassesAt reports it like any other,
+// and RemoveClass refuses it (ErrUnknownClass), which took the whole
+// transaction down. Before document rules existed, every class on an
+// element was a registered one and the assumption held.
+func TestCreateStyleSurvivesDocumentClasses(t *testing.T) {
+	core := &fakeCore{
+		hasSel:   true,
+		freshSel: true,
+		// "dropcaps" is the book's; the other two are the editor's.
+		at: []string{"dropcaps", "wt-b", "wt-u"},
+	}
+	if err := core.DefineClass("wt-b", "font-weight: bold"); err != nil {
+		t.Fatal(err)
+	}
+	if err := core.DefineClass("wt-u", "text-decoration: underline"); err != nil {
+		t.Fatal(err)
+	}
+	core.calls = nil
+
+	if err := CreateStyle(core, "teste"); err != nil {
+		t.Fatalf("CreateStyle failed inside an imported document: %v", err)
+	}
+	for _, c := range core.calls {
+		if c == "remove:dropcaps" {
+			t.Error("tried to remove a class the document owns; the editor never registered it, " +
+				"and stripping it would delete the hook the book's own rule selects on")
+		}
+	}
+	if _, ok := core.classes["teste"]; !ok {
+		t.Error("the style was not defined")
+	}
+	if core.calls[len(core.calls)-1] != "apply:teste" {
+		t.Errorf("calls = %v, want the new style applied last", core.calls)
+	}
+}
