@@ -10,8 +10,12 @@ github.com/luisfurquim/ugarit v0.0.2 h1:0Y+VH9Z2f7ilBYG6/useBV2XbK8beJoHKx8Jivjm
 github.com/luisfurquim/ugarit v0.0.2/go.mod h1:LVXgBoQ+LhzSkjQ2PhXzWYARZks01DJlxRtBdVBZQ6Q=
 github.com/luisfurquim/wings v0.23.0 h1:IucwUTuNTRkRS2lHX1K1t2uSz5ICRlEo5//t7/tT5Hc=
 github.com/luisfurquim/wings v0.23.0/go.mod h1:w7MUmF4sF/NKg9AN5cjIaKMp07Fm9JVyRFP+NlrNbDQ=
+github.com/luisfurquim/wings v0.25.0 h1:1HLx60r6NVnkGq+ogepTgVvpOqjQaywfvTuiURRjBUc=
+github.com/luisfurquim/wings v0.25.0/go.mod h1:w7MUmF4sF/NKg9AN5cjIaKMp07Fm9JVyRFP+NlrNbDQ=
 github.com/luisfurquim/wings/wtextepub v0.4.0 h1:hGLNC+qEaReK5hk3MILUPkzt+pkzk0SBik9+o3iic8Q=
 github.com/luisfurquim/wings/wtextepub v0.4.0/go.mod h1:7O1dtcxC3TkZxER7Z6kd9ZNaYUS2ypKp34A3a8y5y2k=
+github.com/luisfurquim/wings/wtextepub v0.5.0 h1:A0SNQNPG9PueppUd442RU/cHJ2umh9KdjW+imnhF8Lw=
+github.com/luisfurquim/wings/wtextepub v0.5.0/go.mod h1:3JXgo4HaEmWMSnx92884SxQmw/BjGFt91on5/QnYzGU=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20210921155107-089bfa567519/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=
