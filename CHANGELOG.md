@@ -8,7 +8,7 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
-## [Unreleased]
+## [0.27.0] — 2026-08-02
 
 ### Fixed
 - **Creating a style inside an imported document no longer fails

@@ -47,6 +47,15 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
+### v0.27.0
+
+- **A CSS inspector for `w-text`** — the new `inspect` attribute adds a
+  toolbar toggle; hovering the text then lists the selectors in effect at
+  that point. It is the companion to carrying a book's own stylesheet:
+  most of an imported document's formatting comes from rules nobody can
+  apply or remove, and this is how they become findable. It found two
+  bugs on its first outing, both fixed here.
+
 ### v0.26.0
 
 - **An imported book keeps its stylesheet.** A rule whose selector is not
@@ -104,19 +113,6 @@ Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
   metadata), the user edits them in a dialog **anchored over the editor**
   (new `w-dialog` mode), and the values persist inside the document
   itself, readable by every plugin.
-
-### v0.21.0
-
-- **`w-text` gains Underline** — same CSS-class design as Bold/Italic
-  (`wt-u`), recognizing and clearing pasted `<u>` too.
-- **Font picker grows web-safe named stacks with live preview** — Georgia,
-  Palatino, Times, Arial, Verdana, Trebuchet, Courier join the generics,
-  each option rendered in its own typeface (`w-combobox` learned a
-  per-option `font` key).
-- **EPUB export asks the document name** (Save-As prompt via the new
-  `MenuInput` menu kind — the typed name becomes the TOC entry, its
-  sanitized form the file name) **and the TOC opens the book** instead of
-  trailing it (ugarit v0.0.2).
 
 ---
 
