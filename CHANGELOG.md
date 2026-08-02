@@ -8,6 +8,26 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
+## [Unreleased]
+
+### Fixed
+- **An imported book no longer loses its formatting in silence.**
+  Adopting a document's stylesheet drops any rule it cannot hold as a
+  named style, and it did so without a word: a book styled `p.haikai`
+  and `span.dropcaps` — the ordinary way a stylesheet is written — had
+  every font-bearing rule refused while the console reported only that
+  the font had been installed, which is the opposite of a lead. The
+  adoption now has its own logger, `wtext.GCSS`, verbose by default and
+  separate from `wtext.G` so this one section can explain itself without
+  raising the noise of the rest: each refused rule says which selector
+  and why, a summary gives the counts, and a refused rule that asked for
+  a `font-family` is named. `wtext.GCSS.Set(1)` keeps only the summary.
+  CSS comments are now stripped before the sheet is split, so a
+  commented-out rule stops being reported as a rule nobody wrote.
+
+  This is diagnosis, not a widening: which rules are accepted has not
+  changed. The named-style model still cannot express `p.haikai`.
+
 ## [0.25.0] — 2026-08-01
 
 ### Added

@@ -602,9 +602,12 @@ func (e *Editor) adoptDocClasses(parsed js.Value) {
 		return
 	}
 	styles := head.Call("querySelectorAll", "style")
+	var st docSheetStats
 	adopted := 0
+outer:
 	for i := 0; i < styles.Get("length").Int(); i++ {
-		for _, rule := range strings.Split(styles.Index(i).Get("textContent").String(), "}") {
+		sheet := stripCSSComments(styles.Index(i).Get("textContent").String())
+		for _, rule := range strings.Split(sheet, "}") {
 			rule = strings.TrimSpace(rule)
 			if rule == "" {
 				continue
@@ -614,7 +617,13 @@ func (e *Editor) adoptDocClasses(parsed js.Value) {
 				continue
 			}
 			sel = strings.TrimSpace(sel)
+			st.total++
 			if !strings.HasPrefix(sel, ".") {
+				// A type, id, pseudo-element or at-rule selector — or, far
+				// more often in a real book, a class qualified by its element
+				// ("p.haikai", "span.dropcaps"). This editor keeps NAMED
+				// styles, not a stylesheet, so there is nowhere to put one.
+				st.drop(sel, decls, "the editor holds named styles, and this selector names something else")
 				continue
 			}
 			name := sel[1:]
@@ -622,28 +631,33 @@ func (e *Editor) adoptDocClasses(parsed js.Value) {
 				// A compound selector (".chtitle *", ".a > .b", ".x:hover"):
 				// not a named style this editor can hold. Expected in any
 				// sheet written for a browser, so not an error.
-				G.Logf(3, "wtext: document selector %q is not a plain class; skipped\n", sel)
+				st.drop(sel, decls, "not a plain class name")
 				continue
 			}
 			if strings.HasPrefix(name, "wt-") && e.classDefined(name) {
+				st.reserved++
 				continue
 			}
 			if adopted >= maxDocClasses {
-				G.Logf(1, "wtext: document sheet beyond %d classes; rest ignored\n", maxDocClasses)
-				return
+				GCSS.Logf(1, "wtext: document sheet beyond %d classes; rest ignored\n", maxDocClasses)
+				break outer
 			}
 			css := epubhtml.FilterCSS(decls)
 			if css == "" {
-				G.Logf(2, "wtext: document style %q uses nothing this profile supports; skipped\n", name)
+				st.drop(sel, decls, "nothing in it is supported by this profile")
 				continue
 			}
 			if err := e.DefineClass(name, css); err != nil {
-				G.Logf(1, "wtext: document style %q rejected: %v\n", name, err)
+				// Should not happen: FilterCSS's output is built to pass
+				// DefineClass (the property FuzzFilterCSS asserts it). Loud.
+				GCSS.Logf(1, "wtext: document style %q rejected: %v\n", name, err)
+				st.skipped++
 				continue
 			}
 			adopted++
 		}
 	}
+	st.report(adopted)
 }
 
 // IsEmpty reports whether the document holds no user text — the pristine

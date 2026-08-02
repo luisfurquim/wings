@@ -2109,6 +2109,20 @@ through the editor's own policy walker, class-rule validation and property
 bounds — the same gate a paste faces. A chapter's linked stylesheets are
 followed INSIDE the book (never to the network) and merged into the
 document's head, where only rules the class registry accepts survive.
+
+What does NOT survive is reported. The editor holds NAMED styles, not a
+stylesheet, so a rule whose selector is not a plain `.name` — a real
+book's `p.haikai` or `.chtitle *` — has nowhere to be stored and is
+dropped, and so is a rule left with nothing this profile supports. Losing
+formatting in silence is the hardest kind of bug to even notice, so the
+adoption keeps its own logger, **`wtext.GCSS`**, verbose by default
+(level 3) and independent of `wtext.G` — this one section can explain
+itself without raising the noise of the rest. Each refused rule says which
+selector and why; a summary line closes with how many of how many were
+adopted; and a rule that asked for a `font-family` is named explicitly,
+because "the font is installed" and "the text ignores it" are otherwise
+two facts with nothing connecting them. Turn it down with
+`wtext.GCSS.Set(1)` to keep only the summary and the font lead.
 A font a foreign book embeds is never installed from the book: its bytes
 are a binary of unknown origin, and the stores' curated libre catalogs are
 what make a font legitimate to carry into the next export. What the book's
