@@ -7,6 +7,7 @@ import (
 	"syscall/js"
 
 	"github.com/luisfurquim/wings/dom"
+	"github.com/luisfurquim/wings/internal/jsguard"
 	"github.com/luisfurquim/wings/wtext"
 )
 
@@ -290,13 +291,10 @@ func localStore() (store js.Value) {
 // guard runs fn, converting a JS exception into a logged false — the
 // house rule of this codebase: a panic in a wasm frontend takes the whole
 // app down, so nothing that crosses the syscall/js boundary may panic.
-func guard(what string, fn func()) (ok bool) {
-	defer func() {
-		if r := recover(); r != nil {
-			G.Logf(1, "w-text: %s unavailable: %v\n", what, r)
-			ok = false
-		}
-	}()
-	fn()
+func guard(what string, fn func()) bool {
+	if err := jsguard.Do(what, fn); err != nil {
+		G.Logf(1, "w-text: %s unavailable: %v\n", what, err)
+		return false
+	}
 	return true
 }

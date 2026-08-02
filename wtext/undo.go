@@ -2,7 +2,11 @@
 
 package wtext
 
-import "syscall/js"
+import (
+	"syscall/js"
+
+	"github.com/luisfurquim/wings/internal/jsguard"
+)
 
 // The undo machine has ONE capture pipeline: every mutation — native
 // typing, canonicalization, core methods, even Range.deleteContents —
@@ -285,23 +289,27 @@ func (e *Editor) Redo() {
 // capturing the application itself.
 func (e *Editor) applyStep(step []jsOp, invert bool) {
 	e.applying = true
+	// The bookkeeping unwinds whatever happens; the guard is only about
+	// the ops themselves.
 	defer func() {
 		e.discardRecords()
 		e.applying = false
-		if r := recover(); r != nil {
-			// A corrupt op must not kill the whole wasm app; the step is
-			// already popped, so we log and carry on (sec-fail-operational).
-			G.Logf(1, "wtext: recovered while applying undo step: %v\n", r)
-		}
 	}()
-	if invert {
-		for i := len(step) - 1; i >= 0; i-- {
-			step[i].undo()
+	err := jsguard.Do("undo step", func() {
+		if invert {
+			for i := len(step) - 1; i >= 0; i-- {
+				step[i].undo()
+			}
+		} else {
+			for i := 0; i < len(step); i++ {
+				step[i].redo()
+			}
 		}
-	} else {
-		for i := 0; i < len(step); i++ {
-			step[i].redo()
-		}
+	})
+	if err != nil {
+		// A corrupt op must not kill the whole wasm app; the step is
+		// already popped, so we log and carry on (sec-fail-operational).
+		G.Logf(1, "wtext: %v\n", err)
 	}
 }
 

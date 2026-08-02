@@ -8,6 +8,26 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
+## [Unreleased]
+
+### Changed
+- **One guard for the syscall/js boundary: `internal/jsguard`.** A JS
+  exception reaching Go is a panic, and a panic in a wasm frontend takes
+  the whole app down with the user's unsaved document — so nothing
+  crossing into JavaScript may panic. That rule was implemented by hand
+  thirteen times, each site re-deciding its own fallback and its own
+  message, and seven of them (the Intl formatter cache) reported
+  **nothing at all**: a locale or option the browser refused left numbers
+  and dates rendering wrong with no clue anywhere. There is now one
+  implementation, guarding a BLOCK — the shape the boundary actually has,
+  since building an Intl formatter is a dozen JS calls that fail as a
+  unit — and returning a typed `*PanicError` carrying the operation, the
+  recovered value (a DOMException usually says more than any stack) and
+  the trace in a FIELD rather than as a chain of wrapped errors, which
+  would make `errors.Is` walk a wall of frames. Every site now logs its
+  failure. The package touches no `syscall/js` at all, so it is portable
+  and unit-tested natively.
+
 ## [0.27.0] — 2026-08-02
 
 ### Fixed

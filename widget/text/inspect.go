@@ -8,6 +8,7 @@ import (
 	"syscall/js"
 
 	"github.com/luisfurquim/wings/dom"
+	"github.com/luisfurquim/wings/internal/jsguard"
 )
 
 // The CSS inspector: a toolbar toggle that, while on, shows the selectors
@@ -230,13 +231,15 @@ func (t *toolbar) selectorsFor(el js.Value) []string {
 // in a wasm editor loses the user's document; hence the recover. A
 // selector the browser cannot read matches nothing, which is also what it
 // does when rendered into the sheet.
-func matchesSelector(el js.Value, sel string) (ok bool) {
-	defer func() {
-		if recover() != nil {
-			ok = false
-		}
-	}()
-	return el.Call("matches", sel).Bool()
+func matchesSelector(el js.Value, sel string) bool {
+	hit, err := jsguard.Value("matches", func() bool {
+		return el.Call("matches", sel).Bool()
+	})
+	if err != nil {
+		G.Logf(2, "w-text: selector %q is not valid CSS (%v); it matches nothing\n", sel, err)
+		return false
+	}
+	return hit
 }
 
 // showTip puts text in the tooltip, creating it on first use.

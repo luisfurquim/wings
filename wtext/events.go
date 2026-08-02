@@ -6,6 +6,7 @@ import (
 	"syscall/js"
 
 	"github.com/luisfurquim/wings/dom"
+	"github.com/luisfurquim/wings/internal/jsguard"
 )
 
 // The event spine, in order of first defense:
@@ -132,12 +133,9 @@ func (e *Editor) unwire() {
 // degrade and log, never take the whole wasm app down with it (a panic
 // here is total loss — there is no process isolation to fall back on).
 func (e *Editor) guard(where string, fn func()) {
-	defer func() {
-		if r := recover(); r != nil {
-			G.Logf(1, "wtext: recovered in %s: %v\n", where, r)
-		}
-	}()
-	fn()
+	if err := jsguard.Do(where, fn); err != nil {
+		G.Logf(1, "wtext: %v\n", err)
+	}
 }
 
 // ── beforeinput ─────────────────────────────────────────────────────────

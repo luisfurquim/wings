@@ -9,6 +9,7 @@ import (
 	"syscall/js"
 
 	"github.com/luisfurquim/wings/epubhtml"
+	"github.com/luisfurquim/wings/internal/jsguard"
 )
 
 // Undo bounds: a step cap and a byte budget over retained strings/nodes,
@@ -331,21 +332,22 @@ func (e *Editor) selectionObj() js.Value {
 // call runs under recover: early WebKit shipped a variadic signature that
 // rejects the options object, and a JS exception through syscall/js is a
 // panic — total loss without the guard.
-func composedRange(docSel, root js.Value) (rng js.Value) {
-	rng = js.Undefined()
+func composedRange(docSel, root js.Value) js.Value {
 	if docSel.Get("getComposedRanges").Type() != js.TypeFunction {
-		return
+		return js.Undefined()
 	}
-	defer func() {
-		if recover() != nil {
-			rng = js.Undefined()
+	rng, err := jsguard.Value("getComposedRanges", func() js.Value {
+		ranges := docSel.Call("getComposedRanges", map[string]any{"shadowRoots": []any{root}})
+		if ranges.Truthy() && ranges.Get("length").Int() > 0 {
+			return ranges.Index(0)
 		}
-	}()
-	ranges := docSel.Call("getComposedRanges", map[string]any{"shadowRoots": []any{root}})
-	if ranges.Truthy() && ranges.Get("length").Int() > 0 {
-		rng = ranges.Index(0)
+		return js.Undefined()
+	})
+	if err != nil {
+		G.Logf(2, "wtext: %v; falling back to the document selection\n", err)
+		return js.Undefined()
 	}
-	return
+	return rng
 }
 
 // rangeFor materializes a Selection into a DOM Range, normalizing the
@@ -733,15 +735,16 @@ func (e *Editor) StyleProbes() []StyleProbe {
 // loss of the user's document. Hence the recover: a selector the browser
 // cannot even read matches nothing, which is also what it does when
 // rendered into the sheet.
-func (e *Editor) matchesAnything(sel string) (ok bool) {
-	defer func() {
-		if recover() != nil {
-			GCSS.Logf(2, "wtext: document selector %q is not valid CSS; it styles nothing\n", sel)
-			ok = false
-		}
-	}()
-	return e.root.Call("querySelector",
-		epubhtml.ScopeSelector(sel, "[contenteditable]")).Truthy()
+func (e *Editor) matchesAnything(sel string) bool {
+	hit, err := jsguard.Value("querySelector", func() bool {
+		return e.root.Call("querySelector",
+			epubhtml.ScopeSelector(sel, "[contenteditable]")).Truthy()
+	})
+	if err != nil {
+		GCSS.Logf(2, "wtext: document selector %q is not valid CSS (%v); it styles nothing\n", sel, err)
+		return false
+	}
+	return hit
 }
 
 // IsEmpty reports whether the document holds no user text — the pristine

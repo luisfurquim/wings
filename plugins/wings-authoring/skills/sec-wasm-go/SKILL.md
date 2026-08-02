@@ -41,6 +41,25 @@ this is what *you* still own.
   `localStorage` is hostile input (see `sec-hostile-input`). Check `.Type()`
   before calling `.String()` / `.Int()` / `.Bool()` — a wrong-type access
   **panics**, and a panic is total (fact 1).
+- **A call made with foreign data needs a `recover`.** Type-checking covers a
+  wrong-type access, but not a method that THROWS: `el.matches(sel)` on a
+  selector that came from a document, `new Intl.NumberFormat(locale, …)` on a
+  locale from a catalog, a method the browser version does not have. A JS
+  exception arrives in Go as a panic, and a panic is total (fact 1). Wrap the
+  call — not every call, only the ones whose input you did not author — in a
+  small guard, and give it a real fallback:
+
+  ```go
+  func matches(el js.Value, sel string) (ok bool) {
+      defer func() { if recover() != nil { ok = false } }()
+      return el.Call("matches", sel).Bool()
+  }
+  ```
+
+  Guard a BLOCK when the operations fail as a unit (building a formatter is a
+  dozen JS calls). And log it: a guard that silently returns a zero value turns
+  a browser refusal into a mystery — formatting that quietly comes out wrong
+  with nothing anywhere to say why.
 - **innerHTML invariant.** In your components you normally never touch the DOM
   directly — you drive it through `obj.This.Set` and let WINGS render. The
   danger is reaching *around* that: `someEl.Set("innerHTML", fetchedString)` or

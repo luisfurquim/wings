@@ -38,6 +38,16 @@ model. In the browser none of that exists — some djb tactics become
 - Every `js.Value` arriving from the DOM, `fetch`, events, or postMessage is
   hostile input (sec-hostile-input applies): check `.Type()` before `.String()`
   / `.Int()`; a wrong-type access panics — and a panic is total (rule 1).
+- **A call made with foreign data needs a guard: `internal/jsguard`.** Type
+  checks cover a wrong-type access, not a method that THROWS — `matches()` on
+  a selector a book wrote, `new Intl.NumberFormat` on a locale from a catalog,
+  a method a browser version lacks. Use `jsguard.Do(op, fn)` or
+  `jsguard.Value(op, fn)` instead of hand-rolling `defer/recover`: it was
+  written by hand 13 times before the package existed, and 7 of those (the
+  Intl cache) reported NOTHING, so a refused locale left numbers rendering
+  wrong with no clue. It guards a BLOCK, which is the shape the boundary
+  actually has. **Always log the returned `*PanicError`** — a guard that
+  silently returns the zero value converts a browser refusal into a mystery.
 - **innerHTML invariant** (established in the 239e73f hardening): untrusted
   strings never reach `innerHTML`/`insertAdjacentHTML`/`outerHTML`. Templates
   are build-time artifacts; runtime data goes in via `textContent`/attribute
