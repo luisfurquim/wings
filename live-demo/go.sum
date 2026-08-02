@@ -16,6 +16,8 @@ github.com/luisfurquim/wings v0.26.0 h1:Q+7pDcvAbCmO1u6SirBcyB7n8BtrA/10/pId+lC0
 github.com/luisfurquim/wings v0.26.0/go.mod h1:w7MUmF4sF/NKg9AN5cjIaKMp07Fm9JVyRFP+NlrNbDQ=
 github.com/luisfurquim/wings v0.27.0 h1:y+GhdQpPefG/hbZHEQ7Wl2lIuuyGHDCo7ZzyE7YeUsw=
 github.com/luisfurquim/wings v0.27.0/go.mod h1:w7MUmF4sF/NKg9AN5cjIaKMp07Fm9JVyRFP+NlrNbDQ=
+github.com/luisfurquim/wings v0.27.1 h1:V66chqS6rW16cDhfoP8ZODGjKshi3EBiCXRImRWkx1E=
+github.com/luisfurquim/wings v0.27.1/go.mod h1:w7MUmF4sF/NKg9AN5cjIaKMp07Fm9JVyRFP+NlrNbDQ=
 github.com/luisfurquim/wings/wtextepub v0.4.0 h1:hGLNC+qEaReK5hk3MILUPkzt+pkzk0SBik9+o3iic8Q=
 github.com/luisfurquim/wings/wtextepub v0.4.0/go.mod h1:7O1dtcxC3TkZxER7Z6kd9ZNaYUS2ypKp34A3a8y5y2k=
 github.com/luisfurquim/wings/wtextepub v0.5.0 h1:A0SNQNPG9PueppUd442RU/cHJ2umh9KdjW+imnhF8Lw=
