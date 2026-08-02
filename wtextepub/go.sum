@@ -10,6 +10,8 @@ github.com/luisfurquim/ugarit v0.0.2 h1:0Y+VH9Z2f7ilBYG6/useBV2XbK8beJoHKx8Jivjm
 github.com/luisfurquim/ugarit v0.0.2/go.mod h1:LVXgBoQ+LhzSkjQ2PhXzWYARZks01DJlxRtBdVBZQ6Q=
 github.com/luisfurquim/wings v0.23.0 h1:IucwUTuNTRkRS2lHX1K1t2uSz5ICRlEo5//t7/tT5Hc=
 github.com/luisfurquim/wings v0.23.0/go.mod h1:w7MUmF4sF/NKg9AN5cjIaKMp07Fm9JVyRFP+NlrNbDQ=
+github.com/luisfurquim/wings v0.25.0 h1:1HLx60r6NVnkGq+ogepTgVvpOqjQaywfvTuiURRjBUc=
+github.com/luisfurquim/wings v0.25.0/go.mod h1:w7MUmF4sF/NKg9AN5cjIaKMp07Fm9JVyRFP+NlrNbDQ=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20210921155107-089bfa567519/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=

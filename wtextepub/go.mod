@@ -7,7 +7,7 @@ go 1.25.0
 // (EditorCore.Content, MenuPlugin) — bump it before tagging.
 require (
 	github.com/luisfurquim/ugarit v0.0.2
-	github.com/luisfurquim/wings v0.23.0
+	github.com/luisfurquim/wings v0.25.0
 	golang.org/x/net v0.55.0
 )
 
