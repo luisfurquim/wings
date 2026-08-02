@@ -8,7 +8,7 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
-## [Unreleased]
+## [0.27.1] — 2026-08-02
 
 ### Changed
 - **One guard for the syscall/js boundary: `internal/jsguard`.** A JS
