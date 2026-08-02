@@ -45,44 +45,23 @@ func (st *docSheetStats) drop(sel, decls, why string) {
 // when a refused rule named a font, because "the font is installed" and
 // "the text does not use it" are otherwise two facts with nothing
 // connecting them.
-func (st *docSheetStats) report(adopted int) {
+//
+// The two counts are two different fates, not one number split: a NAMED
+// style can be applied and removed by the picker, while a preserved
+// document rule only renders — the browser matches it and the user cannot
+// pick it. Reporting them apart is what tells a reader why a style they
+// can see is not in the style list.
+func (st *docSheetStats) report(adopted, preserved int) {
 	if st.total == 0 {
 		return
 	}
-	GCSS.Logf(1, "wtext: document sheet: %d of %d rules adopted as named styles, %d skipped\n",
-		adopted, st.total, st.skipped)
+	GCSS.Logf(1, "wtext: document sheet: %d of %d rules kept (%d as named styles, %d as document rules), %d skipped\n",
+		adopted+preserved, st.total, adopted, preserved, st.skipped)
 	if st.reserved > 0 {
 		GCSS.Logf(2, "wtext: %d document rule(s) tried to redefine a wt-* style the toolbar owns\n", st.reserved)
 	}
 	if len(st.fontSels) > 0 {
 		GCSS.Logf(1, "wtext: %d skipped rule(s) asked for a font — %s; that text keeps its fallback face even though the font itself may be installed\n",
 			len(st.fontSels), strings.Join(st.fontSels, ", "))
-	}
-}
-
-// stripCSSComments removes /* … */ from a stylesheet before it is split
-// into rules. Without this a commented-out rule survives as text and is
-// then read as a rule of its own: a `/* body { font-family: serif } */`
-// block becomes a skipped selector named `/* body` that the adoption
-// reports as having asked for a font. The report exists to hand over a
-// lead, and a lead pointing at commented-out code is worse than none.
-//
-// An unterminated comment swallows the rest of the sheet, which is what a
-// browser does with one too.
-func stripCSSComments(css string) string {
-	var sb strings.Builder
-	for {
-		open := strings.Index(css, "/*")
-		if open < 0 {
-			sb.WriteString(css)
-			return sb.String()
-		}
-		sb.WriteString(css[:open])
-		rest := css[open+2:]
-		end := strings.Index(rest, "*/")
-		if end < 0 {
-			return sb.String() // unterminated: the rest is comment
-		}
-		css = rest[end+2:]
 	}
 }

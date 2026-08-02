@@ -2110,19 +2110,45 @@ bounds — the same gate a paste faces. A chapter's linked stylesheets are
 followed INSIDE the book (never to the network) and merged into the
 document's head, where only rules the class registry accepts survive.
 
-What does NOT survive is reported. The editor holds NAMED styles, not a
-stylesheet, so a rule whose selector is not a plain `.name` — a real
-book's `p.haikai` or `.chtitle *` — has nowhere to be stored and is
-dropped, and so is a rule left with nothing this profile supports. Losing
-formatting in silence is the hardest kind of bug to even notice, so the
-adoption keeps its own logger, **`wtext.GCSS`**, verbose by default
-(level 3) and independent of `wtext.G` — this one section can explain
-itself without raising the noise of the rest. Each refused rule says which
-selector and why; a summary line closes with how many of how many were
-adopted; and a rule that asked for a `font-family` is named explicitly,
-because "the font is installed" and "the text ignores it" are otherwise
-two facts with nothing connecting them. Turn it down with
-`wtext.GCSS.Set(1)` to keep only the summary and the font lead.
+A rule whose selector is a plain `.name` becomes a **named style** — the
+picker can apply and remove it, and a document this editor wrote
+round-trips through it. Every other rule a book carries — `p.haikai`,
+`span.dropcaps`, `.chtitle *`, which is how a stylesheet is ordinarily
+written — is kept as a **document rule**: its selector is checked, never
+interpreted, and travels verbatim into the editor's own `<style>`.
+
+**The browser is what understands selectors.** Matching, specificity,
+source order and `!important` are delegated to it rather than
+reimplemented here, because it has done them correctly for twenty-five
+years and a second implementation would only be a worse one. What makes
+carrying a foreign selector safe is where it lands: every wings component
+renders inside a shadow root, and CSS in a shadow root cannot escape it,
+so a book's `body { … }` never reaches the page around the widget. The
+few selectors that *would* reach out — `:host`, `:host-context()`,
+`::slotted()`, `::part()` — are refused, along with anything that could
+close the rule and open a raw one. Declarations still pass the property
+allowlist, so a pseudo-element cannot inject text (`content` is not
+allowlisted) and nothing loads a remote resource.
+
+What does not survive is reported. At-rules are not carried (`@font-face`
+is read by the font path instead, `@import` is a network fetch), and a
+rule left with nothing this profile supports is dropped. Losing formatting
+in silence is the hardest kind of bug to even notice, so the adoption
+keeps its own logger, **`wtext.GCSS`**, verbose by default (level 3) and
+independent of `wtext.G` — this one section can explain itself without
+raising the noise of the rest. Each refused rule says which selector and
+why; a summary closes with how many rules were kept and as what; and a
+refused rule that asked for a `font-family` is named explicitly, because
+"the font is installed" and "the text ignores it" are otherwise two facts
+with nothing connecting them. Turn it down with `wtext.GCSS.Set(1)` to
+keep only the summary and the font lead.
+
+On the way back out, the document's rules are re-emitted with the
+selectors they came in with, pruned to those that still match something.
+An exported sheet is therefore allowed to differ from the imported one by
+exactly what the import reported dropping — and by nothing else. What was
+refused was refused on purpose and does not reappear; from the second
+pass on, the pipeline is the identity.
 A font a foreign book embeds is never installed from the book: its bytes
 are a binary of unknown origin, and the stores' curated libre catalogs are
 what make a font legitimate to carry into the next export. What the book's

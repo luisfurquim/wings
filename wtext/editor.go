@@ -37,6 +37,21 @@ type Editor struct {
 	classes map[string]string
 	styleEl js.Value
 
+	// docRules holds the rules a loaded document carried that are not
+	// plain named styles — a book's "p.haikai" or ".chtitle *". Their
+	// selectors are never interpreted here: they are checked, kept
+	// verbatim, rendered in source order (which is the browser's last
+	// tie-breaker, so the order IS meaning) and written back out on
+	// export. See adoptDocClasses.
+	//
+	// docClasses is the set of class names those rules mention. The policy
+	// walker keeps a class attribute only for classes the editor knows, so
+	// without this a rule written "p.haikai" would be carried, rendered,
+	// and match nothing — the walker having stripped `class="haikai"` off
+	// the paragraph first.
+	docRules   []epubhtml.SheetRule
+	docClasses map[string]bool
+
 	// config is the document-property store (see EditorCore.Config): it
 	// persists inside Content()'s head and reloads in SetContent.
 	// configDefaults carries the ConfigPlugins' declared defaults, the
@@ -359,10 +374,12 @@ func (e *Editor) rangeFor(s Selection) (js.Value, error) {
 // ── Content I/O ─────────────────────────────────────────────────────────
 
 // Content serializes the document as a complete EPUB-style content
-// document: the body is the editor tree (which by construction only
-// holds what the policy let in), and the registered classes the tree
-// actually uses travel as ".name { css }" rules in a head <style> — so a
-// stored value round-trips with its styles.
+// document: the body is the editor tree (which by construction only holds
+// what the policy let in), and its styles travel in a head <style> — the
+// registered classes the tree actually uses as ".name { css }" rules, and
+// the document's own preserved rules with their selectors as they came.
+// A stored value round-trips: what this writes is what adoptDocClasses
+// reads back.
 func (e *Editor) Content() string {
 	var sb strings.Builder
 	sb.WriteString("<!DOCTYPE html>\n<html><head><meta charset=\"utf-8\"/>")
@@ -489,8 +506,10 @@ func (e *Editor) DocText() string {
 	return sb.String()
 }
 
-// usedClassRules renders the registered classes the tree references, in
-// the persistable logical form (one unsplit rule per class), sorted.
+// usedClassRules renders the styles the tree still references, in the
+// persistable logical form: the document's own preserved rules first, in
+// source order, then the registered classes as one unsplit rule each,
+// sorted.
 func (e *Editor) usedClassRules() string {
 	els := e.root.Call("querySelectorAll", "[class]")
 	used := map[string]bool{}
@@ -507,6 +526,27 @@ func (e *Editor) usedClassRules() string {
 	}
 	sort.Strings(names)
 	var sb strings.Builder
+	// The document's own rules go back out VERBATIM and in source order —
+	// the selector as the book wrote it, the declarations that survived
+	// the filter. A rule refused at import (an at-rule, a url(), a
+	// selector that pierces the shadow root) is gone for good and must not
+	// reappear here: it was refused ON PURPOSE, and re-emitting it would
+	// make the filter a delay rather than a policy. So an exported sheet
+	// is allowed to differ from the imported one, by exactly what the
+	// import reported dropping — and by nothing else.
+	//
+	// Pruning to what is USED, which named styles get below, is asked of
+	// the browser rather than guessed: a rule nothing matches is a rule
+	// this document does not need.
+	for _, rule := range e.docRules {
+		if !e.matchesAnything(rule.Selector) {
+			continue
+		}
+		sb.WriteString(rule.Selector)
+		sb.WriteString(" { ")
+		sb.WriteString(rule.Decls)
+		sb.WriteString(" }\n")
+	}
 	for _, n := range names {
 		sb.WriteString(".")
 		sb.WriteString(n)
@@ -591,11 +631,18 @@ func (e *Editor) restoreWebFonts() {
 // DefineClass re-validates what the filter left, and the filter's output
 // is guaranteed to pass it (the property FuzzFilterCSS asserts).
 //
-// What is not a plain ".name" rule — a descendant selector, a
-// pseudo-class, an at-rule's innards — is skipped quietly at a debug
-// level. In a foreign book those are most of the sheet, and a wall of
-// errors about things this editor was never going to support buries the
-// one line that matters.
+// A rule whose selector is NOT a plain ".name" is kept all the same, as a
+// preserved document rule (e.docRules): the selector travels verbatim
+// into the editor's own <style> and the BROWSER decides what it matches,
+// how it cascades and which declaration wins. A real book is written
+// against a browser — "p.haikai", "span.dropcaps", ".chtitle *" — and
+// measuring one showed 4 of its 22 rules surviving the old plain-class
+// gate, including every rule that carried its font. Matching, specificity,
+// source order and !important are all things a browser has done correctly
+// for twenty-five years; re-implementing them here would be a second,
+// worse copy. What makes the pass-through safe is where it lands: the
+// editor renders inside a shadow root, and CSS in a shadow root does not
+// escape it (SafeSelector refuses the few selectors that would).
 func (e *Editor) adoptDocClasses(parsed js.Value) {
 	head := parsed.Get("head")
 	if !head.Truthy() {
@@ -604,60 +651,77 @@ func (e *Editor) adoptDocClasses(parsed js.Value) {
 	styles := head.Call("querySelectorAll", "style")
 	var st docSheetStats
 	adopted := 0
-outer:
+	e.docRules = nil
+	e.docClasses = map[string]bool{}
 	for i := 0; i < styles.Get("length").Int(); i++ {
-		sheet := stripCSSComments(styles.Index(i).Get("textContent").String())
-		for _, rule := range strings.Split(sheet, "}") {
-			rule = strings.TrimSpace(rule)
-			if rule == "" {
-				continue
-			}
-			sel, decls, found := strings.Cut(rule, "{")
-			if !found {
-				continue
-			}
-			sel = strings.TrimSpace(sel)
+		for _, rule := range epubhtml.ParseSheet(styles.Index(i).Get("textContent").String()) {
 			st.total++
-			if !strings.HasPrefix(sel, ".") {
-				// A type, id, pseudo-element or at-rule selector — or, far
-				// more often in a real book, a class qualified by its element
-				// ("p.haikai", "span.dropcaps"). This editor keeps NAMED
-				// styles, not a stylesheet, so there is nowhere to put one.
-				st.drop(sel, decls, "the editor holds named styles, and this selector names something else")
+			if !rule.Kept() {
+				st.drop(rule.Selector, rule.Decls, rule.Drop)
 				continue
 			}
-			name := sel[1:]
-			if err := epubhtml.ValidClassName(name); err != nil {
-				// A compound selector (".chtitle *", ".a > .b", ".x:hover"):
-				// not a named style this editor can hold. Expected in any
-				// sheet written for a browser, so not an error.
-				st.drop(sel, decls, "not a plain class name")
+			name, plain := strings.CutPrefix(rule.Selector, ".")
+			if plain && epubhtml.ValidClassName(name) == nil {
+				// A plain class is the one shape that can be more than
+				// rendered: the picker can apply and remove it by name, and a
+				// document this editor wrote round-trips through it.
+				if strings.HasPrefix(name, "wt-") && e.classDefined(name) {
+					st.reserved++ // the toolbar owns its own vocabulary
+					continue
+				}
+				if adopted >= maxDocClasses {
+					GCSS.Logf(1, "wtext: document sheet beyond %d named styles; the rest are kept as document rules\n",
+						maxDocClasses)
+				} else if err := e.DefineClass(name, rule.Decls); err != nil {
+					// Should not happen: FilterCSS's output is built to pass
+					// DefineClass (the property FuzzFilterCSS asserts it). Loud.
+					GCSS.Logf(1, "wtext: document style %q rejected: %v\n", name, err)
+					st.skipped++
+				} else {
+					adopted++
+					continue
+				}
+			}
+			if len(e.docRules) >= maxDocClasses {
+				st.drop(rule.Selector, rule.Decls,
+					fmt.Sprintf("beyond %d document rules", maxDocClasses))
 				continue
 			}
-			if strings.HasPrefix(name, "wt-") && e.classDefined(name) {
-				st.reserved++
-				continue
+			e.docRules = append(e.docRules, rule)
+			for _, cls := range epubhtml.SelectorClasses(rule.Selector) {
+				// The wt- namespace is the toolbar's own vocabulary. A
+				// document naming one of those classes in a selector must not
+				// be able to make the walker carry it onto an element and so
+				// hand itself the editor's formatting.
+				if !strings.HasPrefix(cls, "wt-") && epubhtml.ValidClassName(cls) == nil {
+					e.docClasses[cls] = true
+				}
 			}
-			if adopted >= maxDocClasses {
-				GCSS.Logf(1, "wtext: document sheet beyond %d classes; rest ignored\n", maxDocClasses)
-				break outer
-			}
-			css := epubhtml.FilterCSS(decls)
-			if css == "" {
-				st.drop(sel, decls, "nothing in it is supported by this profile")
-				continue
-			}
-			if err := e.DefineClass(name, css); err != nil {
-				// Should not happen: FilterCSS's output is built to pass
-				// DefineClass (the property FuzzFilterCSS asserts it). Loud.
-				GCSS.Logf(1, "wtext: document style %q rejected: %v\n", name, err)
-				st.skipped++
-				continue
-			}
-			adopted++
 		}
 	}
-	st.report(adopted)
+	e.renderClasses()
+	st.report(adopted, len(e.docRules))
+}
+
+// matchesAnything reports whether a preserved document rule still has
+// anything to style in this document.
+//
+// The selector was never parsed — that is the whole design, the browser
+// is the one that understands selectors — so it may be syntactically
+// invalid CSS, and querySelector THROWS on an invalid selector. Through
+// syscall/js a JS exception is a panic, which in a wasm editor is total
+// loss of the user's document. Hence the recover: a selector the browser
+// cannot even read matches nothing, which is also what it does when
+// rendered into the sheet.
+func (e *Editor) matchesAnything(sel string) (ok bool) {
+	defer func() {
+		if recover() != nil {
+			GCSS.Logf(2, "wtext: document selector %q is not valid CSS; it styles nothing\n", sel)
+			ok = false
+		}
+	}()
+	return e.root.Call("querySelector",
+		epubhtml.ScopeSelector(sel, "[contenteditable]")).Truthy()
 }
 
 // IsEmpty reports whether the document holds no user text — the pristine
@@ -737,6 +801,18 @@ func (e *Editor) renderClasses() {
 	}
 	blockSel := ":is(" + strings.Join(epubhtml.BlockList(), ",") + ")"
 	var sb strings.Builder
+	// The document's own rules come FIRST, in the order the sheet had
+	// them: they are the book's ambient formatting, and everything the
+	// editor itself applies — a named style, then wt-* direct formatting —
+	// must be able to override them, which the later position grants on a
+	// specificity tie. Scoped to the editor root like every other rule
+	// here; the shadow root is the real boundary, this is the second one.
+	for _, rule := range e.docRules {
+		sb.WriteString(epubhtml.ScopeSelector(rule.Selector, "[contenteditable]"))
+		sb.WriteString(" { ")
+		sb.WriteString(rule.Decls)
+		sb.WriteString(" }\n")
+	}
 	for _, name := range ordered {
 		char, block := epubhtml.SplitCSS(e.classes[name])
 		if char != "" {

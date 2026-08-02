@@ -7,30 +7,6 @@ import (
 	"testing"
 )
 
-// TestStripCSSComments: a commented-out rule must not survive as text,
-// or the sheet splitter reads it as a rule and the adoption reports a
-// selector nobody wrote. The last case is the shape that motivated it.
-func TestStripCSSComments(t *testing.T) {
-	for _, tc := range []struct{ in, want string }{
-		{"", ""},
-		{"a { color: red }", "a { color: red }"},
-		{"/* gone */", ""},
-		{"a/* mid */b", "ab"},
-		{"/* one */x/* two */y", "xy"},
-		{"a { color: red } /* unterminated", "a { color: red } "},
-		{"/**/x", "x"},
-		{"/* nested /* still one */ x", " x"},
-		{
-			in:   "/*\nbody {\n\tfont-family: serif;\n}\n*/\n\nbody { font-size: 10pt }",
-			want: "\n\nbody { font-size: 10pt }",
-		},
-	} {
-		if got := stripCSSComments(tc.in); got != tc.want {
-			t.Errorf("stripCSSComments(%q) = %q, want %q", tc.in, got, tc.want)
-		}
-	}
-}
-
 // TestDocSheetStatsReport: the accounting is what the console says, so
 // it is checked here rather than by reading a browser log — a skipped
 // rule that asked for a font is the lead the reader needs, and it must
@@ -110,7 +86,7 @@ func captureLog(fn func()) string {
 // being read.
 func TestDocSheetReportSilentWhenEmpty(t *testing.T) {
 	var st docSheetStats
-	if got := captureLog(func() { st.report(0) }); got != "" {
+	if got := captureLog(func() { st.report(0, 0) }); got != "" {
 		t.Errorf("report on an empty sheet said %q, want silence", got)
 	}
 }
@@ -125,9 +101,10 @@ func TestDocSheetReportContents(t *testing.T) {
 	st.reserved = 2
 	st.drop("p.haikai", "font-family: X", "why")
 
-	got := captureLog(func() { st.report(4) })
+	got := captureLog(func() { st.report(4, 6) })
 	for _, want := range []string{
-		"4 of 22 rules adopted",
+		"10 of 22 rules kept",
+		"4 as named styles, 6 as document rules",
 		"1 skipped",
 		"p.haikai",
 		"2 document rule(s) tried to redefine",
@@ -153,8 +130,8 @@ func TestDocSheetReportQuietGoose(t *testing.T) {
 	if perRule != "" {
 		t.Errorf("per-rule detail leaked at level 1: %q", perRule)
 	}
-	got := captureLog(func() { st.report(2) })
-	if !strings.Contains(got, "2 of 3 rules adopted") || !strings.Contains(got, "p.haikai") {
+	got := captureLog(func() { st.report(2, 0) })
+	if !strings.Contains(got, "2 of 3 rules kept") || !strings.Contains(got, "p.haikai") {
 		t.Errorf("summary or font lead lost at level 1; got:\n%s", got)
 	}
 	if strings.Contains(got, "redefine") {

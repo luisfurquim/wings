@@ -209,3 +209,76 @@ func FuzzValidClassName(f *testing.F) {
 		}
 	})
 }
+
+// FuzzParseSheet: a document's stylesheet is a file from the outside, and
+// the selector inside it is carried VERBATIM into the editor's <style> —
+// the one place where unparsed foreign text reaches a rule we emit. Two
+// invariants hold whatever the bytes:
+//
+//   - a kept selector never carries a construct that would break out of
+//     our rule or pierce the shadow root (:host and its family), and its
+//     declarations are already SanitizeCSS-canonical;
+//   - re-parsing what we would re-emit yields the same rules. This is the
+//     export round trip at the parser level: the first pass filters, and
+//     every pass after it is the identity, so a book cannot degrade a
+//     little more each time it is opened.
+func FuzzParseSheet(f *testing.F) {
+	for _, s := range []string{
+		"p { color: red }",
+		"p.haikai { font-family: 'Uncial Antiqua' !important }",
+		".chtitle * { font-weight: bolder }",
+		"@media print { p { color: red } } p { color: blue }",
+		`a[title="{"] { color: red } p { color: blue }`,
+		`a\} { color: red } p { color: blue }`,
+		"/* body { font-family: serif } */ p { color: red }",
+		"@import 'x'; p { color: red }",
+		":host { color: red }",
+		"p { color: red",
+		"", "}", "{", "{}", ";", "p{}", "p { }",
+		`[epub\:type="chapter"] { color: red }`,
+	} {
+		f.Add(s)
+	}
+	f.Fuzz(func(t *testing.T, s string) {
+		rules := ParseSheet(s)
+
+		var sheet strings.Builder
+		for _, r := range rules {
+			if !r.Kept() {
+				continue
+			}
+			if err := SafeSelector(r.Selector); err != nil {
+				t.Fatalf("kept selector is not safe: %q -> %q: %v", s, r.Selector, err)
+			}
+			clean, err := SanitizeCSS(r.Decls)
+			if err != nil {
+				t.Fatalf("kept declarations rejected by SanitizeCSS: %q -> %q: %v", s, r.Decls, err)
+			}
+			if clean != r.Decls {
+				t.Fatalf("kept declarations not canonical: %q -> %q -> %q", s, r.Decls, clean)
+			}
+			sheet.WriteString(r.Selector + " { " + r.Decls + " }\n")
+		}
+
+		again := ParseSheet(sheet.String())
+		var kept, keptAgain []SheetRule
+		for _, r := range rules {
+			if r.Kept() {
+				kept = append(kept, r)
+			}
+		}
+		for _, r := range again {
+			if r.Kept() {
+				keptAgain = append(keptAgain, r)
+			}
+		}
+		if len(kept) != len(keptAgain) {
+			t.Fatalf("re-parsing changed the rule count: %q -> %d -> %d", s, len(kept), len(keptAgain))
+		}
+		for i := range kept {
+			if kept[i].Selector != keptAgain[i].Selector || kept[i].Decls != keptAgain[i].Decls {
+				t.Fatalf("re-parsing changed rule %d: %q: %+v -> %+v", i, s, kept[i], keptAgain[i])
+			}
+		}
+	})
+}

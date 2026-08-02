@@ -209,7 +209,11 @@ func (e *Editor) copyAttrs(el js.Value, canon string) map[string]string {
 			attrs["href"] = canonHref
 		case epubhtml.AttrClass:
 			for _, cls := range strings.Fields(el.Call("getAttribute", name).String()) {
-				if e.classDefined(cls) {
+				// A registered class, or one a preserved document rule
+				// selects on: the second is what makes "p.haikai" work at
+				// all, since the rule needs the element to still carry the
+				// class it names (see Editor.docClasses).
+				if e.classDefined(cls) || e.docClasses[cls] {
 					addClass(cls)
 				}
 			}

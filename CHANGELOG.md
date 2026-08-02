@@ -10,6 +10,28 @@ per-commit record see the git log and tags.
 
 ## [Unreleased]
 
+### Added
+- **An imported book keeps its stylesheet.** The editor used to accept
+  only rules whose selector was a plain `.name`, because a named style
+  was the only shape it could hold — and a real book is written against
+  a browser: measured on one, 4 of its 22 rules survived, including every
+  rule that carried its font. A rule that is not a plain class is now
+  kept as a **document rule**, its selector checked but never
+  interpreted, travelling verbatim into the editor's `<style>` and back
+  out on export. Matching, specificity, source order and `!important` are
+  the browser's job, not ours; a selector engine and a cascade here would
+  be a second, worse copy of something already present and correct.
+  What makes carrying a foreign selector safe is the shadow root every
+  wings component renders in, which CSS cannot escape — plus a refusal
+  of the few selectors that reach out of one (`:host`, `:host-context()`,
+  `::slotted()`, `::part()`). Declarations still pass the property
+  allowlist, so nothing loads a remote resource and a pseudo-element
+  cannot inject text. `epubhtml.ParseSheet` reads the sheet's structure
+  (brace depth, so a nested `@media` no longer cuts a rule in half;
+  quotes and escapes, so `[title="{"]` and `a\}` cannot desynchronize the
+  scan) and `epubhtml.ScopeSelector` confines each rule to the edited
+  text, part by part — the editor and the toolbar share one shadow tree.
+
 ### Fixed
 - **An imported book no longer loses its formatting in silence.**
   Adopting a document's stylesheet drops any rule it cannot hold as a
