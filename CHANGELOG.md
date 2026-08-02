@@ -8,7 +8,7 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
-## [Unreleased]
+## [0.26.0] — 2026-08-02
 
 ### Added
 - **An imported book keeps its stylesheet.** The editor used to accept

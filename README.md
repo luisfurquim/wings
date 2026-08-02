@@ -47,6 +47,19 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
+### v0.26.0
+
+- **An imported book keeps its stylesheet.** A rule whose selector is not
+  a plain class — `p.haikai`, `.chtitle *`, which is how a stylesheet is
+  ordinarily written — used to be dropped for having nowhere to be
+  stored; measured on a real book, 4 of its 60 rules survived. Such rules
+  are now carried with their selectors verbatim and handed to the browser,
+  which is what understands matching, specificity and `!important`; the
+  shadow root every component renders in is what makes that safe. The
+  property allowlist grew into the same job: it had been drawn for what
+  this editor writes, not for what a book may say, and a drop cap was
+  losing its `float`.
+
 ### v0.25.0
 
 - **EPUB import** — `w-text` opens an e-book, not just writes one:
@@ -104,24 +117,6 @@ Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
   `MenuInput` menu kind — the typed name becomes the TOC entry, its
   sanitized form the file name) **and the TOC opens the book** instead of
   trailing it (ugarit v0.0.2).
-
-### v0.20.0
-
-- **`w-text` gains a side menu for document actions, and EPUB export lives
-  in it** — the new `MenuPlugin` contract renders an accordion column
-  (`w-tabs` over native `<details>`) beside the editor, only when a plugin
-  declares items; the new `wtextepub` module (own Go module, so wings
-  itself stays dependency-free) puts "Export › EPUB" there, packaging the
-  document as an EPUB 3 e-book download.
-
-### v0.17.0
-
-- **`w-text` rich-text editor** joins the widget family — a pluggable
-  `contenteditable` editor with a stock formatting toolbar, undo/redo, and
-  content stored as EPUB-flavored HTML. Every edit, paste and load is
-  sanitized by allowlist-copy through the browser's own parser (new portable,
-  fuzzed `epubhtml` policy package), so untrusted markup can't smuggle scripts,
-  event handlers, or homograph/`javascript:` links into the document.
 
 ---
 
