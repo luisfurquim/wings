@@ -703,6 +703,26 @@ func (e *Editor) adoptDocClasses(parsed js.Value) {
 	st.report(adopted, len(e.docRules))
 }
 
+// StyleProbes lists what to test an element against to learn which rules
+// reach it: the document's own preserved rules, then each registered
+// class as the selectors it is actually RENDERED as — a named style is
+// two rules, not one, and reporting it as one misdescribes the document
+// (see styleProbes). It is what an inspector hands to the browser, so a
+// reader can be told why a point in the text looks the way it does.
+//
+// Carrying a document's stylesheet made this necessary: most of what
+// formats an imported book is now rules the user can neither apply nor
+// remove and which deliberately stay out of the style picker, so without
+// this there is no way left to find out where the formatting comes from.
+func (e *Editor) StyleProbes() []StyleProbe {
+	sels := make([]string, 0, len(e.docRules))
+	for _, rule := range e.docRules {
+		sels = append(sels, rule.Selector)
+	}
+	return styleProbes(sels, e.classes,
+		":is("+strings.Join(epubhtml.BlockList(), ",")+")")
+}
+
 // matchesAnything reports whether a preserved document rule still has
 // anything to style in this document.
 //

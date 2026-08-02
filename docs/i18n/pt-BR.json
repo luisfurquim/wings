@@ -876,11 +876,19 @@
     "revised": false
   },
   {
+    "content": "Inspecionar CSS",
+    "revised": false
+  },
+  {
     "content": "Ajuda",
     "revised": false
   },
   {
     "content": "Ajuda da barra de ferramentas",
+    "revised": false
+  },
+  {
+    "content": "Mostra, ao passar o mouse, quais seletores CSS estão em vigor naquele ponto do texto.",
     "revised": false
   },
   {

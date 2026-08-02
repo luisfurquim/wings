@@ -35,6 +35,12 @@
 
 .wt-field {
   display: grid;
+  /* Containing block for the CSS inspector's tooltip. Absolute, never
+     fixed: a fixed box resolves against the nearest ancestor that
+     establishes a containing block, and w-tab's atmosphere opt-in sets a
+     non-"none" backdrop-filter unconditionally — the trap that once sent
+     the help dialog off-screen. */
+  position: relative;
   grid-template-columns: auto 1fr;
   border: var(--wings-text-border, 1px solid var(--wings-border, #ccc));
   border-radius: var(--wings-text-radius, var(--wings-radius-md, 6px));
@@ -262,3 +268,27 @@
 .wt-labels {
   display: none;
 }
+
+/* ── CSS inspector tooltip (the `inspect` attribute) ───────────────────
+   Lists the selectors in effect under the pointer. Machine text, so it is
+   monospaced and never wrapped mid-selector; pointer-events: none keeps
+   it from stealing the very hover that produced it. */
+
+.wt-tip {
+  position: absolute;
+  z-index: 20;
+  pointer-events: none;
+  max-width: 22rem;
+  padding: 0.35rem 0.5rem;
+  border: var(--wings-text-border, 1px solid var(--wings-border, #ccc));
+  border-radius: var(--wings-radius-sm, 4px);
+  background: var(--wings-surface, #fff);
+  box-shadow: var(--wings-shadow-md, 0 2px 8px rgba(0, 0, 0, 0.15));
+  color: var(--wings-text, #222);
+  font-family: var(--wings-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 0.75rem;
+  line-height: 1.45;
+  white-space: pre;
+  overflow-x: auto;
+}
+.wt-tip[hidden] { display: none; }

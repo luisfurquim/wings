@@ -33,6 +33,14 @@ type toolbar struct {
 	statuses  []trackedStatus
 	helpDlg   js.Value // the open help dialog, or js.Undefined() when none is open
 
+	// CSS inspector (inspect.go): the mode flag survives a toolbar
+	// rebuild, the listeners and the tooltip do not.
+	inspect    bool
+	inspectBtn js.Value // the toggle, or js.Undefined()
+	inspectIDs []int64  // pointer listeners held while the mode is on
+	tip        js.Value // the tooltip element, or js.Undefined()
+	tipFor     js.Value // the element the tooltip currently describes
+
 	cfgDlg     js.Value // the open settings dialog, or js.Undefined()
 	cfgRelease func()   // releases the settings dialog's anchor listener
 	decDlg     js.Value // the open decision dialog, or js.Undefined()
@@ -63,6 +71,7 @@ func newToolbar(obj *wings.PranaObj, container, menu js.Value, editor *wtext.Edi
 		obj: obj, host: obj.Element, container: container, menu: menu,
 		editor: editor, profile: p,
 		helpDlg: js.Undefined(), cfgDlg: js.Undefined(), decDlg: js.Undefined(),
+		inspectBtn: js.Undefined(), tip: js.Undefined(), tipFor: js.Undefined(),
 	}
 }
 
@@ -80,12 +89,16 @@ func (t *toolbar) render() {
 	t.toggles = nil
 	t.selects = nil
 	t.statuses = nil
+	// The inspector's listeners point at elements this rebuild is about to
+	// discard. The MODE flag survives (renderInspect re-arms it).
+	t.disarmInspect()
 	t.container.Set("innerHTML", "") // static container; safe empty string
 	for _, plug := range t.profile.Toolbar {
 		for _, item := range plug.Items() {
 			t.renderItem(item)
 		}
 	}
+	t.renderInspect()
 	t.renderHelp()
 	t.renderMenu()
 	t.refresh()
@@ -174,6 +187,15 @@ func (t *toolbar) helpEntries() []helpEntry {
 				label: t.resolveLabel(groupID) + " › " + t.resolveLabel(labelID),
 				help:  t.resolveLabel(helpID),
 			})
+		}
+	}
+	// The inspector is the widget's own control rather than a plugin's, so
+	// it has no declared item to walk — but a composed help that omits a
+	// button sitting in the toolbar is a help that lies. Last, after the
+	// plugins, which is also where its button is.
+	if t.inspectEnabled() {
+		if help := t.resolveLabel("wtext-inspect-help"); help != "" {
+			out = append(out, helpEntry{label: t.resolveLabel("wtext-inspect"), help: help})
 		}
 	}
 	return out

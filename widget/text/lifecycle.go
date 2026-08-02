@@ -76,6 +76,7 @@ func disconnect(host js.Value) {
 	if b.tb != nil {
 		b.tb.closeHelp()
 		b.tb.closeConfig()
+		b.tb.disarmInspect()
 		if b.tb.unsubFonts != nil {
 			b.tb.unsubFonts()
 		}

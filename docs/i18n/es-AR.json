@@ -876,12 +876,20 @@
     "revised": false
   },
   {
+    "content": "Inspeccionar CSS",
+    "revised": true
+  },
+  {
     "content": "Ayuda",
     "revised": false
   },
   {
     "content": "Ayuda de la barra de herramientas",
     "revised": false
+  },
+  {
+    "content": "Al pasar el mouse, muestra qué selectores CSS rigen en ese punto del texto.",
+    "revised": true
   },
   {
     "content": "Pone en negrita el texto seleccionado.",

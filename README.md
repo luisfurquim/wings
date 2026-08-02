@@ -1789,6 +1789,30 @@ A plain string binding also works.
 | `error` | Error message below the field; use `slot="error"` for HTML |
 | `required` | `"true"` shows the required mark (*) |
 | `disabled` | standard HTML; makes the surface non-editable |
+| `inspect` | adds a **CSS inspector** toggle to the toolbar (read at mount) |
+
+**The CSS inspector.** With `inspect` present, the toolbar gains a toggle;
+while it is on, hovering the text shows the selectors in effect at that
+point — the document's own rules, the named styles, and the `wt-*`
+utility classes the toolbar itself applies. It answers "why does this
+paragraph look like this" for a document whose formatting comes from
+rules the user can neither apply nor remove (see
+[EPUB import](#wtextepub--epub-export-and-import)), which is most of an
+imported book. It lists selectors only, never declarations, and shows
+nothing where no rule reaches. A named style shows as the two rules it
+really is — `span.name` for the character half it puts on the styled
+words, `p.name` for the paragraph half it puts on the whole block — so
+"the style is here" and "part of the style is here" stop looking alike.
+The matching is the browser's (`Element.matches`); nothing here parses a
+selector. Opt-in per instance
+because it is an affordance for editing documents from elsewhere, not a
+button every app should carry:
+
+```html
+<w-text profile="book" inspect></w-text>
+<span slot="labels" id="wtext-inspect">Inspect CSS</span>
+<span slot="labels" id="wtext-inspect-help">Hover the text to see which CSS selectors are in effect at that point.</span>
+```
 
 **Events (via `@`):**
 

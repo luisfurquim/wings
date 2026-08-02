@@ -1,6 +1,11 @@
 package wtext
 
-import "strings"
+import (
+	"sort"
+	"strings"
+
+	"github.com/luisfurquim/wings/epubhtml"
+)
 
 // The document-sheet side of the editor: turning a book's own
 // stylesheet into named styles, and accounting for what could not be
@@ -64,4 +69,68 @@ func (st *docSheetStats) report(adopted, preserved int) {
 		GCSS.Logf(1, "wtext: %d skipped rule(s) asked for a font — %s; that text keeps its fallback face even though the font itself may be installed\n",
 			len(st.fontSels), strings.Join(st.fontSels, ", "))
 	}
+}
+
+// StyleProbe is one selector to test an element against, and the text to
+// show when it matches. Show may carry a single "%s", which the caller
+// fills with the tag of the element that matched.
+type StyleProbe struct {
+	Match string
+	Show  string
+}
+
+// styleProbes lists what to test an element against to learn which rules
+// reach it: the document's own rules first, in source order, then the
+// registered classes, sorted — the order renderClasses emits them, which
+// is also the order that decided which declaration won a specificity tie.
+//
+// A named style contributes the TWO selectors it is actually rendered as,
+// never a collapsed ".name". renderClasses splits a style into its Word
+// halves — character declarations on `span.name`, paragraph declarations
+// on `:is(p,h1,…).name` — and ApplyClass puts the class on the span AND
+// on every block the selection touched. Collapsing them into ".name"
+// reports a style across a whole paragraph when only its character half
+// sits on the words the user actually styled, which is indistinguishable
+// from a bug to whoever is reading the tooltip. (It bites easily:
+// CreateStyle merges everything in effect at the selection, so a style
+// made from bold+underline inside an imported paragraph quietly picks up
+// that paragraph's alignment and margins, and with them a block half.)
+// Showing "span.name" and "p.name" answers instead of confusing.
+//
+// Utility classes (wt-*) are NOT filtered out. They are the honest answer
+// to "why does this look like this" — a run in bold through the toolbar
+// carries wt-b and nothing else explains it.
+//
+// Portable: the pure half of Editor.StyleProbes, testable without a DOM.
+func styleProbes(docRules []string, classes map[string]string, blockSel string) []StyleProbe {
+	out := make([]StyleProbe, 0, len(docRules)+2*len(classes))
+	seen := map[string]bool{}
+	add := func(match, show string) {
+		if match == "" || seen[match] {
+			return
+		}
+		seen[match] = true
+		out = append(out, StyleProbe{Match: match, Show: show})
+	}
+	for _, sel := range docRules {
+		add(sel, sel)
+	}
+	names := make([]string, 0, len(classes))
+	for name := range classes {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		char, block := epubhtml.SplitCSS(classes[name])
+		if char != "" {
+			add("span."+name, "span."+name)
+		}
+		if block != "" {
+			// Shown with the tag that actually matched: the rendered
+			// selector is an :is() over every block tag, which is true but
+			// unreadable in a tooltip.
+			add(blockSel+"."+name, "%s."+name)
+		}
+	}
+	return out
 }

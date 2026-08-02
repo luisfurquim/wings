@@ -267,11 +267,20 @@ blur, as a **complete EPUB-style document** — the head `<style>` carries the
 CSS of the named classes the content uses, so styles round-trip through
 storage (loading also accepts a bare fragment; head rules are re-validated
 before adoption). Attributes: `label`, `profile` (default `"basic"`),
-`placeholder`, `helper`, `error`, `required`, `disabled`. Events: `@input`
+`placeholder`, `helper`, `error`, `required`, `disabled`, `inspect`. Events: `@input`
 (coalesced, args[0] = HTML) and `@change` (on blur after write-back). Form
 lifecycle like `w-input` (`form.reset()` restores mount-time content **and**
 clears undo; `<fieldset disabled>` → read-only). `::part()` surfaces include
-`toolbar` and `editor`; host reflects `[data-focused]`/`[data-empty]`/…
+`toolbar`, `editor` and `tip`; host reflects `[data-focused]`/`[data-empty]`/…
+
+**`inspect`** adds a CSS-inspector toggle to the toolbar: while on, hovering
+the text lists the selectors in effect at that point. A loaded document's own
+stylesheet is carried with its selectors verbatim (a book's `p.haikai`,
+`.chtitle *`) and rendered by the browser, so most of an imported document's
+formatting comes from rules the user can neither apply nor remove and which
+stay out of the style picker — this is how they become findable. Selectors
+only, never declarations; nothing shows where no rule reaches. Supply
+`wtext-inspect` and `wtext-inspect-help` in `slot="labels"`.
 
 **Don't hand-roll a `contenteditable`** — the security model is the whole point
 and it is not something to reproduce ad hoc. Everything entering the document

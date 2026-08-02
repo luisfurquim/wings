@@ -876,12 +876,20 @@
     "revised": false
   },
   {
+    "content": "Inspect CSS",
+    "revised": true
+  },
+  {
     "content": "Help",
     "revised": false
   },
   {
     "content": "Toolbar help",
     "revised": false
+  },
+  {
+    "content": "Hover the text to see which CSS selectors are in effect at that point.",
+    "revised": true
   },
   {
     "content": "Make the selected text bold.",

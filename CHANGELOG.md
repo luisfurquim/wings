@@ -36,6 +36,27 @@ per-commit record see the git log and tags.
   mutation restores it by character offset. Found by the new CSS
   inspector, which made the absence visible for the first time.
 
+### Added
+- **A CSS inspector for `w-text`** — the new `inspect` attribute adds a
+  toolbar toggle; while it is on, hovering the text lists the selectors
+  in effect at that point. Carrying a document's own stylesheet (v0.26.0)
+  made this necessary: most of what formats an imported book is now rules
+  the user can neither apply nor remove and which deliberately stay out
+  of the style picker, so there was no way left to find out why a
+  paragraph looks the way it does — a drop cap losing its `float` took
+  two rounds to diagnose for exactly that reason. Selectors only, never
+  declarations, and nothing at all where no rule reaches. The matching is
+  the browser's (`Element.matches`, under `recover` — a selector we never
+  parsed may not be valid CSS, and a JS exception through syscall/js is a
+  panic); the pointer listeners exist only while the mode is on. Opt-in
+  per instance, because inspecting CSS is an affordance for editing
+  documents that came from elsewhere, not a button every app should pay
+  for. `Editor.StyleProbes` exposes what to test against: a named style
+  reports as the TWO selectors it is rendered as (`span.name` for its
+  character half, the matched tag for its paragraph half) rather than as
+  one collapsed `.name`, which claimed a whole style was in effect across
+  a paragraph when only its character half sat on the styled words.
+
 ## [0.26.0] — 2026-08-02
 
 ### Added
