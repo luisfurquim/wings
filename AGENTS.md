@@ -83,3 +83,16 @@ prefer a single root element for predictable styling.
   `sec-fail-operational` (degrade, don't blank the page; bound every loop),
   `sec-supply-chain` (deps, SRI, catalog signing, `FROM wings`),
   `sec-minimal-trusted-code`, `sec-fuzzing`.
+
+## Committing to the WINGS repo itself
+
+This guide is about writing apps *with* WINGS. If you are instead changing
+WINGS, read [`CONTRIBUTING.md`](CONTRIBUTING.md) — it covers the checks to run
+(both lint passes: native **and** `GOOS=js`) and the release order for the
+nested modules. Two rules that catch everyone:
+
+- **Commit messages are in English**, one line, `@{type}scope: what changed` —
+  types are `feat`, `fix`, `docs`, `chore`, `release`. Most of the existing
+  history is in Portuguese and uses retired types; copy the *format* from a
+  neighbouring commit, never the language.
+- Say WHAT changed, not HOW. The diff explains the implementation.

@@ -4337,6 +4337,13 @@ AI-generated work) no independent copyright is claimed over it.
 "Go" and the Go gopher are associated with the Go project / Google; WINGS is an
 independent project and is **not affiliated with or endorsed by** them.
 
+## Contributing
+
+Patches welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for the checks to run
+before pushing (both lint passes: native **and** `GOOS=js`), the commit message
+convention, and how the nested modules are released. Everything written into the
+repository is in English.
+
 ## License
 
 This project is licensed under the [Mozilla Public License 2.0](LICENSE).
