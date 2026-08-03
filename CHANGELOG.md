@@ -8,6 +8,37 @@ bumps may carry breaking changes).
 This is a curated history — release highlights, not every patch. For the full
 per-commit record see the git log and tags.
 
+## [Unreleased]
+
+### Fixed
+- **A style created from a selection now captures the document's own
+  rules.** Carrying a book's stylesheet meant most of an imported
+  document's formatting came from rules that were never registered
+  classes — a drop cap's face lives in the book's `span.dropcaps` — while
+  `CreateStyle` merged registered classes only. Selecting text that
+  plainly looked formatted and pressing ✎ produced a style missing
+  exactly the formatting that prompted it. The new
+  `EditorCore.StyleLayersAt` reports what actually styles a point: the
+  declarations of every document rule matching the element chain, plus
+  those of the registered classes those elements carry, outermost first.
+  Rule DECLARATIONS, not computed values — a computed style cannot say
+  where a value came from, so it returns inherited and initial values
+  indistinguishable from declared ones, and a style built out of those
+  stops describing formatting and starts imposing a whole context
+  wherever it is applied.
+
+  Two things had to be right for that to work, and neither was. `MergeCSS`
+  now honours **`!important`** — a book's title carries an inline
+  `font-family: "Arial"` (the innermost layer) under a
+  `.chtitle * { font-family: "Uncial Antiqua" !important }`, so the reader
+  sees Uncial while a last-wins merge captured Arial, the one value never
+  on screen. And `CreateStyle` no longer strips a class a document rule
+  SELECTS on: the title is `<p class="chtitle">` and its face comes from
+  `.chtitle *`, so removing the class made the title lose its typography
+  the instant a style was created from a word inside it. Being registered
+  was no defence — `chtitle` is a named style AND a hook — hence the new
+  `EditorCore.IsDocumentClass`.
+
 ## [0.27.1] — 2026-08-02
 
 ### Changed

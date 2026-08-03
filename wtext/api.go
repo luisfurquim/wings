@@ -138,6 +138,36 @@ type EditorCore interface {
 	// makes the innermost formatting win. At a collapsed s armed pending
 	// classes overlay the tree, like InMark.
 	ClassesAt(s Selection) ([]string, error)
+	// StyleLayersAt returns the CSS actually in effect at the start of s,
+	// as declaration lists ordered outside-in like ClassesAt — merging
+	// them in order (epubhtml.MergeCSS) is "the formatting the user is
+	// looking at".
+	//
+	// It is NOT ClassesAt plus a lookup. Since a document's own stylesheet
+	// is carried with its selectors intact, most of an imported book's
+	// formatting comes from rules that are not registered classes at all
+	// — a `span.dropcaps` the editor never named — and a caller walking
+	// ClassesAt sees nothing of it. This reports both: the declarations of
+	// every document rule matching an element in the chain, and of every
+	// registered class those elements carry.
+	//
+	// Rule DECLARATIONS, deliberately, not computed values: a computed
+	// style cannot say where a value came from, so it hands back inherited
+	// and initial values indistinguishable from declared ones, and a style
+	// built out of it stops describing the formatting and starts imposing
+	// a whole context wherever it is applied.
+	StyleLayersAt(s Selection) ([]string, error)
+	// IsDocumentClass reports whether a preserved document rule SELECTS on
+	// this class name — whether the class is a hook the loaded document's
+	// own stylesheet depends on.
+	//
+	// Such a class is not the editor's to strip. A book's chapter title is
+	// `<p class="chtitle">` and its face comes from `.chtitle *`; take the
+	// class off and the rule stops matching, so the title loses its
+	// typography the instant something "tidies up" its classes. Note that
+	// being registered says nothing here: `chtitle` is BOTH a named style
+	// (the sheet also had a plain `.chtitle` rule) and a hook.
+	IsDocumentClass(name string) bool
 
 	// Wrap applies a semantic mark to the text covered by s. A collapsed
 	// s arms the mark as pending: it applies to the next text typed at

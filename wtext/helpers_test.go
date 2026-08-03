@@ -38,6 +38,14 @@ type fakeCore struct {
 	freshSel bool
 	selGen   int
 	gotSel   []Selection
+
+	// docLayers is CSS in effect at the selection that belongs to NO
+	// registered class — a book's own `span.dropcaps` rule. It exists to
+	// model the gap StyleLayersAt was added to close.
+	docLayers []string
+	// docHooks names classes a preserved document rule SELECTS on, which
+	// the editor must not strip.
+	docHooks map[string]bool
 }
 
 func (f *fakeCore) Sel() (Selection, bool) {
@@ -146,9 +154,25 @@ func (f *fakeCore) ClassCSS(name string) (string, bool) {
 	return css, ok
 }
 func (f *fakeCore) ClassesAt(Selection) ([]string, error) { return f.at, nil }
-func (f *fakeCore) Replace(Selection, Fragment) error     { return nil }
-func (f *fakeCore) Delete(Selection) error                { return nil }
-func (f *fakeCore) Txn(fn func(EditorCore) error) error   { return fn(f) }
+
+func (f *fakeCore) IsDocumentClass(name string) bool { return f.docHooks[name] }
+
+// StyleLayersAt models what a real editor reports: the declarations of
+// the document rules matching the chain (docLayers, which no registered
+// class accounts for) followed by those of the classes in `at` that WERE
+// registered — outermost first, as the contract says.
+func (f *fakeCore) StyleLayersAt(Selection) ([]string, error) {
+	out := append([]string(nil), f.docLayers...)
+	for _, cls := range f.at {
+		if css, ok := f.classes[cls]; ok {
+			out = append(out, css)
+		}
+	}
+	return out, nil
+}
+func (f *fakeCore) Replace(Selection, Fragment) error   { return nil }
+func (f *fakeCore) Delete(Selection) error              { return nil }
+func (f *fakeCore) Txn(fn func(EditorCore) error) error { return fn(f) }
 
 func TestToggleMarkWordBehaviour(t *testing.T) {
 	// Not (fully) marked: toggling marks — the partially-bold selection

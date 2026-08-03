@@ -1930,8 +1930,17 @@ wtext.RegisterProfile("full", wtext.Profile{
   under such a name too (`wt-paste-<hash>`), so it does the right thing
   visually but never appears in the dropdown on its own — **to make a
   pasted style reusable and nameable, select the text and press ✎ like any
-  other formatting**; `CreateStyle` reads every class in effect regardless
-  of prefix, so it picks up the pasted one along with everything else.
+  other formatting**; `CreateStyle` captures everything in effect there —
+  every class regardless of prefix, **and the document's own rules**. That
+  second part matters for an imported book, where most of the formatting
+  comes from rules that were never registered classes (a drop cap's face
+  lives in the book's `span.dropcaps`); a style built from classes alone
+  came out missing exactly the formatting that prompted it. What is merged
+  is rule DECLARATIONS, never computed values — a computed style cannot
+  say where a value came from, so it hands back inherited and initial
+  values indistinguishable from declared ones, and a style built out of
+  those stops describing formatting and starts imposing a whole context
+  wherever it is applied.
 - **`CounterToolbar`** — a live character/letter/word count docked to the
   toolbar's right edge. Characters are runes with spaces included but line
   breaks excluded, letters are the runes `unicode.IsLetter` accepts, words

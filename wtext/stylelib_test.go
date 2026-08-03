@@ -367,3 +367,104 @@ func TestCreateStyleSurvivesDocumentClasses(t *testing.T) {
 		t.Errorf("calls = %v, want the new style applied last", core.calls)
 	}
 }
+
+// TestCreateStyleCapturesDocumentRules is the whole point of
+// StyleLayersAt: a style created from a selection must carry the
+// formatting the user was LOOKING AT, including what comes from the
+// document's own stylesheet.
+//
+// A drop cap's face lives in a `span.dropcaps` rule the editor never
+// registered as a class. Building the style out of registered classes
+// alone produced one that dropped exactly the font that made the user
+// want the style in the first place.
+func TestCreateStyleCapturesDocumentRules(t *testing.T) {
+	core := &fakeCore{
+		hasSel:   true,
+		freshSel: true,
+		at:       []string{"dropcaps", "wt-b"},
+		// The book's rule: matched the element, belongs to no class here.
+		docLayers: []string{`font-family: "Uncial Antiqua"; font-size: 480%`},
+	}
+	if err := core.DefineClass("wt-b", "font-weight: bold"); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := CreateStyle(core, "capitular"); err != nil {
+		t.Fatalf("CreateStyle: %v", err)
+	}
+	css := core.classes["capitular"]
+	for _, want := range []string{"Uncial Antiqua", "font-size: 480%", "font-weight: bold"} {
+		if !strings.Contains(css, want) {
+			t.Errorf("the created style lost %q; got %q", want, css)
+		}
+	}
+}
+
+// TestCreateStyleInnermostWins: the layers arrive outermost first, so a
+// property declared closer to the text has to survive the merge — the
+// paragraph says one face, the run the user selected says another, and
+// the style must capture the one they could see.
+func TestCreateStyleInnermostWins(t *testing.T) {
+	core := &fakeCore{
+		hasSel:    true,
+		freshSel:  true,
+		docLayers: []string{"font-family: serif", `font-family: "Uncial Antiqua"`},
+	}
+	if err := CreateStyle(core, "titulo"); err != nil {
+		t.Fatalf("CreateStyle: %v", err)
+	}
+	css := core.classes["titulo"]
+	if strings.Contains(css, "serif") || !strings.Contains(css, "Uncial Antiqua") {
+		t.Errorf("the outer layer won the merge; got %q", css)
+	}
+}
+
+// TestCreateStyleStillNeedsFormatting: no rule reaching the selection is
+// still "nothing to capture", not an empty style.
+func TestCreateStyleStillNeedsFormatting(t *testing.T) {
+	core := &fakeCore{hasSel: true, freshSel: true}
+	if err := CreateStyle(core, "vazio"); !errors.Is(err, ErrNoFormatting) {
+		t.Errorf("CreateStyle on unformatted text = %v, want ErrNoFormatting", err)
+	}
+}
+
+// TestCreateStyleKeepsDocumentHooks: a class a preserved document rule
+// SELECTS on is not the editor's to strip.
+//
+// A book's chapter title is `<p class="chtitle">` and its face comes from
+// `.chtitle *`. CreateStyle removes the classes it folded in, and
+// `chtitle` is registered (the sheet also had a plain `.chtitle` rule),
+// so it was removed — and the title lost its typography the instant a
+// style was created from a word inside it. Being registered is no
+// defence; being a hook is what matters.
+func TestCreateStyleKeepsDocumentHooks(t *testing.T) {
+	core := &fakeCore{
+		hasSel:   true,
+		freshSel: true,
+		at:       []string{"chtitle", "wt-b"},
+		docHooks: map[string]bool{"chtitle": true},
+		// What `.chtitle *` contributes, matched on the inner span.
+		docLayers: []string{`font-family: "Uncial Antiqua" !important`},
+	}
+	// chtitle is BOTH a named style and a hook — the case that bit.
+	if err := core.DefineClass("chtitle", "text-align: center"); err != nil {
+		t.Fatal(err)
+	}
+	if err := core.DefineClass("wt-b", "font-weight: bold"); err != nil {
+		t.Fatal(err)
+	}
+	core.calls = nil
+
+	if err := CreateStyle(core, "teste6"); err != nil {
+		t.Fatalf("CreateStyle: %v", err)
+	}
+	for _, c := range core.calls {
+		if c == "remove:chtitle" {
+			t.Error("removed the class the document's own rule selects on; " +
+				"the title loses its face the moment a style is made from it")
+		}
+	}
+	if css := core.classes["teste6"]; !strings.Contains(css, "Uncial") {
+		t.Errorf("the created style = %q, want the important document rule captured", css)
+	}
+}

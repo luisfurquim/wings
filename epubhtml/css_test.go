@@ -349,3 +349,53 @@ func TestCSSFlowProperties(t *testing.T) {
 		}
 	}
 }
+
+// TestMergeCSSHonoursImportant is the difference between capturing what
+// the page shows and capturing what it does not.
+//
+// A book's chapter title is <span style="font-family: Arial"> (which
+// becomes the innermost layer, a paste class) inside
+// `.chtitle * { font-family: "Uncial Antiqua" !important }`. The reader
+// sees Uncial; a last-wins merge captured Arial — the one value that was
+// never on screen.
+func TestMergeCSSHonoursImportant(t *testing.T) {
+	got := MergeCSS(
+		`font-family: "Uncial Antiqua" !important`,
+		`font-family: "Arial"`,
+	)
+	if !strings.Contains(got, "Uncial") {
+		t.Errorf("MergeCSS = %q; a plain layer overrode an important one", got)
+	}
+	// Important yields to important: the innermost still wins.
+	got = MergeCSS(
+		`font-family: "Uncial Antiqua" !important`,
+		`font-family: "Arial" !important`,
+	)
+	if !strings.Contains(got, "Arial") {
+		t.Errorf("MergeCSS = %q; important should yield to a later important", got)
+	}
+	// Plain over plain is unchanged.
+	if got := MergeCSS("color: red", "color: blue"); !strings.Contains(got, "blue") {
+		t.Errorf("MergeCSS = %q, want the later plain layer to win", got)
+	}
+	// The marker survives, so the captured style reproduces where applied.
+	if got := MergeCSS(`color: red !important`); !strings.Contains(got, "!important") {
+		t.Errorf("MergeCSS = %q, want the priority marker kept", got)
+	}
+}
+
+func TestIsImportant(t *testing.T) {
+	for _, yes := range []string{
+		"red !important", "red!important", "red ! important",
+		"red !IMPORTANT", `"A B", serif  !Important `,
+	} {
+		if !isImportant(yes) {
+			t.Errorf("isImportant(%q) = false", yes)
+		}
+	}
+	for _, no := range []string{"red", "", "url(!important)", "red !importan"} {
+		if isImportant(no) {
+			t.Errorf("isImportant(%q) = true", no)
+		}
+	}
+}

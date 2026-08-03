@@ -272,16 +272,34 @@ func SplitCSS(css string) (charDecls, blockDecls string) {
 // lists overriding earlier ones property by property — the merge rule of
 // "create style from selection", where the innermost formatting wins.
 // The first appearance of a property fixes its position in the output.
+//
+// !important is honoured, which is not a refinement but the difference
+// between describing the page and contradicting it. A layer marked
+// important is NOT overridden by a plain one later, exactly as in the
+// cascade the browser already ran: a book's chapter title carries an
+// inline `font-family: "Arial"` (a paste class, and the innermost layer)
+// under a `.chtitle * { font-family: "Uncial Antiqua" !important }`, so
+// the reader sees Uncial and a last-wins merge captured Arial — the one
+// value that was NOT on screen.
+//
+// The marker survives into the output. A style captured from important
+// declarations reproduces where it is applied next; stripping it would
+// make the style quietly lose to whatever important rule already lives
+// at its destination, which is the same bug one step later.
 func MergeCSS(layers ...string) string {
 	var order []string
-	vals := map[string]string{}
+	type decl struct {
+		val       string
+		important bool
+	}
+	vals := map[string]decl{}
 	for _, layer := range layers {
-		for _, decl := range strings.Split(layer, ";") {
-			decl = strings.TrimSpace(decl)
-			if decl == "" {
+		for _, d := range strings.Split(layer, ";") {
+			d = strings.TrimSpace(d)
+			if d == "" {
 				continue
 			}
-			prop, val, found := strings.Cut(decl, ":")
+			prop, val, found := strings.Cut(d, ":")
 			if !found {
 				continue
 			}
@@ -290,17 +308,32 @@ func MergeCSS(layers ...string) string {
 			if val == "" {
 				continue
 			}
-			if _, seen := vals[prop]; !seen {
+			cur, seen := vals[prop]
+			if !seen {
 				order = append(order, prop)
 			}
-			vals[prop] = val
+			imp := isImportant(val)
+			if seen && cur.important && !imp {
+				continue // an important declaration stands
+			}
+			vals[prop] = decl{val: val, important: imp}
 		}
 	}
 	out := make([]string, 0, len(order))
 	for _, p := range order {
-		out = append(out, p+": "+vals[p])
+		out = append(out, p+": "+vals[p].val)
 	}
 	return strings.Join(out, "; ")
+}
+
+// isImportant reports whether a declaration's value carries the priority
+// marker. Case-insensitive and space-tolerant, as CSS is.
+func isImportant(val string) bool {
+	i := strings.LastIndexByte(val, '!')
+	if i < 0 {
+		return false
+	}
+	return strings.TrimSpace(strings.ToLower(val[i+1:])) == "important"
 }
 
 // PasteClassName derives a deterministic class name for a sanitized

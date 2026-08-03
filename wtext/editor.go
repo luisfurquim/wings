@@ -725,6 +725,72 @@ func (e *Editor) StyleProbes() []StyleProbe {
 		":is("+strings.Join(epubhtml.BlockList(), ",")+")")
 }
 
+// StyleLayersAt implements EditorCore: the CSS in effect at the start of
+// s, outermost first.
+//
+// The walk is ClassesAt's, and for the same reason — a value declared on
+// an ancestor reaches the text through inheritance, so the chain IS the
+// answer. What each element contributes is asked of the browser
+// (Element.matches) rather than worked out here: the document's
+// selectors were never parsed, which is the whole design.
+func (e *Editor) StyleLayersAt(s Selection) ([]string, error) {
+	from, err := e.resolve(s.From)
+	if err != nil {
+		return nil, err
+	}
+	var chain []js.Value
+	for cur := from; cur.Truthy() && !cur.Equal(e.root); cur = cur.Get("parentNode") {
+		if cur.Get("nodeType").Int() == 1 {
+			chain = append(chain, cur)
+		}
+	}
+	var out []string
+	for i := len(chain) - 1; i >= 0; i-- { // outermost first
+		out = append(out, e.layersOn(chain[i])...)
+	}
+	return out, nil
+}
+
+// IsDocumentClass implements EditorCore: whether a preserved document
+// rule selects on this class name (see Editor.docClasses).
+func (e *Editor) IsDocumentClass(name string) bool { return e.docClasses[name] }
+
+// layersOn lists what one element contributes, in the order
+// renderClasses emits it: the document's own rules first, then the
+// registered classes the element carries.
+func (e *Editor) layersOn(el js.Value) []string {
+	var out []string
+	for _, rule := range e.docRules {
+		if rule.Decls == "" || !elementMatches(el, rule.Selector) {
+			continue
+		}
+		out = append(out, rule.Decls)
+	}
+	if !el.Call("hasAttribute", "class").Bool() {
+		return out
+	}
+	for _, cls := range strings.Fields(el.Call("getAttribute", "class").String()) {
+		if css, ok := e.classes[cls]; ok {
+			out = append(out, css)
+		}
+	}
+	return out
+}
+
+// elementMatches asks the browser whether el matches sel, under a guard:
+// a document's selector was never parsed by us, so it may not be valid
+// CSS, and matches() throws on one — which through syscall/js is a panic.
+func elementMatches(el js.Value, sel string) bool {
+	hit, err := jsguard.Value("matches", func() bool {
+		return el.Call("matches", sel).Bool()
+	})
+	if err != nil {
+		GCSS.Logf(2, "wtext: %v; %q matches nothing\n", err, sel)
+		return false
+	}
+	return hit
+}
+
 // matchesAnything reports whether a preserved document rule still has
 // anything to style in this document.
 //

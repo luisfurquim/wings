@@ -33,10 +33,18 @@ func (StyleToolbar) Items() []ToolbarItem {
 }
 
 // CreateStyle captures the formatting in effect at the selection into a
-// named class: the CSS of every class covering the selection start is
-// merged (innermost formatting wins), registered under name, and the
-// source selection swaps its old classes for the new style — from here
-// on it follows the style. Naming an existing style redefines it.
+// named class: everything styling the selection start is merged
+// (innermost formatting wins), registered under name, and the source
+// selection swaps its old classes for the new style — from here on it
+// follows the style. Naming an existing style redefines it.
+//
+// "Everything" is StyleLayersAt, not the registered classes alone. Once a
+// document's own stylesheet is carried with its selectors intact, most of
+// an imported book's formatting comes from rules that were never
+// registered classes — the drop cap's face lives in a `span.dropcaps` the
+// editor never named — and a style built from registered classes alone
+// came out missing exactly the formatting the user was looking at when
+// they asked for it.
 func CreateStyle(core EditorCore, name string) error {
 	name = strings.TrimSpace(name)
 	if err := epubhtml.ValidClassName(name); err != nil {
@@ -53,11 +61,9 @@ func CreateStyle(core EditorCore, name string) error {
 	if err != nil {
 		return err
 	}
-	var layers []string
-	for _, cls := range classes {
-		if css, defined := core.ClassCSS(cls); defined {
-			layers = append(layers, css)
-		}
+	layers, err := core.StyleLayersAt(sel)
+	if err != nil {
+		return err
 	}
 	merged := epubhtml.MergeCSS(layers...)
 	if merged == "" {
@@ -82,6 +88,17 @@ func CreateStyle(core EditorCore, name string) error {
 	return core.Txn(func(c EditorCore) error {
 		for _, cls := range classes {
 			if cls == name {
+				continue
+			}
+			if c.IsDocumentClass(cls) {
+				// The loaded document's own stylesheet selects on this
+				// class: it is a HOOK, not formatting the new style
+				// absorbed. A book's title is `<p class="chtitle">` and its
+				// face comes from `.chtitle *` — remove the class and the
+				// rule stops matching, so the title loses its typography
+				// the moment a style is created from a word inside it.
+				// Being registered is no defence: `chtitle` is a named
+				// style AND a hook.
 				continue
 			}
 			if _, defined := c.ClassCSS(cls); !defined {
