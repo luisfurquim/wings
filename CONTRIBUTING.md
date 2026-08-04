@@ -94,13 +94,21 @@ A copied module must resolve `wings` from the module proxy via its `require`.
 
 ## Releasing
 
+**Never tag a commit whose `CHANGELOG.md` still says `## [Unreleased]`.** The
+version has to be stamped into the documentation *before* the tag exists, not
+after — a tag is permanent, so anyone who checks out exactly that tag reads a
+changelog that does not name the release they are holding, and the only ways
+back are moving a published tag or leaving it wrong forever. The stamp is
+therefore step 1, always, and the tag never runs ahead of it.
+
 Nested modules are tagged with a directory prefix (`wtextepub/v0.5.0`), and a
 sub-module cannot build standalone until the `wings` contract it depends on has
 been tagged. The order matters:
 
-1. `@{release}` commit stamping the version in `CHANGELOG.md` and README's
-   "What's New".
-2. Tag and push `wings` (`vX.Y.Z`).
+1. `@{release}` commit stamping the version in `CHANGELOG.md` (rename
+   `## [Unreleased]` to `## [X.Y.Z] — YYYY-MM-DD`) and in README's "What's
+   New". **This commit is what gets tagged.**
+2. Tag and push `wings` (`vX.Y.Z`) — at the commit from step 1, never before it.
 3. Bump the sub-module's `require` to that version; verify it builds with
    `GOWORK=off` (native **and** `GOOS=js`), which proves it no longer needs the
    workspace. Commit.
@@ -111,6 +119,13 @@ been tagged. The order matters:
 
 Between steps 2 and 3 the sub-module does not build standalone. That gap is
 expected, not a regression.
+
+A sub-module needs a tag of its own only when it CONSUMES contract that the new
+`wings` release introduces. When its code is untouched, Go's minimal version
+selection hands it the newer `wings` as soon as a consumer asks for one, and
+re-tagging it would be noise. A consumer, on the other hand, always needs its
+`require` bumped — MVS does not raise a version nobody asked for, so skipping
+step 5 leaves the demo running the previous release.
 
 ## License
 
