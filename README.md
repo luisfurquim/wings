@@ -47,6 +47,15 @@ authored in Go and running natively in the browser.
 
 Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
 
+### v0.28.0
+
+- **A style created from a selection carries the document's own
+  formatting.** With a book's stylesheet now preserved, most of an
+  imported document's look comes from rules that were never registered
+  classes, so pressing ✎ over a drop cap produced a style missing the
+  very face that prompted it. `EditorCore.StyleLayersAt` reports what
+  actually styles a point, and the merge honours `!important`.
+
 ### v0.27.0
 
 - **A CSS inspector for `w-text`** — the new `inspect` attribute adds a
@@ -105,14 +114,6 @@ Release highlights — full history in [CHANGELOG.md](CHANGELOG.md).
   picker reliably replaces the previous label; Enter no longer echoes a
   paragraph break into `w-text`'s editor; and every widget's shadow
   `<style>` no longer carries hundreds of junk `<br>` elements.
-
-### v0.22.0
-
-- **`w-text` gains document settings** — the new `ConfigPlugin` contract:
-  plugins declare configuration schemas (the EPUB exporter its book
-  metadata), the user edits them in a dialog **anchored over the editor**
-  (new `w-dialog` mode), and the values persist inside the document
-  itself, readable by every plugin.
 
 ---
 
